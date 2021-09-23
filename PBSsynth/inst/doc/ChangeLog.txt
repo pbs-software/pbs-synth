@@ -1,0 +1,21 @@
+PBSsynth Changes
+=================
+Authors : RH  = Rowan Haigh
+          AME = Andrew Edwards
+          PJS = Paul Starr
+          CG  = Chris Grandin
+
+0.1.0 (2021-09-23) [Rcheck=F, Rbuild=F]
+  * Documentation
+    + Created new SVN repo for Stock Synthesis projects (RH 210923)
+    + Started a vignette called `PBSsynthIntro'
+  * R code
+    + Added functional groups (RH 210923)
+      - appFuns:  functions for Appendix F Results
+      - overFuns: functions that overwrite existing ones in r4ss or adnuts
+      - plotFuns: functions that plot data
+      - utilFuns: functions that manipulate data
+  * Sweave
+    + Added Sweave Rnw templates for MPD and MCMC runs to visualise results (RH 210923)
+    + Added Sweave files to build Appendix E (Model Equations) and F (Model Results) for Yellowmouth Rockfish (RH 210923)
+

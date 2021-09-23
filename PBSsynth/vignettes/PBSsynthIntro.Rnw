@@ -1,0 +1,181 @@
+\documentclass[letter, 11pt]{article}
+%\VignetteIndexEntry{Introduction to PBSsynth}
+%\VignettePackage{PBSsynth}
+
+% Packages
+%\usepackage{Sweave}
+\usepackage{color}
+\usepackage{verbatim}
+\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry} %  page margins
+\usepackage[font=small,format=plain,labelfont=bf,indention=0.25in,labelsep=period,justification=raggedright]{caption}
+\usepackage{parskip}
+
+\usepackage[T1]{fontenc}
+\usepackage[scaled=1.1]{inconsolata} %% trial and error
+\renewcommand{\rmdefault}{phv}% Helvetica
+\renewcommand{\sfdefault}{phv}% Helvetica
+\renewcommand{\ttdefault}{zi4}% Helvetica
+
+\usepackage{natbib}  %Bibliography package
+
+\bibliographystyle{apalike3}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, plainpages=true, linkcolor=black, citecolor=black, urlcolor=blue,%
+pdfstartview=Fit, pdfview={XYZ null null null}, pdfpagemode=UseOutlines,%
+pdfauthor={Rowan Haigh and Paul J. Starr}, pdftitle={PBSsynth Information Vignette},%
+pdfsubject={Using Stock Synthesis for BC groundfish assessments}%
+}
+
+% Definitions
+\newcommand{\slan}{{\tt S}}
+\newcommand{\rlan}{{\tt R}}
+\newcommand{\pbss}{{\bf PBSsynth}}
+\newcommand{\tcl}{{\tt Tcl/Tk}}
+\newcommand{\code}[1]{{\tt #1}}
+\newcommand{\ital}[1]{{\it #1}}
+\newcommand{\bold}[1]{{\bf #1}}
+\newcommand{\pkg}[1]{{\bf #1}}
+\definecolor{red}{rgb}{0.8039216,0.2156863,0}
+\definecolor{green}{rgb}{0, 1, 0}
+\definecolor{blue}{rgb}{0, 0, 1}
+\newcommand{\red}[1]{{\textcolor{red} {#1}}}
+
+
+\begin{document}
+
+\title{Introduction to PBSsynth}
+\author{Rowan Haigh and Paul J. Starr}
+\maketitle
+
+%----------------------------------------------------------------
+\section{What is \pbss?}
+
+\pbss{} provides tools for running population models using Stock Synthesis 3 (SS), which is maintained by the NOAA's \href{https://vlab.noaa.gov/web/stock-synthesis/home}{Virtual Lab for Stock Synthesis}.
+This package is not intended for public distribution -- lots of code has been taken and modified from other packages and R code, including \code{`r4ss'} by Ian Taylor et al. and \code{`adnuts'} by Cole Monnahan and Kelli Kristensen.
+We have not fully credited the original sources of functions that we have modified.
+
+In this package, we use the \code{Sweave} approach, which, via \LaTeX, produces a single \code{.pdf} file that contains multiple figures and tables of output.
+This enables easy comparison of stock assessment model runs, as well as direct insertion of the results and tables (with automated captions) into the final stock assessment document.
+
+
+%----------------------------------------------------------------
+\section{What is PBS?}
+
+The initials \bold{PBS} refer to the \href{http://www.pac.dfo-mpo.gc.ca/science/facilities-installations/pbs-sbp/index-eng.html}{Pacific Biological Station}, a major fisheries laboratory operated by by Fisheries and Oceans Canada on the Pacific coast in Nanaimo, British Columbia, Canada.
+
+\section{Where is the User's Guide?}
+
+Users of Stock Synthesis are encouraged to go to NOAA's website and download the latest \href{https://vlab.noaa.gov/web/stock-synthesis/document-library/-/document_library/0LmuycloZeIt/view/1933976}{SS Manual and support documentation}.
+
+%----------------------------------------------------------------
+\section{Running the \pbss{} code -- not updated (still PBSawatea)}
+
+\subsection{Load the package}
+
+\code{require("PBSsynth")}
+
+The current version of \pbss{} includes the namespace functions from the following packages:
+\pkg{methods}, \pkg{PBSmodelling}, \pkg{scape}, \pkg{plotMCMC}, \pkg{xtable}, and \pkg{lattice}.
+\\\\
+Additionally, select functions from the following namespaces have been imported:
+\code{mcmc} from \pkg{coda}, \code{plotCI} from \pkg{gplots}, \code{Cbind} and \code{panel.xYplot} from \pkg{Hmisc}.
+\\\\
+Note that the namespace support functions are only accessible by the \pbss{} code; users will not have command line access to these functions unless they explicitly load the packages (e.g., \code{require(PBSmodelling)}).
+
+
+\subsection{Running the model}
+
+See the \code{PBSsynth-commands-SPP-AREA.rwh} file in each folder for the actual functions (and options) to run for species (SPP) and assessment area (AREA).
+Basically there are five stages to running the model, illustrated below using Queen Charlotte Sound (5ABC) Pacific Ocean Perch (POP).
+The input file is called \code{POP-5ABC-04.txt}.
+
+
+\subsubsection{\code{runADMB} -- Mode of Posterior Distribution (MPD)}
+
+The binary exectuable \code{awatea.exe} (built by ADMB) is called from a user-selected base directory (e.g. \code{C:/Stock Synthesis/POP/5ABC}); therefore, (i)~the exectuable needs to be on the path or its directory must be specified by the argument \code{awateaPath}, and (ii)~R's working directory must be set to the base directory (check using \code{getwd()}).
+All Stock Synthesis calculations occur in the base directory.
+The function \code{runADMB} runs through the number of reweights specified (if any) and automatically puts the original and modified input files, along with various output files, into a new subdirectory.
+Assuming that the input file is \code{POP-5ABC-04.txt}, the new subdirectory will be \code{C:/Stock Synthesis/POP/5ABC/POPrun04}:
+
+\begin{verbatim}
+   out = runADMB("POP-5ABC-04.txt", strSpp="POP", runNo=4, doMPD=TRUE,
+       N.reweight=3, mean.age=TRUE, cvpro=0.2, clean=TRUE)}
+\end{verbatim}
+
+
+\subsubsection{\code{runSweave} -- Run Sweave on MPD Results}
+
+To see the MPD results, run Sweave on the results to generate figures and tables and to create postscript and pdf files containing all the results:
+
+\begin{verbatim}
+   runSweave(strSpp="POP", filename="POP-5ABC-04.txt", runNo=4, rwtNo=3, 
+      Nsex=2, Ncpue=0, Nsurvey=3, SApos=c(TRUE,TRUE,FALSE),
+      Snames=c("GIG.historical","QCS.synoptic","QCS.shrimp")
+\end{verbatim}
+
+Or you can run a wrapper function \code{runMPD} that calls \code{runSweave} using multiple runs and/or multiple reweights:
+
+\begin{verbatim}
+   runMPD(strSpp="POP", prefix=c("POP","5ABC"), runs=4, rwts=0:3,
+      Nsex=2, Ncpue=0, Nsurvey=3, SApos=c(TRUE,TRUE,FALSE), delim="-",
+      Snames=c("GIG.historical","QCS.synoptic","QCS.shrimp"))
+\end{verbatim}
+
+This creates one or more subdirectories (in this case,\\
+\code{C:/Stock Synthesis/POP/5ABC/POPrun04/MPD.run.rwt}, where run=\code{04} and rwt=\code{c(00,01,02,03)}), each of which contains a customized Sweave file (e.g., \code{POPrun04-3.Snw}), the compiled latex file (\code{POPrun04-3.tex}), and a postscript document file (\code{POPrun04-3.pdf}), along with the numerous \code{.eps} image files used in making the \code{.pdf} file.
+
+\subsubsection{Run MCMC Sampling for Posterior Distribution}
+
+It's best to run the MCMC calculations on a stand-alone power desktop.
+Use the reweight input file that best suits the data (e.g., getting SDNRs close to 1), transfer this to the desktop where the same version of \code{awatea.exe} is available, and issue the commands:
+
+\begin{verbatim}
+   awatea -ind POP-5ABC.04.03.txt -mcmc 10000000 -mcsave 10000
+   awatea -ind pop-5ABC.04.03.txt -mceval
+\end{verbatim}
+
+The first command will take many hours to complete; therefore, the second command is issued after the first is completed.
+Next, copy the resulting output files (e.g., \code{.pst}, \code{.out}, \code{Stock Synthesis.psv}, etc.) files \emph{twice} into two new subdirectories on your workstation:
+
+\begin{verbatim}
+   C:/Stock Synthesis/POP/5ABC/POPrun04/MCMC.04.03
+   C:/Stock Synthesis/POP/5ABC/POPrun04/MCMC.04.03/PRJ.04.03
+\end{verbatim}
+
+
+\subsubsection{Maximum Sustainable Yield (MSY)}
+
+Next, calculate maximum sustainable yield for each of your posterior samples.
+
+\begin{verbatim}
+   out = runADMB("POP-5ABC-04.txt", strSpp="POP", runNo=4, rwtNo=3,
+      doMSY=TRUE, msyMaxIter=15000, msyTolConv=0.01, endStrat=0.301,
+      stepStrat=0.001)
+\end{verbatim}
+
+
+\subsubsection{\code{runSweaveMCMC} -- Run Sweave on MCMC Results}
+
+As with the MPD output, run Sweave on the MCMC output to generate figures and tables and to create postscript and pdf files containing all the MCMC results:
+
+\begin{verbatim}
+   runSweaveMCMC(strSpp="POP", filename="POP-5ABC-04.txt", runNo=4,
+      rwtNo=3, skip.last.year=FALSE)
+\end{verbatim}
+
+The final argument in the above call defaults to \code{skip.last.year=TRUE} for all assessments to remove the last year of projections.
+The POP 5ABC assessment in 2010 requires that the last year of projections be kept.
+
+There is also a wrapper function called \code{runMCMC} for \code{runSweaveMCMC} that loops through runs and reweights:
+
+\begin{verbatim}
+   runMCMC(prefix=c("POP","5ABC"), runs=4, rwts=3)
+\end{verbatim}
+
+\emph{Note}: For details of all \pkg{PBSsynth} functions, see the package documentation help files.
+
+
+\bibliography{PBSsynth}
+
+\end{document}

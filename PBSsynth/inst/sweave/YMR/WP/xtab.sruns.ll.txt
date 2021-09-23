@@ -1,0 +1,26 @@
+\setlength{\tabcolsep}{6pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Wed Aug 18 17:00:14 2021
+\begin{table}[ht]
+\centering
+\caption{Log likelihood (LL) values reported by central and sensitivity runs for survey indices, age composition (AF), recruitment, and total (not all LL components reported here)} 
+\label{tab:ymr.log.likes}
+\begin{tabular}{rrrrrrrrrrr}
+  \\[-0.5ex] \hline
+Sen.Run & Label & CPUE & QCS & WCVI & WCHG & GIG & Survey & AF & Recruit & Total \\ 
+  \hline
+S00 (R75) & central run & -18.1 & 0.892 & 7.81 & 19.7 & 14.5 & 24.8 & 461 & 42.2 & 642 \\ 
+   \hdashline \\[-1.75ex]S01 (R78) & add 1997 WCHG index & -18.1 & 0.931 & 7.80 & 19.2 & 14.5 & 24.3 & 463 & 42.2 & 641 \\ 
+  S02 (R79) & estimate M & -17.0 & 0.443 & 7.86 & 19.0 & 14.6 & 24.8 & 461 & 39.4 & 639 \\ 
+  S03 (R80) & drop CPUE & 0 & 0.681 & 7.80 & 19.3 & 14.3 & 42.1 & 709 & 51.9 & 915 \\ 
+  S04 (R81) & Tweedie CPUE & -22.5 & 0.971 & 7.81 & 19.8 & 14.5 & 20.6 & 715 & 52.2 & 900 \\ 
+  S05 (R82) & sigmaR=0.6 & -16.8 & 0.624 & 7.66 & 19.4 & 14.2 & 25.1 & 490 & 56.0 & 682 \\ 
+  S06 (R83) & sigmaR=1.2 & -18.5 & 0.964 & 7.92 & 19.7 & 14.6 & 24.7 & 451 & 40.0 & 628 \\ 
+  S07 (R84) & reduce catch 33\% & -18.4 & 1.14 & 7.77 & 20.1 & 13.7 & 24.3 & 460 & 41.6 & 637 \\ 
+  S08 (R85) & increase catch 50\% & -17.4 & 0.592 & 7.85 & 19.2 & 15.5 & 25.7 & 467 & 43.2 & 647 \\ 
+  S09 (R86) & upweight QC AF & -18.5 & 0.706 & 7.94 & 20.0 & 14.4 & 24.6 & 633 & 51.6 & 825 \\ 
+  S10 (R87) & start Rdevs in 1970 & -8.02 & -0.801 & 8.32 & 16.4 & 12.1 & 28.0 & 547 & 21.0 & 708 \\ 
+  S11 (R88) & no ageing error & -17.9 & 0.992 & 7.72 & 19.9 & 14.5 & 25.3 & 397 & 35.5 & 570 \\ 
+   \hline
+\end{tabular}
+\end{table}

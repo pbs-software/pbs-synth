@@ -1,0 +1,328 @@
+\documentclass[11pt]{book}   
+\usepackage{Sweave}     % needs to come before resDocSty
+\usepackage{resDocSty}  % Res Doc .sty file
+
+% http://tex.stackexchange.com/questions/65919/space-between-rows-in-a-table
+\newcommand\Tstrut{\rule{0pt}{2.6ex}}       % top strut for table row",
+\newcommand\Bstrut{\rule[-1.1ex]{0pt}{0pt}} % bottom strut for table row",
+
+%\usepackage{rotating}   % for sideways table
+\usepackage{longtable,array,arydshln}
+\setlength{\dashlinedash}{0.5pt}
+\setlength{\dashlinegap}{1.0pt}
+
+\usepackage{pdfcomment}
+\usepackage{xifthen}
+\usepackage{fmtcount}    %% for rendering numbers to words
+%\usepackage{multicol}    %% for decision tables (doesn't seem to work)
+\usepackage{xcolor}
+
+\captionsetup{figurewithin=none,tablewithin=none} %RH: This works for resetting figure and table numbers for book class though I don't know why. Set fig/table start number to n-1.
+
+\newcommand{\Bmsy}{B_\mathrm{MSY}}
+\newcommand{\umsy}{u_\mathrm{MSY}}
+\newcommand{\super}[1]{$^\mathrm{#1}$}
+\newcommand{\bold}[1]{\textbf{#1}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\itbf}[1]{\textit{\textbf{#1}}}
+
+\newcommand{\elof}[1]{\in\left\{#1\right\}}   %% is an element of
+\newcommand{\comment}[1]{}                    %% commenting out blocks of text
+\newcommand{\commint}[1]{\hspace{-0em}}       %% commenting out in-line text
+
+\newcommand{\AppCat}{Appendix~A}
+\newcommand{\AppSurv}{Appendix~B}
+\newcommand{\AppCPUE}{Appendix~C}
+\newcommand{\AppBio}{Appendix~D}
+\newcommand{\AppEqn}{Appendix~E}
+
+\def\startP{180}         % page start (default=1)
+\def\startF{0}           % figure start counter (default=0)
+\def\startT{0}           % table start counter (default=0)
+\def\bfTh{{\bf \Theta}}  % bold Theta
+
+%http://tex.stackexchange.com/questions/6058/making-a-shorter-minus
+\def\minus{%
+  \setbox0=\hbox{-}%
+  \vcenter{%
+    \hrule width\wd0 height 0.05pt% \the\fontdimen8\textfont3%
+  }%
+}
+\newcommand{\oldstuff}[1]{\normalsize\textcolor{red}{#1}\normalsize}
+\newcommand{\newstuff}[1]{\normalsize\textcolor{blue}{#1}\normalsize}
+\newcommand{\greystuff}[1]{\normalsize\textcolor{slategrey}{#1}\normalsize}
+
+\newcommand{\ptype}{png}
+\newcommand{\pc}{\%}
+%\newcommand{\mr}[1]{\\\\mathrm{#1}}
+%\newcommand{\xor}[2]{\ifthenelse{\isempty{#1}}{#2}{#1}}
+
+%% ------- GENERIC  ------------------------------
+%% #1=file name & label, #2=caption, #3=caption prefix (optional), #4=label prefix (optional)
+\newcommand\onefig[4]{
+  \begin{figure}[!htb]
+  \begin{center}
+  \ifthenelse{\equal{#4}{}}
+    {\pdftooltip{%
+      \includegraphics[width=6.4in,height=7.25in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1}}}
+    {\pdftooltip{%
+      \includegraphics[width=6.4in,height=7.25in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#4#1}}}
+  \end{center}
+  \ifthenelse{\equal{3}{}}%
+    {\caption{#2}}
+    {\caption{#3#2}}
+  \ifthenelse{\equal{#4}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#4#1}}
+  \end{figure}
+  %%\clearpage
+}
+%% #1 = file name & label, #2=height, #3=caption, #4=caption prefix (optional), #5=label prefix (optional)
+\newcommand\onefigH[5]{
+  \begin{figure}[!htb]
+  \begin{center}
+  \ifthenelse{\equal{#5}{}}
+    {\pdftooltip{%
+      \includegraphics[width=6.4in,height=#2in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1}}}
+    {\pdftooltip{%
+      \includegraphics[width=6.4in,height=#2in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#5#1}}}
+  \end{center}
+  \vspace{-2.5ex}
+  \ifthenelse{\equal{4}{}}%
+    {\caption{#3}}
+    {\caption{#4#3}}
+  \ifthenelse{\equal{#5}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#5#1}}
+  \end{figure}
+}
+%% #1=filename 1 & label, #2=filename 2, #3=caption, #4=caption prefix (optional), #5=label prefix (optional)
+\newcommand\twofig[5]{
+  \begin{figure}[!htb]
+  \begin{center}
+  \ifthenelse{\equal{#5}{}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1} top} \\
+      \pdftooltip{
+        \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#1} bottom}
+    \end{tabular}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#5#1} top} \\
+      \pdftooltip{
+        \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#5#1} bottom}
+    \end{tabular}}
+  \end{center}
+  \ifthenelse{\equal{4}{}}%
+    {\caption{#3}}
+    {\caption{#4#3}}
+  \ifthenelse{\equal{#5}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#5#1}}
+  \end{figure}
+  %%\clearpage
+}
+%% #1 = filename 1 & label, #2 = filename 2, #3 = filename 3, #4 = caption, #5=caption prefix (optional), #6=label prefix (optional)
+\newcommand\threefig[6]{
+  \begin{figure}[!htb]
+  \begin{center}
+  \ifthenelse{\equal{#6}{}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=4in,height=4in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1} top} \\
+      \pdftooltip{
+        \includegraphics[width=4in,height=4in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#1} middle} \\
+      \pdftooltip{
+        \includegraphics[width=4in,height=4in,keepaspectratio=TRUE]{{#3}.\ptype}}{Figure~\ref{fig:#1} bottom}
+    \end{tabular}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=4in,height=4in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#6#1} top} \\
+      \pdftooltip{
+        \includegraphics[width=4in,height=4in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#6#1} middle} \\
+      \pdftooltip{
+        \includegraphics[width=4in,height=4in,keepaspectratio=TRUE]{{#3}.\ptype}}{Figure~\ref{fig:#6#1} bottom}
+    \end{tabular}}
+  \end{center}
+  \ifthenelse{\equal{5}{}}%
+    {\caption{#4}}
+    {\caption{#5#4}}
+  \ifthenelse{\equal{#6}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#6#1}}
+  \end{figure}
+}
+%% #1=fig1 filename, #2=fig2 filename, #3=caption text, #4=fig1 width #5=fig1 height, #6=fig2 width, #7=fig2 height, #8=caption prefix (optional), #9=label prefix (optional)
+\newcommand\twofigWH[9]{
+  \begin{figure}[!htp]
+  \begin{center}
+  \ifthenelse{\equal{#9}{}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=#4in,height=#5in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1} top} \\
+      \pdftooltip{
+        \includegraphics[width=#6in,height=#7in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#1} bottom}
+    \end{tabular}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=#4in,height=#5in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#9#1} top} \\
+      \pdftooltip{
+        \includegraphics[width=#6in,height=#7in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#9#1} bottom}
+    \end{tabular}}
+  \end{center}
+  \ifthenelse{\equal{8}{}}%
+    {\caption{#3}}
+    {\caption{#8#3}}
+  \ifthenelse{\equal{#9}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#9#1}}
+  \end{figure}
+  %%\clearpage
+}
+%% ---------- Not area specific ------------------
+%% #1=figure1 #2=figure2 #3=label #4=caption #5=width (fig) #6=height (fig)
+\newcommand\figbeside[6]{
+\begin{figure}[!htb]
+  \centering
+  \pdftooltip{
+  \begin{minipage}[t]{0.45\textwidth}
+    \begin{center}
+    \includegraphics[width=#5in,height=#6in,keepaspectratio=TRUE]{{#1}.\ptype}
+    \end{center}
+    %\caption{#3}
+    %\label{fig:#1}
+  \end{minipage}}{Figure~\ref{fig:#3} left}%
+  \quad
+  \pdftooltip{
+  \begin{minipage}[t]{0.45\textwidth}
+    \begin{center}
+    \includegraphics[width=#5in,height=#6in,keepaspectratio=TRUE]{{#2}.\ptype}
+    \end{center}
+    %\caption{#4}
+    %\label{fig:#2}
+  \end{minipage}}{Figure~\ref{fig:#3} right}
+  \caption{#4}
+  \label{fig:#3}
+  \end{figure}
+}
+
+\SweaveOpts{pdf=FALSE}        % keep.source=TRUE, 
+
+% Alter some LaTeX defaults for better treatment of figures:
+% See p.105 of "TeX Unbound" for suggested values.
+% See pp. 199-200 of Lamport's "LaTeX" book for details.
+%   General parameters, for ALL pages:
+\renewcommand{\topfraction}{0.85}         % max fraction of floats at top
+\renewcommand{\bottomfraction}{0.85}       % max fraction of floats at bottom
+% Parameters for TEXT pages (not float pages):
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}               % 2 may work better
+\renewcommand{\textfraction}{0.15}        % allow minimal text w. figs
+% Parameters for FLOAT pages (not text pages):
+\renewcommand{\floatpagefraction}{0.7}    % require fuller float pages
+% N.B.: floatpagefraction MUST be less than topfraction !!
+%===========================================================
+
+%% Line delimiters in this document:
+%% #####  Chapter
+%% =====  Section
+%% -----  Subsection
+%% ~~~~~  Subsubsection
+%% +++++  Tables
+%% ^^^^^  Figures
+
+\begin{document}
+\setcounter{page}{\startP}
+\setcounter{figure}{\startF}
+\setcounter{table}{\startT}
+\setcounter{secnumdepth}{4}   % To number subsubsubheadings
+\setlength{\tabcolsep}{3pt}   % table colum separator (is changed later in code depending on table)
+
+\setcounter{chapter}{6}    % temporary for standalone chapters (5=E, 6=F)
+\renewcommand{\thechapter}{\Alph{chapter}} % ditto
+\renewcommand{\thesection}{\thechapter.\arabic{section}.}   
+\renewcommand{\thesubsection}{\thechapter.\arabic{section}.\arabic{subsection}.}
+\renewcommand{\thesubsubsection}{\thechapter.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.}
+\renewcommand{\thesubsubsubsection}{\thechapter.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.\arabic{subsubsubsection}.}
+\renewcommand{\thetable}{\thechapter.\arabic{table}}    
+\renewcommand{\thefigure}{\thechapter.\arabic{figure}}  
+\renewcommand{\theequation}{\thechapter.\arabic{equation}}
+%\renewcommand{\thepage}{\arabic{page}}
+
+\newcounter{prevchapter}
+\setcounter{prevchapter}{\value{chapter}}
+\addtocounter{prevchapter}{-1}
+\newcommand{\eqnchapter}{\Alph{prevchapter}}
+
+<<controls, echo=FALSE, eval=TRUE, results=hide>>= # hide the results 
+##----------------------------
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+source(file.path(sub("/$","",d.synth), "set.controls.r"))
+@
+
+%###############################################################################
+\chapter*{APPENDIX~\thechapter. MODEL RESULTS}
+
+\newcommand{\LH}{}%{DRAFT (\Sexpr{saveDate}) -- Not citable}% working paper}  % Set to {} for final ResDoc
+\newcommand{\RH}{}%{CSAP WP 2019GRF02 (rev for RPR)}
+\newcommand{\LF}{Yellowmouth Rockfish 2021}
+\newcommand{\RF}{Appendix~\thechapter ~-- Model Results}
+
+\lhead{\LH}\rhead{\RH}\lfoot{\LF}\rfoot{\RF}
+
+\newcommand{\BCa}{\Sexpr{the.stocks[1]}}%% new commands cannot contain numerals (use a,b,c for stocks)
+\newcommand{\SPP}{\Sexpr{spp.name}}
+\newcommand{\SPC}{\Sexpr{spp.code}}
+\newcommand{\cvpro}{CPUE~$c_\mathrm{p}$}
+
+%% Define them here and then renew them in BSR.Rnw and RER.Rnw
+\newcommand{\startYear}{\Sexpr{startYear}} %% so can include in captions. 
+\newcommand{\currYear}{\Sexpr{currYear}}   %% so can include in captions. 
+\newcommand{\prevYear}{\Sexpr{prevYear}}   %% so can include in captions. 
+\newcommand{\projYear}{\Sexpr{projYear}}   %% so can include in captions. 
+\newcommand{\pgenYear}{\Sexpr{pgenYear}}   %% so can include in captions. 
+
+%%==============================================================================
+\section{Introduction}
+
+%\newstuff{Note to RPR participants from authors: the originally submitted Working Paper presented results based on an incorrect selectivity prior for the WCVI synoptic survey: $\mu_3$=12.2 instead of the intended value of 15.4.
+%We have updated the base case runs (but not the sensitivities), which has resulted in minor differences to parameter estimates and MSY quantities.
+%If nothing else, the revision has improved the fit to one of the base component runs (B5 R76, $M$=0.06).
+%We do not believe that this update substantially changes the results or conclusions of the Working Paper.}
+
+This appendix describes results for a coastwide stock of \SPP{} (\SPC, \emph{\Sexpr{latin.name}}) that spans the outer BC coast in PMFC areas 3CD5ABCDE.
+Broadly, the results include:
+\vspace{-0.5\baselineskip}%  because topsep doesn't work
+\begin{itemize_csas}
+\item mode of the posterior distribution (MPD) calculations to compare model estimates to observations, 
+\item Markov chain Monte Carlo (MCMC) simulations to derive posterior distributions for the estimated parameters for a composite base case,
+\item MCMC diagnostics for the component runs of the composite base case, and
+\item a range of sensitivity model runs, including MCMC diagnostics.
+\end{itemize_csas}
+Note that MCMC diagnostics are rated using the following subjective criteria:
+\begin{itemize_csas}
+  \item Good -- no trend in traces, split-chains align, no autocorrelation
+  \item Marginal -- trace trend temporarily interrupted, split-chains somewhat frayed, some autocorrelation
+  \item Poor -- trace trend fluctuates substantially or shows a persistent increase/decrease, split-chains differ from each other, substantial autocorrelation
+  \item Unacceptable -- trace trend shows a persistent increase/decrease that has not levelled, split-chains differ markedly from each other, persistant autocorrelation
+\end{itemize_csas}
+
+The final advice consists of a composite base case which provides the primary guidance.
+A range of sensitivity runs are presented to show the effect of some of the main modelling assumptions.
+Estimates of major quantities and advice to management (decision tables) are presented here and in the main text.
+
+
+\SweaveInput{YMR.Rnw}
+
+
+%%==============================================================================
+
+\clearpage
+
+\bibliographystyle{resDoc}
+%% Use for appendix bibliographies only: (http://www.latex-community.org/forum/viewtopic.php?f=5&t=4089)
+\renewcommand\bibsection{\section{References -- Model Results}}
+\bibliography{C:/Users/haighr/Files/GFish/CSAP/Refs/CSAPrefs}
+\end{document}

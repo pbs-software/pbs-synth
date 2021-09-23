@@ -1,0 +1,19 @@
+\setlength{\tabcolsep}{2pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Tue Aug 24 10:13:00 2021
+\begin{table}[ht]
+\centering
+\caption{Log likelihood (LL) values reported by component base runs for survey indices, age composition (AF), recruitment, and total (not all LL components reported here)} 
+\label{tab:ymr.log.likes}
+\begin{tabular}{rrrrrrrrrrr}
+  \\[-1.0ex] \hline
+Run & M & CPUE & QCS & WCVI & WCHG & GIG & Index & AF & Recruit & Total \\ 
+  \hline
+77 & 0.0400 & -18.4 & 1.28 & 7.86 & 20.4 & 14.3 & 25.4 & 454 & 47.5 & 638 \\ 
+  71 & 0.0450 & -18.3 & 1.06 & 7.90 & 20 & 14.4 & 25.1 & 456 & 43.5 & 637 \\ 
+  75 & 0.0500 & -18.1 & 0.870 & 7.92 & 19.7 & 14.5 & 24.9 & 456 & 41.9 & 635 \\ 
+  72 & 0.0550 & -17.8 & 0.703 & 7.93 & 19.4 & 14.5 & 24.8 & 457 & 40.8 & 635 \\ 
+  76 & 0.0600 & -17.4 & 0.555 & 7.94 & 19.1 & 14.6 & 24.8 & 458 & 39.9 & 634 \\ 
+   \hline
+\end{tabular}
+\end{table}

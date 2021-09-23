@@ -1,0 +1,30 @@
+\setlength{\tabcolsep}{2pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Wed Aug 18 17:00:14 2021
+\begin{table}[ht]
+\centering
+\caption{YMR~BC: medians of MCMC-derived quantities from the central run and 11 sensitivity runs (\Nmcmc{} samples each) from their respective MCMC posteriors. Definitions are: $B_0$ -- unfished equilibrium spawning biomass (mature females), $B_{2022}$ -- spawning biomass at the end of 2022, $u_{2022}$ -- exploitation rate (ratio of total catch to vulnerable biomass) in the middle of 2022, $u_\mathrm{max}$ -- maximum exploitation rate (calculated for each sample as the maximum exploitation rate from 1935 - 2022), MSY -- maximum sustainable yield at equilibrium, $B_\mathrm{MSY}$ -- equilibrium spawning biomass at MSY, $u_\mathrm{MSY}$ -- equilibrium exploitation rate at MSY, All biomass values (and MSY) are in tonnes. Sensitivity runs: S01~= add 1997 WCHG index, S02~= estimate M, S03~= drop CPUE, S04~= Tweedie CPUE, S05~= sigmaR=0.6, S06~= sigmaR=1.2, S07~= reduce catch 33\%, S08~= increase catch 50\%, S09~= upweight QCS AF, S10~= start Rdevs in 1970, S11~= no ageing error} 
+\label{tab:ymr.sens.rfpt}
+\begingroup\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\small
+\begin{tabular}{lrrrrrrrrrrrr}
+  \\[-1.0ex] \hline
+ & B3(R75) & S01(R78) & S02(R79) & S03(R80) & S04(R81) & S05(R82) & S06(R83) & S07(R84) & S08(R85) & S09(R86) & S10(R87) & S11(R88) \\ 
+  \hline
+$B_{0}$ & 26,004 & 25,781 & 66,959 & 26,058 & 23,442 & 29,534 & 26,394 & 22,422 & 31,709 & 25,742 & 95,421 & 41,409 \\ 
+  $B_{2022}$ & 17,922 & 17,663 & 80,224 & 22,208 & 16,987 & 21,071 & 17,804 & 15,939 & 21,784 & 19,973 & 114,938 & 16,030 \\ 
+  $B_{2022}/B_{0}$ & 0.693 & 0.686 & 1.19 & 0.854 & 0.725 & 0.709 & 0.675 & 0.705 & 0.689 & 0.781 & 1.19 & 0.387 \\ 
+   \hdashline \\[-1.75ex]$u_{2022}$ & 0.0236 & 0.0241 & 0.00527 & 0.0198 & 0.0250 & 0.0206 & 0.0234 & 0.0267 & 0.0195 & 0.0185 & 0.00386 & 0.0247 \\ 
+  $u_\mathrm{max}$ & 0.0482 & 0.0488 & 0.0138 & 0.0446 & 0.0496 & 0.0451 & 0.0490 & 0.0449 & 0.0626 & 0.0445 & 0.0177 & 0.0501 \\ 
+   \hline
+$MSY$ & 1,031 & 1,023 & 3,708 & 1,044 & 942 & 1,148 & 1,071 & 894 & 1,256 & 1,021 & 3,627 & 1,674 \\ 
+  $B_\mathrm{MSY}$ & 7,548 & 7,483 & 19,209 & 7,640 & 6,876 & 8,397 & 7,830 & 6,526 & 9,185 & 7,487 & 26,453 & 12,266 \\ 
+  $0.4B_{2022}$ & 3,019 & 2,993 & 7,684 & 3,056 & 2,750 & 3,359 & 3,132 & 2,610 & 3,674 & 2,995 & 10,581 & 4,907 \\ 
+  $0.8B_{2022}$ & 6,038 & 5,987 & 15,367 & 6,112 & 5,501 & 6,718 & 6,264 & 5,221 & 7,348 & 5,990 & 21,162 & 9,813 \\ 
+  $B_{2022}/B_\mathrm{MSY}$ & 2.38 & 2.36 & 4.11 & 2.90 & 2.47 & 2.50 & 2.27 & 2.42 & 2.38 & 2.68 & 4.31 & 1.31 \\ 
+  $B_\mathrm{MSY}/B_{0}$ & 0.292 & 0.292 & 0.290 & 0.295 & 0.294 & 0.286 & 0.299 & 0.292 & 0.292 & 0.292 & 0.277 & 0.297 \\ 
+   \hdashline \\[-1.75ex]$u_\mathrm{MSY}$ & 0.0464 & 0.0464 & 0.0549 & 0.0463 & 0.0464 & 0.0463 & 0.0464 & 0.0464 & 0.0463 & 0.0462 & 0.0464 & 0.0463 \\ 
+  $u_{2022}/u_\mathrm{MSY}$ & 0.509 & 0.521 & 0.0968 & 0.427 & 0.540 & 0.444 & 0.504 & 0.576 & 0.420 & 0.400 & 0.0832 & 0.533 \\ 
+   \hline
+\end{tabular}
+\endgroup
+\end{table}

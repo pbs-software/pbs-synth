@@ -1,0 +1,1065 @@
+\documentclass[11pt]{book}   
+\usepackage{Sweave}     % needs to come before resDocSty
+\usepackage{resDocSty}  % Res Doc .sty file
+
+% http://tex.stackexchange.com/questions/65919/space-between-rows-in-a-table
+\newcommand\Tstrut{\rule{0pt}{2.6ex}}       % top strut for table row",
+\newcommand\Bstrut{\rule[-1.1ex]{0pt}{0pt}} % bottom strut for table row",
+
+%\usepackage{rotating}   % for sideways table
+\usepackage{longtable,array,arydshln}
+\setlength{\dashlinedash}{0.5pt}
+\setlength{\dashlinegap}{1.0pt}
+
+\usepackage{pdfcomment}
+\usepackage{xifthen}
+\usepackage{fmtcount}    %% for rendering numbers to words
+%\usepackage{multicol}    %% for decision tables (doesn't seem to work)
+\usepackage{xcolor}
+
+\captionsetup{figurewithin=none,tablewithin=none} %RH: This works for resetting figure and table numbers for book class though I don't know why. Set fig/table start number to n-1.
+
+\newcommand{\Bmsy}{B_\mathrm{MSY}}
+\newcommand{\umsy}{u_\mathrm{MSY}}
+\newcommand{\super}[1]{$^\mathrm{#1}$}
+\newcommand{\bold}[1]{\textbf{#1}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\itbf}[1]{\textit{\textbf{#1}}}
+
+\newcommand{\elof}[1]{\in\left\{#1\right\}}   %% is an element of
+\newcommand{\comment}[1]{}                    %% commenting out blocks of text
+\newcommand{\commint}[1]{\hspace{-0em}}       %% commenting out in-line text
+
+\newcommand{\AppCat}{Appendix~A}
+\newcommand{\AppSurv}{Appendix~B}
+\newcommand{\AppCPUE}{Appendix~C}
+\newcommand{\AppBio}{Appendix~D}
+\newcommand{\AppEqn}{Appendix~E}
+
+\def\startP{180}         % page start (default=1)
+\def\startF{0}           % figure start counter (default=0)
+\def\startT{0}           % table start counter (default=0)
+\def\bfTh{{\bf \Theta}}  % bold Theta
+
+%http://tex.stackexchange.com/questions/6058/making-a-shorter-minus
+\def\minus{%
+  \setbox0=\hbox{-}%
+  \vcenter{%
+    \hrule width\wd0 height 0.05pt% \the\fontdimen8\textfont3%
+  }%
+}
+\newcommand{\oldstuff}[1]{\normalsize\textcolor{red}{#1}\normalsize}
+\newcommand{\newstuff}[1]{\normalsize\textcolor{blue}{#1}\normalsize}
+\newcommand{\greystuff}[1]{\normalsize\textcolor{slategrey}{#1}\normalsize}
+
+\newcommand{\ptype}{png}
+\newcommand{\pc}{\%}
+%\newcommand{\mr}[1]{\\\\mathrm{#1}}
+%\newcommand{\xor}[2]{\ifthenelse{\isempty{#1}}{#2}{#1}}
+
+%% ------- GENERIC  ------------------------------
+%% #1=file name & label, #2=caption, #3=caption prefix (optional), #4=label prefix (optional)
+\newcommand\onefig[4]{
+  \begin{figure}[!htb]
+  \begin{center}
+  \ifthenelse{\equal{#4}{}}
+    {\pdftooltip{%
+      \includegraphics[width=6.4in,height=7.25in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1}}}
+    {\pdftooltip{%
+      \includegraphics[width=6.4in,height=7.25in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#4#1}}}
+  \end{center}
+  \ifthenelse{\equal{3}{}}%
+    {\caption{#2}}
+    {\caption{#3#2}}
+  \ifthenelse{\equal{#4}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#4#1}}
+  \end{figure}
+  %%\clearpage
+}
+%% #1 = file name & label, #2=height, #3=caption, #4=caption prefix (optional), #5=label prefix (optional)
+\newcommand\onefigH[5]{
+  \begin{figure}[!htb]
+  \begin{center}
+  \ifthenelse{\equal{#5}{}}
+    {\pdftooltip{%
+      \includegraphics[width=6.4in,height=#2in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1}}}
+    {\pdftooltip{%
+      \includegraphics[width=6.4in,height=#2in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#5#1}}}
+  \end{center}
+  \vspace{-2.5ex}
+  \ifthenelse{\equal{4}{}}%
+    {\caption{#3}}
+    {\caption{#4#3}}
+  \ifthenelse{\equal{#5}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#5#1}}
+  \end{figure}
+}
+%% #1=filename 1 & label, #2=filename 2, #3=caption, #4=caption prefix (optional), #5=label prefix (optional)
+\newcommand\twofig[5]{
+  \begin{figure}[!htb]
+  \begin{center}
+  \ifthenelse{\equal{#5}{}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1} top} \\
+      \pdftooltip{
+        \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#1} bottom}
+    \end{tabular}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#5#1} top} \\
+      \pdftooltip{
+        \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#5#1} bottom}
+    \end{tabular}}
+  \end{center}
+  \ifthenelse{\equal{4}{}}%
+    {\caption{#3}}
+    {\caption{#4#3}}
+  \ifthenelse{\equal{#5}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#5#1}}
+  \end{figure}
+  %%\clearpage
+}
+%% #1 = filename 1 & label, #2 = filename 2, #3 = filename 3, #4 = caption, #5=caption prefix (optional), #6=label prefix (optional)
+\newcommand\threefig[6]{
+  \begin{figure}[!htb]
+  \begin{center}
+  \ifthenelse{\equal{#6}{}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=4in,height=4in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1} top} \\
+      \pdftooltip{
+        \includegraphics[width=4in,height=4in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#1} middle} \\
+      \pdftooltip{
+        \includegraphics[width=4in,height=4in,keepaspectratio=TRUE]{{#3}.\ptype}}{Figure~\ref{fig:#1} bottom}
+    \end{tabular}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=4in,height=4in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#6#1} top} \\
+      \pdftooltip{
+        \includegraphics[width=4in,height=4in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#6#1} middle} \\
+      \pdftooltip{
+        \includegraphics[width=4in,height=4in,keepaspectratio=TRUE]{{#3}.\ptype}}{Figure~\ref{fig:#6#1} bottom}
+    \end{tabular}}
+  \end{center}
+  \ifthenelse{\equal{5}{}}%
+    {\caption{#4}}
+    {\caption{#5#4}}
+  \ifthenelse{\equal{#6}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#6#1}}
+  \end{figure}
+}
+%% #1=fig1 filename, #2=fig2 filename, #3=caption text, #4=fig1 width #5=fig1 height, #6=fig2 width, #7=fig2 height, #8=caption prefix (optional), #9=label prefix (optional)
+\newcommand\twofigWH[9]{
+  \begin{figure}[!htp]
+  \begin{center}
+  \ifthenelse{\equal{#9}{}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=#4in,height=#5in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1} top} \\
+      \pdftooltip{
+        \includegraphics[width=#6in,height=#7in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#1} bottom}
+    \end{tabular}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=#4in,height=#5in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#9#1} top} \\
+      \pdftooltip{
+        \includegraphics[width=#6in,height=#7in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#9#1} bottom}
+    \end{tabular}}
+  \end{center}
+  \ifthenelse{\equal{8}{}}%
+    {\caption{#3}}
+    {\caption{#8#3}}
+  \ifthenelse{\equal{#9}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#9#1}}
+  \end{figure}
+  %%\clearpage
+}
+%% ---------- Not area specific ------------------
+%% #1=figure1 #2=figure2 #3=label #4=caption #5=width (fig) #6=height (fig)
+\newcommand\figbeside[6]{
+\begin{figure}[!htb]
+  \centering
+  \pdftooltip{
+  \begin{minipage}[t]{0.45\textwidth}
+    \begin{center}
+    \includegraphics[width=#5in,height=#6in,keepaspectratio=TRUE]{{#1}.\ptype}
+    \end{center}
+    %\caption{#3}
+    %\label{fig:#1}
+  \end{minipage}}{Figure~\ref{fig:#3} left}%
+  \quad
+  \pdftooltip{
+  \begin{minipage}[t]{0.45\textwidth}
+    \begin{center}
+    \includegraphics[width=#5in,height=#6in,keepaspectratio=TRUE]{{#2}.\ptype}
+    \end{center}
+    %\caption{#4}
+    %\label{fig:#2}
+  \end{minipage}}{Figure~\ref{fig:#3} right}
+  \caption{#4}
+  \label{fig:#3}
+  \end{figure}
+}
+
+        % keep.source=TRUE, 
+
+% Alter some LaTeX defaults for better treatment of figures:
+% See p.105 of "TeX Unbound" for suggested values.
+% See pp. 199-200 of Lamport's "LaTeX" book for details.
+%   General parameters, for ALL pages:
+\renewcommand{\topfraction}{0.85}         % max fraction of floats at top
+\renewcommand{\bottomfraction}{0.85}       % max fraction of floats at bottom
+% Parameters for TEXT pages (not float pages):
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}               % 2 may work better
+\renewcommand{\textfraction}{0.15}        % allow minimal text w. figs
+% Parameters for FLOAT pages (not text pages):
+\renewcommand{\floatpagefraction}{0.7}    % require fuller float pages
+% N.B.: floatpagefraction MUST be less than topfraction !!
+%===========================================================
+
+%% Line delimiters in this document:
+%% #####  Chapter
+%% =====  Section
+%% -----  Subsection
+%% ~~~~~  Subsubsection
+%% +++++  Tables
+%% ^^^^^  Figures
+
+\begin{document}
+\setcounter{page}{\startP}
+\setcounter{figure}{\startF}
+\setcounter{table}{\startT}
+\setcounter{secnumdepth}{4}   % To number subsubsubheadings
+\setlength{\tabcolsep}{3pt}   % table colum separator (is changed later in code depending on table)
+
+\setcounter{chapter}{6}    % temporary for standalone chapters (5=E, 6=F)
+\renewcommand{\thechapter}{\Alph{chapter}} % ditto
+\renewcommand{\thesection}{\thechapter.\arabic{section}.}   
+\renewcommand{\thesubsection}{\thechapter.\arabic{section}.\arabic{subsection}.}
+\renewcommand{\thesubsubsection}{\thechapter.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.}
+\renewcommand{\thesubsubsubsection}{\thechapter.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.\arabic{subsubsubsection}.}
+\renewcommand{\thetable}{\thechapter.\arabic{table}}    
+\renewcommand{\thefigure}{\thechapter.\arabic{figure}}  
+\renewcommand{\theequation}{\thechapter.\arabic{equation}}
+%\renewcommand{\thepage}{\arabic{page}}
+
+\newcounter{prevchapter}
+\setcounter{prevchapter}{\value{chapter}}
+\addtocounter{prevchapter}{-1}
+\newcommand{\eqnchapter}{\Alph{prevchapter}}
+
+
+%###############################################################################
+\chapter*{APPENDIX~\thechapter. MODEL RESULTS}
+
+\newcommand{\LH}{}%{DRAFT (9/21/2021) -- Not citable}% working paper}  % Set to {} for final ResDoc
+\newcommand{\RH}{}%{CSAP WP 2019GRF02 (rev for RPR)}
+\newcommand{\LF}{Yellowmouth Rockfish 2021}
+\newcommand{\RF}{Appendix~\thechapter ~-- Model Results}
+
+\lhead{\LH}\rhead{\RH}\lfoot{\LF}\rfoot{\RF}
+
+\newcommand{\BCa}{YMR~BC}%% new commands cannot contain numerals (use a,b,c for stocks)
+\newcommand{\SPP}{Yellowmouth Rockfish}
+\newcommand{\SPC}{YMR}
+\newcommand{\cvpro}{CPUE~$c_\mathrm{p}$}
+
+%% Define them here and then renew them in BSR.Rnw and RER.Rnw
+\newcommand{\startYear}{1935} %% so can include in captions. 
+\newcommand{\currYear}{2022}   %% so can include in captions. 
+\newcommand{\prevYear}{2021}   %% so can include in captions. 
+\newcommand{\projYear}{2032}   %% so can include in captions. 
+\newcommand{\pgenYear}{2112}   %% so can include in captions. 
+
+%%==============================================================================
+\section{Introduction}
+
+%\newstuff{Note to RPR participants from authors: the originally submitted Working Paper presented results based on an incorrect selectivity prior for the WCVI synoptic survey: $\mu_3$=12.2 instead of the intended value of 15.4.
+%We have updated the base case runs (but not the sensitivities), which has resulted in minor differences to parameter estimates and MSY quantities.
+%If nothing else, the revision has improved the fit to one of the base component runs (B5 R76, $M$=0.06).
+%We do not believe that this update substantially changes the results or conclusions of the Working Paper.}
+
+This appendix describes results for a coastwide stock of \SPP{} (\SPC, \emph{Sebastes reedi}) that spans the outer BC coast in PMFC areas 3CD5ABCDE.
+Broadly, the results include:
+\vspace{-0.5\baselineskip}%  because topsep doesn't work
+\begin{itemize_csas}
+\item mode of the posterior distribution (MPD) calculations to compare model estimates to observations, 
+\item Markov chain Monte Carlo (MCMC) simulations to derive posterior distributions for the estimated parameters for a composite base case,
+\item MCMC diagnostics for the component runs of the composite base case, and
+\item a range of sensitivity model runs, including MCMC diagnostics.
+\end{itemize_csas}
+Note that MCMC diagnostics are rated using the following subjective criteria:
+\begin{itemize_csas}
+  \item Good -- no trend in traces, split-chains align, no autocorrelation
+  \item Marginal -- trace trend temporarily interrupted, split-chains somewhat frayed, some autocorrelation
+  \item Poor -- trace trend fluctuates substantially or shows a persistent increase/decrease, split-chains differ from each other, substantial autocorrelation
+  \item Unacceptable -- trace trend shows a persistent increase/decrease that has not levelled, split-chains differ markedly from each other, persistant autocorrelation
+\end{itemize_csas}
+
+The final advice consists of a composite base case which provides the primary guidance.
+A range of sensitivity runs are presented to show the effect of some of the main modelling assumptions.
+Estimates of major quantities and advice to management (decision tables) are presented here and in the main text.
+
+
+% !Rnw root = AppF_Results_YMR_BC_2021_WP.Rnw
+
+%%==============================================================================
+%% Yellowmouth Base Case (Runs 77, 71, 75, 72, 76) %% spanning M=0.04 to M=0.06 at 0.005 increments
+
+%% Revised to reflect the NUTS procedure
+\newcommand{\nSims}{4000}
+\newcommand{\nChains}{8}
+\newcommand{\cSims}{500}
+\newcommand{\cBurn}{250}
+\newcommand{\cSamps}{250}
+\newcommand{\Nmcmc}{2000}
+\newcommand{\Nbase}{10,000}
+
+\section{Yellowmouth Coastwide (3CD5ABCDE)}
+
+%% First set up workspace:
+
+%%##############################################################################
+
+\renewcommand{\startYear}{1935} %% so can include in captions. 
+\renewcommand{\currYear}{2022}   %% so can include in captions. 
+\renewcommand{\prevYear}{2021}   %% so can include in captions. 
+\renewcommand{\projYear}{2032}   %% so can include in captions. 
+\renewcommand{\pgenYear}{2112}   %% so can include in captions. 
+
+
+The base case for YMR~BC was selected from model runs 77, 71, 75, 72, and 76 and pooled.
+Important decisions made during the assessment of YMR~BC included:
+\vspace{-0.5\baselineskip}%  because topsep doesn't work
+\begin{itemize_csas}
+  \item fixed natural mortality $M$ to five levels: 0.04, 0.045, 0.05, 0.055, and 0.06 for a total of \numberstringnum{5} reference models using \numberstringnum{1} axis of uncertainty:
+  \begin{itemize_csas}
+    \item B1: R77 (M=0.04)\\\item B2: R71 (M=0.045)\\\item B3: R75 (M=0.05)\\\item B4: R72 (M=0.055)\\\item B5: R76 (M=0.06)  %% will need testing
+  \end{itemize_csas}
+  \item assumed two sexes (females, males);
+  \item set plus age class $A$ to 60~years;
+  \item assumed one commercial fishery dominated by trawl (bottom + midwater), with minor removals by halibut longline, sablefish trap, lingcod longline, inshore longline, and salmon troll, pooled into a single catch series with associated age frequency (AF) data drawn from the trawl fishery;
+  \item used one commercial bottom trawl fishery abundance index series (bottom trawl CPUE index, 1996--2020);
+  \item used \numberstringnum{4} survey abundance index series (QCS Synoptic, WCVI Synoptic, WCHG Synoptic, and GIG Historical), with age frequency (AF) data;
+  \item assumed a wide (weak) normal prior $\mathcal{N}(8,8)$ on $\log R_0$ to help stabilise the model; 
+  \item used informed normal priors for the two selectivity parameters ($\mu_g$, $v_{g\mathrm{L}}$, see \AppEqn) for all fleets (fishery and surveys), and set the male selectivity offset ($\Delta_{g}$) to 0;
+  \item estimated recruitment deviations from 1950 to 2012;
+  \item applied abundance reweighting: added CV process error to index CVs, $c_\mathrm{p}$=0.3296 for the commercial CPUE series and $c_\mathrm{p}$=0 for the surveys (see \AppEqn);
+  \item applied composition reweighting: adjusted AF effective sample sizes using a harmonic mean ratio method (see \AppEqn) based on \citet{McAllister-Ianelli:1997};
+  \item fixed the standard deviation of recruitment residuals ($\sigma_R$) to 0.9;
+  \item used an ageing error vector based on the CV of observed lengths at age, described in \AppBio, Section~D.2.3 and plotted in Figure~D.26 (left panel).
+\end{itemize_csas}
+Five fixed $M$ values produced five separate model runs, with the respective posterior distributions pooled as a composite base case used to provide advice to managers.
+The central run of the composite base case (Run75: $M$=0.05, \cvpro=0.3296) was used as a reference case against which \numberstringnum{14} sensitivity runs were compared.
+
+All model runs were reweighted (i)~once for abundance, by adding process error $c_\mathrm{p}$ to the commercial CPUE (no additional error was added to the survey indices because observed error was already high), and (ii)~once for composition (effective sample size for AF data) using the harmonic mean ratio procedure outlined in \AppEqn.
+The process error added to the commerical CPUE was based on a spline analysis (\AppEqn).
+
+%%------------------------------------------------------------------------------
+\subsection{YMR -- Central Run MPD}
+
+%<<Central run MPD, echo=FALSE, eval=TRUE, results=hide>>= # hide the results 
+%unpackList(example.run)  ## includes contents of 'Bmcmc' (e.g. 'P.MCMC')
+%@
+
+The modelling procedure first determines the best fit (MPD) to the data by minimising the negative log likelihood.
+Because the YMR~BC composite base case examined \numberstringnum{5} models, only the central run ($M$=0.05, \cvpro=0.3296, trawl AFs adjusted by harmonic mean ratio) is presented as an example to show the fits to the data and to present MPD diagnostics (Table~\ref{tab:ymr.parest}).
+Each MPD run is used as the respective starting point for the MCMC simulations.
+
+The following plot references apply to the central run.
+\vspace{-0.5\baselineskip}%  because topsep doesn't work
+\begin{itemize_csas}
+  \item Figure~\ref{fig:ymr.survIndSer} -- model fits to the CPUE and survey indices across observed years;
+  \item Figures~\ref{fig:ymr.agefitFleet1}-\ref{fig:ymr.agefitFleet5} -- model fits (lines=predicted) to the female and male age frequency data (bars=observed) for the fishery and four survey data sets;
+  \item Figures~\ref{fig:ymr.ageresFleet1}-\ref{fig:ymr.ageresFleet5} -- standardised residuals of model fits to the female and male age frequency data for the fishery and four survey data sets;
+  \item Figure~\ref{fig:ymr.harmonica0} -- harmonic mean of effective sample size vs. arithmetic mean of observed sample size;
+  \item Figure~\ref{fig:ymr.meanAge} -- model estimates of mean age compared to the observed mean ages;
+  \item Figure~\ref{fig:ymr.selectivity} -- estimated gear selectivities, together with the ogive for female maturity;
+  \item Figure~\ref{fig:ymr.Bt} -- spawning biomass time series and spawning biomass depletion;
+  \item Figure~\ref{fig:ymr.recruits} -- the recruitment time series and recruitment deviations.
+\end{itemize_csas}
+
+
+The model fits to the survey abundance indices were generally satisfactory (Figures~\ref{fig:ymr.survIndSer}, although various indices were missed entirely (2013 QCS, 2010 WCVI, 2012 WCHG, 1994 GIG).
+The fit to the commercial CPUE indices showed a downward trend from 1996 to 2010 and remained fairly flat thereafter.
+None of the indices were missed, largely due to adding process error of 33\pc.
+Likelihood profile analysis indicated that the CPUE index series was the only abundance series that provided information on stock size.
+
+Only the commercial AF were used to estimate recruitments.
+This was done by upweighting the commercial AF data using the harmonic mean ratio of the effective sample size to the arithmetic mean of the observed sample size.
+These values tended to be large (>6), giving a high weight to these data.
+The AF data for the surveys were deliberately given very low weights (0.25).
+This was done to eliminate any impact on the recruitment estimates from these data, while still estimating a realistic selectivity function.
+The reason for this approach was that quality of the survey AF data seemed low, given the inconsistencies in the apparent year class strength between survey years and between sexes within the same survey year.
+
+The harmonic mean of effective sample size vs. the arithmetic mean of observed sample size (Figure~\ref{fig:ymr.harmonica0}) shows ratios of 6.3, 3.6, 3.2, 4.6, and 6.7 for the five fleets for the central run.
+The base component runs all use harmonic mean ratios calculated for the fishery AFs (6.22 for R77, 6.28 for R71, 6.32 for R75, 6.36 for R72, and 6.39 for R76) and downweighted all the survey AFs using the ratio 0.25 (Table~\ref{tab:baseAFwts}).
+The resulting model estimates of mean age matched the adjusted mean ages very well (Figure~\ref{fig:ymr.meanAge}).
+
+Fits to the commercial trawl fishery age frequency data were excellent, with the model tracking year classes consistently across the 41 year time span represented by the commercial AF data (Figure~\ref{fig:ymr.agefitFleet1}).
+There are some large departures at various age classes (standardised residuals>2 (Figure~\ref{fig:ymr.ageresFleet1}), but that is not surprising given the large number of age-year categories to fit (there are 1680 categories=28 y times 60 ages).
+Residuals by year show that there are about 9-10 age-year categories in the 1990s that are greater than 2 and four greater than 3
+The 1952 and 1982 cohorts show a few residuals greater than 2 as well; however, almost all the age residuals are below 2.
+Fits to AFs from the three synoptic surveys and the GIG historical survey were mixed as expected, given the low weight used to fit these data (Figures~\ref{fig:ymr.agefitFleet2}--\ref{fig:ymr.ageresFleet5}).
+
+The survey selectivity parameter estimates did not move very far from the priors, which differed by survey  (Figure~\ref{fig:ymr.mleParameters}).
+However, the parameter estimates for the commercial trawl fishery moved well away from the prior, indicating the presence of a strong signal from the data. 
+The maturity ogive, generated from an externally fitted model (see \AppBio), was situated to the right of the commercial fishery selectivity function, indicating that sub-mature fish are harvested by this fishery.
+The survey selectivity functions were also situated to the left of the maturity function, indicating that the surveys are sampling sub-mature year classes.
+
+The spawning biomass (female) trajectory for the central run lies between 12,000 and 40,000 tonnes and reached the lowest point in the trajectory in 2013 or 2014 and has since increased, with the lowest point just below 0.5$B_0$ (Figure~\ref{fig:ymr.Bt}).
+
+The recruitment estimates show four large events in 1952, 1961, 1982, and 2006 (Figure~\ref{fig:ymr.recruits}).
+These events appear to be well defined in the data, with the definition greatly improved after the implementation of ageing error based on CVs of length-at-age (see Sensitivity section).
+The model estimates two periods of prolonged below average recruitment deviations, the first between 1970 and 1980 and the second between 1990 and 2000.
+The four recruitment `spikes' correspond to recruitments around three times the long-term average recruitment 
+
+\graphicspath{{C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021/Run75/MPD.75.01/}}
+\input{"YMR.Central.Run.MPD.relab"}%% Modify 'YMR.Central.Run.MPD.tex' as Sweave code relabels the references.
+\clearpage
+
+%%------------------------------------------------------------------------------
+\subsection{YMR -- Central Run MCMC}
+
+
+The MCMC procedure used the `no U-turn sampling' (NUTS) algorithm \citep{Monnahan-Kristensen:2018, Monnahan-etal:2019} to produce \nSims{} iterations, parsing the workload into \nChains{} parallel chains \citep{R:2015_snowfall} of \cSims{} iterations each, discarding the first \cBurn{} iterations and saving the last \cSamps{} samples per chain.
+The parallel chains were then merged for a total of \Nmcmc{} samples for use in the MCMC analysis.
+
+The MCMC plots show:
+\vspace{-0.5\baselineskip}%  because topsep doesn't work
+\begin{itemize_csas}
+\item Figure~\ref{fig:ymr.traceParams} -- traces for \Nmcmc{} samples of the primary estimated parameters;
+\item Figure~\ref{fig:ymr.splitChain} -- split-chain diagnostic plots for the primary estimated parameters;
+\item Figure~\ref{fig:ymr.paramACFs} -- auto-correlation diagnostic plots for the primary estimated parameters;
+\item Figure~\ref{fig:ymr.pdfParameters} -- marginal posterior densities for the primary parameters compared to their respective prior density functions.
+%%\item Figure~\ref{fig:ymr.VBcatch} -- top: estimated vulnerable biomass and catch over time, middle: marginal posterior distribution of recruitment over time, bottom:marginal posterior distribution of exploitation rate over time.
+\end{itemize_csas}
+
+MCMC traces for the central run ($M$=0.05) showed acceptable convergence properties (no trend with increasing sample number) for the estimated parameters (Figure~\ref{fig:ymr.traceParams}), as did diagnostic analyses that split the posterior samples into three equal consecutive segments (Figure~\ref{fig:ymr.splitChain}) and checked for parameter autocorrelation out to 60 lags (Figure~\ref{fig:ymr.paramACFs}).
+Most of the parameter medians did not move far from their initial MPD estimates (Figure~\ref{fig:ymr.pdfParameters}).
+
+\graphicspath{{C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021/Run75/MCMC.75.01.nuts4K/}}
+\input{"YMR.Central.Run.MCMC.relab"}%% Modify 'YMR.Central.Run.MCMC.tex' as Sweave code relabels the references.
+
+%%------------------------------------------------------------------------------
+\subsection{YMR -- Composite Base Case}
+
+
+The composite base case examined \numberstringnum{5} runs which spanned one axis of uncertainty ($M$) for this stock assessment:
+\vspace{-0.5\baselineskip}%  because topsep doesn't work
+\begin{itemize_csas} 
+\item \textbf{B1}~(Run77) -- fixed $M_{1,2}$~= 0.04;
+\item \textbf{B2}~(Run71) -- fixed $M_{1,2}$~= 0.045;
+\item \textbf{B3}~(Run75) -- fixed $M_{1,2}$~= 0.05;
+\item \textbf{B4}~(Run72) -- fixed $M_{1,2}$~= 0.055;
+\item \textbf{B5}~(Run76) -- fixed $M_{1,2}$~= 0.06.
+\end{itemize_csas}
+
+All component runs used \cvpro=0.3296, no added process error on survey indices, ageing error based on CVs of length-at-age, and AF sample reweighting using the harmonic mean ratio method specific to each model run.
+The \Nmcmc{} MCMC samples from each of the above runs were pooled to create a composite posterior of \Nbase{} samples, which was used to estimate population status and to provide advice to managers.
+
+Composite base case median parameter estimates appear in Table~\ref{tab:ymr.base.pars}, and derived quantities at equilibrium and associated with maximum sustainable yield (MSY) and $B_0$ appear in Table~\ref{tab:ymr.base.rfpt}.
+The differences among the component base runs are summarised by various figures:
+\vspace{-0.5\baselineskip}%  because topsep doesn't work
+\begin{itemize_csas}
+  \item Figure~\ref{fig:ymr.compo.LN(R0).traces} -- MCMC traces of $R_0$ for the 5 candidate base runs;
+  \item Figure~\ref{fig:ymr.compo.LN(R0).chains} -- three chain segments of $R_0$ MCMC chains;
+  \item Figure~\ref{fig:ymr.compo.LN(R0).acfs}   -- autocorrelation plots for $R_0$ MCMC output;
+  \item Figure~\ref{fig:ymr.compo.pars.qbox} -- quantile plots of parameter estimates from 5 component base runs;
+  \item Figure~\ref{fig:ymr.compo.rfpt.qbox} -- quantile plots of selected derived quantities from 5 component base runs.
+\end{itemize_csas}
+
+In this stock assessment, projections extend to 2032. 
+Projections out to 3 generations (90~years), where one generation was determined to be 30~years (see Appendix~D), were not completed due to technical reasons associated with the new model framework (SS) and time constraints; however, the stock status of YMR in the Healthy zone does not warrant such projections at this time.
+Various model trajectories and final stock status for the composite base case appear in the figures:
+\vspace{-0.5\baselineskip}%  because topsep doesn't work
+\begin{itemize_csas}
+  \item Figure~\ref{fig:ymr.compo.Bt}     -- estimates of spawning biomass $B_t$ (tonnes) from pooled model posteriors spanning 1935-2112;
+  \item Figure~\ref{fig:ymr.compo.BtB0}   -- estimates of spawning biomass relative to $B_0$ (top panel) and $\Bmsy$ (bottom panel) from pooled model posteriors;
+  \item Figure~\ref{fig:ymr.compo.ut}     -- estimates of exploitation rate $u_t$ (top panel) and $u_t/\umsy$ (bottom panel) from pooled model posteriors;
+  \item Figure~\ref{fig:ymr.compo.Rt}     -- estimates of recruitment $R_t$ (1000s age-0 fish, top panel) and recruitment deviations (bottom panel) from pooled model posteriors;
+  \item Figure~\ref{fig:ymr.compo.snail}  -- phase plot through time of median $B_t/\Bmsy$ and $u_t/\umsy$ relative to DFO's Precautionary Approach (PA) provisional reference points;
+  \item Figure~\ref{fig:ymr.compo.stock.status} -- YMR~BC stock status at end of \currYear{}.
+\end{itemize_csas}
+
+The \numberstringnum{5} component runs demonstrated acceptable MCMC diagnostics for most of the parameters.
+%%; however B5 ($M$=0.06) showed some fraying in the split chains for $R_0$ (Figure~\ref{fig:ymr.compo.LN(R0).chains}) and autocorrelation in $R_0$ (Figure~\ref{fig:ymr.compo.LN(R0).acfs}).
+
+Unlike the 2011 YMR stock assessment \citep{Edwards-etal:2012_ymr}, we were not able to estimate $M$ reliably in this assessment, given the change in modelling software as well as the lack of contrast in the survey data accompanied by very large relative errors.
+Model runs which estimated $M$ gave an MPD estimate of $M_2$ of 0.066 and an MCMC estimate of 0.070 (0.060, 0.076).
+While these estimates were at the lower end of the range for externally estimated $M$ (see Appendix D, section D.1.4), model behaviour when $M$>0.06 appeared to be unstable and the MCMC diagnostics were unacceptable.
+Natural mortality appears to be the most important component of uncertainty in this stock assessment.
+Consequently, a composite base case was constructed by assembling model runs which spanned a plausible range of $M$ values for this stock as well as providing acceptable fits and MCMC diagnostics.
+Various other sources of uncertainty were explored in sensitivity runs based on central run 75.
+
+The composite base case, comprising \numberstringnum{5} pooled MCMC runs, was used to calculate a set of parameter estimates (Table~\ref{tab:ymr.base.pars}) and derived quantities at equilibrium and those associated with MSY (Table~\ref{tab:ymr.base.rfpt}).
+Figure~\ref{fig:ymr.compo.pars.qbox} shows the distribution of all the estimated parameters.
+In most cases, the component runs had parameter estimates with overlapping distributions.
+Equilibrium recruitment in \startYear{} ($R_0$) varied with $M$, increasing as $M$ increased.
+The selectivity parameters differed little among the five $M$ estimates.
+
+Similar to the parameter distributions, those for derived quantities (Figure~\ref{fig:ymr.compo.rfpt.qbox}) varied by $M$.
+Not surprisingly, $B_0$, MSY, $\Bmsy$, $\umsy$, and current stock status relative to $B_0$ increased with increasing $M$.
+The ratio of $\Bmsy/B_0$ remained constant but uncertainty around the median estimate expanded.
+Given a catch of 1057\,t/y in 2021, the apparent harvest rates become lower because estimated spawning biomass (and consequently vulnerable biomass) increases.
+
+The composite base case population trajectory from \startYear{} to \currYear{} and projected biomass to \projYear{} (Figure~\ref{fig:ymr.compo.Bt}), assuming a constant catch policy of 1057~t/y, estimates median spawning biomass $B_t$ in $t$=\startYear, \currYear, and \projYear{} to be 26,385, 18,001, and 17,040 tonnes, respectively.
+Figure~\ref{fig:ymr.compo.BtB0} indicates that the median stock biomass will remain above the USR for the next 10 years at annual catches equal to the \currYear{} catch.
+%%3 generations (90 years).
+Exploitation rates have largely stayed below $\umsy$ for much of the fishery's history (Figure~\ref{fig:ymr.compo.ut}).
+Recruitment of age-0 fish shows four main recruitment events in 1952, 1962, 1982, and 2006 (Figure~\ref{fig:ymr.compo.Rt}).
+
+A phase plot of the time-evolution of spawning biomass and exploitation rate by the modelled fishery in MSY space (Figure~\ref{fig:ymr.compo.snail}) suggests that the stock is firmly in the Healthy zone, with a current position at $B_{\currYear}/\Bmsy$ = 2.394~(1.535,~3.727)
+and $u_{\prevYear}/\umsy$ = 0.508~(0.202,~1.001).
+The current-year stock status figure (Figure~\ref{fig:ymr.compo.stock.status}) shows the position of the composite base case in DFO's Healthy zone, and demonstrates how the individual component runs contribute to the composite base case.
+Values of $M$ higher than 0.06 will push the stock status further into the Healthy zone.
+
+\clearpage
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsubsection{Base case tables}
+
+\setlength{\tabcolsep}{6pt}
+\begin{table}[!h]
+\centering
+\caption{Age frequency weights used for the five base component runs.}
+\label{tab:baseAFwts}
+\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\small
+\begin{tabular}{lcrrrrr}
+\hline \\ [-1.5ex]
+{\bf Base} & {\bf Run} & {\bf Trawl} & {\bf QCS} & {\bf WCVI} & {\bf WCHG} & {\bf GIG} \\ [0.2ex]
+\hline \\ [-1.5ex]
+B1 & R77 & 6.219091 & 0.25 & 0.25 & 0.25 & 0.25 \\
+B2 & R71 & 6.277630 & 0.25 & 0.25 & 0.25 & 0.25 \\
+\hdashline \\ [-1.75ex]
+B3 & R75 & 6.321921 & 0.25 & 0.25 & 0.25 & 0.25 \\
+\hdashline \\ [-1.5ex]
+B4 & R72 & 6.363513 & 0.25 & 0.25 & 0.25 & 0.25 \\
+B5 & R76 & 6.389239 & 0.25 & 0.25 & 0.25 & 0.25 \\
+\hline
+\end{tabular}
+\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\normalsize
+\end{table}
+
+%\qquad % or \hspace{2em}
+
+\setlength{\tabcolsep}{6pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Tue Aug 24 10:13:00 2021
+\begin{table}[ht]
+\centering
+\caption{Composite base case: the 0.05, 0.25, 0.5, 0.75, and 0.95 quantiles for pooled model parameters (defined in \AppEqn) from MCMC estimation of \numberstringnum{5} component model runs of \Nmcmc{} samples each.} 
+\label{tab:ymr.base.pars}
+\begin{tabular}{lrrrrr}
+  \\[-1.0ex] \hline
+ & 5\% & 25\% & 50\% & 75\% & 95\% \\ 
+  \hline
+$\log R_{0}$ & 7.525 & 7.774 & 8.070 & 8.411 & 8.820 \\ 
+  $\mu_{1}~(\text{TRAWL+})$ & 10.98 & 11.34 & 11.60 & 11.88 & 12.28 \\ 
+  $\mu_{2}~(\text{QCS})$ & 10.07 & 12.09 & 13.65 & 15.38 & 17.99 \\ 
+  $\mu_{3}~(\text{WCVI})$ & 8.951 & 11.64 & 13.67 & 15.68 & 18.61 \\ 
+  $\mu_{4}~(\text{WCHG})$ & 8.474 & 9.900 & 10.72 & 11.52 & 12.75 \\ 
+  $\mu_{5}~(\text{GIG})$ & 10.67 & 13.61 & 15.85 & 18.21 & 21.68 \\ 
+  $\log v_{\mathrm{L}1}~(\text{TRAWL+})$ & 1.703 & 1.917 & 2.063 & 2.203 & 2.394 \\ 
+  $\log v_{\mathrm{L}2}~(\text{QCS})$ & 3.056 & 3.622 & 3.982 & 4.342 & 4.829 \\ 
+  $\log v_{\mathrm{L}3}~(\text{WCVI})$ & 2.812 & 3.427 & 3.837 & 4.225 & 4.784 \\ 
+  $\log v_{\mathrm{L}4}~(\text{WCHG})$ & 1.376 & 1.772 & 2.046 & 2.314 & 2.707 \\ 
+  $\log v_{\mathrm{L}5}~(\text{GIG})$ & 3.463 & 4.358 & 4.934 & 5.518 & 6.352 \\ 
+   \hline
+\end{tabular}
+\end{table}
+\setlength{\tabcolsep}{6pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Tue Aug 24 10:13:00 2021
+\begin{table}[ht]
+\centering
+\caption{Composite base case: the 0.05, 0.25, 0.5, 0.75, and 0.95 quantiles of MCMC-derived quantities from \Nbase samples pooled from 5 component runs. Definitions are: $B_0$ -- unfished equilibrium spawning biomass (mature females), $B_{2022}$ -- spawning biomass at the end of 2022, $u_{2021}$ -- exploitation rate (ratio of total catch to vulnerable biomass) in the middle of 2021, $u_\mathrm{max}$ -- maximum exploitation rate (calculated for each sample as the maximum exploitation rate from 1935-2022), $B_\mathrm{MSY}$ -- equilibrium spawning biomass at MSY (maximum sustainable yield), $u_\mathrm{MSY}$ -- equilibrium exploitation rate at MSY, All biomass values (and MSY) are in tonnes. For reference, the average catch over the last 5 years (2016-2020) was 1272~t.} 
+\label{tab:ymr.base.rfpt}
+\begin{tabular}{lrrrrr}
+  \\[-1.0ex] \hline
+ & 5\% & 25\% & 50\% & 75\% & 95\% \\ 
+  \hline
+$B_{0}$ & 20,898 & 23,707 & 26,386 & 30,528 & 41,314 \\ 
+  $B_{2022}$ & 10,070 & 13,848 & 18,001 & 24,978 & 42,533 \\ 
+  $B_{2022}/B_{0}$ & 0.4446 & 0.5708 & 0.6922 & 0.8417 & 1.080 \\ 
+   \hdashline \\[-1.75ex]$u_{2021}$ & 0.01012 & 0.01697 & 0.02357 & 0.03048 & 0.04154 \\ 
+  $u_\mathrm{max}$ & 0.02686 & 0.03845 & 0.04837 & 0.05730 & 0.06531 \\ 
+   \hline
+$MSY$ & 695.7 & 845.4 & 1,039 & 1,327 & 1,919 \\ 
+  $B_\mathrm{MSY}$ & 6,063 & 6,894 & 7,656 & 8,810 & 11,938 \\ 
+  $0.4B_{\mathrm{MSY}}$ & 2,425 & 2,758 & 3,063 & 3,524 & 4,775 \\ 
+  $0.8B_{\mathrm{MSY}}$ & 4,850 & 5,515 & 6,125 & 7,048 & 9,550 \\ 
+  $B_{2022}/B_\mathrm{MSY}$ & 1.535 & 1.969 & 2.394 & 2.905 & 3.727 \\ 
+  $B_\mathrm{MSY}/B_{0}$ & 0.2702 & 0.2847 & 0.2917 & 0.2971 & 0.3036 \\ 
+   \hdashline \\[-1.75ex]$u_\mathrm{MSY}$ & 0.04063 & 0.04356 & 0.04636 & 0.04893 & 0.05117 \\ 
+  $u_{2021}/u_\mathrm{MSY}$ & 0.2019 & 0.3471 & 0.5082 & 0.7066 & 1.001 \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+\setlength{\tabcolsep}{2pt}
+\begin{landscapepage}{
+\input{xtab.cruns.ll.txt}
+\input{xtab.cruns.pars.txt}
+}{\LH}{\RH}{\LF}{\RF} \end{landscapepage}
+
+\begin{landscapepage}{
+\input{xtab.cruns.rfpt.txt}
+}{\LH}{\RH}{\LF}{\RF} \end{landscapepage}
+
+\clearpage
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsubsection{Base case figures}
+
+%%-----Figures: composite base case----------
+\graphicspath{{C:/Users/haighr/Files/GFish/PSARC21/YMR/Docs/RD/AppF_Results/}}
+
+\onefig{ymr.compo.LN(R0).traces}{MCMC traces of $R_0$ for the 5 candidate base runs. Grey lines show the \Nmcmc~samples for the $R_0$ parameter, solid lines show the cumulative median (up to that sample), and dashed lines show the cumulative 0.05 and 0.95 quantiles.  Red circles are the MPD estimates.}{Composite base case component runs: }{}
+
+\onefig{ymr.compo.LN(R0).chains}{diagnostic plots obtained by dividing the $R_0$ MCMC chains of \Nmcmc~MCMC samples into three segments, and overplotting the cumulative distributions of the first segment (red), second segment (blue) and final segment (black).}{Composite base case component runs: }{}
+
+\onefig{ymr.compo.LN(R0).acfs}{autocorrelation plots for the $R_0$ parameters from the MCMC output. Horizontal dashed blue lines delimit the 95\pc{} confidence interval for each parameter's set of lagged correlations.}{Composite base case component runs: }{}
+
+\clearpage
+
+\onefig{ymr.compo.pars.qbox}{quantile plots of the parameter estimates from 5 component runs of the base case, where each box denotes various $M$ values (0.04, 0.045, 0.05, 0.055, 0.06). The boxplots delimit the 0.05, 0.25, 0.5, 0.75, and 0.95 quantiles.}{Composite base case: }{}
+
+\onefig{ymr.compo.rfpt.qbox}{quantile plots of selected derived quantities ($B_{\currYear}$, $B_0$, $B_{\currYear}/B_0$, MSY, $\Bmsy$, $\Bmsy/B_0$, $u_{\prevYear}$, $\umsy$, $u_\mathrm{max}$) from 5 component runs of the base case, where each box denotes various $M$ values (0.04, 0.045, 0.05, 0.055, 0.06). The boxplots delimit the 0.05, 0.25, 0.5, 0.75, and 0.95 quantiles.}{Composite base case: }{}
+
+\clearpage
+
+\onefig{ymr.compo.Bt}{estimates of spawning biomass $B_t$ (tonnes) from pooled model posteriors. The median biomass trajectory appears as a solid curve surrounded by a 90\pc{} credibility envelope (quantiles: 0.05-0.95) in light blue and delimited by dashed lines for years $t$=\startYear:\currYear; projected biomass appears in light red for years $t$=2023:\projYear. Also delimited is the 50\pc{} credibility interval (quantiles: 0.25-0.75) delimited by dotted lines. The horizontal dashed lines show the median LRP and USR.}{Composite base case: }{}
+
+\twofig{ymr.compo.BtB0}{ymr.compo.BtBmsy}{estimates of spawning biomass $B_t$ relative to $B_0$ (top) and $\Bmsy$ (bottom) from pooled model posteriors. The horizontal dashed lines show 0.2$B_0$ \& 0.4$B_0$ (top) and 0.4$\Bmsy$ \& 0.8$\Bmsy$ (bottom). See Fig.~\ref{fig:ymr.compo.Bt} caption for envelope details.}{Composite base case: }{}
+
+\clearpage
+
+%% onefigH: #1 = file name & label, #2=caption, #3=height, #4=caption prefix (optional), #5=label prefix (optional)
+%%\onefig{ymr.compo.recruitsMCMC}{marginal posterior distribution of recruitment trajectory in 1,000s of age-1 fish.}{Composite base case: }{}
+
+%\onefig{ymr.compo.RprojOnePolicy}{marginal posterior distribution of recruitment trajectory (reconstructed: 1935-2022, projected: 2023-2112) in 1,000s of age-1 fish.}{Composite base case: }{}
+
+\twofig{ymr.compo.ut}{ymr.compo.utumsy}{marginal posterior distribution of exploitation trajectory $u_t$ (top) and exploitation relative to $\umsy$ (bottom).}{Composite base case: }{}
+
+\twofig{ymr.compo.Rt}{ymr.compo.Rtdev}{marginal posterior distribution of recruitment trajectory (1000s of age-0 fish) and recruitment deviation trajectory.}{Composite base case: }{}
+
+\clearpage
+
+\onefig{ymr.compo.snail}{phase plot through time of the medians of the ratios $B_t/B_\mathrm{MSY}$ (the spawning biomass in year $t$ relative to $B_\mathrm{MSY}$) and $u_{t-1} / u_\mathrm{MSY}$ (the exploitation rate in year $t-1$ relative to $u_\mathrm{MSY}$) for one fishery (trawl+). The filled green circle is the starting year (1936). Years then proceed along lines gradually darkening from light grey, with the final year (\currYear) as a filled cyan circle, and the blue cross lines represent the 0.05 and 0.95 quantiles of the posterior distributions for the final year. Red and green vertical dashed lines indicate the PA provisional limit and upper stock reference points (0.4, 0.8 $\Bmsy$), and the horizontal grey dotted line indicates $u$ at MSY.}{Composite base case: }{}
+
+\onefig{ymr.compo.stock.status}{stock status at beginning of \currYear{} relative to the PA provisional reference points of 0.4$\Bmsy$ and 0.8$\Bmsy$ for a base case comprising 5 model runs. The top quantile plot shows the composite distribution and below are the 5 contributing runs. Quantile plots show the 0.05, 0.25, 0.5, 0.75, and 0.95 quantiles from the MCMC posteriors.}{Composite base case: }{}
+
+\clearpage \newpage
+
+%%------------------------------------------------------------------------------
+\subsection{YMR -- Decision Tables}
+
+%%-----Tables: Decision Tables ----------
+\setlength{\tabcolsep}{0pt}%% for texArray, otherwise 6pt for xtable
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.47in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.47in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.47in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.47in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.47in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}}
+  \caption{YMR~BC: decision table for the limit reference point $0.4 \Bmsy$ featuring current- and 10-year projections for a range of \itbf{constant catch} strategies (in tonnes). Values are P$(B_t > 0.4 \Bmsy)$, i.e.~the probability of the spawning biomass (mature females) at the start of year $t$ being greater than the limit reference point. The probabilities are the proportion (to two decimal places) of the 10000 MCMC samples for which $B_t > 0.4 \Bmsy$.  For reference, the average catch over the last 5 years (2016-2020) was 1272~t. } \label{tab:ymr.gmu.LRP.CCs}\\  \hline\\[-2.2ex]  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  500 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  750 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1000 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1250 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1500 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & >0.99 & >0.99 & >0.99 \\ 
+  2000 & 1 & 1 & 1 & 1 & 1 & >0.99 & >0.99 & >0.99 & >0.99 & 0.99 & 0.98 \\ 
+  2500 & 1 & 1 & 1 & 1 & >0.99 & >0.99 & >0.99 & 0.99 & 0.97 & 0.95 & 0.92 \\ 
+  3000 & 1 & 1 & 1 & 1 & >0.99 & 0.99 & 0.98 & 0.95 & 0.91 & 0.87 & 0.81 \\ 
+   %\hline
+\end{longtable}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}}
+  \caption{YMR~BC: decision table for the upper stock reference point $0.8 \Bmsy$ featuring current- and 10-year projections for a range of \itbf{constant catch} strategies (in tonnes), such that values are P$(B_t > 0.8 \Bmsy)$.  For reference, the average catch over the last 5 years (2016-2020) was 1272~t. } \label{tab:ymr.gmu.USR.CCs}\\  \hline\\[-2.2ex]  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  500 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  750 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & >0.99 & >0.99 & >0.99 & >0.99 \\ 
+  1000 & 1 & 1 & 1 & 1 & 1 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 \\ 
+  1250 & 1 & 1 & 1 & 1 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & 0.99 \\ 
+  1500 & 1 & 1 & 1 & >0.99 & >0.99 & >0.99 & >0.99 & 0.99 & 0.99 & 0.98 & 0.98 \\ 
+  2000 & 1 & 1 & >0.99 & >0.99 & >0.99 & 0.99 & 0.98 & 0.97 & 0.95 & 0.92 & 0.90 \\ 
+  2500 & 1 & 1 & >0.99 & >0.99 & 0.99 & 0.97 & 0.94 & 0.91 & 0.87 & 0.82 & 0.78 \\ 
+  3000 & 1 & 1 & >0.99 & 0.99 & 0.97 & 0.93 & 0.88 & 0.82 & 0.76 & 0.70 & 0.64 \\ 
+   %\hline
+\end{longtable}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}}
+  \caption{YMR~BC: decision table for the reference point $\Bmsy$ featuring current- and 10-year projections for a range of \itbf{constant catch} strategies (in tonnes), such that values are P$(B_t > \Bmsy)$.  For reference, the average catch over the last 5 years (2016-2020) was 1272~t. } \label{tab:ymr.gmu.Bmsy.CCs}\\  \hline\\[-2.2ex]  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  500 & 1 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 \\ 
+  750 & 1 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 \\ 
+  1000 & 1 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & 0.99 & 0.99 & 0.99 \\ 
+  1250 & 1 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & 0.99 & 0.99 & 0.98 & 0.98 & 0.97 \\ 
+  1500 & 1 & >0.99 & >0.99 & >0.99 & 0.99 & 0.99 & 0.98 & 0.97 & 0.97 & 0.95 & 0.94 \\ 
+  2000 & 1 & >0.99 & >0.99 & 0.99 & 0.98 & 0.97 & 0.94 & 0.92 & 0.89 & 0.86 & 0.83 \\ 
+  2500 & 1 & >0.99 & 0.99 & 0.98 & 0.96 & 0.92 & 0.88 & 0.83 & 0.78 & 0.74 & 0.69 \\ 
+  3000 & 1 & >0.99 & 0.99 & 0.96 & 0.92 & 0.86 & 0.80 & 0.73 & 0.67 & 0.61 & 0.55 \\ 
+   %\hline
+\end{longtable}
+\clearpage
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}}
+  \caption{YMR~BC: decision table for the reference point $\umsy$ featuring current- and 10-year projections for a range of \itbf{constant catch} strategies, such that values are P$(u_t < \umsy)$.  For reference, the average catch over the last 5 years (2016-2020) was 1272~t. } \label{tab:ymr.gmu.umsy.CCs}\\  \hline\\[-2.2ex]  CC  & 2021 & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  CC  & 2021 & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 0.95 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  500 & 0.95 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  750 & 0.95 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & 0.99 & 0.99 \\ 
+  1000 & 0.95 & 0.96 & 0.96 & 0.96 & 0.95 & 0.95 & 0.94 & 0.94 & 0.94 & 0.93 & 0.93 \\ 
+  1250 & 0.95 & 0.87 & 0.86 & 0.85 & 0.84 & 0.83 & 0.82 & 0.81 & 0.80 & 0.79 & 0.78 \\ 
+  1500 & 0.95 & 0.74 & 0.73 & 0.71 & 0.70 & 0.69 & 0.67 & 0.66 & 0.65 & 0.64 & 0.62 \\ 
+  2000 & 0.95 & 0.52 & 0.50 & 0.48 & 0.47 & 0.45 & 0.43 & 0.42 & 0.41 & 0.39 & 0.38 \\ 
+  2500 & 0.95 & 0.36 & 0.35 & 0.33 & 0.31 & 0.29 & 0.28 & 0.27 & 0.25 & 0.24 & 0.23 \\ 
+  3000 & 0.95 & 0.25 & 0.23 & 0.22 & 0.20 & 0.19 & 0.18 & 0.16 & 0.15 & 0.14 & 0.13 \\ 
+   %\hline
+\end{longtable}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}}
+  \caption{YMR~BC: decision table for the reference point $B_{\currYear}$ featuring current- and 10-year projections for a range of \itbf{constant catch} strategies, such that values are P$(B_t > B_{\currYear})$.  For reference, the average catch over the last 5 years (2016-2020) was 1272~t. } \label{tab:ymr.gmu.Bcurr.CCs}\\  \hline\\[-2.2ex]  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 0 & 0.99 & 0.98 & 0.97 & 0.96 & 0.95 & 0.94 & 0.94 & 0.93 & 0.93 & 0.93 \\ 
+  500 & 0 & 0.89 & 0.83 & 0.80 & 0.77 & 0.75 & 0.73 & 0.72 & 0.71 & 0.70 & 0.69 \\ 
+  750 & 0 & 0.72 & 0.64 & 0.61 & 0.58 & 0.55 & 0.53 & 0.52 & 0.51 & 0.50 & 0.49 \\ 
+  1000 & 0 & 0.51 & 0.44 & 0.42 & 0.39 & 0.37 & 0.36 & 0.35 & 0.34 & 0.33 & 0.32 \\ 
+  1250 & 0 & 0.34 & 0.29 & 0.28 & 0.26 & 0.24 & 0.23 & 0.22 & 0.21 & 0.20 & 0.20 \\ 
+  1500 & 0 & 0.22 & 0.19 & 0.18 & 0.17 & 0.16 & 0.15 & 0.14 & 0.13 & 0.13 & 0.12 \\ 
+  2000 & 0 & 0.10 & 0.09 & 0.08 & 0.07 & 0.07 & 0.06 & 0.06 & 0.06 & 0.05 & 0.05 \\ 
+  2500 & 0 & 0.05 & 0.04 & 0.04 & 0.04 & 0.03 & 0.03 & 0.03 & 0.03 & 0.03 & 0.02 \\ 
+  3000 & 0 & 0.02 & 0.02 & 0.02 & 0.02 & 0.02 & 0.02 & 0.02 & 0.01 & 0.01 & 0.01 \\ 
+   %\hline
+\end{longtable}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}}
+  \caption{YMR~BC: decision table for the reference point $u_{\prevYear}$ featuring current- and 10-year projections for a range of \itbf{constant catch} strategies, such that values are P$(u_t < u_{\prevYear})$.  For reference, the average catch over the last 5 years (2016-2020) was 1272~t. } \label{tab:ymr.gmu.ucurr.CCs}\\  \hline\\[-2.2ex]  CC  & 2021 & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  CC  & 2021 & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  500 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  750 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & >0.99 \\ 
+  1000 & 0 & 1 & 0.99 & 0.91 & 0.80 & 0.71 & 0.64 & 0.59 & 0.55 & 0.51 & 0.48 \\ 
+  1250 & 0 & 0 & 0 & <0.01 & <0.01 & <0.01 & 0.01 & 0.01 & 0.01 & 0.02 & 0.02 \\ 
+  1500 & 0 & 0 & 0 & 0 & <0.01 & <0.01 & <0.01 & <0.01 & <0.01 & <0.01 & <0.01 \\ 
+  2000 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & <0.01 & <0.01 & <0.01 & <0.01 \\ 
+  2500 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & <0.01 & <0.01 \\ 
+  3000 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+   %\hline
+\end{longtable}
+\clearpage
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}}
+  \caption{YMR~BC: decision table for an alternative reference point $0.2 B_0$ featuring current- and 10 year projections for a range of \itbf{constant catch} strategies, such that values are P$(B_t > 0.2 B_0)$.  For reference, the average catch over the last 5 years (2016-2020) was 1272~t. } \label{tab:ymr.gmu.20B0.CCs}\\  \hline\\[-2.2ex]  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  500 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  750 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1000 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & >0.99 & >0.99 & >0.99 & >0.99 \\ 
+  1250 & 1 & 1 & 1 & 1 & 1 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 \\ 
+  1500 & 1 & 1 & 1 & 1 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & 0.99 & 0.99 \\ 
+  2000 & 1 & 1 & 1 & >0.99 & >0.99 & >0.99 & 0.99 & 0.98 & 0.97 & 0.95 & 0.93 \\ 
+  2500 & 1 & 1 & 1 & >0.99 & >0.99 & 0.98 & 0.96 & 0.94 & 0.90 & 0.87 & 0.82 \\ 
+  3000 & 1 & 1 & >0.99 & >0.99 & 0.98 & 0.96 & 0.92 & 0.86 & 0.81 & 0.75 & 0.69 \\ 
+   %\hline
+\end{longtable}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.48in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}}
+  \caption{YMR~BC: decision table for an alternative reference point $0.4 B_0$ featuring current- and 10 year projections for a range of \itbf{constant catch} strategies, such that values are P$(B_t > 0.4 B_0)$.  For reference, the average catch over the last 5 years (2016-2020) was 1272~t. } \label{tab:ymr.gmu.40B0.CCs}\\  \hline\\[-2.2ex]  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 0.98 & 0.99 & 0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 \\ 
+  500 & 0.98 & 0.98 & 0.98 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 & 0.99 \\ 
+  750 & 0.98 & 0.98 & 0.98 & 0.98 & 0.98 & 0.98 & 0.97 & 0.97 & 0.97 & 0.97 & 0.97 \\ 
+  1000 & 0.98 & 0.98 & 0.97 & 0.97 & 0.97 & 0.96 & 0.96 & 0.95 & 0.94 & 0.93 & 0.93 \\ 
+  1250 & 0.98 & 0.98 & 0.97 & 0.96 & 0.95 & 0.94 & 0.93 & 0.91 & 0.90 & 0.89 & 0.87 \\ 
+  1500 & 0.98 & 0.97 & 0.96 & 0.95 & 0.93 & 0.92 & 0.89 & 0.87 & 0.85 & 0.83 & 0.81 \\ 
+  2000 & 0.98 & 0.97 & 0.95 & 0.92 & 0.88 & 0.85 & 0.81 & 0.77 & 0.73 & 0.69 & 0.66 \\ 
+  2500 & 0.98 & 0.96 & 0.92 & 0.88 & 0.82 & 0.77 & 0.71 & 0.66 & 0.60 & 0.55 & 0.51 \\ 
+  3000 & 0.98 & 0.95 & 0.90 & 0.83 & 0.76 & 0.69 & 0.61 & 0.54 & 0.49 & 0.44 & 0.40 \\ 
+   %\hline
+\end{longtable}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}}
+  \caption{YMR~BC: decision table for COSEWIC reference criterion A2 `Endangered' featuring current-10-year projections and for a range of \itbf{constant catch} strategies, such that values are P$(B_t > 0.5 B_0)$. For reference, the average catch over the last 5 years (2016-2020) was 1272~t. } \label{tab:ymr.cosewic.50B0.CCs}\\  \hline\\[-2.2ex]  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 0.88 & 0.91 & 0.93 & 0.94 & 0.95 & 0.96 & 0.97 & 0.98 & 0.98 & 0.99 & 0.99 \\ 
+  500 & 0.88 & 0.89 & 0.90 & 0.91 & 0.91 & 0.92 & 0.92 & 0.92 & 0.92 & 0.92 & 0.92 \\ 
+  750 & 0.88 & 0.89 & 0.89 & 0.89 & 0.88 & 0.88 & 0.88 & 0.88 & 0.88 & 0.87 & 0.87 \\ 
+  1000 & 0.88 & 0.88 & 0.87 & 0.86 & 0.86 & 0.84 & 0.84 & 0.83 & 0.82 & 0.81 & 0.80 \\ 
+  1250 & 0.88 & 0.87 & 0.85 & 0.84 & 0.82 & 0.81 & 0.79 & 0.77 & 0.75 & 0.73 & 0.72 \\ 
+  1500 & 0.88 & 0.86 & 0.84 & 0.82 & 0.79 & 0.76 & 0.74 & 0.71 & 0.69 & 0.66 & 0.64 \\ 
+  2000 & 0.88 & 0.84 & 0.80 & 0.76 & 0.72 & 0.68 & 0.63 & 0.59 & 0.55 & 0.52 & 0.49 \\ 
+  2500 & 0.88 & 0.83 & 0.77 & 0.71 & 0.65 & 0.58 & 0.53 & 0.49 & 0.45 & 0.41 & 0.37 \\ 
+  3000 & 0.88 & 0.81 & 0.73 & 0.65 & 0.57 & 0.51 & 0.45 & 0.40 & 0.35 & 0.31 & 0.28 \\ 
+   %\hline
+\end{longtable}
+\clearpage
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}}
+  \caption{YMR~BC: decision table for COSEWIC reference criterion A2 `Threatened' featuring current-10-year projections and for a range of \itbf{constant catch} strategies, such that values are P$(B_t > 0.7 B_0)$. For reference, the average catch over the last 5 years (2016-2020) was 1272~t. } \label{tab:ymr.cosewic.70B0.CCs}\\  \hline\\[-2.2ex]  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 0.48 & 0.53 & 0.56 & 0.59 & 0.63 & 0.66 & 0.68 & 0.71 & 0.73 & 0.75 & 0.77 \\ 
+  500 & 0.48 & 0.51 & 0.52 & 0.53 & 0.55 & 0.55 & 0.56 & 0.57 & 0.58 & 0.59 & 0.59 \\ 
+  750 & 0.48 & 0.50 & 0.50 & 0.51 & 0.51 & 0.51 & 0.51 & 0.51 & 0.51 & 0.51 & 0.51 \\ 
+  1000 & 0.48 & 0.49 & 0.49 & 0.48 & 0.48 & 0.47 & 0.46 & 0.45 & 0.45 & 0.44 & 0.43 \\ 
+  1250 & 0.48 & 0.48 & 0.47 & 0.46 & 0.44 & 0.43 & 0.42 & 0.41 & 0.39 & 0.38 & 0.37 \\ 
+  1500 & 0.48 & 0.47 & 0.45 & 0.43 & 0.41 & 0.39 & 0.38 & 0.36 & 0.34 & 0.33 & 0.31 \\ 
+  2000 & 0.48 & 0.45 & 0.42 & 0.39 & 0.36 & 0.33 & 0.30 & 0.28 & 0.26 & 0.24 & 0.23 \\ 
+  2500 & 0.48 & 0.44 & 0.39 & 0.35 & 0.31 & 0.28 & 0.25 & 0.22 & 0.20 & 0.18 & 0.16 \\ 
+  3000 & 0.48 & 0.42 & 0.37 & 0.31 & 0.27 & 0.23 & 0.20 & 0.18 & 0.15 & 0.13 & 0.12 \\ 
+   %\hline
+\end{longtable}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}}
+  \caption{YMR~BC: probability of satisfying the A2 criterion of $\leq 30 \%$ decline from 3 generations (90 years) earlier featuring current- and 10-year projections and for a range of \itbf{constant catch} strategies.  For reference, the average catch over the last 5 years (2016-2020) was 1272~t. } \label{tab:ymr.cosewic.30Gen.CCs}\\  \hline\\[-2.2ex]  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & >0.99 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  500 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & 1 & 1 \\ 
+  750 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 \\ 
+  1000 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & 0.99 & 0.99 \\ 
+  1250 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & >0.99 & 0.99 & 0.99 & 0.99 & 0.98 & 0.98 \\ 
+  1500 & >0.99 & >0.99 & >0.99 & >0.99 & 0.99 & 0.99 & 0.98 & 0.97 & 0.97 & 0.96 & 0.95 \\ 
+  2000 & >0.99 & >0.99 & >0.99 & 0.99 & 0.98 & 0.96 & 0.94 & 0.92 & 0.90 & 0.87 & 0.85 \\ 
+  2500 & >0.99 & >0.99 & 0.99 & 0.97 & 0.95 & 0.92 & 0.88 & 0.84 & 0.80 & 0.75 & 0.71 \\ 
+  3000 & >0.99 & >0.99 & 0.98 & 0.96 & 0.91 & 0.86 & 0.80 & 0.74 & 0.68 & 0.62 & 0.57 \\ 
+   %\hline
+\end{longtable}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.6in}}
+  \caption{YMR~BC: probability of satisfying the A2 criterion of $\leq 50 \%$ decline from 3 generations (90 years) earlier featuring current- and 10-year projections and for a range of \itbf{constant catch} strategies.  For reference, the average catch over the last 5 years (2016-2020) was 1272~t. } \label{tab:ymr.cosewic.50Gen.CCs}\\  \hline\\[-2.2ex]  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  CC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 0.88 & 0.91 & 0.93 & 0.94 & 0.96 & 0.97 & 0.98 & 0.99 & 0.99 & 0.99 & >0.99 \\ 
+  500 & 0.88 & 0.89 & 0.90 & 0.91 & 0.92 & 0.93 & 0.93 & 0.94 & 0.95 & 0.95 & 0.96 \\ 
+  750 & 0.88 & 0.89 & 0.89 & 0.89 & 0.89 & 0.90 & 0.90 & 0.90 & 0.91 & 0.91 & 0.92 \\ 
+  1000 & 0.88 & 0.88 & 0.87 & 0.86 & 0.86 & 0.86 & 0.86 & 0.86 & 0.86 & 0.86 & 0.86 \\ 
+  1250 & 0.88 & 0.87 & 0.85 & 0.84 & 0.83 & 0.82 & 0.81 & 0.81 & 0.80 & 0.79 & 0.78 \\ 
+  1500 & 0.88 & 0.86 & 0.84 & 0.82 & 0.80 & 0.78 & 0.77 & 0.75 & 0.73 & 0.72 & 0.70 \\ 
+  2000 & 0.88 & 0.84 & 0.80 & 0.76 & 0.73 & 0.70 & 0.66 & 0.63 & 0.60 & 0.57 & 0.55 \\ 
+  2500 & 0.88 & 0.83 & 0.77 & 0.71 & 0.66 & 0.61 & 0.56 & 0.52 & 0.49 & 0.46 & 0.43 \\ 
+  3000 & 0.88 & 0.81 & 0.73 & 0.65 & 0.58 & 0.52 & 0.48 & 0.43 & 0.39 & 0.36 & 0.33 \\ 
+   %\hline
+\end{longtable}
+\clearpage
+\clearpage \newpage
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsubsection{GMU -- Guidance for setting TACs}
+
+Decision tables for the composite base case provide advice to managers as probabilities that current and projected biomass $B_t$ ($t = \currYear, ..., \projYear$) will exceed biomass-based reference points (or that projected exploitation rate $u_t$ will fall below harvest-based reference points) under constant catch (CC) policies. Note that years for biomass-based reference points refer to the start of years, whereas years for harvest-based reference points refer to years prior to the start ($\sim$mid-year).
+Decision tables in the document (all under a constant catch policy):
+\vspace{-0.5\baselineskip}%  because topsep doesn't work
+\begin{itemize_csas}
+\item Table~\ref{tab:ymr.gmu.LRP.CCs} -- probability of $B_t$ exceeding the LRP, P$(B_t > 0.4 \Bmsy)$; %% \& \ref{tab:ymr.gmu.LRP.HRs} 
+\item Table~\ref{tab:ymr.gmu.USR.CCs} -- probability of $B_t$ exceeding the USR, P$(B_t > 0.8 \Bmsy)$; %% \& \ref{tab:ymr.gmu.USR.HRs}
+\item Table~\ref{tab:ymr.gmu.Bmsy.CCs} -- probability of $B_t$ exceeding biomass at MSY, P$(B_t > \Bmsy)$; %% \& \ref{tab:ymr.gmu.Bmsy.HRs}
+\item Table~\ref{tab:ymr.gmu.umsy.CCs} -- probability of $u_t$ falling below harvest rate at MSY, P$(u_t < \umsy)$; %% \& \ref{tab:ymr.gmu.umsy.HRs}
+\item Table~\ref{tab:ymr.gmu.Bcurr.CCs} -- probability of $B_t$ exceeding current-year biomass, P$(B_t > B_{\currYear})$; %% \& \ref{tab:ymr.gmu.Bcurr.HRs}
+\item Table~\ref{tab:ymr.gmu.ucurr.CCs} -- probability of $u_t$ falling below current-year harvest rate, P$(u_t < u_{\prevYear})$; %% \& \ref{tab:ymr.gmu.ucurr.HRs}
+\item Table~\ref{tab:ymr.gmu.20B0.CCs} -- probability of $B_t$ exceeding a non-DFO `soft limit', P$(B_t > 0.2 B_0)$; %% \& \ref{tab:ymr.gmu.20B0.HRs}
+\item Table~\ref{tab:ymr.gmu.40B0.CCs} -- probability of $B_t$ exceeding a non-DFO `target' biomass, P$(B_t > 0.4 B_0)$; %% \& \ref{tab:ymr.gmu.40B0.HRs}
+\end{itemize_csas}
+
+MSY-based reference points estimated within a stock assessment model can be highly sensitive to model assumptions about natural mortality and stock recruitment dynamics \citep{Forrest-etal:2018}.
+As a result, other jurisdictions use reference points that are expressed in terms of $B_0$ rather than $\Bmsy$ (e.g., \citealt{NZMF:2011}), because $\Bmsy$ is often poorly estimated as it depends on estimated parameters and a consistent fishery (although $B_0$ shares several of these same problems).
+Therefore, the reference points of 0.2$B_0$ and 0.4$B_0$ are also presented here.
+These are default values used in New Zealand respectively as a `soft limit', below which management action needs to be taken, and a `target' biomass for low productivity stocks, a mean around which the biomass is expected to vary.
+The `soft limit' is equivalent to the upper stock reference (USR, 0.8$\Bmsy$) in the provisional DFO Sustainable Fisheries Framework while a `target' biomass is not specified by the provisional DFO SFF.
+Additionally, results are provided comparing projected biomass to $\Bmsy$ and to current spawning biomass $B_{\currYear}$, and comparing projected harvest rate to current harvest rate $u_{\prevYear}$.
+
+COSEWIC indicator A1 is reserved for those species where the causes of the reduction are clearly reversible, understood, and ceased.
+Indicator A2 is used when the population reduction may not be reversible, may not be understood, or may not have ceased.
+The 2011 Yellowmouth Rockfish recovery potential analysis \citep{Edwards-etal:2012_ymr} placed YMR into category A2b (where the `b' indicates that the designation was based on `an index of abundance appropriate to the taxon').
+Under A2, a species is considered Endangered or Threatened if the decline has been >50\pc{} or >30\pc{} below $B_0$, respectively.
+%%Using these guidelines, the recovery reference criteria become $0.5B_{t-3G}$ (a 50\pc{} decline) and $0.7B_{t-3G}$ (a 30\pc{} decline), where $B_{t-3G}$ is the biomass three generations (90 years) previous to the biomass in year $t$, e.g., P($B_{2023,...,2112} > 0.5\vee0.7 B_{1933,...,2022}$). 
+
+Additional short-term tables for COSEWIC's A2 criterion:
+\vspace{-0.5\baselineskip}
+\begin{itemize_csas}
+\item Table~\ref{tab:ymr.cosewic.50B0.CCs}  -- probability of $B_t$ exceeding `Endangered' status (P($B_t > 0.5B_0$);
+\item Table~\ref{tab:ymr.cosewic.70B0.CCs}  -- probability of $B_t$ exceeding `Threatened' status (P($B_t > 0.7B_0$).
+%%\item Table~\ref{tab:ymr.cosewic.30Gen.CCs} -- probability of $\leq 30\pc{}$ decline over 3 generations (90 years);
+%%\item Table~\ref{tab:ymr.cosewic.50Gen.CCs} -- probability of $\leq 50\pc{}$ decline over 3 generations (90 years).
+\end{itemize_csas}
+
+
+%------------------------------------------------------------------------------
+\subsection{YMR -- Sensitivity Analysis}\label{ss:sensruns} 
+
+
+\Numberstringnum{14} sensitivity analyses were run (with full MCMC simulations) relative to the central run (Run75: $M$=0.05, \cvpro=0.3296) to test the sensitivity of the outputs to alternative model assumptions:
+\vspace{-0.5\baselineskip}%  because topsep doesn't work
+\begin{itemize_csas}
+  \item \textbf{S01}~(Run78)  -- add 1997 index to WCHG survey series: (label:~``add~1997~WCHG~index'');
+  \item \textbf{S02}~(Run79)  -- estimate $M$ using a normal prior: $\mathcal{N}(0.05,0.01)$ (label:~``estimate~M'');
+  \item \textbf{S03}~(Run80)  -- drop commercial CPUE series  (label:~``drop~CPUE'');
+  \item \textbf{S04}~(Run81)  -- use CPUE series fitted by Tweedie distribution (label:~``Tweedie~CPUE'');
+  \item \textbf{S05}~(Run82)  -- reduce std.dev. of recr.~residuals $\sigma_R$ from 0.9 to 0.6  (label:~``sigmaR=0.6'');
+  \item \textbf{S06}~(Run83)  -- increase std.dev. of recr.~residuals $\sigma_R$ from 0.9 to 1.2 (label:~``sigmaR=1.2'');
+  \item \textbf{S07}~(Run84)  -- reduce commercial catch for 1965-1995 by 33\pc{} (label:~``reduce~catch~33\%'');
+  \item \textbf{S08}~(Run85)  -- increase comm. catch for 1965-1995 by 50\pc{} (label:~``increase~catch~50\%'');
+  \item \textbf{S09}~(Run86)  -- upweight QCS AF samples by 3.5 (label:~``upweight~QCS~AF'');
+  \item \textbf{S10}~(Run87) -- delay recruitment deviations from 1950 to 1970 (label:~``start~Rdevs~in~1970'');
+  \item \textbf{S11}~(Run88) -- remove ageing error based on CVs of length-at-age (label:~``no~ageing~error'');
+  \item \textbf{S12}~(Run91) -- reduce steepness from $h$=0.7 to $h$=0.5 (label:~``steepness~h=0.5'');
+  \item \textbf{S13}~(Run92) -- double 2021 catch from 1057\,t to 2114\,t (label:~``double~2021~catch'');
+  \item \textbf{S14}~(Run93) -- use AE based on ageing precision (label:~``AE~from~age~readers'').
+\end{itemize_csas}
+
+All sensitivity runs were reweighted once for: (i)~abundance, by adding process error to the commercial CPUE (except for S04 because error was already high), and (ii)~composition, by multiplying the trawl AF sample size by a harmonic mean ratio procedure (\AppEqn, Table~\ref{tab:sensAFwts}).
+The process error added to the commercial CPUE for all sensitivities (except S04) was the same as that adopted in the central run B3 (R75) (CPUE=0.3296), based on a spline analysis (\AppEqn).
+No additional process error was added to survey indices because observed error was already high.
+
+\setlength{\tabcolsep}{4pt}
+\begin{table}[!h]
+\centering
+\caption{Age frequency weights used for the central run (B3) and fourteen sensitivity runs.}
+\label{tab:sensAFwts}
+\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\small
+\begin{tabular}{lcrrrrr}
+\hline \\ [-1.5ex]
+{\bf Sens} & {\bf Run} & {\bf Trawl} & {\bf QCS} & {\bf WCVI} & {\bf WCHG} & {\bf GIG} \\ [0.2ex]
+\hline \\ [-1.5ex]
+B3 & R75 & 6.321921 & 0.25 & 0.25 & 0.25 & 0.25 \\
+\hdashline \\ [-1.75ex]
+S01 & R78 &  6.325070 & 0.25 & 0.25 & 0.25 & 0.25 \\
+S02 & R79 &  6.408812 & 0.25 & 0.25 & 0.25 & 0.25 \\
+S03 & R80 & 10.279413 & 0.25 & 0.25 & 0.25 & 0.25 \\
+S04 & R81 & 10.440879 & 0.25 & 0.25 & 0.25 & 0.25 \\
+S05 & R82 &  6.449762 & 0.25 & 0.25 & 0.25 & 0.25 \\
+S06 & R83 &  6.222421 & 0.25 & 0.25 & 0.25 & 0.25 \\
+S07 & R84 &  6.253996 & 0.25 & 0.25 & 0.25 & 0.25 \\
+S08 & R85 &  6.389155 & 0.25 & 0.25 & 0.25 & 0.25 \\
+S09 & R86 &  6.321921 & 3.50 & 0.25 & 0.25 & 0.25 \\
+S10 & R87 &  5.997195 & 0.25 & 0.25 & 0.25 & 0.25 \\
+S11 & R88 &  5.241267 & 0.25 & 0.25 & 0.25 & 0.25 \\
+S12 & R91 &  6.326616 & 0.25 & 0.25 & 0.25 & 0.25 \\
+S13 & R92 &  6.358515 & 0.25 & 0.25 & 0.25 & 0.25 \\
+S14 & R93 &  6.055056 & 0.25 & 0.25 & 0.25 & 0.25 \\
+\hline
+\end{tabular}
+\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\normalsize
+\end{table}
+
+The MPD (mode of the posterior distribution) `best fit' was used as the starting point for a Bayesian search across the joint posterior distributions of the parameters using the Monte Carlo Markov Chain (MCMC) method.
+Unlike previous BC rockfish assessments, which used a random walk Metropolis procedure, sensitivity runs (as for the base components) were evaluated using a ``No U-Turn Sampling'' (NUTS) procedure to reduce the evaluation time from days to hours.
+All sensitivity runs, except for S02 (estimate $M$), were judged to have converged for the NUTS algorithm using \nChains{} parallel chains of \cSims{} each and discarding the first \cBurn{} from each. 
+The remaining \nChains{} sets of \cSamps{} samples were merged to yield \Nmcmc{} samples per sensitivity run.
+Using a higher numbers of simulations with thinning did not improve the fit to S02 (estimate $M$), although it did remove autocorrelation.
+
+The differences among the sensitivity runs (including the central run) are summarised in tables of median parameter estimates (Table~\ref{tab:ymr.sens.pars}) and median MSY-based quantities (Table~\ref{tab:ymr.sens.rfpt}).
+Sensitivity plots appear in:
+\vspace{-0.5\baselineskip}%  because topsep doesn't work
+\begin{itemize_csas}
+  \item Figure~\ref{fig:ymr.senso.LN(R0).traces} -- trace plots for chains of $R_0$ MCMC samples;
+  \item Figure~\ref{fig:ymr.senso.LN(R0).chains} -- diagnostic split-chain plots for $R_0$ MCMC samples;
+  \item Figure~\ref{fig:ymr.senso.LN(R0).acfs} -- diagnostic autocorrelation plots for $R_0$ MCMC sample;
+  \item Figure~\ref{fig:ymr.senso.traj.BtB0} -- trajectories of median $B_t/B_0$;
+  \item Figure~\ref{fig:ymr.senso.traj.R} -- trajectories of  median recruitment $R_t$ (1000s age-0 fish);
+  \item Figure~\ref{fig:ymr.senso.traj.U} -- trajectories of median exploitation rate $u_t$;
+  \item Figure~\ref{fig:ymr.senso.pars.qbox} -- quantile plots of selected parameters for the sensitivity runs;
+  \item Figure~\ref{fig:ymr.senso.rfpt.qbox} -- quantile plots of selected derived quantities for the sensitivity runs;
+  \item Figure~\ref{fig:ymr.senso.stock.status} -- stock status plots of $B_{\currYear}/\Bmsy$.
+ \end{itemize_csas}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsubsection{Sensitivity diagnostics}
+
+The diagnostic plots (Figures~\ref{fig:ymr.senso.LN(R0).traces} to \ref{fig:ymr.senso.LN(R0).acfs}) suggest that eight sensitivity runs exhibited good MCMC behaviour, four were fair, one was poor, and one was unacceptable with little credibility:
+\vspace{-0.5\baselineskip}%  because topsep doesn't work
+\begin{itemize_csas}
+  \item Good -- no trend in traces, split-chains align, no autocorrelation
+  \begin{itemize_csas}
+    \item S01 (add~1997~WCHG~index)
+    \item S04 (Tweedie~CPUE)
+    \item S06 (sigmaR=1.2)
+    \item S07 (reduce~catch~33\%)
+    \item S08 (increase~catch~50\%)
+    \item S12 (steepness~h=0.5)
+    \item S13 (double~2021~catch)
+    \item S14 (AE~from~age~readers)
+  \end{itemize_csas}
+  \item Fair -- trace trend temporarily interrupted, split-chains somewhat frayed, some autocorrelation
+  \begin{itemize_csas}
+    \item S03 (drop~CPUE)
+    \item S05 (sigmaR=0.6)
+    \item S09 (upweight~QCS~AF)
+    \item S11 (no~ageing~error)
+  \end{itemize_csas}
+  \item Poor -- trace trend fluctuates substantially or shows a persistent increase/decrease, split-chains differ from each other, substantial autocorrelation
+  \begin{itemize_csas}
+    \item S10 (start~Rdevs~in~1970)
+  \end{itemize_csas}
+  \item Unacceptable -- trace trend shows a persistent increase/decrease that has not levelled, split-chains differ markedly from each other, persistent autocorrelation
+  \begin{itemize_csas}
+    \item S02 (estimate~M)
+  \end{itemize_csas}
+ \end{itemize_csas}
+
+The run that estimated $M$ (S02) may not have converged and the unacceptable diagnostics suggested instability in the model.
+Additionally, the posterior for $M_1$ (females), 0.070 (0.060, 0.078), moved well above the prior $\mathcal{N}(0.05,0.01)$.
+While a higher $M$ may be suitable for this species, it was not supported by the available data.
+
+\onefig{ymr.senso.LN(R0).traces}{MCMC traces for the estimated parameters. Grey lines show the \Nmcmc~samples for each parameter, solid blue lines show the cumulative median (up to that sample), and dashed lines show the cumulative 0.05 and 0.95 quantiles. Red circles are the MPD estimates.}{YMR sensitivity $R_0$: }{}
+
+\onefig{ymr.senso.LN(R0).chains}{diagnostic plots obtained by dividing the MCMC chain of \Nmcmc~MCMC samples into three segments, and overplotting the cumulative distributions of the first segment (red), second segment (blue) and final segment (black).}{YMR sensitivity $R_0$: }{}
+
+\onefig{ymr.senso.LN(R0).acfs}{autocorrelation plots for the estimated parameters from the MCMC output. Horizontal dashed blue lines delimit the 95\pc{} confidence interval for each parameter's set of lagged correlations.}{YMR sensitivity $R_0$: }{}
+
+\clearpage
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsubsection{Sensitivity comparisons}
+
+The trajectories of the $B_t$ medians relative to $B_0$ (Figure~\ref{fig:ymr.senso.traj.BtB0}) indicate that most sensitivities followed the trajectory of the central run with some variation, while three scenarios departed markedly (S02, S10, S11).
+Although estimating $M$ (S02) followed the trajectory of the central run, it remained consistently above the latter and resulted in one of the most optimistic scenarios.
+However, it is likely that this run did not converge and these results should be interpreted with caution.
+
+The most pessimistic run was the one without ageing error (AE) corrections (S11), followed by the run using an alternative AE based on CVs of age calculated from otolith readers' estimates of precision (S14), suggesting that accounting for ageing error is important to remove bias, in both cases negative.
+The trajectory of the AE run using CVs of age (S14) lies in between the run with no AE (S11) and the central run (B3) for the base case, which uses AE based on CVs of length-at age.
+
+While S11 and S14 estimated higher $B_0$ values (median\,= 41,400\,t and 32,150\,t, respectively) compared to the central run (median\,= 26,000\,t), the median estimates of current stock status relative to $B_0$ were considerably lower (S11=0.39; S14=0.55, B3=0.69).
+The higher $B_0$ suggests that the runs using absent/weak AE adjustments estimated more productive stocks (the median MSY values are 62\pc{} and 24\pc{} greater than the central run estimate; Table~\ref{tab:ymr.sens.rfpt}).
+However, Figure~\ref{fig:ymr.senso.traj.RD} shows that S11 estimated very low recruitment deviations in the late 1990s, which may be the reason that the $B_{\currYear}$ stock status for S11 was so low.
+The estimates of larger stock size and consequent greater productivity by this run seem less credible than the runs which include ageing error.
+Runs S11 and S14 also estimated broad recruitments across years whereas the central run estimates relatively large recruitments in single years.
+The sensitivities with AE based on length-at-age seemed more credible given these considerations; however, there is no definitive answer on which AE, if any, provides the most credible fit to the data.
+Based on the log-likelihoods alone (Table~\ref{tab:ymr.log.likes}), S11 (no AE) provides the best overall fit to the data.
+
+The run that estimated recruitment deviations starting in 1970 rather than 1950 (S10) followed a path well below the central run before trending up to an estimate for current (\currYear) stock status that was higher than the run that estimated $M$.
+The reason for this result can be seen in Figure~\ref{fig:ymr.senso.traj.RD}, where run S10 estimated the highest recruitment deviations of all the runs during the low period in the late 1990s.
+Run S10 then estimated higher recruitment deviations in the following years compared to most of the other runs.
+This compensatory behaviour is responsible for the very optimistic stock status estimated by this run.
+
+Dropping the CPUE series (S03) resulted in higher estimates for current status; however, this run increased the fishery AF weight because the dominant uncertainty in S03 was the high relative error associated with the surveys.
+The harmonic mean ratio procedure increased the weight associated with the fishery AF data (Table~\ref{tab:sensAFwts}) because the effective sample size associated with these data was relatively informative compared to the other data in the model.
+
+Run S09, which upweighted the QC Sound survey AFs, illustrates why we chose to downweight the available survey age frequency data.
+This run estimated an age at maximum selectivity that was shifted downward by three years compared to the central run (S09 median $\mu_2$=10.8; B3 median $\mu_2$=13.7; Table~\ref{tab:ymr.sens.pars}).
+By adjusting the selectivity function to the left, this model estimated two very large recent year classes (in 2010 and 2015) that are absent in all the other model runs (Figures~\ref{fig:ymr.senso.traj.R} \& \ref{fig:ymr.senso.traj.RD}).
+These strong year classes result in a very optimistic estimate of current stock status (median=0.75$B_0$) and would likely propagate into optimistic projections.
+While these year classes may in fact exist, it seems unwise to allow this slender piece of data to drive such a high degree of optimism.
+
+Parameter estimates varied little among sensitivity runs (Figure~\ref{fig:ymr.senso.pars.qbox}), with the exception of S02 (estimating $M$) and S09 (upweighting the QCS survey AFs).
+Derived quantities based on MSY (Figure~\ref{fig:ymr.senso.rfpt.qbox}) exhibited unrealistically high values of MSY and $B_0$ for S02 and S10 (delayed estimation of recruitment deviations).
+
+The stock status ($B_{2022}/\Bmsy$) for the sensitivities (Figure~\ref{fig:ymr.senso.stock.status}) all appear to be in the DFO Healthy zone, including the most pessimistic S11 run that does not correct for ageing error.
+
+\begin{landscapepage}{\input{xtab.sens.pars.txt}}{\LH}{\RH}{\LF}{\RF}
+\end{landscapepage}
+
+\begin{landscapepage}{
+\input{xtab.sens.rfpt.txt}
+}{\LH}{\RH}{\LF}{\RF} \end{landscapepage}
+
+\begin{landscapepage}{
+	\input{xtab.sruns.ll.txt}
+}{\LH}{\RH}{\LF}{\RF} \end{landscapepage}
+
+\setlength{\tabcolsep}{3pt}
+\clearpage
+
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%%\subsubsection{Sensitivity figures}
+
+\onefig{ymr.senso.traj.BtB0}{model trajectories of median spawning biomass as a proportion of unfished equilibrium biomass ($B_t/B_0$) for the central run of the composite base case and 14 sensitivity runs. Horizontal dashed lines show alternative reference points used by other jurisdictions: 0.2$B_0$ ($\sim$DFO's USR), 0.4$B_0$ (often a target level above $\Bmsy$), and $B_0$ ( equilibrium spawning biomass).}{YMR sensitivity: }{}
+
+\onefig{ymr.senso.traj.U}{model trajectories of median exploitation rate of vulnerable biomass ($u_t$) for the central run of the composite base case and 14 sensitivity runs.}{YMR sensitivity: }{}
+
+\onefig{ymr.senso.traj.R}{model trajectories of median recruitment of one-year old fish ($R_t$, 1000s) for the central run of the composite base case and 14 sensitivity runs.}{YMR sensitivity: }{}
+
+\onefig{ymr.senso.traj.RD}{model trajectories of median recruitment deviations for the central run of the composite base case and 14 sensitivity runs.}{YMR sensitivity: }{}
+
+\clearpage
+
+\onefig{ymr.senso.pars.qbox}{quantile plots of selected parameter estimates ($\log R_0$, $\mu_{g=1,2,3}$, $\log v_{\mathrm{L}g=1,2}$) comparing the central run with 14 sensitivity runs. See text on sensitivity numbers. The boxplots delimit the 0.05, 0.25, 0.5, 0.75, and 0.95 quantiles; outliers are excluded.}{YMR sensitivity: }{}
+
+\onefig{ymr.senso.rfpt.qbox}{quantile plots of selected derived quantities ($B_{\currYear}$, $B_0$, $B_{\currYear}/B_0$, MSY, $\Bmsy$, $\Bmsy/B_0$, $u_{\prevYear}$, $\umsy$, $u_\mathrm{max}$) comparing the central run with 12 sensitivity runs (S02 and S10 omitted because biomass scale overwhelms that of the others, see Table~\ref{tab:ymr.sens.rfpt}). See text on sensitivity numbers. The boxplots delimit the 0.05, 0.25, 0.5, 0.75, and 0.95 quantiles; outliers are excluded.}{YMR sensitivity: }{}
+
+\onefig{ymr.senso.stock.status}{stock status at beginning of 2022 relative to the DFO PA provisional reference points of 0.4$\Bmsy$ and 0.8$\Bmsy$ for the central run of the composite base case (Run75) and 14 sensitivity runs. Vertical dotted line uses median of the central run to faciliate comparisons with sensitivity runs. Boxplots show the 0.05, 0.25, 0.5, 0.75, and 0.95 quantiles from the MCMC posterior.}{YMR sensitivity: }{}
+
+\clearpage
+
+
+
+%%==============================================================================
+
+\clearpage
+
+\bibliographystyle{resDoc}
+%% Use for appendix bibliographies only: (http://www.latex-community.org/forum/viewtopic.php?f=5&t=4089)
+\renewcommand\bibsection{\section{References -- Model Results}}
+\bibliography{C:/Users/haighr/Files/GFish/CSAP/Refs/CSAPrefs}
+\end{document}
