@@ -1,0 +1,83 @@
+%%\newpage
+\subsubsection{Central run MPD tables}
+
+%%---Table 2-----------------------------
+\setlength{\tabcolsep}{4pt}
+\begin{table}[!h]
+\centering
+\caption{Central Run 75: Priors and MPD estimates for estimated parameters. Prior information -- distributions: 0~=~uniform, 2~=~beta, 6~=~normal}
+\label{tab:ymr.parest}
+\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\small
+\begin{tabular}{lcccccr}
+\hline \\ [-1.5ex]
+%\multicolumn{6}{l}{{\bf Parameter in write-up, Awatea input name, Awatea export name}} \\
+{\bf Parameter} & {\bf Phase} & {\bf Range} & {\bf Type} & {\bf (Mean,SD)} & {\bf Initial} & {\bf MPD} \\ [1ex]
+\hline \\ [-1.5ex]
+LN(R0) & 1 & (1, 16) & 6 & (8, 8) & 8 & 8.062 \\
+mu(1) TRAWL+ & 3 & (1, 40) & 6 & (10.7, 2.14) & 10.7 & 11.645 \\
+varL(1) TRAWL+ & 4 & (-15, 15) & 6 & (1.6, 0.32) & 1.6 & 2.073 \\
+mu(2) QCS & 3 & (1, 40) & 6 & (15.6, 3.12) & 15.6 & 13.599 \\
+varL(2) QCS & 4 & (-15, 15) & 6 & (3.72, 0.744) & 3.72 & 3.915 \\
+mu(3) WCVI & 3 & (1, 40) & 6 & (15.4, 3.08) & 15.4 & 13.738 \\
+varL(3) WCVI & 4 & (-15, 15) & 6 & (3.44, 0.688) & 3.44 & 3.820 \\
+mu(4) WCHG & 3 & (1, 40) & 6 & (10.8, 2.16) & 10.8 & 10.834 \\
+varL(4) WCHG & 4 & (-15, 15) & 6 & (2.08, 0.416) & 2.08 & 2.017 \\
+mu(5) GIG & 3 & (1, 40) & 6 & (17.4, 3.48) & 17.4 & 15.753 \\
+varL(5) GIG & 4 & (-15, 15) & 6 & (4.6, 0.92) & 4.6 & 4.828 \\
+\hline
+\end{tabular}
+\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\normalsize
+\end{table}
+
+\newpage
+\subsubsection{Central run MPD figures}
+
+\onefig{mleParameters}{Likelihood profiles (thin blue curves) and prior density functions (thick black curves) for the estimated parameters. Vertical lines represent the maximum likelihood estimates; red triangles indicate initial values used in the minimization process.}{Central Run 75: }{ymr.}
+
+\onefig{survIndSer}{Survey index values (points) with 95\pc{} confidence intervals (bars) and MPD model fits (curves) for the fishery-independent survey series.}{Central Run 75: }{ymr.}
+
+\clearpage
+
+\onefig{agefitFleet1}{Trawl+ Fishery proportions-at-age (bars=observed, lines=predicted) for females and males combined.}{Central Run 75: }{ymr.}
+\onefig{ageresFleet1}{Trawl+ Fishery residuals of model fits to proportion-at-age data. Vertical axes are standardised residuals. Boxplots in threes panels show residuals by age class, by year of data, and by year of birth (following a cohort through time). Cohort boxes are coloured green if recruitment deviations in birth year are positive, red if negative. Boxes give quantile ranges (0.25-0.75) with horizontal lines at medians, vertical whiskers extend to the the 0.05 and 0.95 quantiles, and outliers appear as plus signs.}{Central Run 75: }{ymr.}
+\clearpage
+
+\onefig{agefitFleet2}{QCS Synoptic survey proportions-at-age (bars=observed, lines=predicted) for females and males combined.}{Central Run 75: }{ymr.}
+\onefig{ageresFleet2}{QCS Synoptic survey residuals of model fits to proportion-at-age data. See Fig.~\ref{fig:ymr.ageresFleet1} caption for plot details.}{Central Run 75: }{ymr.}
+\clearpage
+
+\onefig{agefitFleet3}{WCVI Synoptic survey proportions-at-age (bars=observed, lines=predicted) for females and males combined.}{Central Run 75: }{ymr.}
+\onefig{ageresFleet3}{WCVI Synoptic survey residuals of model fits to proportion-at-age data. See Fig.~\ref{fig:ymr.ageresFleet1} caption for plot details.}{Central Run 75: }{ymr.}
+\clearpage
+
+\onefig{agefitFleet4}{WCHG Synoptic survey proportions-at-age (bars=observed, lines=predicted) for females and males combined.}{Central Run 75: }{ymr.}
+\onefig{ageresFleet4}{WCHG Synoptic survey residuals of model fits to proportion-at-age data. See Fig.~\ref{fig:ymr.ageresFleet1} caption for plot details.}{Central Run 75: }{ymr.}
+\clearpage
+
+\onefig{agefitFleet5}{GIG Hisorical survey proportions-at-age (bars=observed, lines=predicted) for females and males combined.}{Central Run 75: }{ymr.}
+\onefig{ageresFleet5}{GIG Historical survey residuals of model fits to proportion-at-age data. See Fig.~\ref{fig:ymr.ageresFleet1} caption for plot details.}{Central Run 75: }{ymr.}
+\clearpage
+
+\onefig{harmonica0}{Harmonic mean of effective sample size (horizontal dashed line) vs. arithmetic mean of observed sample size (vertical dashed line) for unweighted AFs. Solid line shows 1:1 relationship; red dashed curve shows first-order polynomial regression fit.}{Central Run 75: }{ymr.}
+
+%\onefig{harmonica}{\textbf{Weighted AF} -- harmonic mean of effective sample size vs. arithmetic mean of adjusted sample size.}{Central Run 75: }{ymr.}
+
+\clearpage
+
+%\onefig{meanAge0}{Mean ages each year for the \textbf{unweighted} data (solid circles) with 95\pc{} confidence intervals and model estimates (blue lines) for the commercial and survey age data.}{Central Run 75: }{ymr.}
+
+\onefig{meanAge}{Mean ages each year for the weighted data (solid green circles) where vertical bars denote the range of the data and cross bars denote $\sim$95\pc{} confidence intervals associated with adjusted sample sizes; model estimates of mean age appear as blue lines.}{Central Run 75: }{ymr.}
+
+\clearpage
+
+\onefig{selectivity}{Selectivities for commercial fleet catch and surveys (all MPD values), with maturity ogive for females indicated by `m'.}{Central Run 75: }{ymr.}
+
+\twofig{Bt}{BtB0}{Spawning biomass -- (top) $B_t$ (tonnes, mature females) over time; (bottom) $B_t$ relative to unfished equilbrium spawning biomass $B_0$. Blue line designates SS fit for \currYear.}{Central Run 75: }{ymr.}
+
+%%\twofig{recruits}{recDev}{Recruitment (thousands of fish) over time (top) and log of annual recruitment deviations (bottom), $\epsilon_t$, where bias-corrected multiplicative deviation is  $\mbox{e}^{\epsilon_t - \sigma_R^2/2}$ and  $\epsilon_t \sim \mbox{Normal}(0, \sigma_R^2)$. Blue line designates \currYear{} SS fit for age-0 fish.}{Central Run 75: }{ymr.}
+
+%% #1 = filename 1 & label, #2 = filename 2, #3 = filename 3, #4 = caption, #5=caption prefix (optional), #6=label prefix (optional)
+\threefig{recruits}{recDev}{stockRecruit}{Recruitment -- (top) thousands of age-0 fish from \startYear{} to \currYear; (middle) log of annual recruitment deviations $\epsilon_t$, where bias-corrected multiplicative deviation is  $\mbox{e}^{\epsilon_t - \sigma_R^2/2}$ and $\epsilon_t \sim \mbox{Normal}(0, \sigma_R^2)$; (bottom) deterministic stock-recruit relationship (black curve) and observed values (labelled by year of spawning).}{Central Run 75: }{ymr.}
+
+\clearpage
+%%==============================================================================

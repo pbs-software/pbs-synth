@@ -532,8 +532,8 @@ if (sumting) {
 					png(filename=paste0(fout,".png"), units="in", res=pngres, width=8, height=8)
 				#boxfill = c("gainsboro","green4","blue","red","purple","orange","skyblue","gold3","salmon3","red2","hotpink","darkred","dodgerblue") ## colours used in the trajectory plots (REBS)
 				boxfill = c("gainsboro",col.senso[S.num]) ## colours used in the trajectory plots (YMR)
-				#panelBoxes(P.pars, xlim=c(0.25,nchains+0.75), xlab=linguaFranca("Sensitivity Runs",l), ylab=linguaFranca("Parameter estimates",l), nchains=nchains, xfac=c("CR", paste0("S",pad0(1:(nchains-1),2))), boxfill=boxfill, cex.strip=1.2, cex.axis=1.2, cex.lab=1.5, outline=FALSE)
-				panelBoxes(LP.pars, xlim=c(0.25,nchains+0.75), xlab=linguaFranca("Sensitivity Runs",l), ylab=linguaFranca("Parameter estimates",l), nchains=nchains, xfac=c("CR", paste0("S",pad0(S.num,2))), boxfill=boxfill, cex.strip=1.2, cex.axis=1.2, cex.lab=1.5, outline=FALSE)
+				#panelBoxes(P.pars, xlim=c(0.25,nchains+0.75), xlab=linguaFranca("Sensitivity Runs",l), ylab=linguaFranca("Parameter estimates",l), nchains=nchains, xfac=c(ifelse(NrefM>1,"CR","B1"), paste0("S",pad0(1:(nchains-1),2))), boxfill=boxfill, cex.strip=1.2, cex.axis=1.2, cex.lab=1.5, outline=FALSE)
+				panelBoxes(LP.pars, xlim=c(0.25,nchains+0.75), xlab=linguaFranca("Sensitivity Runs",l), ylab=linguaFranca("Parameter estimates",l), nchains=nchains, xfac=c(ifelse(NrefM>1,"CR","B1"), paste0("S",pad0(S.num,2))), boxfill=boxfill, cex.strip=1.2, cex.axis=1.2, cex.lab=1.5, outline=FALSE)
 				if (p %in% c("png","eps")) dev.off()
 			}
 		}; eop()
@@ -569,7 +569,7 @@ if (sumting) {
 				if (p=="png") png(filename=paste0(fout,".png"), units="in", res=pngres, width=8, height=8)
 				#boxfill = c("gainsboro","green4","blue","red","purple","orange","skyblue","gold3","salmon3","red2","hotpink","darkred","dodgerblue") ## colours used in the trajectory plots (REBS)
 				boxfill = c("gainsboro",col.senso[S.num]) ## colours used in the trajectory plots (YMR)
-				panelBoxes(LQ.pars, xlim=c(0.25,nchains+0.75), xlab=linguaFranca("Sensitivity Runs",l), ylab=linguaFranca("Derived Quantities",l), nchains=nchains, xfac=c("CR", paste0("S",pad0(S.num,2))), boxfill=boxfill, cex.strip=1.2, cex.axis=1.1, cex.lab=1.5, outline=FALSE, fn.ylim=fn.ylim)
+				panelBoxes(LQ.pars, xlim=c(0.25,nchains+0.75), xlab=linguaFranca("Sensitivity Runs",l), ylab=linguaFranca("Derived Quantities",l), nchains=nchains, xfac=c(ifelse(NrefM>1,"CR","B1"), paste0("S",pad0(S.num,2))), boxfill=boxfill, cex.strip=1.2, cex.axis=1.1, cex.lab=1.5, outline=FALSE, fn.ylim=fn.ylim)
 				if (p %in% c("png","eps")) dev.off()
 			}
 		}; eop()
@@ -741,8 +741,10 @@ if (sumting) {
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.senso
 
 
-## tabSS.compo--------------------------2022-07-23
+## tabSS.compo--------------------------2022-11-18
 ## Make Base Case Tables
+## Note: u2023=u2022 (see 'gatherMCMC.r') so change 
+##       labels here in rfpt tables to use 'prevYear'
 ## ---------------------------------------------RH
 tabSS.compo = function(istock="CAR", prefix="car.", compo,
   useRlow=FALSE, qRlow=0.25, sigdig=4)
@@ -797,7 +799,9 @@ tabSS.compo = function(istock="CAR", prefix="car.", compo,
 
 	xtab.compo.pars = xtable(tabPmed, align="lrrrrr",
 		label   = paste0("tab:",prefix,"base.pars"), digits = if (exists("formatCatch")) NULL else sigdig,
-		caption = paste0("Base run: the ", texThatVec(tcall(quants5)), " quantiles for ", ifelse(NrefM>1,"pooled","")," model parameters (defined in \\AppEqn) from MCMC estimation of ", "\\numberstringnum{", NrefM, "} component model runs of \\Nmcmc{} samples each.") )
+		caption = paste0("Base run: the ", texThatVec(tcall(quants5)), " quantiles for ", ifelse(NrefM>1,"pooled",""),
+		" model parameters (defined in \\AppEqn) from MCMC estimation of \\numberstringnum{", NrefM, "} ",
+		ifelse(NrefM>1, "component model runs of \\Nmcmc{} samples each.", "base run of \\Nbase{} samples.") ) )
 	xtab.compo.pars.out = capture.output(print(xtab.compo.pars,
 		caption.placement="top", sanitize.rownames.function=function(x){x}, add.to.row =list(pos=list(-1), command=c("\\\\[-1.0ex]")) ) )
 	tput(xtab.compo.pars.out)
@@ -829,6 +833,7 @@ tabSS.compo = function(istock="CAR", prefix="car.", compo,
 	tabmsy = formatCatch(tabmsy, N=sigdig)
 	#colnames(tabmsy) =  gsub("\\%","\\\\%",colnames(tabmsy))
 	names.msy = rownames(tabmsy)
+
 	names.msy =
 		gsub("\\.(B|u)", "/\\1",
 		gsub("_Trawl", "~(\\\\text{trawl})",
@@ -839,14 +844,18 @@ tabSS.compo = function(istock="CAR", prefix="car.", compo,
 		gsub("MSY",  paste0("\\\\text{MSY}"),
 		gsub("VB",  "V",
 		gsub("[Uu]max", "u_\\\\text{max}",
-		gsub("curr",  paste0("_{",currYear,"}"),
+		gsub("ucurr",  paste0("u_{",prevYear,"}"),
+		gsub("Bcurr",  paste0("B_{",currYear,"}"),
 		gsub("B0", "B_{0}",
-		names.msy)))))))))))
+		names.msy))))))))))))
 	rownames(tabmsy) =  paste(rep("$",nrow(tabmsy)),names.msy,rep("$",nrow(tabmsy)),sep="")
-	
+#browser();return()
+
+	## Caption for MSY table
 	cap.msy = paste0(
-		"Base run: the ", texThatVec(tcall(quants5)), " quantiles of MCMC-derived quantities from \\Nbase", 
-		" samples ", ifelse(NrefM>1,"pooled","")," from ", NrefM, " component runs. Definitions are: ",
+		"Base run: the ", texThatVec(tcall(quants5)), " quantiles of MCMC-derived quantities from \\Nbase{} samples ", 
+		ifelse(NrefM>1,"pooled","")," from ", ifelse(NrefM>1, "component runs.", "a single base run."),
+		" Definitions are: ",
 		"$B_0$ -- unfished equilibrium spawning biomass (mature females), ",
 		#"$V_0$ -- unfished equilibrium vulnerable biomass (males and females), ",
 		"$B_{", currYear, "}$ -- spawning biomass at the beginning of ", currYear, ", ",
@@ -870,10 +879,21 @@ tabSS.compo = function(istock="CAR", prefix="car.", compo,
 	## Component run likelihoods
 	## -------------------------
 	tabll = formatCatch(avgLL)
-	rownames(tabll) = gsub("_", " ", rownames(tabll))
+	rownames(tabll) =
+		sub("^Index$", "Abundance Index",
+		sub("^Recruit$", "Recruitment",
+		sub("^AF$", "Age Frequency",
+		sub("BT$",  "Bottom Trawl",
+		sub("TRI$", "Triennial",
+		sub("HIS$", "Historical",
+		sub("SYN$", "Synoptic",
+		gsub("_", " ",
+	rownames(tabll) ))))))))
+#browser();return()
+	
 	xtab.cruns.ll = xtable(tabll, align=paste0("l", paste0(rep("r",dim(avgLL)[2]),collapse="")),
 		label   = paste0("tab:",prefix,"log.likes"), digits=NULL, 
-		caption = "Log likelihood (LL) values reported by component base runs for survey indices, age composition (AF), recruitment, and total (not all LL components reported here)")
+		caption = paste0("Log likelihood (LL) values reported by ", ifelse(NrefM>1, "component base runs", "the single base run"), " for survey indices, age composition (AF), recruitment, and total (not all LL components reported here)") )
 	xtab.cruns.ll.out = capture.output(print(xtab.cruns.ll,  include.rownames=TRUE,
 		caption.placement="top", sanitize.rownames.function=function(x){x}, add.to.row =list(pos = list(-1), command = c("\\\\[-1.0ex]")) ) )
 	rowhead = grep("^\\s&",xtab.cruns.ll.out)
@@ -923,8 +943,9 @@ tabSS.compo = function(istock="CAR", prefix="car.", compo,
 
 	xtab.cruns.pars = xtable(P.tab, align=paste0("l", paste0(rep("c",dim(P.tab)[2]),collapse="")),
 		label   = paste0("tab:",prefix,"runs.pars"), digits = if (exists("formatCatch")) NULL else sigdig,
-		caption = paste0("Base run: model parameter MPDs (delimited by `|') and MCMC medians (with 0.05 and 0.95 quantile limits) for each of the ",
-		"\\numberstringnum{", NrefM, "} component model runs of \\Nmcmc{} samples each.") )
+		caption = paste0("Base run: model parameter MPDs (delimited by `|') and MCMC medians (with 0.05 and 0.95 quantile limits) for ",
+		ifelse(NrefM>1, paste0("each of the \\numberstringnum{", NrefM, "} component model runs of \\Nmcmc{} samples each."),
+		"the base model run of \\Nbase{} samples.") ) )
 	xtab.cruns.pars.out = capture.output(print(xtab.cruns.pars,
 		caption.placement="top", sanitize.rownames.function=function(x){x}, add.to.row =list(pos = list(-1), command = c("\\\\[-1.0ex]")) ) )
 	tput(xtab.cruns.pars.out)
@@ -960,8 +981,9 @@ tabSS.compo = function(istock="CAR", prefix="car.", compo,
 
 	xtab.cruns.rfpt = xtable(Q.tab, align=paste0("l", paste0(rep("r",dim(Q.tab)[2]),collapse="")),
 		label   = paste0("tab:",prefix,"runs.rfpt"), digits = if (exists("formatCatch")) NULL else sigdig,
-		caption = paste0("Base run: MCMC median (with 0.05 and 0.95 quantile limits) for derived model quantities for each of the ",
-		"\\numberstringnum{", NrefM, "} component model runs of \\Nmcmc{} samples each.") )
+		caption = paste0("Base run: MCMC median (with 0.05 and 0.95 quantile limits) for derived model quantities for ",
+		ifelse(NrefM>1, paste0("each of the \\numberstringnum{", NrefM, "} component model runs of \\Nmcmc{} samples each."),
+		"the base model run of \\Nbase{} samples.") ) )
 	xtab.cruns.rfpt.out = capture.output(print(xtab.cruns.rfpt,
 		caption.placement="top", sanitize.rownames.function=function(x){x}, add.to.row=list(pos=list(-1,3,11), command=c("\\\\[-1.0ex]", "\\hdashline \n", "\\hdashline \n")), hline.after=c(-1,0,5,nrow(xtab.cruns.rfpt)) ) )
 	tput(xtab.cruns.rfpt.out)
@@ -1676,8 +1698,10 @@ return()
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tabSS.decision
 
 
-## tabSS.senso--------------------------2022-07-22
+## tabSS.senso--------------------------2022-11-18
 ## Make Sensitivity Tables
+## Note: u2023=u2022 (see 'gatherMCMC.r') so change 
+##       labels here in rfpt tables to use 'prevYear'
 ## ---------------------------------------------RH
 tabSS.senso = function(istock="CAR", prefix="car.", senso, sigdig=4)
 {
@@ -1771,7 +1795,7 @@ tabSS.senso = function(istock="CAR", prefix="car.", senso, sigdig=4)
 	}
 	cap.par = paste0(
 		name, ": median values of MCMC samples for the primary estimated parameters, ",
-		"comparing the central run to ", Nsens, " sensitivity runs (\\Nmcmc{} samples each). R~= Run, S~= Sensitivity. ",
+		"comparing the ", ifelse(NrefM>1,"central","base"), " run to ", Nsens, " sensitivity runs (\\Nmcmc{} samples each). R~= Run, S~= Sensitivity. ",
 		"Numeric subscripts other than those for $R_0$ and $M$ indicate the following gear types $g$: ",
 		texThatVec(paste0(c(1, match(iseries,fleets)[-1]),"~= ",iseries),simplify=F), ". ", sen.leg
 	)
@@ -1856,13 +1880,15 @@ tabSS.senso = function(istock="CAR", prefix="car.", senso, sigdig=4)
 		gsub("MSY",  paste0("\\\\text{MSY}"),
 		gsub("VB",  "V",
 		gsub("[Uu]max", "u_\\\\text{max}",
-		gsub("curr",  paste0("_{",currYear,"}"),
+		gsub("ucurr",  paste0("u_{",prevYear,"}"),
+		gsub("Bcurr",  paste0("B_{",currYear,"}"),
 		gsub("B0", "B_{0}",
-		names.rfpt)))))))))))
+		names.rfpt))))))))))))
 	rownames(tab.sens.rfpt) =  paste(rep("$",nrow(tab.sens.rfpt)),names.rfpt,rep("$",nrow(tab.sens.rfpt)),sep="")
+#browser();return()
 
 	cap.rfpt = paste0(
-		name, ": medians of MCMC-derived quantities from the central run and ", Nsens,
+		name, ": medians of MCMC-derived quantities from the ", ifelse(NrefM>1,"central","base"), " run and ", Nsens,
 		" sensitivity runs (\\Nmcmc{} samples each) from their respective MCMC posteriors. Definitions are: ",
 		"$B_0$ -- unfished equilibrium spawning biomass (mature females), ",
 		#"$V_0$ -- unfished equilibrium vulnerable biomass (males and females), ",
@@ -1873,7 +1899,7 @@ tabSS.senso = function(istock="CAR", prefix="car.", senso, sigdig=4)
 		startYear , " - ", currYear, "), ",
 		"MSY -- maximum sustainable yield at equilibrium, ",
 		"$B_\\text{MSY}$ -- equilibrium spawning biomass at MSY, ",
-		"$u_\\text{MSY}$ -- equilibrium exploitation rate at MSY, ",
+		"$u_\\text{MSY}$ -- equilibrium exploitation rate at MSY. ",
 		#"$V_\\text{MSY}$ -- equilibrium vulnerable biomass at MSY. ",
 		"All biomass values (and MSY) are in tonnes. ", sen.leg
 	)
@@ -1893,7 +1919,6 @@ tabSS.senso = function(istock="CAR", prefix="car.", senso, sigdig=4)
 
 	## Sensitivity run likelihoods
 	## ---------------------------
-#browser();return()
 	tab.sens.ll = formatCatch(senLL,N=sigdig)
 	names.ll = rownames(senLL)
 	names.ll = sub("_BT|_SYN|_TRI|_HIS","",names.ll)
@@ -1904,10 +1929,11 @@ tabSS.senso = function(istock="CAR", prefix="car.", senso, sigdig=4)
 	LL.senso = t(tab.sens.ll)
 	LL.senso[,"Sen.Run"] = sub("\\s+$", "", S.prefix)
 	LL.senso = data.frame(Sen.Run=LL.senso[,"Sen.Run"], Label = c("base run", gsub("_"," ",sen.lab)), LL.senso[,-c(1:2)])
+#browser();return()
 
 	xtab.sruns.ll = xtable(LL.senso, align=paste0("l", paste0(rep("r",dim(LL.senso)[2]),collapse="")),
 		label   = paste0("tab:",prefix,"log.likes"), digits=NULL, 
-		caption = "Log likelihood (LL) values reported by central and sensitivity runs for survey indices, age composition (AF), recruitment, and total (not all LL components reported here)")
+		caption = paste0("Log likelihood (LL) values reported by ", ifelse(NrefM>1,"central","base"), " and sensitivity runs for survey indices, age composition (AF), recruitment, and total (not all LL components reported here)") )
 	xtab.sruns.ll.out = capture.output(print(xtab.sruns.ll,  include.rownames=FALSE,
 		caption.placement="top", sanitize.rownames.function=function(x){x}, add.to.row =list(pos = list(-1,1), command = c("\\\\[-0.5ex]", "\\hdashline \\\\[-1.75ex]")) ) )
 	tput(xtab.sruns.ll.out)

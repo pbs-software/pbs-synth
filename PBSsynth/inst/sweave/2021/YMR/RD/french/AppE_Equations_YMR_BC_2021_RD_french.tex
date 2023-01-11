@@ -1,0 +1,1370 @@
+%% Annexe E \'{E}quations -- s\'{e}baste \`{a} bouche jaune
+
+\documentclass[11pt]{book}
+\usepackage{Sweave}     % needs to come before resDocSty
+\usepackage{resDocSty}  % Res Doc .sty file
+
+%\usepackage{rotating}   % for sideways table
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{pdfcomment}
+\usepackage{fmtcount}    %% for rendering numbers to words
+\usepackage{xcolor, soul}
+
+\usepackage{amssymb}% https://ctan.org/pkg/amssymb?lang=en
+\usepackage{mathtools}% https://ctan.org/pkg/mathtools?lang=en
+\usepackage{MnSymbol}% https://ctan.org/pkg/mathtools?lang=en
+\newcommand{\Lagr}{\mathcal{L}}%% Langrangian L for likelihood
+\newcommand{\Norm}{\mathcal{N}}%% Normal distribution
+\newcommand{\Fobj}{\mathcal{F}}%% Function objective
+\newcommand{\Biom}{\mathcal{B}}%% Mid-season retained dead biomass
+\newcommand{\Temp}{\mathcal{T}}%% Temporary variable for Selectivity calcs
+\newcommand{\Joyn}{\mathcal{J}}%% Joiner variable for Selectivity calcs (\Join already defined)
+\def\bfTh{{\bf \Theta}}%% bold Theta
+\newcommand{\dprime}{\prime\prime}%% double prime (supposedly in stix package but it doesn't load properly)
+\newcommand{\isactive}{\circledast}%{\circledcirc}%
+\newcommand{\inactive}{\vartriangleleft}%
+\newcommand{\adj}[1]{\overrightharpoon{#1}}% adjusted value
+\newcommand{\mbull}{$\filledtriangleright$\,}
+\newcommand{\nbull}{~~~$\smalltriangleright$\,}
+
+\definecolor{red}{rgb}{1,0,0}
+\definecolor{green}{rgb}{0,1,0}
+\definecolor{blue}{rgb}{0,0,1}
+\definecolor{yellow}{rgb}{1,1,0}
+\definecolor{slategrey}{rgb}{0.4392157, 0.5019608, 0.5647059}
+\definecolor{deepskyblue}{rgb}{0, 0.7490196, 1}
+\definecolor{gainsboro}{rgb}{0.8627451,0.8627451,0.8627451}
+\definecolor{aliceblue}{RGB}{240, 248, 255}
+\definecolor{dodgerblue}{RGB}{24, 116, 205}
+\definecolor{moccasin}{RGB}{255, 236, 204}
+\definecolor{honeydew}{RGB}{240, 255, 240}
+\newcommand{\oldstuff}[1]{\normalsize\textcolor{red}{#1}\normalsize}
+\newcommand{\newstuff}[1]{\normalsize\textcolor{blue}{#1}\normalsize}
+\newcommand{\greystuff}[1]{\normalsize\textcolor{slategrey}{#1}\normalsize}
+\sethlcolor{yellow}
+
+\captionsetup{figurewithin=none,tablewithin=none} %RH: This works for resetting figure and table numbers for book class though I don't know why. Set fig/table start number to n-1.
+
+\newcommand{\Bmsy}{B_\text{RMD}}
+\newcommand{\umsy}{u_\text{RMD}}
+
+\newcommand{\mr}[1]{\mathrm{#1}}
+\newcommand{\super}[1]{$^\mr{#1}$}
+\newcommand{\ms}[1]{{\scriptscriptstyle #1}}  %% math small
+\newcommand{\mm}[1]{{\scriptstyle #1}}        %% math moderately small
+\newcommand{\elof}[1]{\in\left\{#1\right\}}   %% is an element of
+\newcommand{\comment}[1]{}                    %% commenting out blocks of text
+\newcommand{\commint}[1]{\hspace{-0em}}       %% commenting out in-line text
+\newcommand{\angL}{\guillemotleft\,}
+\newcommand{\angR}{\,\guillemotright}
+\newcommand{\pc}{\%}
+\newcommand{\ptype}{png}
+
+\def\startP{187}         %% page start (default=1)
+\def\startF{0}           %% figure start counter (default=0)
+\def\startT{0}           %% table start counter (default=0)
+
+%%http://tex.stackexchange.com/questions/6058/making-a-shorter-minus
+\def\minus{%
+  \setbox0=\hbox{-}%
+  \vcenter{%
+    \hrule width\wd0 height 0.05pt% \the\fontdimen8\textfont3%
+  }%
+}
+%%https://tex.stackexchange.com/questions/22100/the-bar-and-overline-commands (Danie Els)
+\makeatletter
+\newsavebox\myboxA
+\newsavebox\myboxB
+\newlength\mylenA
+\newcommand*\widebar[2][0.75]{%
+    \sbox{\myboxA}{$\m@th#2$}%
+    \setbox\myboxB\null% Phantom box
+    \ht\myboxB=\ht\myboxA%
+    \dp\myboxB=\dp\myboxA%
+    \wd\myboxB=#1\wd\myboxA% Scale phantom
+    \sbox\myboxB{$\m@th\overline{\copy\myboxB}$}%  Overlined phantom
+    \setlength\mylenA{\the\wd\myboxA}%   calc width diff
+    \addtolength\mylenA{-\the\wd\myboxB}%
+    \ifdim\wd\myboxB<\wd\myboxA%
+       \rlap{\hskip 0.5\mylenA\usebox\myboxB}{\usebox\myboxA}%
+    \else
+        \hskip -0.5\mylenA\rlap{\usebox\myboxA}{\hskip 0.5\mylenA\usebox\myboxB}%
+    \fi}
+\makeatother
+
+\makeatletter
+\renewcommand{\@chapapp}{}% Not necessary...
+\newenvironment{chapquote}[2][2em]
+  {\setlength{\@tempdima}{#1}%
+   \def\chapquote@author{#2}%
+   \parshape 1 \@tempdima \dimexpr\textwidth-2\@tempdima\relax%
+   \itshape}
+  {\par\normalfont\hfill--\ \chapquote@author\hspace*{\@tempdima}\par\smallskip}
+\makeatother
+
+\def\ds{\rule{0pt}{1.5ex}}
+
+%% #1=filename, #2=caption text; NOTE: Tags won't work if figure boundaries hit the margins (e.g., keep width < 6.5in)
+\newcommand\onefig[2]{
+  \begin{figure}[tp]
+  \begin{center}
+  \pdftooltip{
+  \includegraphics[width=6.4in,height=7.25in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1}}
+  \end{center}
+  \caption{#2}
+  \label{fig:#1}
+  \end{figure}
+}
+%% #1=fig filename, #2=caption text, #3=fig width, #4=fig height
+\newcommand\onefigWH[4]{
+  \begin{figure}[tp]
+  \begin{center}
+  \pdftooltip{
+  \includegraphics[width=#3in,height=#4in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1}}
+  \end{center}
+  \caption{#2}
+  \label{fig:#1}
+  \end{figure}
+}
+%% #1=fig1 filename, #2=fig2 filename, #3=caption text, #4=fig1 height, #5=fig2 height
+\newcommand\twofig[3]{
+  \begin{figure}[tp]
+  \centering
+  \begin{tabular}{c}
+  \pdftooltip{
+  \includegraphics[width=6in,height=3.5in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1} top} \\
+  \pdftooltip{
+  \includegraphics[width=6in,height=3.5in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#1} bottom}
+  \end{tabular}
+  \caption{#3}
+  \label{fig:#1}
+  \end{figure}
+  \clearpage
+}
+%% #1=fig1 filename, #2=fig2 filename, #3=caption text, #4=fig1 width #5=fig1 height, #6=fig2 width, #7=fig2 height
+\newcommand\twofigWH[7]{
+  \begin{figure}[tp]
+  \centering
+  \begin{tabular}{c}
+  \pdftooltip{
+  \includegraphics[width=#4in,height=#5in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1} top} \\
+  \pdftooltip{
+  \includegraphics[width=#6in,height=#7in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#1} bottom}
+  \end{tabular}
+  \caption{#3}
+  \label{fig:#1}
+  \end{figure}
+  \clearpage
+}
+%% #1=figure1 #2=figure2 #3=label #4=caption #5=width (fig) #6=height (fig)
+\newcommand\figbeside[6]{
+\begin{figure}[!htp]
+  \centering
+  \pdftooltip{
+  \begin{minipage}[t]{0.47\linewidth}
+    \begin{center}
+    \includegraphics[width=#5in,height=#6in,keepaspectratio=TRUE]{{#1}.\ptype}
+    \end{center}
+    %\caption{#3}
+    %\label{fig:#1}
+  \end{minipage}}{Figure~\ref{fig:#3} left}%
+  \quad
+  \pdftooltip{
+  \begin{minipage}[t]{0.47\linewidth}
+    \begin{center}
+    \includegraphics[width=#5in,height=#6in,keepaspectratio=TRUE]{{#2}.\ptype}
+    \end{center}
+    %\caption{#4}
+    %\label{fig:#2}
+  \end{minipage}}{Figure~\ref{fig:#3} right}
+  \caption{#4}
+  \label{fig:#3}
+\end{figure}
+}
+
+        % keep.source=TRUE,
+
+% Alter some LaTeX defaults for better treatment of figures:
+% See p.105 of "TeX Unbound" for suggested values.
+% See pp. 199-200 of Lamport's "LaTeX" book for details.
+%   General parameters, for ALL pages:
+\renewcommand{\topfraction}{0.95}         % max fraction of floats at top
+\renewcommand{\bottomfraction}{0.50}       % max fraction of floats at bottom
+% Parameters for TEXT pages (not float pages):
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}               % 2 may work better
+\renewcommand{\textfraction}{0.05}        % allow minimal text w. figs
+% Parameters for FLOAT pages (not text pages):
+\renewcommand{\floatpagefraction}{0.75}    % require fuller float pages
+% N.B.: floatpagefraction MUST be less than topfraction !!
+
+%% Stuff from previous LaTeX equation appendix:
+%% -------------------------------------------
+  \def\AppLet{E}                   % Annexe letter
+ %\def\schematic{1~}               % Figure number for schematic fig
+                                   %  (in main text)
+  \font\mbf=cmmib10 scaled 1200    % computer modern math italic bold
+  \font\sbf=cmbsy10 scaled 1200    % computer modern symbol bold
+  \def\bfmi#1{{\hbox{\mbf #1}}}    % bold face math italic macro
+  \def\bfms#1{{\hbox{\sbf #1}}}    % bold face math symbol macro
+  \def\bfTh{{\bf \Theta}}          % bold Theta
+  \def\bfPh{{\bf \Phi}}            % bold Phi
+  \def\bfleq{\,\bfms{\char'24}\,}  % bold <= (less than or equal)
+  \def\bfgeq{\,\bfms{\char'25}\,}  % bold >= (greater than or equal)
+  \def\bfeq{\mbox{\bf\,=\,}}       % bold =
+  \def\bft{\bfmi{t}}               % bold t
+  \def\bfT{\bfmi{T}}               % bold T   - need for headings
+  \def\rbT{\mbox{\bf T}}           % Roman bold T
+  \def\rbU{\mbox{\bf U}}           % Roman bold U
+  \def\winf{w_\infty}
+
+  \def\veq{\vspace{-4ex}} % contraction around equations
+  \def\vec{\vspace{-3ex}} % contraction around centering
+  %\def\headc{\vspace{-2ex}} % contraction after 'fake' subsubheading
+  \def\headc{\vspace{-1ex}} % contraction after 'fake' subsubheading
+  %\def\subsub#1{\noindent {\bf #1} \headc}    % fake subheading
+
+% RH commands
+\newcommand{\code}[1]{\normalsize\texttt{#1}\normalsize}%
+\newcommand\Tstrut{\rule{0pt}{2.6ex}}% top strut
+\newcommand\Bstrut{\rule[-1.1ex]{0pt}{0pt}}% bottom strut
+%\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}%
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}%
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}%
+
+% AME commands
+
+\newcommand{\inarea}{coastwide}
+
+\newcommand{\AppCat}{Annexe~A}
+\newcommand{\AppSurv}{Annexe~B}
+\newcommand{\AppCPUE}{Annexe~C}
+\newcommand{\AppBio}{Annexe~D}
+\newcommand{\AppRes}{Annexe~F}
+
+%% https://tex.stackexchange.com/questions/69662/how-to-globally-change-the-spacing-around-equations
+\makeatletter
+\g@addto@macro\normalsize{%% This is used for equation control but it interferes with \normalsize unless you add % after each line below
+  \setlength\abovedisplayskip{-6pt}%
+  \setlength\belowdisplayskip{-6pt}%
+  \setlength\abovedisplayshortskip{0pt}%
+  \setlength\belowdisplayshortskip{0pt}%
+}
+
+\def\vsd{\vspace*{1ex}}     % Aha - there's a whole bunch of these plus -ve
+\def\hsd{\hspace*{1ex}}
+\def\newp{\vfill \break}
+\def\Var{\mbox{Var}}
+\def\Cov{\mbox{Cov}}
+
+% Equation reference: #1=internal label saved in AUX file
+\newcommand{\eref}[1]{(\ref{#1})}
+
+% Revise Andy's usual:
+\renewcommand{\eb}{\vsd \vsd \begin{eqnarray}}
+\renewcommand{\ee}{\end{eqnarray} \vsd }
+
+%%==========================================================
+
+%% Line delimiters in this document:
+%% #####  Chapter
+%% =====  Section
+%% -----  Subsection
+%% ~~~~~  Subsubsection
+%% +++++  Tables
+%% ^^^^^  Figures
+
+\begin{document}\renewcommand{\tablename}{Tableau}
+
+\setcounter{page}{\startP}
+\setcounter{figure}{\startF}
+\setcounter{table}{\startT}
+\setcounter{secnumdepth}{3}    % To number subsubheadings-ish
+\setlength{\tabcolsep}{3pt}   % table column separator
+
+
+\setlength\LTleft{0pt plus \textwidth}
+\setlength\LTright{0pt plus \textwidth}
+%% Fix by David Carlisle for longtable xxx to match that in array
+\def\LT@startpbox#1{%
+  \bgroup
+  \color@begingroup% Omit line if package date older than 2014/10/28
+    \let\@footnotetext\LT@p@ftntext
+    \setlength\hsize{#1}%
+    \@arrayparboxrestore
+   \everypar{%
+      \vrule \@height \ht\@arstrutbox \@width \z@
+      \everypar{}}%
+%    \vrule \@height \ht\@arstrutbox \@width \z@
+}
+%% Default spacing above and below equations
+%%\setlength{\abovedisplayskip}{-6pt}
+%%\setlength{\belowdisplayskip}{-6pt}
+
+\setcounter{chapter}{5}    % temporary for standalone chapters 9=(5=F, 6=G)
+\renewcommand{\thechapter}{\Alph{chapter}} % ditto
+\renewcommand{\thesection}{\thechapter.\arabic{section}.}
+\renewcommand{\thesubsection}{\thechapter.\arabic{section}.\arabic{subsection}.}
+\renewcommand{\thesubsubsection}{\thechapter.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.}
+\renewcommand{\thetable}{\thechapter.\arabic{table}} 
+\renewcommand{\thefigure}{\thechapter.\arabic{figure}}
+\renewcommand{\theequation}{\thechapter.\arabic{equation}}
+%\renewcommand{\thepage}{\arabic{page}}
+
+\newcounter{prevchapter}
+\setcounter{prevchapter}{\value{chapter}}
+\addtocounter{prevchapter}{-1}
+\newcommand{\eqnchapter}{\Alph{prevchapter}}
+
+\def\finalYr{2022}  %% final year in model
+\def\ncomm{1}       %% index g for commercial fishery (if more than one, this will need to be revised)
+\def\nsurv{4}       %% index g for total number of surveys
+\def\gsurv{2,...,5}     %% index g for all surveys
+\def\gcomm{1}     %% index g for all commercial fisheries
+\def\ugees{1,...,5}     %% index g for surveys/fisheries with age data (composition)
+\def\qgees{1,...,5}     %% index g for surveys/fisheries with index data (abundance)
+
+\newcommand{\spn}{s\'{e}baste \`{a} bouche jaune}
+\newcommand{\spc}{SBJ}
+
+
+%###############################################################################
+\chapter*{ANNEXE~\thechapter. \'{E}QUATIONS DU MOD\`{E}LE}
+
+\newcommand{\LH}{}%%{DRAFT (11/19/2021) not citable}%% Set to {} for final ResDoc
+\newcommand{\RH}{}%%{CSAP WP 2019GRF02}%% Set to {} for final ResDoc
+\newcommand{\LF}{\spn{} 2021}
+\newcommand{\RF}{Annexe~\thechapter ~-- \'{E}quations du mod\`{e}le}
+
+\lhead{\LH}\rhead{\RH}\lfoot{\LF}\rfoot{\RF}
+
+%% Revised to reflect the NUTS procedure
+\newcommand{\nSims}{4\,000}
+\newcommand{\nChains}{8}
+\newcommand{\cSims}{500}
+\newcommand{\cBurn}{250}
+\newcommand{\cSamps}{250}
+\newcommand{\Nmcmc}{2\,000}
+\newcommand{\Nbase}{10\,000}
+
+\newcommand{\numMCMC}{1\,000}
+%\newcommand{\nSims}{6~million}
+\newcommand{\sRate}{5\,000}
+\newcommand{\nSamps}{1\,200}
+\newcommand{\nBurn}{200}
+\newcommand{\harvestMax}{0,401}
+\newcommand{\harvestInc}{0,001}
+\newcommand{\policyMax}{3\,000}
+\newcommand{\policyInc}{500 (or 250)}
+\newcommand{\currYear}{2022} %% so can include in captions.
+\newcommand{\prevYear}{2021} %% so can include in captions.
+\newcommand{\projYear}{2032} %% so can include in captions.
+
+%%==========================================================
+\section{INTRODUCTION}%% CSAP wants this as Heading 2
+
+L'\'{e}valuation des stocks de \spn{} (\spc) de 2021 adopte la version 3.30.17.01 de Stock Synthesis 3 (SS) (15 juin 2021), qui est un cadre de mod\'{e}lisation statistique de la population structur\'{e}e selon l'\^{a}ge \citep{Methot-Wetzel:2013} qui utilise la puissance du logiciel \href{https://www.admb-project.org/}{ADMB} pour l'estimation bay\'{e}sienne des trajectoires des populations et de leurs incertitudes.
+\href{https://vlab.noaa.gov/web/stock-synthesis}{L'\'{e}quipe de d\'{e}veloppement de Stock Synthesis} \`{a} la NOAA (National Oceanic and Atmospheric Administration, d\'{e}partement du Commerce des \'{E}tats-Unis) fournit des ex\'{e}cutables et des documents sur la fa\c{c}on d'ex\'{e}cuter SS, et le \href{https://github.com/nmfs-stock-synthesis/stock-synthesis}{code source de SS} est accessible sur GitHub.
+
+Auparavant, le \spc{} \'{e}tait \'{e}valu\'{e} \`{a} l'aide d'un mod\`{e}le plus simple structur\'{e} selon l'\^{a}ge appel\'{e} \angL Awatea\angR{}, qui est une version de Coleraine \citep{Hilborn-etal:2003} qui a \'{e}t\'{e} \'{e}labor\'{e}e et maintenue par Allan Hicks (alors \`{a} l'Universit\'{e} de Washington, maintenant \`{a} la \href{https://www.iphc.int/}{CIFP}).
+Awatea et SS sont des plateformes de mise en {\oe}uvre du logiciel Automatic Differentiation Model Builder \citep{ADMB:2009}, qui fournit : a) des estimations de la densit\'{e} a posteriori maximale en utilisant une minimisation de fonction et une diff\'{e}renciation automatique; et b) une approximation de la distribution a posteriori des param\`{e}tres \`{a} l'aide de la m\'{e}thode de Monte Carlo par cha\^{i}nes de Markov (MCCM), et plus pr\'{e}cis\'{e}ment de l'algorithme de Hastings-Metropolis \citep{Gelman-etal:2004}.
+
+Awatea a \'{e}t\'{e} utilis\'{e} dans les \'{e}valuations des stocks structur\'{e}es selon l'\^{a}ge suivantes de la C.-B. depuis 2007 :
+\begin{itemize_csas}{}{}
+\item 2020 -- le complexe s\'{e}baste \`{a} {\oe}il \'{e}pineux/s\'{e}baste \`{a} taches noires dans les zones 5DE et 3CD5AB de la CPMP \citep{Starr-Haigh:2022_rebs};
+\item 2019 -- le bocaccio pour la c\^{o}te de la C.-B. \citep{Starr-Haigh:2022_bor};
+\item 2019 -- la veuve pour la c\^{o}te de la C.-B. \citep{Starr-Haigh:2021_wwr};
+\item 2018 -- le s\'{e}baste \`{a} raie rouge dans les zones 5DE et 3CD5ABC de la CPMP \citep{Starr-Haigh:2021_rsr};
+\item 2017 -- le s\'{e}baste \`{a} longue m\^{a}choire (SLM) dans le bassin de la Reine-Charlotte \citep{Haigh-etal:2018_pop5ABC};
+\item 2014 -- le s\'{e}baste \`{a} queue jaune pour la c\^{o}te de la C.-B. \citep{DFO-SAR:2015_ytr};
+\item 2013 -- le s\'{e}baste argent\'{e} le long de la c\^{o}te du Pacifique du Canada \citep{Starr-etal:2016_sgr};
+\item 2013 -- la fausse limande du Pacifique en C.-B. \citep{Holt-etal:2016_rol};
+\item 2012 -- le SLM au large de la c\^{o}te ouest de l'\^{i}le de Vancouver \citep{Edwards-etal:2014_pop3CD};
+\item 2012 -- le SLM au large de la c\^{o}te ouest de Haida Gwaii \citep{Edwards-etal:2014_pop5DE};
+\item 2011 -- le s\'{e}baste \`{a} bouche jaune le long de la c\^{o}te du Pacifique du Canada \citep{Edwards-etal:2012_ymr};
+\item 2010 -- le SLM dans le bassin de la Reine-Charlotte \citep{Edwards-etal:2012_pop5ABC};
+\item 2009 -- la mise \`{a} jour pour le s\'{e}baste canari en C.-B. \citep{DFO-SR:2009_car};
+\item 2007 -- le s\'{e}baste canari en C.-B. \citep{Stanley-etal:2009_car}.
+\end{itemize_csas}
+
+
+La principale force d'Awatea|Coleraine est l'utilisation d'une formulation de vraisemblance robuste propos\'{e}e par \citet{Fournier-etal:1998} pour les donn\'{e}es sur la composition selon le sexe et l'\^{a}ge (ou la longueur). Le mod\`{e}le normal robuste a \'{e}t\'{e} utilis\'{e} plut\^{o}t que le mod\`{e}le d'erreur multinomial plus traditionnel puisqu'il r\'{e}duit l'influence des observations avec des \'{e}carts-types des r\'{e}sidus normalis\'{e}s >\,3  \citep{Fournier-etal:1990}.
+\citet{Fournier-etal:1990} ont rep\'{e}r\'{e} deux types d'\'{e}carts :
+\begin{itemize_csas}{}{}
+	\item type I -- la survenue occasionnelle d'un \'{e}v\'{e}nement ayant une tr\`{e}s faible probabilit\'{e} d'occurrence;
+	\item type II -- la probabilit\'{e} d'observer un \'{e}v\'{e}nement avec une fr\'{e}quence sup\'{e}rieure \`{a} la normale dans la population (p.\,ex., un banc de jeunes poissons).
+\end{itemize_csas}
+Leur fonction de vraisemblance solide r\'{e}duit les deux types d'\'{e}carts.
+
+SS propose deux mod\`{e}les d'erreur, soit le mod\`{e}le multinomial et un mod\`{e}le compos\'{e} multinomial de Dirichlet.
+Ce dernier peut estimer des tailles d'\'{e}chantillon effectives semblables aux m\'{e}thodes de repond\'{e}ration it\'{e}ratives, mais sans n\'{e}cessiter de nombreuses it\'{e}rations d'ex\'{e}cution du mod\`{e}le d'\'{e}valuation \citep{Thorson-etal:2017}.
+Au moment de l'\'{e}valuation des stocks, SS ne proposait pas la fonction de vraisemblance normale consolid\'{e}e de Fournier.
+
+Les entr\'{e}es de donn\'{e}es dans SS comprennent quatre fichiers -- \code{\angL d\'{e}part.ss\angR{}}, \code{\angL donn\'{e}es.ss\angR{}}, \code{\angL contr\^{o}le.ss\angR{}} et \code{\angL pr\'{e}vision.ss\angR{}} -- au lieu d'un seul fichier utilis\'{e} par Awatea.
+Les valeurs de contr\^{o}le des param\`{e}tres et les distributions a priori figurent dans le fichier de \code{contr\^{o}le}, et les donn\'{e}es figurent dans le fichier de \code{donn\'{e}es}; ces fichiers peuvent \^{e}tre nomm\'{e}s comme l'utilisateur le souhaite, car le fichier de \code{d\'{e}part} pr\'{e}cise leurs noms.
+Les noms des fichiers de \code{d\'{e}part} et de \code{pr\'{e}vision} doivent demeurer invariables.
+Contrairement \`{a} Awatea, qui n\'{e}cessite de pr\'{e}ciser un fichier d'entr\'{e}e \`{a} partir de la ligne de commande (p.\,ex., \code{\angL awatea -ind fielname.txt\angR{}}), le lancement de SS se fait en saisissant seulement \code{\angL ss\angR{}}, car le logiciel pr\'{e}sume la pr\'{e}sence des quatre fichiers ci-dessus.
+Les options de SS pour l'ajustement des donn\'{e}es sont plus complexes que celles d'Awatea et offrent une plus grande souplesse; cependant, cette souplesse n\'{e}cessite une courbe d'apprentissage abrupte.
+
+Dans la pr\'{e}sente \'{e}valuation, nous avons utilis\'{e} la distribution multinomiale pour l'ajustement des fr\'{e}quences d'\^{a}ge (FA) malgr\'{e} les avantages de l'utilisation de la distribution multinomiale de Dirichlet, car lors des essais pr\'{e}liminaires, nous n'avons constat\'{e} aucun progr\`{e}s r\'{e}el dans les ajustements r\'{e}siduels des FA, ce qui a n\'{e}cessit\'{e} une repond\'{e}ration manuelle.
+Par cons\'{e}quent, cette \'{e}valuation a opt\'{e} pour un syst\`{e}me de pond\'{e}ration manuelle des donn\'{e}es sur l'abondance et la composition, lequel est d\'{e}crit \`{a} la section~\ref{ss:reweight}%% Section label already ends in a period so do not need another.
+
+L'ex\'{e}cution de la plateforme SS est simplifi\'{e}e \`{a} l'aide d'un code R personnalis\'{e} (archiv\'{e} sur le site GitHub \angL \href{https://github.com/pbs-software}{logiciel PBS} comme \href{https://github.com/pbs-software/pbs-synth}{\code{PBSsynth}}\angR{}), qui s'appuie largement sur le code fourni par les progiciels \angL \href{https://github.com/pbs-software/pbs-awatea}{\code{PBSawatea}}\angR{}, \angL \href{https://github.com/r4ss/r4ss}{\code{r4ss}}\angR{} \citep{R:2020_r4ss} et \angL \href{https://github.com/Cole-Monnahan-NOAA/adnuts}{\code{adnuts}}\angR{} \citep{R:2018_adnuts}.
+Les figures et les tableaux de r\'{e}sultats ont \'{e}t\'{e} produits automatiquement dans R, un environnement pour effectuer des calculs statistiques et cr\'{e}er des graphiques \citep{R:2021_base}.
+La fonction \code{Sweave} de R \citep{Leisch:2002} regroupe automatiquement, au moyen de \LaTeX, la grande quantit\'{e} de figures et de tableaux sous forme de fichiers en format \code{\angL PDF\angR{}} pour les ex\'{e}cutions du mod\`{e}le et \AppRes.
+
+\citet{Methot-Wetzel:2013} fournissent des d\'{e}tails sur le mod\`{e}le SS dans leur annexe~A.
+Une s\'{e}lection de d\'{e}tails sur le mod\`{e}le structur\'{e} selon l'\^{a}ge, la proc\'{e}dure bay\'{e}sienne, le syst\`{e}me de repond\'{e}ration, les distributions a priori et les m\'{e}thodes utilis\'{e}es pour calculer les points de r\'{e}f\'{e}rence et effectuer des projections sont pr\'{e}sent\'{e}s ci-dessous.
+
+%%\clearpage
+%%==========================================================
+\section{HYPOTH\`{E}SES DU MOD\`{E}LE}
+
+Les \textbf{ hypoth\`{e}ses} du mod\`{e}le sont les suivantes :
+\begin{enumerate_csas}{}{}
+\item La population de s\'{e}baste \`{a} bouche jaune (SBJ) \'{e}valu\'{e}e en C.-B. constituait un seul stock dans les zones combin\'{e}s 3CD5ABCDE de la CPMP.
+\item Les prises annuelles ont \'{e}t\'{e} effectu\'{e}es par une seule p\^{e}che, soit \angL Chalut+\angR{}, qui d\'{e}signe une p\^{e}che combin\'{e}e domin\'{e}e par la capture au chalut (de fond et p\'{e}lagique), avec des prises suppl\'{e}mentaires (mineures) provenant d'autres p\^{e}ches (p\^{e}che du fl\'{e}tan \`{a} la palangre, p\^{e}che de la morue charbonni\`{e}re \`{a} la trappe, p\^{e}che de la morue-lingue et du saumon \`{a} la tra\^{i}ne, et p\^{e}che au s\'{e}baste \`{a} la ligne et \`{a} l'hame\c{c}on). La prise annuelle \'{e}tait connue sans erreur et se produisait au milieu de chaque ann\'{e}e.
+\item La relation stock-recrutement de Beverton-Holt \'{e}tait invariable dans le temps et pr\'{e}sentait une structure d'erreur log-normale.
+\item La s\'{e}lectivit\'{e} \'{e}tait diff\'{e}rente entre les flottilles (p\^{e}che et relev\'{e}s), mais identique entre les sexes, et demeurait invariable dans le temps. Les param\`{e}tres de s\'{e}lectivit\'{e} ont \'{e}t\'{e} estim\'{e}s lorsque des donn\'{e}es sur l'\'{e}tablissement de l'\^{a}ge \'{e}taient disponibles.
+\item La mortalit\'{e} naturelle $M$ a \'{e}t\'{e} fix\'{e}e \`{a} cinq valeurs (0,04, 0,045, 0,05, 0,055 et 0,06) pour les femelles et les m\^{a}les et est demeur\'{e}e invariable dans le temps.
+\item Les param\`{e}tres de croissance \'{e}taient \'{e}tablis et invariables dans le temps.
+\item Les param\`{e}tres de la maturit\'{e} selon l'\^{a}ge pour les femelles \'{e}taient fixes et invariables dans le temps. Il n'\'{e}tait pas n\'{e}cessaire de tenir compte la maturit\'{e} des m\^{a}les, car on pr\'{e}sumait qu'il y avait toujours suffisamment de m\^{a}les matures. La population de m\^{a}les matures n'est pas comptabilis\'{e}e par ce mod\`{e}le, la biomasse f\'{e}conde \'{e}tant exprim\'{e}e uniquement en femelles matures.
+\item Le recrutement \`{a} l'\^{a}ge~0 \'{e}tait compos\'{e} de 50\pc{} de femelles et de 50\pc{} de m\^{a}les.
+\item L'\'{e}cart-type du recrutement ($\sigma_R$) a \'{e}t\'{e} fix\'{e} \`{a} 0,9.
+\item Seuls les \^{a}ges des poissons d\'{e}termin\'{e}s \`{a} l'aide de la m\'{e}thode privil\'{e}gi\'{e}e de cassure et de br\^{u}lage des otolithes \citep{MacLellan:1997} ont servi, car les \^{a}ges d\'{e}termin\'{e}s par les m\'{e}thodes d'\'{e}tablissement de l'\^{a}ge selon un examen de la surface (principalement avant 1978) \'{e}taient fauss\'{e}s \citep{Beamish:1979}. L'\'{e}tablissement de l'\^{a}ge selon un examen de la surface a \'{e}t\'{e} jug\'{e} appropri\'{e} pour les tr\`{e}s jeunes s\'{e}bastes (d'\^{a}ge 1 \`{a} 3).
+\item Un vecteur de l'erreur de d\'{e}termination de l'\^{a}ge (EA) fond\'{e} sur des CV des longueurs selon l'\^{a}ge observ\'{e}es a \'{e}t\'{e} utilis\'{e}.
+\item Les \'{e}chantillons des prises de la p\^{e}che commerciale selon l'\^{a}ge dans une p\'{e}riode de trois mois donn\'{e}e au cours d'une ann\'{e}e \'{e}taient repr\'{e}sentatifs de la p\^{e}che de ce trimestre si le nombre d'\'{e}chantillons \'{e}tait $\geq$2 pendant cette ann\'{e}e.
+\item Les indices relatifs \`{a} l'abondance \'{e}taient proportionnels \`{a} la biomasse vuln\'{e}rable au milieu de l'ann\'{e}e, apr\`{e}s que la moiti\'{e} des prises et la moiti\'{e} de la mortalit\'{e} naturelle aient \'{e}t\'{e} retir\'{e}es.
+\item Les \'{e}chantillons pour la composition selon l'\^{a}ge proviennent du milieu de l'ann\'{e}e, apr\`{e}s que la moiti\'{e} des prises et la moiti\'{e} de la mortalit\'{e} naturelle aient \'{e}t\'{e} retir\'{e}es.
+\end{enumerate_csas}
+
+%%==========================================================
+\section{NOTATION ET \'{E}QUATIONS DU MOD\`{E}LE}
+
+La notation utilis\'{e}e dans le mod\`{e}le est indiqu\'{e}e dans le tableau~\AppLet.1, les \'{e}quations dans les tableaux \AppLet.2 et \AppLet.3, et la description des distributions a priori pour les param\`{e}tres estim\'{e}s dans le tableau \AppLet.4. La description du mod\`{e}le est divis\'{e}e entre les composantes d\'{e}terministes, les composantes stochastiques et les a priori bay\'{e}siens. Tous les details sur la notation et les \'{e}quations sont donn\'{e}s apr\`{e}s les tableaux. % (dans l'ordre d'apparition dans les tableaux, dans la mesure du possible).
+
+Les composantes d\'{e}terministes du tableau \AppLet.2 calculent de fa\c{c}on it\'{e}rative le nombre de poissons dans chaque classe d'\^{a}ge (et de chaque sexe) au fil du temps, tout en tenant compte des donn\'{e}es relatives aux prises provenant de la p\^{e}che commerciale, au poids selon l'\^{a}ge et \`{a} la maturit\'{e}, ainsi que des valeurs fixes connues pour tous les param\`{e}tres.
+
+%%\newpage
+Comme nous n'avons pas de valeurs fixes connues (ou suppos\'{e}es fixes) pour tous les param\`{e}tres, nous devons en estimer beaucoup et ajouter de la stochasticit\'{e} au recrutement.
+Pour ce faire, on utilise les composantes stochastiques indiqu\'{e}es au tableau \AppLet.3.
+
+L'incorporation des distributions a priori des param\`{e}tres estim\'{e}s donne la pleine mise en {\oe}uvre bay\'{e}sienne, dont le but est de r\'{e}duire au minimum la fonction objective $\Fobj(\bfTh)$ produite par \eref{Fobj}.
+Cette fonction est d\'{e}riv\'{e}e des composantes d\'{e}terministe, stochastique et a priori du mod\`{e}le. % , qui sont d\'{e}crits \`{a} la suite des tableaux.
+
+%\newpage
+\smallskip
+
+% ********************** Table 1 ************************************
+
+%\baselineskip 2.5ex \vspace{-2ex}
+\setlength\tabcolsep{0pt}
+
+%% The following is too harsh:
+%\fontdimen14\textfont2=6pt
+%\fontdimen15\textfont2=6pt
+%\fontdimen16\textfont2=5pt
+%\fontdimen17\textfont2=5pt
+
+\begin{longtable}{L{1.00in}L{5.5in}}
+\caption{Notation pour le mod\`{e}le des prises selon l'\^{a}ge SS (suite au verso). Le mod\`{e}le d'\'{e}valuation n'utilise que des \angL cohortes\angR{} (classes d'\^{a}ge selon l'ann\'{e}e), alors que SS reconna\^{i}t des subdivisions temporelles plus fines appel\'{e}es \angL morphes\angR{} (saisons), lesquelles peuvent \^{e}tre caract\'{e}ris\'{e}es par des \angL pelotons\angR{} (taux de croissance). }%
+%% Note: $\mr{CST}$ denotes `YMR~offshore'.}%
+\label{tab:notate}
+\\ \hline\\[-2.2ex]
+{\bf Symbole}  & \multicolumn{1}{c}{{\bf Description et unit\'{e}s}} \\[0.2ex]\hline\\[-1.5ex] \endfirsthead \hline
+{\bf Symbole}   & \multicolumn{1}{c}{{\bf Description and units}} \\[0.2ex]\hline\\[-1.5ex] \endhead
+\hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  %
+& \multicolumn{1}{c}{\bf{Indices (tous en indices)}} \\[0.5ex]
+$a$            & \mbull classe d'\^{a}ge, o\`{u} $a = 1, 2, 3,... A$, et\\
+               & \nbull $a^\prime$ = \^{a}ge de r\'{e}f\'{e}rence proche de l'\^{a}ge le plus jeune dans les donn\'{e}es\\% bien repr\'{e}sent\'{e} dans les donn\'{e}es\\
+               & \nbull $a^{\dprime}$ = \^{a}ge de r\'{e}f\'{e}rence proche de l'\^{a}ge le plus avanc\'{e} dans les donn\'{e}es\\% bien repr\'{e}sent\'{e} dans les donn\'{e}es\\
+$l$            & \mbull casier de longueur, o\`{u} $l = 1, 2, 3,... \Lambda$, et $\Lambda$ est l'indice du casier de la plus grande longueur\\
+               & \nbull $L^\prime$ = longueur de r\'{e}f\'{e}rence pour $a^{\prime}$\\
+               & \nbull $L^{\dprime}$ = longueur de r\'{e}f\'{e}rence pour $a^{\dprime}$\\
+               & \nbull $\breve{L}_l, \, \mathring{L}_l$ = longueurs minimale et moyenne du casier de longueur $l$\\%, respectivement\\
+$t$            & \mbull ann\'{e}e de mod\`{e}le, o\`{u} $t = 1, 2, 3,... T$ correspond aux ann\'{e}es r\'{e}elles :\\
+               & 1935, ..., 2022, et $t = 0$ repr\'{e}sente les conditions d'\'{e}quilibre sans exploitation\\
+$g$            & \mbull indice pour les donn\'{e}es sur les s\'{e}ries (abondance|composition) :\\
+   & ~~1 -- P\^{e}che Chalut+|CPUE (donn\'{e}es de la p\^{e}che commerciale)\\ & ~~2 -- Synoptique du BRC -- s\'{e}rie des relev\'{e}s au chalut\\ & ~~3 -- Synoptique sur la COIV -- s\'{e}rie des relev\'{e}s au chalut\\ & ~~4 -- Synoptique sur la COHG -- s\'{e}rie des relev\'{e}s au chalut\\ & ~~5 -- Historique dans le GIG -- s\'{e}rie des relev\'{e}s au chalut\\
+$s$            & \mbull sexe, $1{ = }$femelles, $2{ = }$m\^{a}les\\
+\\[-1.5ex]
+ & \multicolumn{1}{c}{\bf{Plages des indices}} \\
+$A$            & \mbull accumulateur selon la classe d'\^{a}ge, $A\elof{60}$\\
+$G$            & \mbull nombre de flottes (p\^{e}ches et relev\'{e}s)\\
+$\Lambda$      & \mbull nombre de casiers de longueur\\
+$T$            & \mbull nombre d'ann\'{e}es dans le mod\`{e}le, $T = 88$\\
+${\bf T}_g$    & \mbull ensembles d'ann\'{e}es dans le mod\`{e}le pour les indices de l'abondance des relev\'{e}s tir\'{e}es des s\'{e}ries $g$, indiqu\'{e}es ici %\\
+   en ann\'{e}es r\'{e}elles dans un souci de clart\'{e} (soustraire 1934 pour obtenir l'ann\'{e}e dans le mod\`{e}le $t$) :\\
+   & ~~${\bf T}_{1}$ = \{1996, ..., 2020\}\\ & ~~${\bf T}_{2}$ = \{2003:2005, 2007, 2009, 2011, 2013, 2015, 2017, 2019\}\\ & ~~${\bf T}_{3}$ = \{2006:2008, 2010, 2012, 2016, 2018, 2020\}\\ & ~~${\bf T}_{4}$ = \{2004, 2006, 2008, 2010, 2012, 2014, 2016, 2018\}\\ & ~~${\bf T}_{5}$ = \{1967, 1969, 1971, 1973, 1976:1977, 1984, 1994\}\\
+${\bf U}_g$    & \mbull ensembles d'ann\'{e}es dans le mod\`{e}le avec des donn\'{e}es sur la proportion selon l'\^{a}ge pour les s\'{e}ries $g$ :\\% (indiqu\'{e}es ici comme des ann\'{e}es r\'{e}elles) :\\
+   & ~~${\bf U}_{1}$ = \{1979:1980, 1990:1996, 1998:2003, 2005, 2007, 2009:2019\}\\ & ~~${\bf U}_{2}$ = \{2003, 2005, 2007, 2009, 2011, 2013, 2015, 2017, 2019\}\\ & ~~${\bf U}_{3}$ = \{1996, 2006, 2010, 2012\}\\ & ~~${\bf U}_{4}$ = \{1997, 2006:2008, 2010, 2012, 2014, 2016, 2018\}\\ & ~~${\bf U}_{5}$ = \{1979, 1994:1995\}\\
+\\[-1ex]
+
+& \multicolumn{1}{c}{{\bf Donn\'{e}es et param\`{e}tres fix\'{e}s}} \\[0.5ex]
+$\widetilde{a}_{a}$   & \mbull \^{a}ge apr\`{e}s correction du biais pour tenir compte de l'\^{a}ge $a$ (used in ageing error)\\
+$\xi_{a}$             & \mbull \'{e}cart type pour l'\^{a}ge $a$ (utilis\'{e} dans l'erreur de d\'{e}termination de l'\^{a}ge)\\
+$p_{\ds atgs}$        & \mbull proportion pond\'{e}r\'{e}e observ\'{e}e de poissons des s\'{e}ries $g$ chaque ann\'{e}e $t \in {\bf U}_g$ qui sont
+                        la classe d'\^{a}ge $a$ et le sexe $s$; donc $\Sigma_{a=1}^{A} \Sigma_{s=1}^2 p_{atgs} = 1$ pour chaque $t \in {\bf U}_g$; dans SS :\\%%, $g=\ugees$\\
+                      & \nbull $p_l$\,= proportion observ\'{e}e dans le casier de longueur \,$l$\\
+                      & \nbull $p_a$\,= proportion observ\'{e}e dans l'\^{a}ge \,$a$\\
+                      & \nbull $p_z$\,= proportion observ\'{e}e selon la taille dans le casier de longueur\,$l$\\
+                      & \nbull \spc{} n'utilise que $p_a$\\
+$n_{tg}$              & \mbull taille de l'\'{e}chantillon pr\'{e}cis\'{e}e qui donne la $p_{atgs}$ correspondante\\
+$\widetilde{n}_{tg}$  & \nbull taille effective de l'\'{e}chantillon en fonction de $\widehat{p}_{atgs}$\\
+$C_{tg}$              & \mbull biomasse observ\'{e}e des prises (tonnes) au cours de l'ann\'{e}e $t = 1, 2, ..., T-1$\\
+$\tau_{tg}$           & \mbull \'{e}cart-type de $C_{tgs}$\\
+$d_{tg}$              & \mbull biomasse des prises rejet\'{e}es (tonnes) au cours de l'ann\'{e}e $t$\\
+$\delta_{tg}$         & \mbull \'{e}cart-type de $d_{tg}$\\
+$\delta_{tg}^\prime$  & \mbull d\'{e}calage de l'\'{e}cart-type d\'{e}fini par l'utilisateur \`{a} ajouter \`{a} $\delta_{tg}$\\
+$w_{as}$              & \mbull poids moyen (kg) d'un individu de la classe d'\^{a}ge $a$ et du sexe $s$ d'apr\`{e}s les param\`{e}tres fix\'{e}s\\
+$\widebar{w}_{tg}$    & \mbull poids corporel moyen (kg) par ann\'{e}e ($t$) et par flottille ($g$)\\
+$\psi_{tg}$           & \mbull \'{e}cart-type de $\widebar{w}_{tg}$\\
+$\psi_{tg}^\prime$    & \mbull d\'{e}calage de l'\'{e}cart-type d\'{e}fini par l'utilisateur \`{a} ajouter \`{a} $\psi_{tg}$\\
+$m_a$                 & \mbull proportion de femelles de la classe d'\^{a}ge $a$ qui sont matures (fix\'{e}e \`{a} partir des donn\'{e}es)\\
+$I_{tg}$              & \mbull estimations de la biomasse (tonnes) \`{a} partir des relev\'{e}s $g = \gsurv$, pour l'ann\'{e}e $t \in {\bf T}_g$, en tonnes\\
+$\kappa_{tg}$         & \mbull \'{e}cart-type de $I_{tg}$\\
+$\kappa_{tg}^\prime$  & \mbull d\'{e}calage de l'\'{e}cart-type d\'{e}fini par l'utilisateur \`{a} ajouter \`{a} $\kappa_{tg}$\\
+% **$f_{1t}, f_{2t}$  & *needed?, what's the assumption? fraction of catch taken prior to research and charter vessel surveys  \\
+$\sigma_R$            & \mbull param\`{e}tre de l'\'{e}cart-type pour l'erreur du processus de recrutement, $\sigma_R = 0.9$\\
+$\epsilon_t$          & \mbull \'{e}carts de recrutement d\'{e}coulant d'une erreur de processus\\
+$b_t$                 & \mbull param\`{e}tre de correction du biais de recrutement :\\
+                      & \nbull varie de 1 (ann\'{e}es riches en donn\'{e}es) \`{a} 0 (ann\'{e}es pauvres en donn\'{e}es)\\
+% $v_{gR}$            & param\`{e}tre d'\'{e}cart pour le membre droit de la courbe de s\'{e}lectivit\'{e} pour les s\'{e}ries $g = 1,...,7$; $v_{gR} = 100$\\
+% $v_{R}$             & param\`{e}tre d'\'{e}cart pour le membre droit des courbes de s\'{e}lectivit\'{e}, $v_{R} = e^{100}$\\
+% & ~~fix\'{e} \`{a} 100 pour \'{e}viter tout membre descendant
+$\widehat{x}$       & \mbull valeurs estim\'{e}es des donn\'{e}es $x$ observ\'{e}es (g\'{e}n\'{e}ralis\'{e}es)\\
+\\[-.5ex]
+
+%\pagebreak
+
+& \multicolumn{1}{c}{{\bf Param\`{e}tres estim\'{e}s}} \\[0.5ex]
+$\bfTh$             & \mbull ensemble de param\`{e}tres estim\'{e}s :\\
+$R_0$               & \mbull recrutement vierge de poissons d'\^{a}ge 0 (nombres de poissons, en milliers)\\
+$M_{s}$             & \mbull taux de mortalit\'{e} naturelle pour le sexe $s = 1,2$~~(fix\'{e} \`{a} cinq valeurs)\\
+$h$                 & \mbull param\`{e}tre d'inclinaison pour le recrutement de Beverton-Holt (fix\'{e} \`{a} 0,7)\\
+$q_g$               & \mbull capturabilit\'{e} pour les flottes ($g=\qgees$)\\
+%%$\mu_g$           & \mbull \^{a}ge de pleine s\'{e}lectivit\'{e} pour les femelles ($g=\ugees$)\\
+%%$v_{\mr{L}g}$     & \mbull param\`{e}tre exprim\'{e} en logarithme de la largeur du membre ascendant de la courbe de s\'{e}lectivit\'{e} \\
+%%$v_{\mr{R}g}$     & \mbull param\`{e}tre exprim\'{e} en logarithme de la largeur du membre descendant de la courbe de s\'{e}lectivit\'{e} \\
+$\beta_{itg}$      & \mbull param\`{e}tres normaux doubles pour les femelles ($s = 1$),
+                      o\`{u} $i{ = }1,...,6$ pour les six $\beta$ param\`{e}tres qui d\'{e}terminent la s\'{e}lectivit\'{e} $S_{atgs}$ pour
+                      l'ann\'{e}e $t$ and series $g{=}\ugees$, \`{a} l'aide des
+                      fonctions de jonction $j_{1atgs}$ et $j_{2atgs}$ pour les fonctions $\pi_{1atgs}$ et $\pi_{2atgs}$ des membres ascendants et descendants, respectivement, o\`{u} $\gamma_{1tgs}$ et $\gamma_{2tgs}$ d\'{e}crivent des exponentielles \\
+$\Delta_{itg}$      & \mbull d\'{e}calage de la vuln\'{e}rabilit\'{e} pour les m\^{a}les ($s=2$), o\`{u} les indices $itg$ sont les m\^{e}mes que pour $\beta$\\
+% $v_{gL}, v_{gR}$  & \mbull param\`{e}tre d'\'{e}cart pour les membres gauche et droit de la s\'{e}lectivit\'{e} pour les series $g = 1,...,7$; $v_{gR} = 100$ fix\'{e} pour \'{e}viter tout membre descendant\\
+% $\sigma_I$        & \mbull param\`{e}tre d'\'{e}cart-type pour l'erreur initiale de la structure selon l'\^{a}ge \\
+% **$\tau_2$        & \mbull \'{e}cart-type de l'erreur de mesure de la proportion d'\^{a}ge \\
+% **$\kappa^2$      & \mbull \'{e}cart combin\'{e} $\sigma_1^2 + \tau_1^2$ \\
+% **$\rho$          & \mbull ratio de l'\'{e}cart $\sigma_1^2 / \kappa^2$, fix\'{e} dans l'analyse du mod\`{e}le \\
+%%$\alpha$, $\beta$ & \mbull autre formule pour le recrutement :\\
+%%                  & \nbull $\alpha = (1 - h) B_0 / (4 h R_0)$ et $\beta = (5 h - 1) / 4 h R_0$;\\
+% $\widehat{\cdot}$ & \mbull valeur estim\'{e}e des donn\'{e}es observ\'{e}es repr\'{e}sent\'{e}es by $\cdot$
+\\[-1.5ex]
+
+& \multicolumn{1}{c}{{\bf \'{E}tats d\'{e}riv\'{e}s}} \\[0.5ex]
+$N_{ats}$           & \mbull nombre de poissons (en milliers) de la classe d'\^{a}ge $a$ (en milliers) et du sexe $s$ au d\'{e}but de l'ann\'{e}e $t$\\
+$B_t$               & \mbull biomasse f\'{e}conde (tonnes de femelles matures) au d\'{e}but de l'ann\'{e}e $t$\\
+$B_0$               & \mbull biomasse f\'{e}conde vierge (tonnes de femelles matures) au d\'{e}but de l'ann\'{e}e $0$\\
+$R_t$               & \mbull recrutement de poissons d'\^{a}ge 0 (nombres de poissons, en milliers) au cours de l'ann\'{e}e $t$\\
+$\rho_t$            & \nbull \'{e}carts de recrutement (consignation de milliers de poissons d'\^{a}ge 0) au cours de l'ann\'{e}e $t$\\
+$V_{tg}$            & \mbull biomasse vuln\'{e}rable (tonnes de femelles ainsi que de m\^{a}les) au milieu de l'ann\'{e}e $t$\\
+$\Biom_{tg}$        & \mbull biomasse morte conserv\'{e}e \`{a} la mi-saison (tonnes de femelles et de m\^{a}les)\\% ainsi que de m\^{a}les)\\
+$F_{tg}$            & \mbull taux instantan\'{e} de mortalit\'{e} pour la p\'{e}riode $t$ par p\^{e}che $g$\\
+                    & \nbull la m\'{e}thode hybride utilise l'approximation de Pope et l'\'{e}quation de Baranov\\
+                    & \nbull calculs facilit\'{e}s par les variables temporaires $\Temp_{tg}$ et les jonctions $\Joyn_{tg}$\\
+$Z_{ats}$           & \mbull taux de mortalit\'{e} totale (naturelle et par p\^{e}che) pour la p\'{e}riode $t$ et le sexe $s$\\
+
+\\[-0.75ex]
+& \multicolumn{1}{c}{{\bf Composantes de la vraisemblance}} \\[0.5ex]
+$\Lagr_{1g}(\bfTh | \{ \widehat{I}_{tg} \} )$ & \mbull composante log-vraisemblance : CPUE ou indice de l'abondance\\
+$\Lagr_{2g}(\bfTh | \{ d_{tg} \} )$           & \mbull composante log-vraisemblance : rejet de la biomasse \\
+$\Lagr_{3g}(\bfTh | \{ \widebar{w}_{tg} \} )$ & \mbull composante log-vraisemblance : poids corporel moyen \\
+$\Lagr_{4g}(\bfTh | \{ l_{tg} \} )$           & \mbull composante log-vraisemblance : composition selon la longueur\\
+$\Lagr_{5g}(\bfTh | \{ a_{tg} \} )$           & \mbull composante log-vraisemblance : composition selon l'\^{a}ge\\
+$\Lagr_{6g}(\bfTh | \{ z_{tg} \} )$           & \mbull composante log-vraisemblance : composition selon la taille g\'{e}n\'{e}ralis\'{e}e\\
+$\Lagr_{7g}(\bfTh | \{ C_{tg} \} )$           & \mbull composante log-vraisemblance : prise initiale \`{a} l'\'{e}quilibre \\
+$\Lagr_{R}(\bfTh | \{ R_{tg} \} )$            & \mbull composante log-vraisemblance : \'{e}carts de recrutement\\
+$\Lagr_{\phi_j}(\bfTh | \{ \phi_j \} )$       & \mbull composante log-vraisemblance : a priori des param\`{e}tres\\
+$\Lagr_{P_t}(\bfTh | \{ P_t \} )$             & \mbull composante log-vraisemblance : \'{e}carts al\'{e}atoires des param\`{e}tres (s'ils varient avec le temps)\\
+$\Lagr(\bfTh)$                                & \mbull log-vraisemblance total \\
+
+\\[-1.0ex]
+& \multicolumn{1}{c}{{\bf Distributions a priori et fonction objective}} \\[0.25ex]
+$\phi_j(\bfTh)$          & \mbull distribution a priori du param\`{e}tre $j$ \\
+$\phi(\bfTh)$            & \mbull distribution a priori commune pour tous les param\`{e}tres estim\'{e}s\\
+$\Fobj(\bfTh)$     & \mbull fonction objective \`{a} r\'{e}duire au minimum\\
+\hline
+%\end{tabular} \newp % \baselineskip \mybaselineskip
+%\end{table}
+\end{longtable}
+
+%\newpage
+\bigskip
+
+% ********************** Tableau 2 ************************************
+
+\def\beq{ \begin{fleqn} \begin{equation}}
+\def\eeq{\end{equation} \end{fleqn} }
+\def\bec{\\[-30pt]\begin{center}}%%\hspace{-15ex}}
+\def\eec{\end{center} \\[-12pt]}%% \vspace{-1ex}}
+
+\leftskip=0em%   1.5em   %indents caption (that isn't done as a caption)
+\parindent=0em% -1.5em  % then revert back afterwards
+
+\begin{longtable}{L{6.5in}}
+\caption{Composantes d\'{e}terministes. \`{A} l'aide des donn\'{e}es sur les prises, le poids selon l'\^{a}ge et la maturit\'{e}, et avec des valeurs fix\'{e}es pour tous les param\`{e}tres, on calcule les conditions initiales \`{a} partir de \eref{Na0s}-\eref{LA0s}, puis on calcule de mani\`{e}re it\'{e}rative la dynamique de l'\'{e}tat dans le temps selon les \'{e}quations principales \eref{Nats}, les fonctions de la s\'{e}lectivit\'{e} \eref{Satgs}-\eref{gammas}, ainsi que les \'{e}tats d\'{e}riv\'{e}s \eref{Lats}-\eref{Rt}. Il est alors possible de calculer les observations estim\'{e}es pour les indices de la biomasse du relev\'{e} et les proportions selon l'\^{a}ge \`{a} l'aide de \eref{Itg.hat} et de \eref{patgs.hat}. Les observations estim\'{e}es de ces facteurs sont compar\'{e}es aux donn\'{e}es dans le Tableau~\ref{tab:stocomp}.}
+\label{tab:detcomp}
+\\ \hline\\[-2.2ex]
+\multicolumn{1}{c}{\textbf{Composantes d\'{e}terministes}} \\[0.2ex]\hline\\[-1.5ex] \endfirsthead \hline
+\multicolumn{1}{c}{\textbf{Composantes d\'{e}terministes}} \\[0.2ex]\hline\\[-1.5ex] \endhead
+\hline\\[-2.2ex]   \endfoot \\ \hline \endlastfoot  %
+
+%% \vspace appears to be incompatible with longtable (RH 210511)
+%% \multicolumn does not work after a call to fleqn  (RH 210512)
+%% longtable does not recognise pagebreaks once equation has been issued (RH 210513) but:
+%% \pagebreak does work in longtable if equations are properly returned using '\\' (RH 210513)
+
+%%----------------------------------------------------------
+\bec {\bf Conditions initiales (${\bf \bft \bfeq 0 \,;\, \bfmi{s} \bfeq 1,2}$\,)} \eec
+%%\multicolumn{1}{c}{\bf Initial conditions (${\bf \bft \bfeq 0 \,;\, \bfmi{s} \bfeq 1,2}$\,)} \\[-0.5ex]
+
+\beq N_{a0s} = 0,5 R_0 e^{\minus aM_{s}}~;~~~  0 \leq a \leq 3A \minus 1
+  \elabel{Na0s} \eeq \\
+
+\beq N_{A0s} = \sum\nolimits_{a=A}^{3A\minus1} N_{a0s} + (N_{3A \minus 1,0s} \, e^{\minus M_{as}}) \, / \,(1-e^{\minus M_{as}})
+  \elabel{NA0s} \eeq \\
+
+\beq B_0 = B_1 = \sum\nolimits_{a=1}^A w_{as} m_{as} N_{a0s}~;~~~ s{=}1~~\text{\footnotesize ~~~(female)}% ***** need to check equation
+  \elabel{B0} \eeq \\
+
+\begin{fleqn}     % \beq puts -ve vspace, not good for { ...
+\begin{equation}
+L_{a0s} = \left\{
+  \begin{array}{ll}
+    \breve{L}_1 + ( \, a / a^\prime \, ) \, ( \, L_{s}^{\prime} - \breve{L}_1 \, )  & ;~~a \leq a^{\prime}\\
+    L_{\infty s} + ( \, L_{s}^{\prime} - L_{\infty s} \, ) \, e^{\minus k_s ( a \minus a^{\prime} ) }  & ;~~a^{\prime} < a \leq A \minus 1
+\elabel{La0s}
+ \end{array}
+\right.
+\end{equation}
+\end{fleqn}\\
+
+\beq \mr{~~~~~~~~~~~~~~where~~} L_{\infty s} = L_{s}^{\prime} + ( L_{s}^{\dprime} - L_{s}^{\prime} ) \, \left[ 1 - e^{\minus k_s ( a^{\dprime} \minus a^{\prime} ) } \right]
+   \elabel{Linf} \eeq \\%% final return '\\' is necessary
+
+\beq L_{A0s} = \frac { \sum\nolimits_{a=A}^{2A} \left[ e^{\minus 0,2 (a \minus A \minus 1 ) } \right] \left[ L_{As} + ( a / A - 1) ( L_{\infty s} - L_{A0s} ) \right] }{ \sum\nolimits_{a=A}^{2A} e^{\minus 0,2 (a \minus A \minus 1) } }
+  \elabel{LA0s} \eeq \\
+
+%%----------------------------------------------------------
+\\[-0.5ex]
+\bec {\bf Dynamique de l'\'{e}tat (${\bf 2 \bfleq \bft \bfleq \bfT \,;\, \bfmi{s} \bfeq 1,2}$\,)} \eec
+
+\begin{fleqn}
+\begin{equation}
+N_{ats} = \left\{
+ \begin{array}{ll}
+ c R_{0t}  & ;~~a = 0, c = \text{\footnotesize proportion de femelles}\\
+ N_{a \minus 1, t \minus 1, s} \, e^{\minus Z_{a,t \minus 1,s}}  & ;~~1 \leq a \leq A \minus 1\\
+ N_{A \minus 1, t \minus 1, s} \, e^{\minus Z_{A \minus 1, t \minus 1, s}} + N_{A, t \minus 1, s} \, e^{\minus Z_{A, t \minus 1, s}}  & ;~~a = A
+\elabel{Nats}
+ \end{array}
+\right.
+\end{equation}
+\end{fleqn}\\
+
+%% \pagebreak does not work in longtable if equations are not properly returned using '\\' (RH 210513)
+%%\pagebreak
+
+%%----------------------------------------------------------
+\\[-0.5ex]
+\bec {\bf R\'{e}gime de s\'{e}lectivit\'{e} 20 ($\bfmi{g} \bf = 1,...,5$)} \eec
+
+\beq S_{atgs} = \pi_{\ds 1atgs} ( 1 - j_{\ds 1atgs} ) + j_{\ds 1atgs} \left[ ( 1 - j_{\ds 2atgs} ) + j_{\ds 2atgs} \pi_{\ds 2atgs} \right]
+  \elabel{Satgs} \eeq \\
+
+\beq j_{\ds 1atgs} = 1 \, / \, \left[ 1 + e^{\minus 20 ( a \minus \beta_{1tgs} ) / (1 + \left| a \minus \beta_{1tgs} \right| ) } \right]~;~~~ \beta_{1tgs} = \text{\footnotesize premier \^{a}ge o\`{u}~} S_{tgs}{=}1
+  \elabel{j1atgs} \eeq \\
+
+\beq j_{\ds 2atgs} = 1 \, / \, \left[ 1 + e^{\minus 20 ( a \minus a_{tgs}^{\star} ) / (1 + \left| a \minus a_{tgs}^{\star} \right| ) } \right]~;~~~ a_{tgs}^{\star} = \text{\footnotesize dernier \^{a}ge o\`{u}~} S_{tgs}{=}1
+  \elabel{j2atgs} \eeq \\
+
+\beq a_{\ds tgs}^{\star} = \beta_{1tgs} + ( 0,99 A - \beta_{1tgs} ) / ( 1 + \beta_{2tgs} )~;~~~ \text{\footnotesize en supposant \^{a}ge bin\,= 1\,ans}
+  \elabel{astar} \eeq \\
+
+\beq \pi_{\ds 1atgs} = \left( \frac { 1 }{ 1 + e^{\minus \beta_{5tgs}} } \right) \left( \frac { 1 }{ 1 - ( 1 + e^{\minus \beta_{5tgs}} ) } \right) \left( \frac{ e^{\minus ( a \minus \beta_{1tgs} )^2 /  e^{\beta_{3tgs}} } - \gamma_{1tgs} }{ 1 - \gamma_{1tgs} } \right)
+  \elabel{pi1atgs} \eeq \\
+
+\beq \pi_{\ds 2atgs} = 1 + \left[ \left( \frac { 1 }{ 1 + e^{\minus \beta_{6tgs}} } \right) - 1 \right] \left( \frac{ e^{\minus ( a \minus a_{tgs}^{\star} ) /  e^{\beta_{4tgs}} } - 1 }{ \gamma_{2tgs} - 1 } \right)
+  \elabel{pi2atgs} \eeq \\
+
+\beq \gamma_{1tgs} = e^{ \minus (1 \minus \beta_{1tgs})^2 / e^{\beta_{3tgs}} }~;~~~ \gamma_{2tgs} = e^{ \minus (A \minus a_{tgs}^{\star} )^2 / e^{\beta_{4tgs}} }
+  \elabel{gammas} \eeq \\
+
+%\pagebreak
+
+%%----------------------------------------------------------
+\bec {\bf \'{E}tats d\'{e}riv\'{e}s ($\bf 1 \bfleq \bft \bfleq \bfT - 1$\,)} \eec
+
+\beq L_{ats} = L_{a\minus1,t\minus1,s} + \, ( \, L_{a\minus1 \minus k,t\minus1,s} - L_{\infty s} \, ) \, ( \, e^{\minus k_s} - 1 \, );~~~ a < A
+  \elabel{Lats} \eeq \\
+
+\beq L_{Ats} = \frac { N_{A\minus1,ts} \widebar{L}_{Ats} + N_{Ats} \, \left[ \, L_{Ats} - ( \, L_{Ats} + L_{\infty s} \, ) \, ( \, e^{\minus k_s} - 1 \, ) \right] }{ N_{A\minus1,ts} + N_{Ats} }
+  \elabel{LAts} \eeq \\
+
+\beq \widebar{L}_{ats} = {L}_{ats} + ( \, {L}_{ats} - L_{\infty s} \, ) \, ( \, e^{\minus 0,5 k_{s}} - 1 \, )
+  \elabel{Lats.bar} \eeq \\
+
+\begin{fleqn}
+\begin{equation}
+\alpha_{ats} = \left\{
+ \begin{array}{ll}
+ \widebar{L}_{ats} \nu_{s}^{\prime} \, | \, a_{ts} \nu_{s}^{\prime}  & ;~~a \leq a^{\prime}\\
+ \widebar{L}_{ats} \left[ \nu_{s}^{\prime} + ( \widebar{L}_{ats} \minus L_{s}^{\prime} ) / ( L_{s}^{\dprime} \minus L_{s}^{\prime} ) ( \nu_{s}^{\dprime} \minus \nu_{s}^{\prime} ) \right] \, | &\\
+  ~~~a_{ts} \nu_{s}^{\prime} \left[ \nu_{s}^{\prime} + ( a_{ts} \minus a_{s}^{\prime} ) / ( a_{s}^{\dprime} \minus a_{s}^{\prime} ) ( \nu_{s}^{\dprime} \minus \nu_{s}^{\prime} ) \right]  & ;~~a^{\prime} < a < a^{\dprime}\\
+ \widebar{L}_{ats} \nu_{s}^{\dprime} \, | \, a_{ts} \nu_{s}^{\dprime}  & ;~~a^{\dprime} \leq a
+\elabel{cvage}
+ \end{array}
+\right.
+\end{equation}
+\end{fleqn}\\
+
+\begin{fleqn}
+\begin{equation}
+\varphi_{\ds lats} = \left\{
+ \begin{array}{ll}
+ \Phi \left[ (\breve{L}_{l} - \widebar{L}_{ats} ) / \alpha_{ats} \right]  & ;~~l = 1\\
+ \Phi \left[ (\breve{L}_{l+1} - \widebar{L}_{ats} ) / \alpha_{ats} \right] - \Phi \left[ (\breve{L}_{l} - \widebar{L}_{ats} ) / \alpha_{ats} \right]  & ;~~1 < l < L\\
+ 1 - \Phi \left[ (\breve{L}_{l} - \widebar{L}_{ats} ) / \alpha_{ats} \right]  & ;~~l = L
+\elabel{len.age}
+ \end{array}
+\right.
+\end{equation}
+\end{fleqn}\\
+
+\beq w_{\ds ls} = a_s \, \mathring{L}_{\, l}^{\, b_s}~;~~~ \mathring{L}_{\, l} = \text{\footnotesize bac de taille moyenne}~l
+  \elabel{wls} \eeq \\
+
+\beq f_a = \sum\nolimits_{l=1}^{\Lambda} \, \varphi_{\ds las} \, m_{\ds l} o_{\ds l} w_{\ds ls}~;~~~ s{=}1, m{=}\text{\footnotesize maturit\'{e}}, o{=}\text{\footnotesize oeufs/kg}
+  \elabel{fa} \eeq \\
+
+\beq Z_{ats} = M_{as} \sum\nolimits_{g \in 1} \, ( \, S_{atgs} \, F_{tg} \, )~;~~~ F_{tg} = \text{\footnotesize taux de mortalit\'{e} par p\^{e}che apicale}
+  \elabel{Zats} \eeq \\
+
+\beq \Temp_{1tg} = C_{tg}  / ( \widehat{\Biom}_{tg} + 0.1 C_{tg} )~;~~ \Joyn_{1tg} = 1 / \left[ 1 + e^{30 ( \Temp_{1tg} \minus 0,95 ) } \right]~;~~ \Temp_{2tg} = \Joyn_{1tg} \Temp_{1tg} + 0,95 ( 1 - \Joyn_{1tg} )
+  \elabel{Tj1T} \eeq \\
+
+\beq F_{1tg} = -\log \, ( \, 1 - \Temp_{2tg} )
+  \elabel{F1tg} \eeq \\
+
+\beq \widehat{C}_t = \sum\nolimits_{g\in1} \sum\nolimits_{s=1}^2 \sum\nolimits_{a=0}^{A} \, \frac{ F_{1tg} }{ Z_{ats} } \, w_{as} N_{ats} S_{atgs} \lambda_{ats}~;~~~ \lambda_{ats} = ( \, 1 - e^{\minus Z_{ats}} ) / ( \, Z_{ats} \, )
+  \elabel{Ct.hat} \eeq \\
+
+\beq \adj{Z}_{t} = C_{t} / ( \widehat{C}_t + 0,0001 )~;~~ Z_{ats}^\prime = M_{as} + \adj{Z}_{t} ( Z_{ats} - M_{as} )~;~~ \lambda_{ats}^\prime = ( 1 - e^{\minus Z_{ats}^\prime} ) / ( Z_{ats}^\prime )
+  \elabel{Zt.adj} \eeq \\
+
+\beq \Temp_{3tg} = \sum\nolimits_{s=1}^{2} \sum\nolimits_{a=0}^{A} w_{as} N_{ats} S_{atgs} \lambda_{ats}^\prime
+  \elabel{T3tg} \eeq \\
+
+\beq F_{2tg} = C_{tg} / ( \Temp_{3tg} + 0,0001 )~;~~~ \Joyn_{2tg} = 1 / \left[ 1 + e^{30(F_{2tg} \minus 0,95 F_{\mr{max}} ) } \right]
+  \elabel{F2tg} \eeq \\
+
+\beq F_{tg} = \Joyn_{2tg} F_{2tg} + ( 1 - \Joyn_{2tg} ) F_{\mr{max}}~;~~~ \text{\footnotesize estimation actualis\'{e}e de~} F \text{\footnotesize ~en utilisant la m\'{e}thode hybride ci-dessus}
+  \elabel{Ftg} \eeq \\
+
+\beq C_{ats} = \sum\nolimits_{g\in1}  \, \frac{ F_{tg} }{ Z_{ats}^\prime } \, w_{as} N_{ats} S_{atgs} \lambda_{ats}^\prime
+  \elabel{Cats} \eeq \\
+
+\beq B_{t} = \sum\nolimits_{a=0}^{A} \, N_{ats} f_{a}~;~~~s{=}1, f{=} \text{\footnotesize f\'{e}condit\'{e}}
+  \elabel{Bt} \eeq \\
+
+\beq V_{tg} = \sum_{s=1}^2 \sum_{a=1}^A e^{\minus M_{s}/2}\, w_{as} \, N_{ats} \, S_{atgs}~;~~~ g \in \{\gcomm\}, \,\, u_{tg} =  C_{tg}  / V_{tg}, \,\, u_{atgs} = u_{tg} S_{atgs}
+  \elabel{Vtg} \eeq \\
+
+\beq R_t = \frac{ 4 h R_0 B_{t\minus 1} }{ (1-h) B_0 + (5 h - 1) B_{t\minus 1} } ~~\left( \equiv  \frac{B_{t\minus 1}}{\alpha + \beta B_{t\minus 1}} \right)
+  \elabel{Rt} \eeq \\
+
+\\
+\bec {\bf Erreur de d\'{e}termination de l'\^{a}ge} \eec
+%%$\widetilde{a}$     & adjusted ages after ageing error is applied to a modeled distribution of true ages\\
+%% Jon Schnute:
+\beq \Phi(x|\mu,\sigma) = \frac{1}{\sqrt{2\pi}} \int_{\minus\infty}^{(x-\mu)/\sigma} e^{\minus (t^2 / 2)}\,dt~~~\text{\footnotesize distribution normale cumulative}
+  \elabel{cdn.fun} \eeq \\
+%%\beq \widetilde{\Norm}(\mu,\sigma) = \frac{1}{2} \left[ 1 + \Xi \left( \frac{x - \mu}{\sigma \sqrt{2}} \right) \right];~~~ \text{\footnotesize where~~~} \Xi(x) = \frac{1}{\sqrt{2\pi}} \int_{\minus\infty}^{x} e^{\minus t^2}\,dt
+%%  \label{cdn.fun} \eeq \\
+
+\begin{fleqn}
+\begin{equation}
+\Psi_{a} = \left\{
+ \begin{array}{ll}
+ \Phi \left( \frac{ a - \widetilde{a}_{a} }{ \xi_{a} } \right)  & ;~~a = 1\\
+ \Phi \left( \frac{ a + 1 - \widetilde{a}_{a} }{ \xi_{a} } \right) - \Phi \left( \frac{ a - \widetilde{a}_{a} }{ \xi_{a} } \right)  & ;~~1 < a < A\\
+ 1 - \Phi \left( \frac{ A - \widetilde{a}_{a} }{ \xi_{a} } \right)  & ;~~a = A
+\elabel{age.err}
+ \end{array}
+\right.
+\end{equation}
+\end{fleqn}\\
+
+%%   for (a=0; a<=nages;a++)
+%%    {
+%%     age = age_err(Keynum,1,a); // bias-adjusted age?
+%%     for (b=2;b<=n_abins;b++)     //  so the lower tail is accumulated into the first age' bin
+%%       age_age(Keynum,b,a)= cumd_norm((age_bins(b)-age)/age_err(Keynum,2,a));
+%%
+%%     for (b=1;b<=n_abins-1;b++)
+%%       age_age(Keynum,b,a) = age_age(Keynum,b+1,a)-age_age(Keynum,b,a);
+%%
+%%     age_age(Keynum,n_abins,a) = 1.-age_age(Keynum,n_abins,a) ;     // so remainder is accumulated into the last age' bin
+
+\\
+\bec {\bf Observations estim\'{e}es} \eec
+%%  ($\bf 1 \bfleq \bft \bfleq \bfT$\,)} \eec
+
+\beq \widehat{I}_{tg} = q_g  \sum_{s=1}^2 \sum_{a=1}^A e^{-M_{s}/2} (1 - u_{ats}/2)  w_{as} S_{ags} N_{ats} \,; \ \ \ t \in {\bf T}_g, ~g=\qgees
+  \elabel{Itg.hat}  \eeq \\
+
+\beq \widehat{p}_{atgs} = \frac{e^{-M_{s}/2} (1 - u_{ats}/2) S_{ags} N_{ats}}{\sum_{s=1}^2 \sum_{a=1}^A e^{-M_{s}/2} (1 - u_{ats}/2) S_{ags} N_{ats}}; \ \mm{1 \leq a \leq A,~ t \in {\bf U}_g,~g=\ugees,~s=1,2}
+  \elabel{patgs.hat} \eeq \\
+
+
+
+%\noindent \hrule %\tabline
+\end{longtable}
+
+\newp
+
+% ********************** Tableau 3 ************************************
+
+\begin{longtable}{L{6.5in}}
+\caption{Composantes stochastiques. Calcul de la fonction de vraisemblance $\Lagr(\bfTh)$ pour les composantes stochastiques du mod\`{e}le figurant dans le Tableau~\ref{tab:detcomp}, et fonction objective qui en r\'{e}sulte $f(\bfTh)$ \`{a} r\'{e}duire au minimum.}
+\label{tab:stocomp}
+\\ \hline\\[-2.2ex]
+\multicolumn{1}{c}{\textbf{Composantes stochastiques }} \\[0.2ex]\hline\\[-1.5ex] \endfirsthead \hline
+\multicolumn{1}{c}{\textbf{Stochastic components}} \\[0.2ex]\hline\\[-1.5ex] \endhead
+\hline\\[-2.2ex]   \endfoot \hline \endlastfoot  %
+
+\bec {\bf Param\`{e}tres estim\'{e}s} \eec
+
+%% \beq \bfTh = \left( { \vrule height 2.5ex width 0ex} \{\mu_g\}, \{v_{gL}\}, \{\Delta_g\}, \{q_g\}, \{M_s\}, R_0, h \right)
+%% \beq \bfTh = \left\{ \mu_1, \mu_2, \mu_6, v_{1L}, v_{2L}, v_{6L}, \Delta_1, \Delta_2, \Delta_6, q_1, q_2, q_3, M_1, M_2, R_0, h \right\}
+%% redoing in order that output is in:
+%%\beq \bfTh = \left\{ R_0; M_{1,2}; h; q_{\qgees}; \mu_{\ugees}; \Delta_{\ugees}; v_{\ugees L} \right\} \label{lpar} \eeq
+
+\beq \bfTh = \left\{ R_0; q_{\qgees}; \mu_{\ugees}, \pi_{\mr{T}\ugees}, v_{\mr{L}\ugees L}, v_{\mr{R}\ugees}, \pi_{\mr{F}\ugees} \right\}
+  \elabel{bfTh} \eeq
+
+\bec {\bf \'{E}carts du recrutement} \eec
+
+\beq \rho_{t+1} = \log R_{t+1}  - \log B_{t} + \log(\alpha + \beta B_{t}) + 0,5 b_{t} \sigma_R^2 + \epsilon_{t}~;~~~ \epsilon_{t} \sim \Norm (0, \sigma_R^2) \, ,~ 1 \leq t \leq T \minus 1
+  \elabel{rdevs} \eeq \\
+
+\\[-3.5ex]
+\begin{fleqn}
+\begin{equation}
+\text{~~~where~~} b_{t} = \left\{
+ \begin{array}{ll}
+ 0  & ;~~t \leq t_1^b\\
+ b_{\mr{max}} \left[ 1 - (t - t_1^b) / (t_2^b - t_1^b) \right]  & ;~~t_1^b < t < t_2^b\\
+ b_{\mr{max}}  & ;~~t_2^b \leq t \leq t_3^b\\
+ b_{\mr{max}} \left[ 1 - (t_3^b - t) / (t_4^b - t_3^b) \right]  & ;~~t_3^b < t < t_4^b\\
+ 0  & ;~~t_4^b \leq t
+\elabel{rbias}
+ \end{array}
+\right.
+\end{equation}
+\end{fleqn}\\
+
+% \, ; ~~ 1 \leq t \leq T-1~~~~~\text{**** needs proofing}
+% Two equations for if there was error in initial age structure _s
+% \beq \xi_{as} = \log N_{a1s} - \log R_0 + \log 2 + M(a - 1) + \sigma_I^2  \, ;~~1 \leq a \leq A-1, s = 1,2 \label{xias} \eeq \vsd
+
+% \beq \xi_{As} = \log N_{A1s} - \log R_0 + \log 2 + M(A - 1) + \log (1 - e^{- M}) + \sigma_I^2  \, ; s = 1,2  \label{xiAs}  \eeq \vsd
+
+\bec {\bf Composantes logarithme-vraisemblance ($\isactive$~actives, $\inactive$~inactives)} \eec
+
+\beq \isactive~ \Lagr_{1g}(\bfTh | \{ \widehat{I}_{tg} \} ) = \sum_{t \in {\bf T}_g} \left[ \frac{ ( \log I_{tg} - \log (q_g B_{tg}) )^2 }{2 \kappa_{tg}^2 } + \kappa_{tg}^\prime \log \kappa_{tg} \right]
+  \elabel{ll1} \eeq \\
+
+\beq \inactive~ \Lagr_{2g}(\bfTh | \{ d_{tg} \} ) = \sum_{t=1}^T  0,5 (\mr{df}_g + 1) \log \left[ \frac{ 1 + ( d_{tg} - \widehat{d}_{tg} )^2 }{ \mr{df}_g \delta_{tg}^2 }  \right] + \delta_{tg}^\prime \log \delta_{tg}
+  \elabel{ll2} \eeq \\
+
+\beq \inactive~ \Lagr_{3g}(\bfTh | \{ \widebar{w}_{tg} \} ) = \sum_{t=1}^T 0.5 (\mr{df}_{\widebar{w}} + 1) \log \left[ \frac{ 1 + ( \widebar{w}_{tg} - \widehat{\widebar{w}}_{tg} )^2 }{ \mr{df}_{\widebar{w}} \psi_{tg}^2 }  \right] + \psi_{tg}^\prime \log \psi_{tg}
+  \elabel{ll3} \eeq \\
+
+\beq \inactive~ \Lagr_{4g}(\bfTh | \{ l_{tg} \} ) = \sum\nolimits_{t \in {\bf U}_g} \sum\nolimits_{s=1}^2 \sum\nolimits_{l=1}^L n_{\ds tgs} \, p_{\ds ltgs} \, \log \, ( p_{\ds ltgs} / \, \widehat{p}_{\ds ltgs} ) \text{\footnotesize \,; option de composition\,1\normalsize}
+  \elabel{ll4} \eeq \\
+
+\beq \isactive~ \Lagr_{5g}(\bfTh | \{ a_{tg} \} ) = \sum\nolimits_{t \in {\bf U}_g} \sum\nolimits_{s=1}^2 \sum\nolimits_{a=1}^A n_{\ds tgs} \, p_{\ds atgs} \, \log \, ( p_{\ds atgs} / \, \widehat{p}_{\ds atgs} ) \text{\footnotesize \,; option de composition\,2\normalsize}
+  \elabel{ll5} \eeq \\
+
+\beq \inactive~ \Lagr_{6g}(\bfTh | \{ z_{tg} \} ) = \sum\nolimits_{t \in {\bf U}_g} \sum\nolimits_{s=1}^2 \sum\nolimits_{z=1}^{\Lambda} n_{\ds tgs} \, p_{\ds ztgs} \, \log \, ( p_{\ds ztgs} / \, \widehat{p}_{\ds ztgs} ) \text{\footnotesize \,; option de composition\,3\normalsize}
+  \elabel{ll6} \eeq \\
+
+\beq \isactive~ \Lagr_{7g}(\bfTh | \{ C_{tg} \} ) = \sum\nolimits_{t=1}^{T}  \, \left[ \log C_{tg} - \log ( \widehat{C}_{tg} + 1\mr{e}\minus6 ) \right]^2 / ~ 2 \tau_{tg}^2
+  \elabel{ll7} \eeq \\
+
+\beq \isactive~ \Lagr_{R}(\bfTh | \{ R_{t} \} ) = 0,5 \, \sum\nolimits_{t=1}^{T} \, ( \widetilde{R}_t^2 / \sigma_R^2 ) + b_t \log \sigma_R^2
+  \elabel{llR} \eeq \\
+
+\beq \isactive~ \Lagr_{\phi_j}(\bfTh | \{ \phi_j \} ) = 0.5 \, \left[ ( \phi_j - \mu_{\phi_j} ) / \sigma_{\phi_j}  \right]^2 \text{\footnotesize ~~~; distributions a priori normales pour le param\`{e}tre $j$\normalsize}
+  \elabel{llphi.norm} \eeq \\
+
+\beq \isactive~ \Lagr_{\phi_j}(\bfTh | \{ \phi_j \} ) = 0,5 \, \left[ ( \log \phi_j - \mu_{\phi_j} ) / \sigma_{\phi_j}  \right]^2 \text{\footnotesize ~; distributions a priori log-normales pour le param\`{e}tre $j$\normalsize}
+  \elabel{llphi.lnorm} \eeq \\
+
+\beq \inactive~ \Lagr_{P_j}(\bfTh | \{ P_{jt} \} ) = ( 1 / 2\sigma_P^2 ) \, \sum\nolimits_{t=1}^{T} \, \widetilde{P}_{jt}^2 \text{\footnotesize ~~~; pour les param\`{e}tres variant dans le temps, le cas \'{e}ch\'{e}ant\normalsize}
+  \elabel{llP} \eeq \\
+
+\bec {\bf Fonction objective} \eec
+
+\beq \Fobj(\bfTh) = \sum_{i=1}^{7} \sum_{g=1}^{G} \omega_{ig} \Lagr_{ig} + \omega_{R} \Lagr_{R} + \sum_{\phi} \omega_{\phi} \Lagr_{\phi} + \sum_{P} \omega_{P} \Lagr_{P}~~ ; \omega \text{\footnotesize \,= facteurs de pond\'{e}ration pour chaque~} \Lagr
+  \elabel{Fobj} \eeq \\
+
+\end{longtable}
+%\noindent \hrule %\tabline
+\clearpage
+
+\comment{
+%\textbf{Temporary Notes:}
+%\begin{itemize_csas}
+%\item \newstuff{Text in blue indicates new or revised material for scrutiny.}
+%\item \greystuff{Text in grey indicates material that has yet to be determined.}
+%\item \oldstuff{Text in red indicates material from a previous assessment that needs revision to reflect current assessment.}
+%\end{itemize_csas}
+}
+
+% ********************** Table 4 ************************************
+
+\begin{longtable}{L{1in}C{1.0in}C{1.0in}C{1.0in}C{1.0in}C{1.4in}}
+\caption{D\'{e}tails pour l'estimation des param\`{e}tres, y compris les distributions a priori avec les moyennes et les \'{e}carts-types correspondants, les limites des contraintes des param\`{e}tres et les valeurs initiales pour lancer la proc\'{e}dure de minimisation pour les calculs du MDP (mode de la densit\'{e} a posteriori). Pour les distributions a priori uniformes, les limites param\`{e}trent compl\`{e}tement l'a priori. Dans SS, une solution analytique pour $q$ est calcul\'{e}e lorsque le param\`{e}tre est autoris\'{e} \`{a} \angL flotter\angR{}.}
+\comment{
+%Les fonctions de la densit\'{e} de probabilit\'{e} a priori non uniformes ainsi obtenues sont les fonctions $\phi_j(\bfTh)$ qui contribuent \`{a} la distribution a priori commune dans \eref{jointprior}.
+}
+\label{tab:priors}
+\\ \hline\\[-2.2ex]
+\textbf{Param\`{e}tre} & \textbf{Phase} & \textbf{Distribution a priori} & \textbf{Moyenne, \'{e}cart-type} & \textbf{Limites} & \textbf{Valeur initiale}
+\\[0.2ex]\hline\\[-1.5ex] \endfirsthead \hline
+\textbf{Param\`{e}tre} & \textbf{Phase} & \textbf{Distribution a priori} & \textbf{Moyenne, \'{e}cart-type} & \textbf{Limites} & \textbf{Valeur initiale}
+\\[0.2ex]\hline\\[-1.5ex] \endhead
+\hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  %
+
+% copy table from Sweave tex file
+\textbf{SBJ~au large des c\^{o}tes} &   &          &              &             &\\
+$\log R_0$                    & 1 & normale   & 8, 8         & [1, 16]     &  8\\
+$M_{1}, M_{2}$                & - & fix\'{e}e    & --           & --          &  {\footnotesize\{0,04 \`{a} 0,06 par 0,005\}}\\
+$h$                           & - & fix\'{e}e    & --           & --          &  0,7\\
+%%$\log \epsilon_t$             & 2 & normale  & 0, 0,9        & [-15, 15]    &  0\\
+$\log q_{1,...,5}$            & - & analytique & -3,   6      & [-15, 15]   & -3\\
+$\mu_{1}$                     & 3 & normale  & 10,7,  2,14   & [1, 40]     & 10,7\\
+$\mu_{2}$                     & 3 & normale  & 15,6,  3,12   & [1, 40]     & 15,6\\
+$\mu_{3}$                     & 3 & normale  & 15,4,  3,08   & [1, 40]     & 15,4\\
+$\mu_{4}$                     & 3 & normale  & 10,8,  2,16   & [1, 40]     & 10,8\\
+$\mu_{5}$                     & 3 & normale  & 1,,4,  3,48   & [1, 40]     & 17,4\\
+$\log v_{\text{L}1}$        & 4 & normale  &  1,6,  0,32   & [-15, 15]   &  1,6\\
+$\log v_{\text{L}2}$        & 4 & normale  &  3,72, 0,744  & [-15, 15]   &  3,72\\
+$\log v_{\text{L}3}$        & 4 & normale  &  3,44, 0,688  & [-15, 15]   &  3,44\\
+$\log v_{\text{L}4}$        & 4 & normale  &  2,08, 0,416  & [-15, 15]   &  2,08\\
+$\log v_{\text{L}5}$        & 4 & normale  &  4,6,  0,92   & [-15, 15]   &  4,6\\
+$\Delta_{1,...,5}$            & - & fix\'{e}e   &  --           & [-20, 20]   &  0\\
+\hline
+\end{longtable}
+
+%\medskip
+
+%%==========================================================
+\section{DESCRIPTION DES COMPOSANTES D\'{E}TERMINISTES}
+
+La notation (Tableau~\ref{tab:notate}) et la configuration des composantes d\'{e}terministes (Tableau~\ref{tab:detcomp}) sont d\'{e}crites ci-apr\`{e}s. Acronymes : SS~ = Stock Synthesis; AW~ = Awatea, FA~ = fr\'{e}quences d'\^{a}ge ou proportions; \spc~ = \spn.
+
+%currentRes = importRes("C:/Users/haighr/Files/GFish/PSARC13/SGR/Data/Awatea/CST/SGRrun16/SGR-CST.16.03.res", Dev=TRUE, CPUE=TRUE, Survey=TRUE, CLc=TRUE, CLs=TRUE, CAs=TRUE, CAc=TRUE, extra=TRUE)
+
+\subsection{Classes d'\^{a}ge}
+
+L'indice (en indice) $a$ repr\'{e}sente les classes d'\^{a}ge, allant de 1 \`{a} l'accumulateur selon la classe d'\^{a}ge, $A$, de 60.
+La classe d'\^{a}ge $a = 5$, par exemple, repr\'{e}sente les poissons \^{a}g\'{e}s de 4 \`{a} 5 ans (ce qui est la convention habituelle, mais pas universelle, \citealt{Caswell:2001}), et par cons\'{e}quent un poisson de la classe d'\^{a}ge 1 est n\'{e} l'ann\'{e}e pr\'{e}c\'{e}dente.
+La variable $N_{ats}$ est le nombre de poissons de la classe d'\^{a}ge $a$ et du sexe $s$ au \textit{d\'{e}but} de l'ann\'{e}e $t$, donc le mod\`{e}le est ex\'{e}cut\'{e} jusqu'\`{a} l'ann\'{e}e $T$, qui correspond au d\'{e}but de l'ann\'{e}e \finalYr.
+
+\subsection{Ann\'{e}es}
+
+L'indice $t$ repr\'{e}sente les ann\'{e}es dans le mod\`{e}le, de $1$ \`{a} $T=88$, et $t=0$ repr\'{e}sente les conditions d'\'{e}quilibre sans exploitation.
+L'ann\'{e}e r\'{e}elle correspondant \`{a} $t=1$ est 1935, donc l'ann\'{e}e dans le mod\`{e}le $T=88$ correspond \`{a} \finalYr.
+L'interpr\'{e}tation de l'ann\'{e}e d\'{e}pend de l'\'{e}tat d\'{e}riv\'{e} du mod\`{e}le ou de l'entr\'{e}e des donn\'{e}es :
+\begin{itemize_csas}{}{}
+\item d\'{e}but de l'ann\'{e}e : $N_{ats}$, $B_t$, $R_t$
+\item milieu de l'ann\'{e}e : $C_{tg}$, $V_{tg}$, $F_{tg}$, $u_{tg}$, $\widehat{I}_{tg}$, $\widehat{p}_{atgs}$
+\end{itemize_csas}
+
+\subsection{Donn\'{e}es de la p\^{e}che commerciale}
+
+Comme il est expliqu\'{e} \`{a} l'\AppCat, les prises de la p\^{e}che commerciale ont \'{e}t\'{e} reconstitu\'{e}es jusqu'en 1918 pour cinq types de p\^{e}che -- (1)~la p\^{e}che au chalut; (2)~la p\^{e}che du fl\'{e}tan \`{a} la palangre; (3)~la p\^{e}che de la morue charbonni\`{e}re \`{a} la trappe et \`{a} la palangre; (4)~la p\^{e}che du chien de mer, de la morue-lingue et du saumon \`{a} la tra\^{i}ne; (5)~la p\^{e}che du s\'{e}baste de la c\^{o}te ext\'{e}rieure \`{a} la ligne et \`{a} l'hame\c{c}on -- toutes, \`{a} l'exclusion de la zone 4B de la CPMP (d\'{e}troit de Georgie).
+Dans la pr\'{e}sente \'{e}valuation, une seule p\^{e}che a \'{e}t\'{e} utilis\'{e}e, \`{a} savoir \angL Chalut+\angR{} (comprenant les cinq p\^{e}ches).
+La pr\'{e}pond\'{e}rance des prises par la p\^{e}che au chalut \'{e}tait si importante (>99\pc) que les prises de toutes les p\^{e}ches ont \'{e}t\'{e} regroup\'{e}es pour n'en former qu'une seule.
+Compte tenu des prises n\'{e}gligeables les premi\`{e}res ann\'{e}es, le mod\`{e}le commence en 1935 et les prises ant\'{e}rieures \`{a} cette date n'ont pas \'{e}t\'{e} incluses.
+La s\'{e}rie chronologique des prises est indiqu\'{e}e par $C_{tg}$ et comprend les prises conserv\'{e}es et rejet\'{e}es (observ\'{e}es ou reconstitu\'{e}es).
+Cet ensemble ${\bf U}_{\ugees}$ (Tableau~\ref{tab:notate}) donne les ann\'{e}es pour lesquelles on dispose des donn\'{e}es sur la d\'{e}termination de l'\^{a}ge provenant de la p\^{e}che commerciale.
+Les valeurs des proportions selon l'\^{a}ge sont donn\'{e}es par $p_{atgs}$ avec la taille suppos\'{e}e de l'\'{e}chantillon $n_{tg}$, o\`{u} $g = \gcomm$ correspond aux donn\'{e}es de la p\^{e}che commerciale.
+Ces proportions sont les proportions pond\'{e}r\'{e}es calcul\'{e}es selon le syst\`{e}me de pond\'{e}ration stratifi\'{e}e d\'{e}crit \`{a} l'\AppBio, qui ajuste l'effort d'\'{e}chantillonnage in\'{e}gal entre les strates temporelles et spatiales.
+
+\subsection{Donn\'{e}es de relev\'{e}}
+Les donn\'{e}es de relev\'{e} des flottilles $g{=}\gsurv$ ont \'{e}t\'{e} utilis\'{e}es, comme il est d\'{e}crit de mani\`{e}re d\'{e}taill\'{e}e \`{a} l'\AppSurv{}.
+Pour la c\^{o}te de la C.-B., les indices $g$ indiquent les relev\'{e}s suivants : $g$ = 2 correspond aux relev\'{e}s synoptiques men\'{e}s dans le bassin de la Reine-Charlotte (BRC);  $g$ = 3 correspond aux relev\'{e}s synoptiques men\'{e}s sur la c\^{o}te ouest de l'\^{i}le de Vancouver (COIV);  $g$ = 4 correspond aux relev\'{e}s synoptiques men\'{e}es sur la c\^{o}te ouest de Haida Gwaii (COHG);  $g$ = 5 correspond aux relev\'{e}s historiques effectu\'{e}s dans le goulet de l'\^{i}le Goose (GIG).
+Les ann\'{e}es pour lesquelles les donn\'{e}es sont disponibles pour chaque relev\'{e} sont indiqu\'{e}es dans le Tableau~\ref{tab:notate};
+${\bf T}_g$ correspond aux ann\'{e}es des estimations de la biomasse du relev\'{e} $I_{tg}$ (et aux \'{e}carts-types correspondants $\kappa_{tg}$), et ${\bf U}_g$ aux ann\'{e}es des donn\'{e}es sur la proportion selon l'\^{a}ge $p_{atgs}$ (avec les tailles suppos\'{e}es des \'{e}chantillons $n_{tg}$).
+Il convient de noter que la taille de l'\'{e}chantillon se rapporte au nombre d'\'{e}chantillons, o\`{u} chacun d'entre eux comprend des sp\'{e}cimens, g\'{e}n\'{e}ralement $\sim$ 30 \`{a} 350 poissons.
+
+\subsection{Sexe}
+
+Nous avons utilis\'{e} un mod\`{e}le \`{a} deux sexes, o\`{u} l'indice $s{ = }1$ repr\'{e}sente les femelles et $s{ = }2$ les m\^{a}les (il convient de prendre note que ces indices sont l'inverse des codes utilis\'{e}s dans la base de donn\'{e}es GFBioSQL).
+Les donn\'{e}es sur la d\'{e}termination de l'\^{a}ge ont \'{e}t\'{e} s\'{e}par\'{e}es en fonction du sexe, tout comme les intrants des poids selon l'\^{a}ge. Les s\'{e}lectivit\'{e}s et la mortalit\'{e} naturelle ont \'{e}t\'{e} estim\'{e}es pour chaque sexe.
+
+\subsection{Poids selon l'\^{a}ge}
+
+On supposait que les poids selon l'\^{a}ge $w_{as}$ \'{e}taient fixes dans le temps et reposaient sur les param\`{e}tres du mod\`{e}le allom\'{e}trique (longueur-poids) et de croissance (\^{a}ge-longueur) propres au sexe, issus des donn\'{e}es biologiques; voir l'\AppBio{} pour plus de d\'{e}tails.
+
+\subsection{Maturit\'{e} des femelles}
+
+La proportion des femelles de la classe d'\^{a}ge $a$ qui sont matures est $m_a$ et est pr\'{e}sum\'{e}e fixe dans le temps; voir les pr\'{e}cisions \`{a} l'\AppBio{}.
+
+\subsection{Conditions initiales}
+
+On suppose une situation d'\'{e}quilibre sans exploitation au d\'{e}but de la reconstitution, car il n'existe pas de preuve de pr\'{e}l\`{e}vements importants avant 1935.
+Les conditions initiales \eref{Na0s} et \eref{NA0s} ont \'{e}t\'{e} obtenues en d\'{e}finissant $R_t = R_0$ (recrutement vierge), $N_{ats} = N_{a1s}$ (condition d'\'{e}quilibre) et $u_{ats} = 0$ (pas de p\^{e}che).
+\eref{B0} a donn\'{e} la biomasse f\'{e}conde vierge $B_0$.
+Les longueurs initiales ont \'{e}t\'{e} d\'{e}finies au moyen des \'{e}quations de croissance de \citet{Schnute:1981} \eref{La0s}-\eref{LA0s}.
+
+\subsection{Dynamique de l'\'{e}tat}
+
+Le c{\oe}ur du mod\`{e}le est l'ensemble d'\'{e}quations dynamiques \eref{Nats} pour le nombre estim\'{e} $N_{ats}$ de poissons de la classe d'\^{a}ge $a$ et du sexe $s$ au d\'{e}but de l'ann\'{e}e $t$.
+La proportion de nouvelles recrues $c$ (femelles) dans l'\'{e}quation \eref{Nats} a \'{e}t\'{e} fix\'{e}e \`{a} 0,5.
+L'\'{e}quation \eref{Nats} calcule le nombre de poissons de chaque classe d'\^{a}ge (et de chaque sexe) qui survivent jusqu'\`{a} l'ann\'{e}e suivante, o\`{u} $Z_{ats}$ repr\'{e}sente le taux de mortalit\'{e} total, qui dans le pr\'{e}sent cas comprend la mortalit\'{e} naturelle $M$ et la mortalit\'{e} par p\^{e}che $F$.
+L'accumulateur selon la classe d'\^{a}ge $A$ conserve les survivants de cette classe au cours des ann\'{e}es suivantes.
+
+%%La mortalit\'{e} naturelle $M_s$ a \'{e}t\'{e} estim\'{e}e s\'{e}par\'{e}ment pour les m\^{a}les et les femelles.
+La mortalit\'{e} naturelle $M_s$ a \'{e}t\'{e} fix\'{e}e pour les m\^{a}les et les femelles dans la pr\'{e}sente \'{e}valuation, sauf pour le cycle de sensibilit\'{e} S02.
+Ce param\`{e}tre appara\^{i}t dans les \'{e}quations sous la forme $e^{-M_s}$ en tant que proportion des individus non exploit\'{e}s qui survivent cette ann\'{e}e.
+%  (note that e$^{-M_s} \approx 1 - M_s$ since $M_s$ is small).
+
+\subsection{S\'{e}lectivit\'{e}s} \label{ss:select}
+
+Diff\'{e}rentes s\'{e}lectivit\'{e}s ont \'{e}t\'{e} mod\'{e}lis\'{e}es pour chacune des cinq flottilles ($g = 1$ pour la p\^{e}che et $g = 2,...,5$ pour les relev\'{e}s) en utilisant le r\'{e}gime de s\'{e}lectivit\'{e}~20 de SS pour les femelles (les \'{e}quations~\ref{Satgs}-\ref{gammas}) et l'option de s\'{e}lectivit\'{e}~3 pour les m\^{a}les (bien que la s\'{e}lectivit\'{e} des SBJ m\^{a}les ait \'{e}t\'{e} fix\'{e}e au m\^{e}me niveau que celle des femelles dans la pr\'{e}sente \'{e}valuation).
+Il convient de noter que le terme \angL log\angR{} d\'{e}signe ici les logarithmes naturels. %%; \angL AW\angR{} d\'{e}signe Awatea et \angL SS\angR{} d\'{e}signe Stock Synthesis 3.
+La tendance 20 d\'{e}crit une s\'{e}lectivit\'{e} normale double pour les femelles o\`{u} les param\`{e}tres sont les suivants :
+%%\vspace{-0.5\baselineskip}%  because topsep doesn't work
+
+\begin{enumerate_itemize}{}{}
+  \item $\beta_{1g}$ -- l'\^{a}ge auquel la s\'{e}lectivit\'{e} atteint son maximum pour la premi\`{e}re fois (g\'{e}n\'{e}ralement 1) :
+    \begin{enumerate_itemize}{-1}{-0.25}
+      \item SS : l'\^{a}ge de d\'{e}part (ann\'{e}e) pour le plateau;
+      \item AW : l'\^{a}ge de la pleine s\'{e}lectivit\'{e} ($\mu_g$) pour les femelles;
+    \end{enumerate_itemize}
+  \item $\beta_{2g}$ -- utilis\'{e} pour g\'{e}n\'{e}rer une logistique entre le sommet ($\beta_{1g}$) et l'\^{a}ge maximal ($A$) qui d\'{e}termine la largeur du plateau sup\'{e}rieur ($a_g^{\star} - \beta_{1g}$), o\`{u} $a_g^{\star}$ repr\'{e}sente l'\^{a}ge final du plateau sup\'{e}rieur;
+%  \begin{enumerate_itemize}
+%    \item o\`{u} la largeur $w_\mathrm{T} = \beta{1g} + \pi_{\mathrm{T}g} + (0.99A - \pi_{\mathrm{T}g}) / (1+e^{-\pi_{\mathrm{T}g}})$;
+%  \end{enumerate_itemize}
+  \item $\beta_{3g}$ -- utilis\'{e} pour d\'{e}terminer la largeur du membre ascendant de la courbe normale double :
+    \begin{enumerate_itemize}{-1}{-0.25}
+      \item SS : d\'{e}terminer l'inclinaison du membre ascendant en intervenant sur son \'{e}cart;
+      \item AW : log de l'\'{e}cart pour le membre gauche ($v_{\mr{L}g}$) de la courbe de s\'{e}lectivit\'{e};
+    \end{enumerate_itemize}
+  \item $\beta_{4g}$ -- utilis\'{e} pour d\'{e}terminer la largeur du membre descendant de la courbe normale double :
+    \begin{enumerate_itemize}{-1}{-0.25}
+      \item SS : utilis\'{e} pour d\'{e}terminer la largeur du membre descendant de la courbe normale double;
+      \item AW : log de l'\'{e}cart pour le membre droit ($v_{\mr{R}g}$) de la courbe de s\'{e}lectivit\'{e};
+    \end{enumerate_itemize}
+  \item $\beta_{5g}$ -- d\'{e}terminer la s\'{e}lectivit\'{e} initiale en g\'{e}n\'{e}rant une logistique entre 0 et 1 au premier \^{a}ge;
+    \begin{enumerate_itemize}{-1}{-0.25}
+      \item o\`{u} la s\'{e}lectivit\'{e} $S_{a{=}1,g} = 1/(1+e^{-\beta_{5g}})$; toutefois,
+      \item utiliser -999 pour ignorer l'algorithme de s\'{e}lectivit\'{e} initial et diminuer la s\'{e}lectivit\'{e} des petits poissons en utilisant $\beta_{3g}$;
+    \end{enumerate_itemize}
+  \item $\beta_{6g}$ -- d\'{e}terminer la s\'{e}lectivit\'{e} finale en g\'{e}n\'{e}rant une logistique entre 0 et 1 \`{a} la classe d'\^{a}ge finale;
+    \begin{enumerate_itemize}{-0.25}{-0.25}
+      \item o\`{u} la s\'{e}lectivit\'{e} $S_{Ag} = 1/(1+e^{-\beta_{6g}})$.
+    \end{enumerate_itemize}
+\end{enumerate_itemize}
+
+L'option 3 de la tendance 20 d\'{e}crit la s\'{e}lectivit\'{e} des m\^{a}les comme une compensation de la s\'{e}lectivit\'{e} des femelles, o\`{u} les param\`{e}tres sont les suivants :
+\begin{enumerate_csas}{}{}
+\item $\Delta_{1g}$ = la compensation du sommet des m\^{a}les ($\Delta_g$ dans AW) ajout\'{e}e au premier param\`{e}tre de s\'{e}lectivit\'{e}, $\beta_{1g}$ ($\mu_g$ dans AW);
+\item $\Delta_{2g}$ = la compensation de largeur des m\^{a}les (largeur logarithmique) ajout\'{e}e au troisi\`{e}me param\`{e}tre de s\'{e}lectivit\'{e}, $\beta_{3g}$ ($v_{\text{L}g}$ dans AW);
+\item $\Delta_{3g}$ = la compensation de largeur des m\^{a}les (largeur logarithmique) ajout\'{e}e au quatri\`{e}me param\`{e}tre de s\'{e}lectivit\'{e}, $\beta_{4g}$ ($v_{\text{R}g}$ dans AW);
+\item $\Delta_{4g}$ = la compensation du plateau des m\^{a}les ajout\'{e}e au sixi\`{e}me param\`{e}tre de s\'{e}lectivit\'{e}, $\beta_{6g}$;
+\item $\Delta_{5g}$ = la s\'{e}lectivit\'{e} apicale pour les m\^{a}les (g\'{e}n\'{e}ralement 1, mais peut \^{e}tre diff\'{e}rente de celle des femelles).
+\end{enumerate_csas}
+
+La s\'{e}lectivit\'{e} en forme de d\^{o}me ne survient que dans trois conditions :\\
+\begin{itemize_csas}{-0.25}{}
+  \item la largeur du plateau sup\'{e}rieur (entre $\beta_{1g}$ et $a_g^{\star}$) doit \^{e}tre inf\'{e}rieure \`{a} $A - \beta_{1g}$;
+  \item les inclinaisons du membre descendant (contr\^{o}l\'{e} par $\beta_{4g}$) ne doivent pas \^{e}tre trop faibles;
+  \item la s\'{e}lectivit\'{e} finale (contr\^{o}l\'{e}e par $\beta_{6g}$) doit \^{e}tre inf\'{e}rieure \`{a} la s\'{e}lectivit\'{e} maximale (g\'{e}n\'{e}ralement 1).
+\end{itemize_csas}
+En r\`{e}gle g\'{e}n\'{e}rale, la m\^{e}me fonction de s\'{e}lectivit\'{e} est utilis\'{e}e pour les m\^{a}les, sauf que certains des param\`{e}tres de s\'{e}lectivit\'{e} ($\beta_{ig}$ pour $i\in \{1,3,4,6\}$) peuvent \^{e}tre d\'{e}cal\'{e}s si les donn\'{e}es sur les FA des m\^{a}les sont suffisamment diff\'{e}rentes de celles des femelles.
+En ce qui concerne le SBJ, $\Delta_{1,2,3,4}$ ont \'{e}t\'{e} fix\'{e}s \`{a} 0, c.-\`{a}-d. que la s\'{e}lectivit\'{e} des m\^{a}les a \'{e}t\'{e} suppos\'{e}e \^{e}tre la m\^{e}me que celle des femelles.
+
+Pour ce qui est du SBJ~au large des c\^{o}tes, deux des six a priori de la s\'{e}lectivit\'{e} ($\beta_{1g}$ et $\beta_{3g}$) ont \'{e}t\'{e} estim\'{e}s \`{a} l'aide d'a priori normaux, tandis que les quatre autres ont \'{e}t\'{e} fix\'{e}s \`{a} des valeurs qui maintiennent une s\'{e}lectivit\'{e} maximale pour les \^{a}ges sup\'{e}rieurs \`{a} $\beta_{1g} \vee \mu_g$ (c.-\`{a}-d. aucune s\'{e}lectivit\'{e} en forme de d\^{o}me).
+Nous avons utilis\'{e} des valeurs a priori informatives pour nous assurer que les s\'{e}lectivit\'{e}s des relev\'{e}s demeurent dans une plage appropri\'{e}e, \'{e}tant donn\'{e} la nature \'{e}parse et contradictoire des donn\'{e}es sur les FA des relev\'{e}s.
+Bien que nous utilisions des valeurs a priori informatives pour les donn\'{e}es sur les FA dans les p\^{e}ches au chalut, nous aurions pu utiliser une valeur a priori uniforme, \'{e}tant donn\'{e} le signal fort observ\'{e} dans tous les mod\`{e}les pour ces donn\'{e}es.
+Les moyennes a priori ont \'{e}t\'{e} fix\'{e}es \`{a} des valeurs moyennes issues des m\'{e}dianes a posteriori de la m\'{e}thode de MCCM des \'{e}valuations des stocks de s\'{e}baste \`{a} longue m\^{a}choire pr\'{e}c\'{e}dentes, en faisant correspondre chaque relev\'{e} \`{a} l'\'{e}valuation des stocks appropri\'{e}e.
+On a attribu\'{e} \`{a} ces a priori des limites mod\'{e}r\'{e}ment serr\'{e}es (CV = 20\pc).
+Les a posteriori de la m\'{e}thode de MCCM de ces param\`{e}tres de s\'{e}lectivit\'{e} du SBJ~au large des cotes varient peu entre toutes les \'{e}valuations des stocks (sauf lorsqu'on leur attribue des poids \'{e}lev\'{e}s) et pr\'{e}sentent des diagnostics a posteriori acceptables.
+
+\subsection{\'{E}tats d\'{e}riv\'{e}s}
+
+La biomasse f\'{e}conde (biomasse des femelles matures, en tonnes) $B_t$ au d\'{e}but de l'ann\'{e}e $t$ est calcul\'{e}e dans \eref{Bt} en multipliant le nombre de femelles $N_{at1}$ par la f\'{e}condit\'{e} $f_a$ \eref{fa}, qui est une fonction d'une matrice de la longueur selon l'\^{a}ge $\varphi_{lats}$ \eref{len.age}, de la courbe de maturit\'{e} ($m_l$), de la production d'{\oe}ufs ($o_l$)et du poids selon la longueur $w_{l1}$ \eref{wls}.
+
+Le taux de mortalit\'{e} par p\^{e}che $F_{tg}$ \eref{Ftg} provient d'un processus it\'{e}ratif visant \`{a} ajuster au plus pr\`{e}s les prises observ\'{e}es plut\^{o}t que d'\'{e}liminer les prises en proc\'{e}dant par soustraction.
+Un taux de r\'{e}colte en milieu de saison est calcul\'{e} en ayant recours \`{a} l'approximation de Pope \citep{Pope:1972}, qui est ensuite converti en un $F$ instantan\'{e} \`{a} l'aide de l'\'{e}quation de Baranov \citep{Baranov:1918}.
+Le $F$ approximatif de chaque flottille est r\'{e}p\'{e}t\'{e} it\'{e}rativement plusieurs fois (g\'{e}n\'{e}ralement trois ou quatre) en utilisant la proc\'{e}dure de Newton-Rhapson jusqu'\`{a} ce que sa valeur corresponde \'{e}troitement aux prises observ\'{e}es par la flottille.
+Des d\'{e}tails se trouvent dans \citet{Methot-Wetzel:2013}.
+
+SS ne rend pas compte de la biomasse vuln\'{e}rable \textit{en tant que telle}, mais l'\'{e}quation \eref{Vtg} fournit une \'{e}quation d'Awatea pour $V_{tg}$ au milieu de l'ann\'{e}e.
+En supposant que $C_{tg}$ est pris au milieu de l'ann\'{e}e, le taux de r\'{e}colte est simplement $C_{tg} / V_{tg}$.
+De plus, pour l'ann\'{e}e $t$, la proportion $u_{tg}$ de poissons de la classe d'\^{a}ge $a$ et du sexe $s$ qui sont captur\'{e}s dans la p\^{e}che $g$ peut \^{e}tre calcul\'{e}e en multipliant les s\'{e}lectivit\'{e}s de la p\^{e}che commerciale $S_{atgs}$ et le rapport $u_t$ \eref{Vtg}.
+
+\subsection{Fonction stock-recrutement}
+
+On utilise une fonction de recrutement de Beverton-Holt, param\'{e}tr\'{e}e pour l'inclinaison, $h$, qui est la proportion du recrutement non exploit\'{e} \`{a} long terme obtenue lorsque l'on r\'{e}duit l'abondance du stock \`{a} 20\pc{} du niveau vierge \citep{Mace-Doonan:1988, Michielsens-McAllister:2004}.
+Awatea utilise un a priori sur $h$ de \citet{Forrest-etal:2010}, o\`{u} les param\`{e}tres de forme pour une distribution b\^{e}ta sont $\alpha = (1 - h) B_0 / (4 h R_0)$ et $\beta = (5 h - 1) / 4 h R_0$ (\citealt{Hilborn-etal:2003, Michielsens-McAllister:2004}).
+Cela vient de leur substitution dans l'\'{e}quation de Beverton-Holt, $R_t = B_{t-1} / (\alpha + \beta B_{t-1})$, o\`{u} $R_0$ est le recrutement vierge, $R_t$ est le recrutement de l'ann\'{e}e $t$, $B_t$ est la biomasse f\'{e}conde au d\'{e}but de l'ann\'{e}e $t$ et $B_0$ est la biomasse f\'{e}conde vierge.
+Stock Synthesis propose plusieurs options de recrutement, notamment Ricker, Beverton-Holt et une fonction \`{a} trois param\`{e}tres fond\'{e}e sur la survie qui convient aux esp\`{e}ces pr\'{e}sentant un faible taux de f\'{e}condit\'{e} \citep{Taylor-etal:2013}; toutefois, $h$ a \'{e}t\'{e} fix\'{e} \`{a} 0,7 (sauf pour un cycle de sensibilit\'{e}) dans la pr\'{e}sente \'{e}valuation, car le stock n'a jamais \'{e}t\'{e} gravement appauvri.
+
+\subsection{Ajustement aux donn\'{e}es}
+
+Les estimations par le mod\`{e}le des indices de la biomasse du relev\'{e} $I_{tg}$ sont indiqu\'{e}es par $\widehat{I}_{tg}$ et calcul\'{e}es dans \eref{Itg.hat}.
+On multiplie les nombres estim\'{e}s $N_{ats}$ par le terme de la mortalit\'{e} naturelle $e^{-M_s / 2}$ (qui repr\'{e}sente la moiti\'{e} de la mortalit\'{e} naturelle annuelle), le terme $1 - u_{ats} / 2$ (qui repr\'{e}sente la moiti\'{e} des prises de la p\^{e}che commerciale), les poids selon l'\^{a}ge $w_{as}$ (pour la conversion en biomasse) et la s\'{e}lectivit\'{e} $S_{ags}$.
+On multiplie alors la somme (des \^{a}ges et des sexes) par le param\`{e}tre de la capturabilit\'{e} $q_g$ pour obtenir l'estimation de la biomasse du mod\`{e}le $\widehat{I}_{tg}$.
+\comment{
+%Il n'est pas n\'{e}cessaire d'appliquer un coefficient de 0,001 dans \eref{dg1} pour convertir les kg en tonnes, car $N_{ats}$ est exprim\'{e} en milliers de poissons (il en va de m\^{e}me pour \eref{dS0} et \eref{dSt}).
+}
+
+Les proportions selon l'\^{a}ge estim\'{e}es $\widehat{p}_{atgs}$ sont calcul\'{e}es dans \eref{patgs.hat}.
+Pour une ann\'{e}e et un type d'engin donn\'{e}s, le produit $e^{-M_{s}/2} (1 - u_{ats}/2) S_{ags} N_{ats}$ donne les nombres attendus relatifs de poissons captur\'{e}s pour chaque combinaison d'\^{a}ge et de sexe.
+Pour les convertir en proportions estim\'{e}es pour chaque combinaison \^{a}ge-sexe, comme $\sum_{s=1}^2 \sum_{a=1}^{A} \widehat{p}_{atgs} = 1$,il suffit de les diviser par $\sum_{s=1}^2 \sum_{a=1}^A e^{-M_{s}/2} (1 - u_{ats}/2) S_{ags} N_{ats}$.
+
+L'erreur de d\'{e}termination de l'\^{a}ge (EA) dans la pr\'{e}sente \'{e}valuation des stocks a \'{e}t\'{e} appliqu\'{e}e en utilisant les intrants de type vecteur du biais et de la pr\'{e}cision de SS.
+Le vecteur de biais utilis\'{e} \'{e}tait de 0,5 \`{a} 60,5 par incr\'{e}ments de 1 an pour les \^{a}ges 0 \`{a} 60, ce qui, dans SS, signifie qu'aucun biais d'\^{a}ge n'existe.
+Le vecteur de pr\'{e}cision pour les \^{a}ges 0 \`{a} 60 a \'{e}t\'{e} estim\'{e} comme \'{e}tant l'\'{e}cart-type des \^{a}ges 1 \`{a} 61 calcul\'{e} \`{a} partir des CV des longueurs selon l'\^{a}ge :
+~~~$\sigma_a = a (\sigma_{L_a} / \mu_{L_a})$, o\`{u} $a = 1,...,61$.
+En utilisant ces vecteurs, SS applique une distribution normale cumulative pour chaque \^{a}ge afin de calculer la fr\'{e}quence de l'\^{a}ge attendu \'{e}tant donn\'{e} un \^{a}ge moyen attribu\'{e} et un \'{e}cart-type (voir~\ref{age.err}).
+
+\begin{chapquote}{Richard Methot, 2021, \textit{comm. pers.}}
+\angL SS n'ajuste jamais les donn\'{e}es d'entr\'{e}e. La plateforme ajuste plut\^{o}t les valeurs attendues pour les donn\'{e}es afin de prendre en compte les facteurs connus qui ont influenc\'{e} la cr\'{e}ation des observations. Ainsi, l'erreur de d\'{e}termination de l'\^{a}ge est appliqu\'{e}e \`{a} une distribution mod\'{e}lis\'{e}e des \^{a}ges r\'{e}els (apr\`{e}s que la s\'{e}lectivit\'{e} ait pris un sous-ensemble de la population) pour cr\'{e}er une nouvelle distribution des \^{a}ges qui comprend l'influence de l'erreur de d\'{e}termination de l'\^{a}ge.\angR{} [traduction]
+\end{chapquote}
+
+%%==========================================================
+\section{DESCRIPTION DES COMPOSANTES STOCHASTIQUES}
+
+\subsection{Param\`{e}tres}
+
+L'ensemble $\bfTh$ indique les param\`{e}tres qui sont estim\'{e}s.
+La proc\'{e}dure d'estimation est d\'{e}crite dans la section sur les calculs bay\'{e}siens ci-apr\`{e}s.
+
+\subsection{\'{E}carts du recrutement}
+
+Pour le recrutement, on pr\'{e}sume une erreur de processus log-normale, de sorte que la version stochastique de la fonction d\'{e}terministe stock-recrutement (\ref{Rt}) est
+\eb
+R_t = \frac{B_{t-1}}{\alpha + \beta B_{t-1}} e^{\minus 0,5 b_t \sigma_R^2 + \epsilon_t} \elabel{Rt.sto}
+\ee \\[-0.25ex]
+
+%%e^{\minus 0,5 b_t \sigma_R^2 + \epsilon_t}~;~~~ \epsilon_t \sim \Norm (0, \sigma_R^2)
+
+o\`{u} $\epsilon_t \sim \Norm(0, \sigma_R^2)$, et le terme de correction en fonction du biais $-b_t \sigma_R^2/2$ term dans \eref{Rt.sto} permet d'avoir la moyenne des \'{e}carts du recrutement \'{e}gale \`{a} 0.
+On a alors l'\'{e}quation de l'\'{e}cart du recrutement (\ref{rdevs}) et la fonction de logarithme-vraisemblance (\ref{llR}).
+Dans la pr\'{e}sente \'{e}valuation, la valeur de $\sigma_R$ a \'{e}t\'{e} fix\'{e}e \`{a} 0,9 en fonction des valeurs utilis\'{e}es dans les \'{e}valuations r\'{e}centes des stocks de s\'{e}bastes de la C.-B.
+D'autres \'{e}valuations ont utilis\'{e} $\sigma_R$ = 0,6 \`{a} la suite d'une \'{e}valuation du s\'{e}baste argent\'{e} \citep{Starr-etal:2016_sgr} dans laquelle les auteurs ont d\'{e}clar\'{e} qu'il s'agissait de la valeur habituelle pour le \angL s\'{e}baste\angR{} marin \citep{Mertz-Myers:1996}.
+Un mod\`{e}le d'Awatea de la fausse limande a utilis\'{e} $\sigma_R$~= 0,6 \citep{Holt-etal:2016_rol} en mentionnant qu'il s'agissait d'un d\'{e}faut couramment utilis\'{e} pour les \'{e}valuations de poissons \`{a} nageoires \citep{Beddington-Cooke:1983}.
+Lors des r\'{e}centes \'{e}valuations du s\'{e}baste de la C.-B., nous avons adopt\'{e} $\sigma_R$~= 0,9 en nous fondant sur un ajustement empirique du mod\`{e}le conforme aux donn\'{e}es sur la composition selon l'\^{a}ge pour le SLM 5ABC \citep{Edwards-etal:2012_pop5ABC}.
+Une \'{e}tude men\'{e}e par \citet{Thorson-etal:2014} a examin\'{e} 154 populations de poissons et a estim\'{e} que la valeur $\sigma_R$~= 0,74 (ET=0,35) dans sept ordres taxonomiques; la valeur marginale pour les Scorpaeniformes \'{e}tait de $\sigma_R$= 0,78 (ET=0,32), mais n'\'{e}tait \'{e}tablie qu'\`{a} partir de sept stocks.
+
+\subsection{Fonctions de logarithme-vraisemblance}
+
+La fonction objective $\Fobj(\bfTh)$ \eref{Fobj} comprend une somme pond\'{e}r\'{e}e de composantes de la vraisemblance individuelles, lesquelles peuvent inclure les suivantes :
+\begin{itemize_csas}{}{}
+  \item $\Lagr_{I_g}$ \eref{ll1} -- CPUE ou indice d'abondance par flottille;
+  \item $\Lagr_{d_g}$ \eref{ll2} -- biomasse rejet\'{e}e par flottille;
+  \item $\Lagr_{\widehat{w}_g}$ \eref{ll3} -- poids corporel moyen par flottille;
+  \item $\Lagr_{l_g}$ \eref{ll4} -- composition selon la longueur par flottille;
+  \item $\Lagr_{a_g}$ \eref{ll5} -- composition selon l'\^{a}ge par flottille;
+  \item $\Lagr_{z_g}$ \eref{ll6} -- taille moyenne selon l'\^{a}ge par flotte;
+  \item $\Lagr_{C_g}$ \eref{ll7} -- prises par flotte;
+  \item $\Lagr_{R}$ \eref{llR}   --  \'{e}carts de recrutement;
+  \item $\Lagr_{\phi_j}$ \eref{llphi.norm} \`{a} \eref{llphi.lnorm} -- a priori des param\`{e}tres;
+  \item $\Lagr_{P_j}$ \eref{llP} -- \'{e}carts al\'{e}atoires des param\`{e}tres.
+\end{itemize_csas}
+Consulter \citet{Methot-Wetzel:2013} et \citet{Methot-etal:2020} pour obtenir plus d'options de vraisemblance et de d\'{e}tails.
+
+%%==========================================================
+\section{CALCULS BAY\'{E}SIENS}
+
+L'estimation des param\`{e}tres compare les observations estim\'{e}es (fond\'{e}es sur le mod\`{e}le) des indices de la biomasse des relev\'{e}s et les proportions selon l'\^{a}ge aux donn\'{e}es et r\'{e}duit au minimum les \'{e}carts du recrutement.
+\`{A} cette fin, on r\'{e}duit au minimum la fonction objective $f(\bfTh)$ qui, comme le montre l'\'{e}quation \eref{Fobj} est le n\'{e}gatif de la somme de la fonction de logarithme-vraisemblance total comprenant les composantes li\'{e}es au logarithmes \eref{ll1}-\eref{llP}.
+
+%%\newpage
+La proc\'{e}dure des calculs bay\'{e}siens est la suivante :
+\begin{enumerate_itemize}{}{}
+  \item r\'{e}duire au minimum la fonction objective $f(\bfTh)$ afin de produire les estimations du mode de la densit\'{e} a posteriori (MDP) pour chaque param\`{e}tre :
+  \begin{enumerate_itemize}{-0.25}{-0.25}
+    \item cela se fait par phases,
+    \item on applique une proc\'{e}dure de repond\'{e}ration;
+  \end{enumerate_itemize}
+  \item g\'{e}n\'{e}rer des \'{e}chantillons \`{a} partir des distributions a posteriori communes des param\`{e}tres \`{a} l'aide de la proc\'{e}dure de Monte Carlo par cha\^{i}ne de Markov (MCCM) en commen\c{c}ant les cha\^{i}nes \`{a} partir des estimations du MDP.
+\end{enumerate_itemize}
+
+\subsection{Phases}
+
+On a obtenu les estimations du MDP en r\'{e}duisant au minimum la fonction objective $f(\bfTh)$, \`{a} partir de la version stochastique (non bay\'{e}sienne) du mod\`{e}le.
+Ces estimations ont ensuite servi de d\'{e}but aux cha\^{i}nes pour la proc\'{e}dure MCCM pour l'ensemble du mod\`{e}le bay\'{e}sien.
+
+Il n'est pas recommand\'{e} d'estimer simultan\'{e}ment tous les param\`{e}tres qui peuvent \^{e}tre estim\'{e}s pour les mod\`{e}les non lin\'{e}aires complexes, et ADMB permet donc de maintenir certains des param\`{e}tres \`{a} estimer \`{a} une valeur fixe pendant la premi\`{e}re partie du processus d'optimisation \citet{ADMB:2009}.
+Certains param\`{e}tres sont estim\'{e}s pendant la phase~1, d'autres pendant la phase~2, et ainsi de suite.
+L'ordre (s'il est estim\'{e}) g\'{e}n\'{e}ralement utilis\'{e} par l'\'{e}quipe d'\'{e}valuation du s\'{e}baste hauturier de la C.-B. est le suivant :
+
+\begin{changemargin}{0.25in}{0.25in}{0.5ex}
+phase 1 : recrutement vierge $R_0$ et capturabilit\'{e}s des relev\'{e}s $q_{\gsurv}$\\
+  \hsd (bien que l'ajustement $q$ ici adopte une option de \angL flotteur\angR{}, qui calcule une solution analytique);\\
+phase 2 : \'{e}carts du recrutement $\epsilon_t$ (fix\'{e}s \`{a} 0 dans la phase 1);\\
+phase 3 : mortalit\'{e} naturelle $M_{s}$ et \^{a}ge de la pleine s\'{e}lectivit\'{e} pour les femelles $\beta_{1g}$ for $g{=}\ugees$;\\
+phase 4 : param\`{e}tres de s\'{e}lectivit\'{e} suppl\'{e}mentaires $\beta_{ng}$ for $n{=}2,...,6$ $g{=}\ugees$;\\
+phase 5 : inclinaison $h$.
+\end{changemargin}
+
+\subsection{Repond\'{e}ration} \label{ss:reweight}
+
+La taille des \'{e}chantillons est utilis\'{e}e pour calculer l'\'{e}cart d'une source de donn\'{e}es et est utile pour indiquer les diff\'{e}rences relatives d'incertitude entre les ann\'{e}es pour chaque source de donn\'{e}es.
+Cependant, la taille de l'\'{e}chantillon peut ne pas repr\'{e}senter la diff\'{e}rence relative de l'\'{e}cart entre les diff\'{e}rentes sources de donn\'{e}es (g\'{e}n\'{e}ralement l'abondance par rapport \`{a} la composition).
+Par cons\'{e}quent, dans une \'{e}valuation int\'{e}gr\'{e}e des stocks, il faudrait ajuster les pond\'{e}rations relatives de chaque source de donn\'{e}es pour refl\'{e}ter le contenu en information de chacune, tout en conservant les diff\'{e}rences relatives d'une ann\'{e}e \`{a} l'autre.
+Pour ce faire, on peut appliquer des facteurs d'ajustement aux donn\'{e}es sur l'abondance et la composition pour pond\'{e}rer les sources de donn\'{e}es \`{a} la hausse ou \`{a} la baisse les unes par rapport aux autres.
+Les \'{e}valuations des stocks de s\'{e}bastes utilisant le mod\`{e}le d'Awatea depuis 2011 ont adopt\'{e} l'approche de repond\'{e}ration de \citet{Francis:2011}, en ajoutant l'erreur de processus propre \`{a} la s\'{e}rie aux CV de l'indice de l'abondance lors de la premi\`{e}re repond\'{e}ration, et en repond\'{e}rant it\'{e}rativement la taille de l'\'{e}chantillon de la fr\'{e}quence d'\^{a}ge (donn\'{e}es sur la composition) par l'\^{a}ge moyen lors de la premi\`{e}re repond\'{e}ration et des suivantes.
+
+\subsubsection{Abondance} \label{sss:rwt_abund}
+
+Pour les donn\'{e}es sur l'abondance (telles que les indices des relev\'{e}s et les indices des CPUE dans la p\^{e}che commerciale), \citet{Francis:2011} recommande de repond\'{e}rer les coefficients de variation observ\'{e}s, $c_0$, en ajoutant tout d'abord l'erreur de processus, $c_\text{p} \sim$ 0,2 par exemple, afin d'avoir un coefficient de variation repond\'{e}r\'{e}
+
+\eb
+c_1 = \sqrt{c_0^2 + c_\text{p}^2}~. \elabel{reweight}
+\ee
+
+Les indices de l'abondance des relev\'{e}s pour le \spc{} pr\'{e}sentaient une erreur relative \'{e}lev\'{e}e, et aucune erreur suppl\'{e}mentaire $c_\text{p}$ n'a donc \'{e}t\'{e} ajout\'{e}e \`{a} ces indices.
+
+On a \'{e}labor\'{e} une proc\'{e}dure pour estimer l'erreur de processus $c_\text{p}$ qui s'ajoute aux CPUE de la p\^{e}che commerciale au moyen d'une analyse de lissage par splines.
+\citet{Francis:2011}, qui cite \citet{Clark-Hare:2006}, recommande qu'on utilise une fonction de lissage pour d\'{e}terminer l'erreur de processus appropri\'{e}e qui doit \^{e}tre ajout\'{e}e aux donn\'{e}es de CPUE; l'objectif est de trouver un \'{e}quilibre permettant d'ajuster les indices de fa\c{c}on rigoureuse sans enlever la majorit\'{e} du signal relatif aux donn\'{e}es.
+On a utilis\'{e} une s\'{e}quence arbitraire de 50 \'{e}l\'{e}ments comprenant des degr\'{e}s de libert\'{e} (DL,~$\nu_i$), dans laquelle $i = 2,...,N$ et $N$~ correspond au nombre de valeurs de CPUE $U_t$ de $t = 1996,...,2020$, pour ajuster les donn\'{e}es de CPUE \`{a} l'aide du lissage par splines.
+Lorsque $i = N$, la courbe spline \'{e}tait parfaitement ajust\'{e}e aux donn\'{e}es et la somme des carr\'{e}s des r\'{e}sidus (SCR, $\rho_N$) \'{e}tait nulle.
+On a ajust\'{e} la courbe spline \`{a} une plage de degr\'{e}s de libert\'{e} d'essai $\nu_i$; les valeurs de la SCR $\rho_i$ obtenues formaient une courbe de type logistique avec un point d'inflexion \`{a} $i = k$ (Figure~\ref{fig:CPUEres-CVpro-YMR}).
+La diff\'{e}rence entre les estimations ponctuelles de $\rho_i$ (indicateur de la pente $\delta_i$) a produit une courbe concave pour laquelle l'indicateur minimal de la pente $\delta_i$ \'{e}tait situ\'{e} pr\`{e}s du point d'inflexion $k$.
+%%%(Une v\'{e}rification en utilisant le code de l'indicateur de la premi\`{e}re d\'{e}riv\'{e}e a r\'{e}v\'{e}l\'{e} des r\'{e}sultats semblables.)
+Au point d'inflexion $k$, $\nu_k$ =~2,449 pour le SBJ~au large des c\^{o}tes, donc $\rho_k$ =~3,118; on a converti cette valeur \`{a} une $c_\text{p}$= de ~0,3296, au moyen de l'\'{e}quation suivante :
+\vspace{-0.25\baselineskip}%% reduce space above
+\eb
+c_\text{p} = \sqrt{\dfrac{\rho_k}{N-2}}~~~{\left[ \dfrac{1}{N} \sum\limits_{t=1996}^{2020} U_t \right]}^{-1}~. \elabel{cvpro.cpue}
+\ee
+
+Pour chaque ex\'{e}cution du mod\`{e}le, les CV des indices de l'abondance ont \'{e}t\'{e} ajust\'{e}s lors de la premi\`{e}re repond\'{e}ration seulement en utilisant l'erreur de processus $c_\text{p}$~= 0,3296, 0, 0, 0, et 0 le long de la c\^{o}te de la C.-B. ($g$ = 1,...,5).
+
+\graphicspath{{./french/}}  %% does not work if figure with same name is available on the default path (stoopid latex)
+
+%% #1=figure1 #2=figure2 #3=label #4=caption #5=width (fig) #6=height (fig)
+\onefigWH{CPUEres-CVpro-YMR}{Estimation de l'erreur de processus \`{a} ajouter aux donn\'{e}es de CPUE issues de la p\^{e}che commerciale : graphique sup\'{e}rieur gauche -- somme des carr\'{e}s des r\'{e}sidus (SCR) obtenue \`{a} l'aide du lissage par splines \`{a} divers degr\'{e}s de libert\'{e}; graphique sup\'{e}rieur droit -- pente de la SCR ($\sim$ premi\`{e}re d\'{e}riv\'{e}e), la ligne verticale pointill\'{e}e repr\'{e}sente le degr\'{e} de libert\'{e} correspondant \`{a} la valeur minimale de la pente; graphique inf\'{e}rieur gauche -- donn\'{e}es sur l'indice de CPUE lorsque la courbe spline est ajust\'{e}e selon un degr\'{e} de libert\'{e} de 2 (courbe tiret\'{e}e bleue) et un degr\'{e} de libert\'{e} de 2,469 (courbe pleine rouge); graphique inf\'{e}rieur droit -- ajustement des r\'{e}sidus normalis\'{e}.}{4.5}{4.5}
+
+\subsubsection{Composition} \label{sss:rwt_abund}
+
+Les ajustements du mod\`{e}le pour le SBJ utilisant la proc\'{e}dure de pond\'{e}ration de Francis (Francis 2011) ont produit des r\'{e}sultats d'\'{e}valuation qui n'\'{e}taient pas cr\'{e}dibles, les distributions a posteriori de la m\'{e}thode de MCCM donnant des probabilit\'{e}s \'{e}lev\'{e}es pour des tailles initiales des stocks d'\'{e}quilibre ($B_0$) sup\'{e}rieures \`{a} 100 000 tonnes m\'{e}triques et des queues a posteriori qui d\'{e}passaient 1 000 000 de tonnes (g\'{e}n\'{e}ralement associ\'{e}es \`{a} des valeurs \'{e}lev\'{e}es de $M$).
+Ces estimations de la taille des stocks d\'{e}passaient largement les estimations du sc\'{e}nario de r\'{e}f\'{e}rence de $B_0$ \'{e}tablies pour les m\^{e}mes stocks par \citet{Edwards-etal:2012_ymr} et d\'{e}passaient \'{e}galement les estimations \'{e}quivalentes de $B_0$ pour le s\'{e}baste \`{a} longue m\^{a}choire, l'esp\`{e}ce de \emph{Sebastes} dont la population est reconnue comme la plus importante dans les eaux de la C.-B.
+La raison sous-jacente de ces probabilit\'{e}s \'{e}lev\'{e}es pour une grande taille de stock de SBJ r\'{e}side dans la nature peu informative des estimations de la biomasse des relev\'{e}s, lesquelles pr\'{e}sentaient peu de contraste et des erreurs relatives \'{e}lev\'{e}es (tableaux~B.4, B.7, B.10 et B.13, annexe B).
+M\^{e}me l'ajout d'une s\'{e}rie de CPUE pr\'{e}sentant un plus grand contraste et une erreur relative un peu plus faible n'a pas r\'{e}solu le probl\`{e}me des longues queues associ\'{e}es aux estimations de la biomasse tr\`{e}s importantes.
+
+L'exp\'{e}rimentation de pond\'{e}rations alternatives pour les donn\'{e}es sur les fr\'{e}quences d'\^{a}ge a men\'{e} \`{a} la conclusion que les r\'{e}sultats de l'\'{e}valuation qui pr\'{e}sentaient des r\'{e}sultats plus coh\'{e}rents avec \citet{Edwards-etal:2012_ymr}, et qui semblaient se situer dans une plage cr\'{e}dible, pouvaient \^{e}tre obtenus en donnant plus de poids aux donn\'{e}es sur les fr\'{e}quences d'\^{a}ge des chaluts commerciaux.
+La proc\'{e}dure de Francis (2011) a \'{e}t\'{e} con\c{c}ue pour r\'{e}duire la pond\'{e}ration des donn\'{e}es sur la composition afin que les s\'{e}ries de la biomasse des relev\'{e}s et des CPUE pr\'{e}dominent.
+Cependant, cette proc\'{e}dure a \'{e}chou\'{e} pour l'\'{e}valuation des stocks de SBJ de 2021 en raison de la nature peu informative de la s\'{e}rie d'indices de la biomasse tir\'{e}s des relev\'{e}s.
+
+Une augmentation de la pond\'{e}ration arbitraire des donn\'{e}es sur les fr\'{e}quences d'\^{a}ge provenant de la p\^{e}che commerciale, de l'ordre de quatre \`{a} six fois les tailles des \'{e}chantillons d'origine, a permis d'obtenir des estimations du mod\`{e}le plus conformes aux r\'{e}sultats attendus.
+Toutefois, si ces poids accrus ont permis de r\'{e}soudre le probl\`{e}me des queues longues pour les stocks de tr\`{e}s grande taille, ceux-ci se sont av\'{e}r\'{e}s \emph{ponctuels} et sans fondement th\'{e}orique.
+Une autre m\'{e}thode couramment utilis\'{e}e a \'{e}t\'{e} adopt\'{e}e. Cette derni\`{e}re repose sur une proc\'{e}dure sugg\'{e}r\'{e}e dans le manuel de SS sous le titre \angL Directives sur la mod\'{e}lisation de la dynamique des populations, pond\'{e}ration des donn\'{e}es\angR{} et compare la moyenne harmonique des tailles des \'{e}chantillons effectives \`{a} la moyenne arithm\'{e}tique des tailles des \'{e}chantillons observ\'{e}es :
+
+\begin{chapquote}{\citet{Methot-etal:2021}, \textit{pond\'{e}ration des donn\'{e}es}}
+\angL La taille effective de l'\'{e}chantillon est calcul\'{e}e \`{a} partir de l'ajustement des compositions selon la longueur ou l'\^{a}ge observ\'{e}es. L'algorithme pour l'ajustement est destin\'{e} \`{a} rendre la moyenne arithm\'{e}tique de la taille de l'\'{e}chantillon d'entr\'{e}e \'{e}gale \`{a} la moyenne harmonique de la taille effective de l'\'{e}chantillon \citep{McAllister-Ianelli:1997}\angR{} [traduction]
+\end{chapquote}
+
+\citet{Stewart-Hamel:2014} a utilis\'{e} cette m\'{e}thode de la moyenne harmonique pour conclure que la taille des \'{e}chantillons pour les donn\'{e}es sur la composition est souvent de deux \`{a} quatre fois le nombre de lev\'{e}s par voyage.
+En g\'{e}n\'{e}ral, un plus grand nombre d'\'{e}chantillons compos\'{e}s de moins de sp\'{e}cimens est pr\'{e}f\'{e}rable \`{a} un plus petit nombre d'\'{e}chantillons compos\'{e}s de plus de sp\'{e}cimens.
+
+SS calcule les tailles des \'{e}chantillons effectives \eref{effN} et le progiciel dans R \code{r4ss} \citep{R:2020_r4ss} fait \'{e}tat du rapport de la moyenne harmonique de ces tailles des \'{e}chantillons effectives $\widetilde{n}_{tg}$ par rapport \`{a} la moyenne des tailles des \'{e}chantillons d'origine $n_{tg}$ pour chaque flottille $g$ (Figure~\ref{fig:harmonica}).
+
+Chaque ex\'{e}cution du mod\`{e}le indiqu\'{e}e dans la pr\'{e}sente \'{e}valuation des stocks a \'{e}t\'{e} ajust\'{e}e deux fois.
+La premi\`{e}re ex\'{e}cution a permis de proc\'{e}der \`{a} un ajustement initial des donn\'{e}es \`{a} partir duquel nous avons calcul\'{e} le \angL rapport de la moyenne harmonique\angR{} \eref{whmr}.
+La deuxi\`{e}me ex\'{e}cution du mod\`{e}le a utilis\'{e} ce rapport ($w_1$) pour pond\'{e}rer les donn\'{e}es sur les fr\'{e}quences d'\^{a}ge de la p\^{e}che commerciale au chalut, ainsi que pour ajouter l'erreur de processus \`{a} la s\'{e}rie des CPUE (voir la section~\ref{sss:rwt_abund}).
+Nous n'avons utilis\'{e} que le rapport de la moyenne harmonique pour les donn\'{e}es sur l'\^{a}ge tir\'{e}es de la p\^{e}che commerciale et nous avons intentionnellement pond\'{e}r\'{e} \`{a} la baisse les donn\'{e}es sur l'\^{a}ge provenant des relev\'{e}s ($w_{2,3,4,5}$=0,25) pour les raisons d\'{e}crites \`{a} la section~8.1.1.
+L'ajustement MDP de cette deuxi\`{e}me ex\'{e}cution pond\'{e}r\'{e}e a ensuite \'{e}t\'{e} utilis\'{e} comme mod\`{e}le initial pour la proc\'{e}dure de simulation par MCCM.
+
+\eb
+\widetilde{n}_{tg} = \frac{ \sum_{a=1}^A \widehat{p}_{atg} \left( 1 - \widehat{p}_{atg} \right) } { \sum_{a=1}^A \left( p_{atg} - \widehat{p}_{atg} \right) } \elabel{effN}
+\ee
+
+\eb
+w_{g} =   \frac{ \sum\nolimits_t N_{g} / ( 1 / \widetilde{n}_{tg} ) }{ \sum\nolimits_t  n_{tg} / N_{g} }~;~~~ N_g = \text{\footnotesize number years with AF data in fleet~} g  \elabel{whmr}
+\ee
+
+\onefigWH{harmonica}{FA dans la p\^{e}che chalut+ non pond\'{e}r\'{e}e -- moyenne harmonique de la taille effective de l'\'{e}chantillon par rapport \`{a} la moyenne arithm\'{e}tique de la taille ajust\'{e}e de l'\'{e}chantillon. Le but de la pond\'{e}ration des donn\'{e}es sur la composition est d'ajuster la moyenne arithm\'{e}tique de la taille observ\'{e}e de l'\'{e}chantillon pour qu'elle soit approximativement \'{e}gale \`{a} la moyenne harmonique de la taille effective de l'\'{e}chantillon (c.-\`{a}-d. faire passer la ligne grise pleine par l'intersection des lignes pointill\'{e}es bleues).}{4.5}{3.375}
+%\clearpage
+
+\subsection{Distributions a priori}
+
+Les distributions a priori des param\`{e}tres estim\'{e}s (sans inclure les \'{e}carts du recrutement) sont d\'{e}crites dans le Tableau~\ref{tab:priors}.
+Un a priori normal \'{e}lev\'{e} $\Norm$(8,8) a \'{e}t\'{e} utilis\'{e}e pour $R_0$; cela a apport\'{e} plus de stabilit\'{e} au mod\`{e}le que l'utilisation d'un a priori uniforme sans pour autant avoir une incidence sur le processus d'estimation.
+Les a priori de la s\'{e}lectivit\'{e} \'{e}taient normaux avec des moyennes \`{a} partir des valeurs m\'{e}dianes des a posteriori de la m\'{e}thode de MCCM des \'{e}valuations pr\'{e}c\'{e}dentes des stocks de SLM, correspondant \`{a} chaque relev\'{e}, et avec des CV de 20\pc{}.
+La s\'{e}lectivit\'{e} est abord\'{e}e plus en d\'{e}tail \`{a} la section ~\ref{ss:select}
+L'inclinaison n'a pas \'{e}t\'{e} estim\'{e}e dans ce mod\`{e}le, mais elle a \'{e}t\'{e} fix\'{e}e \`{a} $h$ = 0,7.
+Les param\`{e}tres de capturabilit\'{e} $q_g$ ont \'{e}t\'{e} d\'{e}termin\'{e}s de fa\c{c}on analytique par SS (en utilisant \code{flotteur = 1}).
+La mortalit\'{e} naturelle a \'{e}t\'{e} fix\'{e}e dans les ex\'{e}cutions des composantes de base de 0,04 \`{a} 0,06; toutefois, une analyse de sensibilit\'{e} a utilis\'{e} un a priori normal de $\Norm$(0,05 et 0,01) lors de l'estimation de ce param\`{e}tre.
+
+\subsection{Propri\'{e}t\'{e}s de la proc\'{e}dure MCCM}
+
+La proc\'{e}dure MCCM a utilis\'{e} l'algorithme \angL \'{e}chantillonnage sans retour\angR{} (NUTS) \citep{Monnahan-Kristensen:2018, Monnahan-etal:2019} pour produire \nSims{} it\'{e}rations en analysant la charge de travail en \nChains{} cha\^{i}nes parall\`{e}les (\`{a} l'aide du progiciel \code{snowfall} dans~R \citealt{R:2015_snowfall}) de \cSims{} it\'{e}rations chacune, en \'{e}liminant les \cBurn{} premi\`{e}res it\'{e}rations et en conservant les \cSamps{} derniers \'{e}chantillons de chaque cha\^{i}ne.
+Nous avons ensuite fusionn\'{e} les cha\^{i}nes parall\`{e}les pour obtenir les \Nmcmc{} qui ont servi \`{a} l'analyse de MCCM.
+
+%%==========================================================
+\section{POINTS DE R\'{E}F\'{E}RENCE, PROJECTIONS ET AVIS AUX GESTIONNAIRES}
+
+Les avis aux gestionnaires portent sur une s\'{e}rie de points de r\'{e}f\'{e}rence.
+Le premier ensemble est fond\'{e} sur le rendement maximal durable (RMD) et comprend les points de r\'{e}f\'{e}rence provisoires de l'approche de pr\'{e}caution du MPO \citep{DFO-SAR:2006_pa, DFO:2009_pa}, \`{a} savoir 0,4$\Bmsy$ et 0,8$\Bmsy$ (nous fournissons \'{e}galement$\Bmsy$ et $\umsy$, lesquels d\'{e}signent la biomasse f\'{e}conde estim\'{e}e au point d'\'{e}quilibre et le taux de r\'{e}colte au RMD, respectivement).
+Un deuxi\`{e}me ensemble de points de reference comprenant la biomasse f\'{e}conde actuelle $B_{\currYear}$ et le taux de r\'{e}colte $u_{\prevYear}$ est utilis\'{e} pour montrer la probabilit\'{e} que la taille du stock augmente \`{a} partir de la biomasse de femelles reproductrices actuelle ou diminue \`{a} partir du taux de r\'{e}colte actuel.
+Un troisi\`{e}me ensemble de points de r\'{e}f\'{e}rence, 0,2$B_0$ et 0,4$B_0$, repose sur la biomasse f\'{e}conde estim\'{e}e \`{a} l'\'{e}quilibre non exploit\'{e}e $B_0$.
+Voir la discussion plus approfondie dans le corps du document.
+
+%% Revised to reflect the NUTS procedure
+%%\newcommand{\nSims}{4000}
+%%\newcommand{\nChains}{8}
+%%\newcommand{\cSims}{500}
+%%\newcommand{\cBurn}{250}
+%%\newcommand{\cSamps}{250}
+%%\newcommand{\Nmcmc}{2000}
+%%\newcommand{\Nbase}{10,000}
+
+On calcule ensuite la probabilit\'{e} $\text{P}(B_{\finalYr} > 0.4\Bmsy)$ en tant que proportion des \Nbase{} \'{e}chantillons MCCM pour lesquels $B_{\finalYr} > 0,4\Bmsy$ (et de m\^{e}me pour les autres points de r\'{e}f\'{e}rence fond\'{e}s sur la biomasse).
+Pour les taux de r\'{e}colte, la probabilit\'{e} $\text{P}(u_{\prevYear} < \umsy)$ est calcul\'{e}e de mani\`{e}re \`{a} ce que les indicateurs de l'\'{e}tat des stocks fond\'{e}s sur $B$- et $u$ (et les projections lorsque $t = 2023,...,\projYear$) indiquent la probabilit\'{e} de se trouver dans une \angL bonne\angR{} situation.
+
+Les projections ont \'{e}t\'{e} \'{e}tablies \`{a} 11 ans, en commen\c{c}ant avec la biomasse pour le d\'{e}but de \currYear.
+L'utilisateur de SS doit \^{e}tre conscient que toutes les valeurs d\'{e}riv\'{e}es sont pour une p\'{e}riode de d\'{e}but d'ann\'{e}e.
+Par cons\'{e}quent, si l'ann\'{e}e de fin dans les donn\'{e}es est pr\'{e}cis\'{e}e comme \'{e}tant \prevYear, les quantit\'{e}s d\'{e}riv\'{e}es comme la biomasse f\'{e}conde $B_t$ sont estim\'{e}es au d\'{e}but de l'ann\'{e}e \prevYear.
+SS \'{e}tablira par d\'{e}faut une projection d'au moins un an de sorte que les prises de \prevYear{} puissent \^{e}tre appliqu\'{e}es et que les quantit\'{e}s d\'{e}riv\'{e}es soient g\'{e}n\'{e}r\'{e}es pour \currYear{} (pr\'{e}vision d'un an).
+Par cons\'{e}quent, dans le fichier \code{forecast.ss}, l'utilisateur doit indiquer l'ann\'{e}e en cours plus toutes les ann\'{e}es de pr\'{e}vision suppl\'{e}mentaires (p.\,ex., une pr\'{e}vision sur 10 ans n\'{e}cessite 11 prises pr\'{e}cis\'{e}es de \currYear{} \`{a} 2033).
+De plus, si un utilisateur requiert des pr\'{e}visions g\'{e}n\'{e}rationnelles (p.\,ex., trois g\'{e}n\'{e}rations de SBJ = 90 ans), 91 ann\'{e}es de pr\'{e}vision doivent \^{e}tre pr\'{e}cis\'{e}es avant toute tentative d'ex\'{e}cution MCCM.
+Dans ce document de travail, notre projection sur 10 ans comprenait l'ann\'{e}e en cours (d\'{e}but de \currYear) et nous n'avons donc en r\'{e}alit\'{e} que 9 ans de projection.
+
+On a utilis\'{e} une fourchette de strat\'{e}gies de prises constantes, de 0 \`{a} \policyMax\t par incr\'{e}ments de \policyInc\ t (les prises moyennes de 2016 \`{a} 2020 \'{e}taient de 1272\,t le long de la c\^{o}te de la~C.-B.).
+Pour chaque strat\'{e}gie, les projections ont \'{e}t\'{e} \'{e}tablies pour chacun des \Nbase{} \'{e}chantillons MCCM (ce qui a donn\'{e} les distributions a posteriori de la future biomasse f\'{e}conde).
+Les recrutements ont \'{e}t\'{e} calcul\'{e}s de mani\`{e}re al\'{e}atoire \`{a} l'aide de \eref{Rt} (c.-\`{a}-d.~\`{a} partir des \'{e}carts du recrutement log-normaux tir\'{e}s de la courbe estim\'{e}e du stock-recrutement), avec les valeurs de $\epsilon_t \sim \mbox{Normal}(0, \sigma_R^2)$ g\'{e}n\'{e}r\'{e}es al\'{e}atoirement.
+Malheureusement, SS calcule les \'{e}carts de recrutement projet\'{e}s au moment des ex\'{e}cutions MCCM et nous n'avons donc pas pu modifier la politique de prises apr\`{e}s l'ex\'{e}cution MCCM.
+Dans Awatea, le passage \`{a} \code{-mceval} peut produire une s\'{e}rie chronologique de $\left\{ \epsilon_t \right\}$ pr\'{e}cis\'{e}e par l'utilisateur pour chacun des \'{e}chantillons MCCM, ce qui signifie que les politiques de prises peuvent varier en fonction du nombre d'ann\'{e}es projet\'{e}es.
+%%Pour chacun de ces \'{e}chantillons, on a utilis\'{e} la m\^{e}me s\'{e}rie chronologique de $\left\{ \epsilon_t \right\}$ pour chaque strat\'{e}gie de prises (afin que pour un \'{e}chantillon MCCM donn\'{e}, toutes les strat\'{e}gies de prises soient soumises \`{a} la m\^{e}me stochasticit\'{e} du recrutement).
+
+%\clearpage
+
+\bibliographystyle{resDoc_french}
+%% Use for appendix bibliographies only: (http://www.latex-community.org/forum/viewtopic.php?f=5&t=4089)
+\renewcommand\bibsection{\section{R\'{E}F\'{E}RENCES -- \'{E}QUATIONS DU MOD\`{E}LE}}
+\bibliography{C:/Users/haighr/Files/GFish/CSAP/Refs/CSAPrefs_french}
+
+\end{document}

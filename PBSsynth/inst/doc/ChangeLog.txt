@@ -5,6 +5,19 @@ Authors : RH  = Rowan Haigh
           PJS = Paul Starr
           CG  = Chris Grandin
 
+0.4.0 (2023-01-11) [Rcheck=F, Rbuild=F]
+  * R code
+    + Updated `appFuns.r'
+      - Modified functions `tabSS.compo' and `tabSS.senso' to properly label the harvest rate (u) subscripts. (RH 221220)
+      - Modified function `plotSS.senso' to use `B1' instead of `CR' when there is only one base run. (RH 221220)
+    + Updated `plotFuns.r'
+      - Modified function `plotSS.stdres' to use r4ss' calculation of Pearson residuals for AFs fitted by the Multinomial or Dirichlet-Multinomial. (RH 221116)
+    + Added a `zzz.r' file in case a package miraculously coalesces. (RH 230111)
+  * Documentation (RH 230111)
+    + Added CAR's base run and sensitivity model inputs (ss files)
+    + Added CAR's sweave-based components for Appendices E and F for the working paper (WP) and research document (RD).
+    + Added YMR's final english and french Appendices E & F for CSAS publication.
+
 0.3.0 (2022-11-01) [Rcheck=F, Rbuild=F]
   * R code
     + `plotFuns.r' -- accumulated changes to plotting functions since last year (2021)

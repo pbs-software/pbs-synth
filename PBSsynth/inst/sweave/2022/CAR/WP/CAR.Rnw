@@ -1,0 +1,826 @@
+%$ !Rnw root = AppF_Results_CAR_BC_2021_WP.Rnw
+%% R scripts:
+%%   gatherMCMC.r
+%%   plotSS.pmcmc.r
+%%   plotSS.compo.r
+%%   plotSS.senso.r
+%%   tabSS.compo.r
+%%   tabSS.decision.r
+%%   tabSS.senso.r
+%%==============================================================================
+%% Canary Base Case (Runs 77, 71, 75, 72, 76) %% spanning M=0.04 to M=0.06 at 0.005 increments
+
+%%\renewcommand{\baselinestretch}{1.0}% increase spacing for all lines, text and table (maybe use \\[-1em])
+\renewcommand*{\arraystretch}{1.1}% increase spacing for table rows
+
+%% Revised to reflect the NUTS procedure
+\newcommand{\nSims}{4,000}
+\newcommand{\nChains}{8}
+\newcommand{\cSims}{500}
+\newcommand{\cBurn}{250}
+\newcommand{\cSamps}{250}
+\newcommand{\Nmcmc}{2,000}
+\newcommand{\Nbase}{2,000}
+
+\section{CANARY ROCKFISH COASTWIDE}
+
+%% First set up workspace:
+<<CAR_start, echo=FALSE, eval=TRUE, results=hide>>= # hide the results 
+istock = "CAR"
+unpackList(stock[[istock]][["Controls"]])
+Ngear.mcmc = 1 ## SS3 does not separate gear-related derived parameters (e.g., F or u)
+
+redoFIGS = c(F,F)  ## compo, senso
+redoTABS = c(F,F,F) ## compo, decision, senso
+
+refCC.sentence   = "For reference, the average catch over the last 5 years (2017-2021) was 775~t by Trawl and 13.5~t by Other."
+central.run      = as.numeric(strsplit(exp.run.rwt,"\\.")[[1]][1])
+central.rwt      = as.numeric(strsplit(exp.run.rwt,"\\.")[[1]][2])
+central.mpd.dir  = file.path(base.dir, paste0("Run",central.run), paste0("MPD.",exp.run.rwt))
+mcmc.dir.suffix  = ""; #".nuts4K"
+central.mcmc.dir = file.path(base.dir, paste0("Run",central.run), paste0("MCMC.",exp.run.rwt,mcmc.dir.suffix))
+
+#caption.prefix = ifelse (length(run.num)==1, paste0(gsub(" ","~",name),": "), paste0(name," CR.",exp.run.rwt,": "))
+caption.prefix = ifelse (length(run.num)==1, paste0(gsub(" ","~",name),": "), paste0("Central Run ",central.run,": "))
+relabelTex(paste0(istock,".Central.Run.MPD"),  prefix=prefix, caption=caption.prefix)
+relabelTex(paste0(istock,".Central.Run.MCMC"), prefix=prefix, caption=caption.prefix)
+##relabelTex("car.Sens.Diags", prefix=prefix, caption="")
+
+RUN.NUM     = texThatVec(run.num, simplify=FALSE)
+NrefM       = sum(!is.na(stock[[istock]]$Control$axisU))  ## number or reference models
+fornow      = base.lab
+if (length(fornow)!=NrefM)
+	stop ("Sum Ting Wong: Number of base runs do not match labels...")
+NaxU = getActDim(stock[[istock]]$Control$axisU)             ## Number of axes of uncertainty
+SaxU = paste0(paste0("\\\\item ",fornow),collapse="\\\\\\\\")  ## Construct latex item list of base runs labels
+
+pfigs  = c("pmcmc","compo") #"nada"
+ptypes = "png";  lang=c("e")
+ngear   = 2  ## number of commercial fisheries
+nfleet  = 8  ## number of fleets (fisheries + surveys)
+ncpue   = 1
+nsurv   = 6
+cvp1    = 0.178
+modYrs  = startYear:currYear
+proYrs  = (currYear+1):projYear
+
+run.rwt = paste0(pad0(run.num,2),".",pad0(rwt.num,2))
+use.run.rwt = B.index = run.rwt[use.num]
+
+## Years for previous stock assessments
+## ------------------------------------
+if (is.element(spp.code,c("BOR"))){
+	assYrs = c(2008, 2012)
+} else if (is.element(spp.code,c("WWR"))){
+	assYrs = c(2019)
+} else if (is.element(spp.code,c("RSR"))){
+	assYrs = c(2010, 2018)
+} else if (is.element(spp.code,c("POP"))){
+	if (is.element(area.name,c("5ABC"))){
+		assYrs = c(2001, 2010, 2017)
+	} else if (is.element(area.name,c("3CD","5DE"))){
+		assYrs = c(2012)
+	}
+} else if (is.element(spp.code,c("WAP"))){
+	assYrs = c(2017)
+} else if (is.element(spp.code,c("SBF"))){
+	assYrs = c(2016)
+} else if (is.element(spp.code,c("SGR","SST","YYR"))){
+	assYrs = c(2015)
+} else if (is.element(spp.code,c("ARF","RBR","YTR"))){
+	assYrs = c(2014)
+} else if (is.element(spp.code,c("ROL","SGR"))){
+	assYrs = c(2013)
+} else if (is.element(spp.code,c("YMR"))){
+	assYrs = c(2011,2021)
+} else if (is.element(spp.code,c("CAR"))){
+	assYrs = c(1999,2005,2007,2009)
+} else {
+	assYrs = NULL
+}
+@
+<<CAR_compo, echo=FALSE, eval=TRUE, results=hide>>= # hide the results 
+redo.compo=F; redoFigs=redoFIGS[1]; redoTabs=redoTABS[1]
+
+## Get composite MCMC
+## ------------------
+redo.compo = FALSE
+if (redo.compo) {
+	##compo.run = c(77,71,75,72,76); compo.rwt=rep(1,length(compo.run)); compo.mcmc = rep(mcmc.dir.suffix,length(compo.run))# c(75,78) #  ## component runs
+	compo.run = run.num; compo.rwt=rwt.num; compo.mcmc = rep(mcmc.dir.suffix,length(compo.run))  ## component runs
+	compo.run.rwt = paste0( pad0(compo.run,2), pad0(compo.rwt,2) )
+	compo.dir = paste0("Run", pad0(compo.run,2), "/MCMC.", compo.run.rwt, compo.mcmc)
+	.flush.cat("Gathering component runs...\n")
+	compo = gatherMCMC(mcdir=compo.dir, pyrs=proYrs, basedir="C:/Users/haighr/Files/GFish/PSARC21/CAR/Data/SS/CAR2021")
+	save("compo", file=paste0("compo.", format(Sys.Date(), "%y%m%d"), ".rda"))
+} else {
+	load(max(list.files(".",pattern="^compo\\.[[:digit:]]+\\.rda")))
+}
+unpackList(compo)
+P.rc    = .findSquare(ncol(ampdPA))  ## Parameter panel setup
+R.rc    = .findSquare(nrow(ampdPA))  ## Component run setup
+N.mcmc  = nrow(avgTS)
+
+## Combine TS and PJ's AC
+Bt.mcmc     = cbind(avgTS[,,"Bt"], avgPJ[,,"Bt","AC.00"])
+BtBmsy.mcmc = cbind(avgTS[,,"BtBmsy"], avgPJ[,,"BtBmsy","AC.00"])
+BtB0.mcmc   = cbind(avgTS[,,"BtB0"], avgPJ[,,"BtB0","AC.00"])
+ut.mcmc     = cbind(avgTS[,,"ut"], avgPJ[,,"ut","AC.00"])
+utumsy.mcmc = cbind(avgTS[,,"utumsy"], avgPJ[,,"utumsy","AC.00"])
+Rt.mcmc     = cbind(avgTS[,,"Rt"], avgPJ[,,"Rt","AC.00"])
+Rtdev.mcmc  = cbind(avgTS[,,"Rtdev"], avgPJ[,,"Rtdev","AC.00"])
+
+packList(c("N.mcmc", "P.rc", "R.rc", "Bt.mcmc", "BtBmsy.mcmc", "BtB0.mcmc", "ut.mcmc", "utumsy.mcmc", "Rt.mcmc", "Rtdev.mcmc"), target="data.compo.figs")
+
+if (redoFigs) {
+	source(file.path(sub("/$","",d.synth), "plotSS.pmcmc.r"))
+	source(file.path(sub("/$","",d.synth), "plotSS.compo.r"))
+	plotSS.compo(compo=compo, ptypes="png", lang=c("f","e"), redo.panels=T)
+}
+if (redoTabs) {
+	source(file.path(sub("/$","",d.synth), "tabSS.compo.r"))
+	tabSS.compo(istock=istock, compo=compo)
+}
+load("car.compo.tabs.rda")  ## always need to load the tables
+
+resetGraph();expandGraph(); eop()
+@
+
+%%##############################################################################
+
+\renewcommand{\startYear}{\Sexpr{startYear}} %% so can include in captions. 
+\renewcommand{\currYear}{\Sexpr{currYear}}   %% so can include in captions. 
+\renewcommand{\prevYear}{\Sexpr{prevYear}}   %% so can include in captions. 
+\renewcommand{\projYear}{\Sexpr{projYear}}   %% so can include in captions. 
+\renewcommand{\pgenYear}{\Sexpr{pgenYear}}   %% so can include in captions. 
+
+
+The base run for \Sexpr{name} was selected after running a range of preliminary model runs.
+This base run includes the following decisions and assumptions:
+\begin{itemize_csas}{-0.5}{}
+  \item assumed two sexes (females, males);
+  \item estimated a single mortality $M$ per sex to represent all ages;
+  %%N/A: to five levels: 0.04, 0.045, 0.05, 0.055, and 0.06 for a total of \numberstringnum{\Sexpr{NrefM}} reference models using \numberstringnum{\Sexpr{NaxU}} axis of uncertainty:
+  %%N/A: \begin{itemize_csas}{}{}
+  %%N/A:  \Sexpr{SaxU}  %% will need testing
+  %%N/A: \end{itemize_csas}
+  \item set plus age class $A$ to 60~years;
+  \item assumed two commercial fisheries called `Trawl' (predominant with $\sim$97\pc{} of catch) and `Other'. The Trawl fishery comprised bottom and midwater trawl gear, while the Other fishery included non-trawl gear (halibut longline, sablefish trap/longline, dogfish/lingcod troll, and hook \& line rockfish). Age frequency (AF) data were only available from the trawl fishery;
+  \item used one commercial bottom trawl fishery abundance index series (bottom trawl CPUE index, 1996--2021);
+  \item used \numberstringnum{\Sexpr{Nsurv}} survey abundance index series (\Sexpr{texThatVec(iseries[(Ncpue+1):(Ncpue+Nsurv)],simplify=F)}), with age frequency (AF) data for the first three surveys;
+  \item assumed a wide (weak) normal prior $\mathcal{N}(7,7)$ on $\log R_0$ to help stabilise the model; 
+  \item used informed normal priors for the three primary selectivity parameters ($\mu_g$, $v_{g\text{L}}$, $\Delta_{g}$, see \AppEqn) for all fleets (fishery and surveys) derived from Table J.7 in \citet{Stanley-etal:2009_car};
+  \item estimated recruitment deviations from 1950 to 2012;
+  \item applied abundance reweighting: added CV process error to index CVs, $c_\text{p}$=\Sexpr{cvp1} for the commercial CPUE series and $c_\text{p}$=0 for the surveys (see \AppEqn);
+  \item used SS3's Dirichlet-Multinomial error distribution to fit AF data instead of applying composition reweighting;
+  \item fixed the standard deviation of recruitment residuals ($\sigma_R$) to 0.9;
+  \item used an ageing error vector based on the CV of observed lengths at age, described in \AppBio, Section~D.2.3 and plotted in Figure~D.26 (left panel).
+\end{itemize_csas}
+%%N/A: Five fixed $M$ values produced five separate model runs, with the respective posterior distributions pooled as a composite base run used to provide advice to managers.
+%%n/A: The base run of the composite base run (Run\Sexpr{substring(exp.run.rwt,1,2)}: $M$=0.05, \cvpro=\Sexpr{cvp1}) was used as a reference case against which \numberstringnum{\Sexpr{Nsens}} sensitivity runs were compared.
+The base run (Run\Sexpr{substring(exp.run.rwt,1,2)}: estimate $M$ and $h$, \cvpro=\Sexpr{cvp1}) was used as a reference case against which \numberstringnum{\Sexpr{Nsens}} sensitivity runs taken to MCMC and four additional sensitivity runs taken to the MPD were compared.
+
+All model runs were reweighted once for abundance, by adding process error $c_\text{p}$ to the commercial CPUE (no additional error was added to the survey indices because observed error was already high).
+The process error added to the commerical CPUE was based on a spline analysis (\AppEqn).
+There was no weighting applied for composition as the AF were fit using the Dirichlet-Multinomial distribution.
+
+%%------------------------------------------------------------------------------
+\subsection{Base Run}
+\subsubsection{MPD fits}\label{sssMPD}
+
+%<<Central run MPD, echo=FALSE, eval=TRUE, results=hide>>= # hide the results 
+%unpackList(example.run)  ## includes contents of 'Bmcmc' (e.g. 'P.MCMC')
+%@
+
+The modelling procedure first determined the best fit (MPD = mode of posterior distribution) to the data by minimising the negative log likelihood.
+%%N/A: Because the \Sexpr{name} composite base run examined \numberstringnum{\Sexpr{NrefM}} models, only the base run ($M$=0.05, \cvpro=\Sexpr{cvp1}, trawl AFs adjusted by harmonic mean ratio) is presented as an example to show the fits to the data and to present MPD diagnostics (Table~\ref{tab:car.parest}).
+The MPD was used as the starting point for the MCMC simulations.
+
+The following plot references apply to the base run.
+\begin{itemize_csas}{-0.5}{}
+  \item Figure~\ref{fig:car.survIndSer} -- model fits to the CPUE and survey indices across observed years;
+  \item Figures~\ref{fig:car.agefitFleet1}-\ref{fig:car.ageresFleet5} -- model fits (lines=predicted) to the female and male age frequency data (bars=observed) for the fishery and three survey data sets along with respective standardised residuals of model fits;
+%%N/A  \item Figure~\ref{fig:car.harmonica0} -- harmonic mean of effective sample size vs. arithmetic mean of observed sample size;
+  \item Figure~\ref{fig:car.meanAge} -- model estimates of mean age compared to the observed mean ages;
+  \item Figure~\ref{fig:car.selectivity} -- estimated gear selectivities, together with the ogive for female maturity;
+  \item Figure~\ref{fig:car.spawning} -- spawning biomass time series and depletion;
+  \item Figure~\ref{fig:car.recruits} -- the recruitment time series and recruitment deviations;
+  \item Figure~\ref{fig:car.stockRecruit} -- the stock-recruitment curve.
+\end{itemize_csas}
+
+<<exploitation_nonsense, echo=FALSE, eval=TRUE, results=hide>>= # hide the results 
+#crB = currentRes.base$B
+#crU = crB[,if(Ngear==1) "U" else paste0("U.",1:Ngear),drop=FALSE]
+#crU = apply(crU,1,function(x){sum(x*Usplit)})
+#names(crU) = startYear:currYear
+@
+
+In this \SPC{} stock assessment, both natural mortality ($M$) and steepness ($h$) were estimated without difficulty, there being only weak correlation between these two parameters (Figure~\ref{fig:car.mleParameters}); this eliminated the requirement in previous assessments where multiple runs using fixed $M$ values were needed to build a composite base case that covered a plausible range of values for this parameter.
+The MPD for female natural mortality ($M$=0.093) shifted much higher than the prior mean value ($M$=0.06), while the male MPD remained close to the prior mean ($M$=0.065).
+This divergence between the estimates by sex was driven by the difference in the age frequency data by sex amd is required to fit the AF data credibly.
+Steepness was also estimated to be higher ($h$=0.88) than the prior mean ($h$=0.76).
+The selectivity parameter estimates did not move far from the prior means; however, the estimated age at full selectivity ($\mu_g$) was lower for the surveys than for the commercial fishery, which is consistent with the surveys using smaller mesh codends.
+The WCVI $\mu$ value was estimated to be near 10 while the QCS and Triennial survey estimates for this parameter were 12.4 and 12.3 respectively, compared to age 13.3 in the commercial fishery, reflecting the presence of younger fish in the survey data.
+There was little information in the data to move the male shift parameter ($\Delta_{1g}$) away from its initial prior mean of -0.4.
+
+Only the commercial CPUE indices were downweighted by adding process error to the index CVs (\cvpro); this was because the GLM model estimated standard errors were extraordinarily small (see Table C.9).
+The bootsrap survey index relative errors were already high so no additional process error was added.
+Model fits to the survey abundance indices were generally satisfactory (Figure~\ref{fig:car.survIndSer}), although various indices were missed entirely (e.g., 1996 CPUE, 2009 QCS, 2006 WCVI, 1980 NMFS, 2011 and 2021 HS, 2016 WCHG).
+The fit to the commercial CPUE indices was flat from 1996 to 2002 followed by an upward trend from 2003 to 2021.
+
+Neither \citet{Francis:2011} reweighting using mean ages nor \cite{McAllister-Ianelli:1997} reweighting using harmonic mean ratios were used in this stock assessment, a departure from previous stock assessments.
+Instead, the Dirichlet-Multinomial distribution, as implemented in SS3, was used as a model-based method for estimating effective sample size \citep{Thorson-etal:2017}.
+This distribution incorporates an additional parameter per `fleet' ($\log\,\text{DM}\,\theta_g$), which governs the ratio of nominal (`input') and effective (`output') sample size.
+
+Fits to the commercial trawl fishery age frequency data were good, with the model tracking year classes consistently across the 41 year time span represented by the commercial AF data (Figure~\ref{fig:car.agefitFleet1}).
+Standardised residuals rarely exceeded 1 for the various age classes (Figure~\ref{fig:car.ageresFleet1}), although there were many small negative residuals which may indicate that there was a tendency to underestimate the age proportions.
+Residuals by sample year show that the only years when standardised residuals exceeded 1 occurred in 2001 and 2017.
+Fits to the survey AFs from the three surveys were fair, with some residuals exceeding 2 (Figures~\ref{fig:car.agefitFleet3}--\ref{fig:car.ageresFleet5}).
+As with the commercial AF fits, the survey AF fits also tended to show small negative residuals, again indicating that the model tended to underestimate the age proportions.
+
+Mean ages appeared to be well tracked (Figure~\ref{fig:car.meanAge}), suggesting that the Dirichlet-Multinomial $\theta_g$ parameters were re-weighting effectively.
+The maturity ogive, generated from an externally fitted model (see \AppBio), was situated to the left of the commercial selectivity fits for all ages up to 12 or 13, indicating that younger mature fish were not being heavily harvested by the commercial fishery.
+This is also true of the QCS and Triennial surveys, while the WCVI survey selectivity ogive sits well to the left of the female maturity ogive, indicating that this survey selects all mature and sub-mature CAR.
+
+Biomass trajectories (Figure~\ref{fig:car.spawning}) partition total biomass into various components (total male, total female, and spawning female).
+Spawing biomass is relatively small compared to total biomass (by approximately one third) because there is a considerable amount of biomass that is not mature females, including all males.
+The biomass trajectories declined from 1935 to 1995.
+The year 1996 marked the introduction of the 100\pc{} onboard observer program followed by the implementation of an individual vessel quota system in 1997.
+Biomass, beginning with 1996, ceased to decline, and, beginning in the early 2000s, began to increase.
+Consequently, it might be inferred that biomass responded positively after introduction of fisheries management programmes in the latter part of the 1990s.
+Prior to 1996, spawning biomass levels remained below 0.4$B_0$ for a decade.
+
+Recruitment was below average until the late 1990s (Figure~\ref{fig:car.recruits}), when there followed a long period with above average recruitment punctuated by a number of solid recruitment events.
+There was at least one notable recruitment event in 2010 (Figure~\ref{fig:car.stockRecruit}).
+Although the cohort continuity patterns presented in \AppBio{} were not as persuasive as those for other offshore rockfish species (e.g., POP), the stock assessment model was capable of fitting these data credibly.
+
+The likelihood profile analysis indicated that the age frequency data are the primary contributor of information for the female $M$ parameter, while the both the age data and the biomass data preclude low estimates of $\log\,R_0$ (Figure~\ref{fig:car.LLprof-R0}).
+There is not a great deal of information in any of the data sets to constrain the upper bound of $\log\,R_0$.
+
+A retrospective analysis was undertaken using the base run as the initial platform.
+The upper panel of Figure~\ref{fig:car.RA-indices} shows the model adjusting its fit to the CPUE index series as more years were added to the series, while the lower panel shows an increase in the level of the biomass trajectory as some year classes with strong recruitment entered the fishery.
+This retrospective analysis did not reveal any underlying problems in the model, with between-year shifts explained through the introduction of new information into the model.
+
+The size of the recruitment events can be gauged from Figures~\ref{fig:car.RA-indices} to \ref{fig:car.RA-recdevs} (upper panel) while the differences in the model runs look smaller in a relative sense when the stock is plotted in terms of $B_0$.
+The overall conclusion from the retrospective analysis is that there are no apparent pathologies associated with this stock assessment.
+Observed changes in the stock assessments are directly attributable to changes in the available data, not to underlying structural issues associated with the model assumptions.
+
+%\newpage
+
+\graphicspath{{\Sexpr{paste0(central.mpd.dir,ifelse("f" %in% lang,"/french/","/"))}}}
+\input{"CAR.Central.Run.MPD.relab"}%% Modify 'CAR.Central.Run.MPD.tex' as Sweave code relabels the references.
+\clearpage
+
+%%------------------------------------------------------------------------------
+\subsubsection{MCMC fits}\label{sssMCMC}
+
+<<Central run MCMC, echo=FALSE, eval=TRUE, results=hide>>= # hide the results 
+#unpackList(Bmcmc.base[[1]][[1]])  ## base run MCMCs only
+@
+
+The MCMC procedure used the `no U-turn sampling' (NUTS) algorithm \citep{Monnahan-Kristensen:2018, Monnahan-etal:2019} to produce \nSims{} iterations, parsing the workload into \nChains{} parallel chains \citep{R:2015_snowfall} of \cSims{} iterations each, discarding the first \cBurn{} iterations and saving the last \cSamps{} samples per chain.
+The parallel chains were then merged for a total of \Nmcmc{} samples for use in the MCMC analysis.
+
+The MCMC plots show:
+\begin{itemize_csas}{-0.5}{}
+\item Figure~\ref{fig:car.traceParams} -- traces for \Nmcmc{} samples of the primary estimated parameters;
+\item Figure~\ref{fig:car.splitChain} -- split-chain diagnostic plots for the primary estimated parameters;
+\item Figure~\ref{fig:car.paramACFs} -- auto-correlation diagnostic plots for the primary estimated parameters;
+\item Figure~\ref{fig:car.pdfParameters} -- marginal posterior densities for the primary parameters compared to their respective prior density functions.
+%%\item Figure~\ref{fig:car.VBcatch} -- top: estimated vulnerable biomass and catch over time, middle: marginal posterior distribution of recruitment over time, bottom:marginal posterior distribution of exploitation rate over time.
+\end{itemize_csas}
+
+MCMC traces for the base run showed acceptable convergence properties (no trend with increasing sample number) for the estimated parameters (Figure~\ref{fig:car.traceParams}), as did diagnostic analyses that split the posterior samples into three equal consecutive segments (Figure~\ref{fig:car.splitChain}, although there is some minor fraying in the LN(R0) parameter) and checked for parameter autocorrelation out to 60 lags (Figure~\ref{fig:car.paramACFs}).
+Most of the parameter medians did not move far from their initial MPD estimates, with the possible exception of steepness (Figure~\ref{fig:car.pdfParameters}).
+
+
+%%------------------------------------------------------------------------------
+%%\subsection{CAR -- Composite Base Case}
+
+<<Composite Base MCMC, echo=FALSE, eval=TRUE, results=hide>>= # hide the results 
+BoverBmsy = avgTS[,,"BtBmsy"]
+UoverUmsy = avgTS[,,"utumsy"]
+## Subset vector of chosen runs to use in the base composite
+Ruse  = grepl(paste0(paste0("^",use.run.rwt),collapse="|"),rownames(BoverBmsy))
+BoverBmsy = BoverBmsy[Ruse,]
+#UoverUmsy = lapply(UoverUmsy,function(x){ x[Ruse,] })  ## Awatea
+UoverUmsy = UoverUmsy[Ruse,]
+## Make sure that catpol chosen matches that in `plotSS.compo' (eg, L31):
+Bt.med = c(apply(avgTS[,as.character(c(startYear,currYear)),"Bt"],2,median), apply(avgPJ[,as.character(c(projYear)),"Bt","CC.04",drop=F],2,median,na.rm=T))
+@
+
+%%The composite base run examined \numberstringnum{\Sexpr{NrefM}} runs which spanned one axis of uncertainty ($M$) for this stock assessment:
+%%\begin{itemize_csas}{-0.5}{}
+%%\item \textbf{B1}~(Run\Sexpr{pad0(run.num[1],2)}) -- fixed $M_{1,2}$~= 0.04;
+%%\item \textbf{B2}~(Run\Sexpr{pad0(run.num[2],2)}) -- fixed $M_{1,2}$~= 0.045;
+%%\item \textbf{B3}~(Run\Sexpr{pad0(run.num[3],2)}) -- fixed $M_{1,2}$~= 0.05;
+%%\item \textbf{B4}~(Run\Sexpr{pad0(run.num[4],2)}) -- fixed $M_{1,2}$~= 0.055;
+%%\item \textbf{B5}~(Run\Sexpr{pad0(run.num[5],2)}) -- fixed $M_{1,2}$~= 0.06.
+%%\end{itemize_csas}
+
+%%All component runs used \cvpro=\Sexpr{cvp1}, no added process error on survey indices, ageing error based on CVs of length-at-age, and AF sample reweighting using the harmonic mean ratio method specific to each model run.
+%%The \Nmcmc{} MCMC samples from each of the above runs were pooled to create a composite posterior of \Nbase{} samples, which was used to estimate population status and to provide advice to managers.
+
+%%Composite base run median parameter estimates appear in Table~\ref{tab:car.base.pars}, and derived quantities at equilibrium and associated with maximum sustainable yield (MSY) and $B_0$ appear in Table~\ref{tab:car.base.rfpt}.
+%%The differences among the component base runs are summarised by various figures:
+%%\begin{itemize_csas}{-0.5}{}
+%%  \item Figure~\ref{fig:car.compo.LN(R0).traces} -- MCMC traces of $R_0$ for the \Sexpr{NrefM} candidate base runs;
+%%  \item Figure~\ref{fig:car.compo.LN(R0).chains} -- three chain segments of $R_0$ MCMC chains;
+%%  \item Figure~\ref{fig:car.compo.LN(R0).acfs}   -- autocorrelation plots for $R_0$ MCMC output;
+%%  \item Figure~\ref{fig:car.compo.pars.qbox} -- quantile plots of parameter estimates from \Sexpr{NrefM} component base runs;
+%%  \item Figure~\ref{fig:car.compo.rfpt.qbox} -- quantile plots of selected derived quantities from \Sexpr{NrefM} component base runs.
+%%\end{itemize_csas}
+
+In this stock assessment, projections extend 10 years to \Sexpr{projYear}. 
+Projections out to \Sexpr{Ngen} generations (\Sexpr{Ngen*gen1}~years), where one generation was determined to be \Sexpr{gen1}~years (see Appendix~D), were not computed because the stock status of CAR falls unambiguously into the Healthy zone.
+Various model trajectories and final stock status for the base run appear in the figures:
+\begin{itemize_csas}{-0.5}{}
+  \item Figure~\ref{fig:car.compo.Bt}     -- estimates of spawning biomass $B_t$ (tonnes) from model posteriors spanning \Sexpr{paste(startYear,pgenYear,sep="-")};
+  \item Figure~\ref{fig:car.compo.BtB0}   -- estimates of spawning biomass relative to $B_0$ (top panel) and $\Bmsy$ (bottom panel) from model posteriors;
+  \item Figure~\ref{fig:car.compo.ut}     -- estimates of exploitation rate $u_t$ (top panel) and $u_t/\umsy$ (bottom panel) from model posteriors;
+  \item Figure~\ref{fig:car.compo.Rt}     -- estimates of recruitment $R_t$ (1000s age-0 fish, top panel) and recruitment deviations (bottom panel) from model posteriors;
+  \item Figure~\ref{fig:car.compo.snail}  -- phase plot through time of median $B_t/\Bmsy$ and $u_t/\umsy$ relative to DFO's Precautionary Approach (PA) provisional reference points;
+  \item Figure~\ref{fig:car.compo.stock.status} -- \Sexpr{name} stock status at beginning of \currYear{}.
+\end{itemize_csas}
+
+%%The \numberstringnum{\Sexpr{NrefM}} component runs demonstrated acceptable MCMC diagnostics for most of the parameters.
+%%; however B5 ($M$=0.06) showed some fraying in the split chains for $R_0$ (Figure~\ref{fig:car.compo.LN(R0).chains}) and autocorrelation in $R_0$ (Figure~\ref{fig:car.compo.LN(R0).acfs}).
+
+Female natural mortality appears to be the most important component of uncertainty in this stock assessment because older females disappear from the samples.
+Either they remain hidden from the gear (e.g., hide in non-trawlable areas) or their natural mortality increases after a certain age.
+Previous stock assessments of \SPC{} in BC and Washington used a stepped mortality function to model this change. 
+This stock assessment has chosen to model this observation in its base run by assuming an increased female natural mortalitiy relative to male natural mortality because including a stepped-mortality function does not improve the fit to the data or change management advice, but requires an additional assumption.
+This stock assessment also explored a range of other model uncertainties in sensitivity runs relative to the base run \Sexpr{central.run}.
+
+%%N/A: Figure~\ref{fig:car.compo.pars.qbox} shows the distribution of all the estimated parameters.
+%%N/A: In most cases, the component runs had parameter estimates with overlapping distributions.
+%%N/A: Equilibrium recruitment in \startYear{} ($R_0$) varied with $M$, increasing as $M$ increased.
+%%N/A: The selectivity parameters differed little among the five $M$ estimates.
+
+%%N/A: Similar to the parameter distributions, those for derived quantities (Figure~\ref{fig:car.compo.rfpt.qbox}) varied by $M$.
+%%N/A: Not surprisingly, $B_0$, MSY, $\Bmsy$, $\umsy$, and current stock status relative to $B_0$ increased with increasing $M$.
+%%N/A: The ratio of $\Bmsy/B_0$ remained constant but uncertainty around the median estimate expanded.
+%%N/A: Given a catch of \Sexpr{avgCP[1,1,"AC.00"]}\,t/y in \Sexpr{currYear-1}, the apparent harvest rates become lower because estimated spawning biomass (and consequently vulnerable biomass) increases.
+
+The base run was used to calculate a set of parameter estimates (Table~\ref{tab:car.base.pars}) and derived quantities at equilibrium and those associated with MSY (Table~\ref{tab:car.base.rfpt}).
+The base run population trajectory from \startYear{} to \currYear{} (Figure~\ref{fig:car.compo.Bt}), estimates median spawning biomass $B_t$ in $t$=\startYear, \currYear, and \projYear{} (assuming a constant catch of 750~t/y) to be \Sexpr{texThatVec(formatC(Bt.med,digits=0, format="d",big.mark=","),simplify=F)} tonnes, respectively.
+Figure~\ref{fig:car.compo.BtB0} indicates that the median stock biomass will remain above the USR for the next \Sexpr{length(proYrs)} years at annual catches equal to all catches used in catch projections.
+%%\Sexpr{Ngen} generations (\Sexpr{Ngen*gen1} years).
+Exploitation rates have largely stayed below $\umsy$ for much of the fishery's history (Figure~\ref{fig:car.compo.ut}).
+Recruitment of age-0 fish shows fairly even recruitment, with the top four recruitment years being
+\Sexpr{texThatVec(names(rev(sort(apply(avgTS[,,"Rt"],2,median)))[1:4]),simplify=F)} (Figure~\ref{fig:car.compo.Rt}).
+
+A phase plot of the time-evolution of spawning biomass and exploitation rate by the modelled fisheries in MSY space (Figure~\ref{fig:car.compo.snail}) suggests that the stock is in the Healthy zone, with a current position at $B_{\currYear}/\Bmsy$ = \Sexpr{medCI(BoverBmsy[,as.character(currYear)],dig=sigdig)}
+and $u_{\prevYear}/\umsy$ = \Sexpr{ medCI(UoverUmsy[,as.character(currYear)],dig=sigdig)}.
+(Four samples were dropped because estimated MSY was 0\,t, and subsequently $\umsy$=0, rendering division by zero errors in $u_{t\minus1}/\umsy$.)
+The current-year stock status figure (Figure~\ref{fig:car.compo.stock.status}) shows that the position of the base run lies in the DFO Healthy zone.
+%%N/A: , and demonstrates how the individual component runs contribute to the composite base run.
+%%N/A: Values of $M$ higher than 0.06 will push the stock status further into the Healthy zone.
+
+%%\clearpage
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsubsubsection{Tables MCMC base run}
+
+<<tab.compo.mcmc, results=tex, echo=FALSE, strip.white=false>>=
+
+#tget(xtab.compo.pars.out)
+xtab.compo.pars.out = sub("caption\\{Composite","caption{CAR",xtab.compo.pars.out)
+cat("\\setlength{\\tabcolsep}{6pt}\n")
+cat(xtab.compo.pars.out, sep="\n")
+#cat("\\clearpage\n")
+
+#tget(xtab.compo.rfpt.out)
+xtab.compo.rfpt.out = sub("caption\\{Composite","caption{CAR",xtab.compo.rfpt.out)
+cat("\\setlength{\\tabcolsep}{6pt}\n")
+cat(xtab.compo.rfpt.out, sep="\n")
+#cat("\\clearpage\n")
+@
+\setlength{\tabcolsep}{2pt}
+<<tab.compo.mcmc.lscape, results=tex, echo=FALSE, strip.white=false>>=
+#tget(xtab.cruns.pars.out)
+#cat(xtab.cruns.pars.out, sep="\n")
+#cat("\\clearpage\n")
+writeLines(c("\\setlength{\\tabcolsep}{2pt}", xtab.cruns.ll.out),   con="xtab.cruns.ll.txt")
+writeLines(c("\\setlength{\\tabcolsep}{6pt}", xtab.cruns.pars.out), con="xtab.cruns.pars.txt")
+writeLines(c("\\setlength{\\tabcolsep}{2pt}", xtab.cruns.rfpt.out), con="xtab.cruns.rfpt.txt")
+@
+%%\begin{landscapepage}{
+\input{xtab.cruns.ll.txt}
+\input{xtab.cruns.pars.txt}
+%%}{\LH}{\RH}{\LF}{\RF} \end{landscapepage}
+
+%%\begin{landscapepage}{
+\input{xtab.cruns.rfpt.txt}
+%%}{\LH}{\RH}{\LF}{\RF} \end{landscapepage}
+
+\clearpage
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsubsubsection{Figures MCMC base run}
+
+%%-----Figures: composite base run----------
+\graphicspath{{\Sexpr{paste0(central.mcmc.dir, ifelse("f" %in% lang,"/french/","/"))}}}
+\input{"CAR.Central.Run.MCMC.relab"}%% Modify 'CAR.Central.Run.MCMC.tex' as Sweave code relabels the references.
+
+\graphicspath{{\Sexpr{paste0(appF.dir,ifelse("f" %in% lang,"/french/","/"))}}}
+%%\onefig{car.compo.LN(R0).traces}{MCMC traces of $R_0$ for the \Sexpr{NrefM} candidate base runs. Grey lines show the \Nmcmc~samples for the $R_0$ parameter, solid lines show the cumulative median (up to that sample), and dashed lines show the cumulative 0.05 and 0.95 quantiles.  Red circles are the MPD estimates.}{Composite base run component runs: }{}
+%%\onefig{car.compo.LN(R0).chains}{diagnostic plots obtained by dividing the $R_0$ MCMC chains of \Nmcmc~MCMC samples into three segments, and overplotting the cumulative distributions of the first segment (red), second segment (blue) and final segment (black).}{Composite base run component runs: }{}
+%%\onefig{car.compo.LN(R0).acfs}{autocorrelation plots for the $R_0$ parameters from the MCMC output. Horizontal dashed blue lines delimit the 95\pc{} confidence interval for each parameter's set of lagged correlations.}{Composite base run component runs: }{}
+
+\clearpage
+
+%\onefig{car.compo.pars.qbox}{quantile plots of the parameter estimates from \Sexpr{NrefM} component runs of the base run, where each box denotes various $M$ values (0.04, 0.045, 0.05, 0.055, 0.06). The boxplots delimit the \Sexpr{texThatVec(quants5)} quantiles.}{CAR base run: }{}
+
+%\onefig{car.compo.rfpt.qbox}{quantile plots of selected derived quantities ($B_{\currYear}$, $B_0$, $B_{\currYear}/B_0$, MSY, $\Bmsy$, $\Bmsy/B_0$, $u_{\prevYear}$, $\umsy$, $u_\text{max}$) from \Sexpr{NrefM} component runs of the base run, where each box denotes various $M$ values (0.04, 0.045, 0.05, 0.055, 0.06). The boxplots delimit the \Sexpr{texThatVec(quants5)} quantiles.}{CAR base run: }{}
+
+%\clearpage
+
+\onefig{car.compo.Bt}{estimates of spawning biomass $B_t$ (tonnes) from pooled model posteriors. The median biomass trajectory appears as a solid curve surrounded by a 90\pc{} credibility envelope (quantiles: 0.05-0.95) in light blue and delimited by dashed lines for years $t$=\startYear:\currYear; projected biomass for years $t$=\Sexpr{currYear+1}:\projYear appear in green for no catch, orange for average catch (750\,t/y), and red for high catch (1500\,t/y). Also delimited is the 50\pc{} credibility interval (quantiles: 0.25-0.75) delimited by dotted lines. The horizontal dashed lines show the median LRP and USR.}{CAR base run: }{}
+
+\twofig{car.compo.BtB0}{car.compo.BtBmsy}{estimates of spawning biomass $B_t$ relative to (top) $B_0$ and (bottom) $\Bmsy$ from pooled model posteriors. The horizontal dashed lines show 0.2$B_0$ \& 0.4$B_0$ (top) and 0.4$\Bmsy$ \& 0.8$\Bmsy$ (bottom). See Fig.~\ref{fig:car.compo.Bt} caption for envelope details.}{CAR base run: }{}
+
+\clearpage
+
+%% onefigH: #1 = file name & label, #2=caption, #3=height, #4=caption prefix (optional), #5=label prefix (optional)
+%%\onefig{car.compo.recruitsMCMC}{marginal posterior distribution of recruitment trajectory in 1,000s of age-1 fish.}{CAR base run: }{}
+
+%\onefig{car.compo.RprojOnePolicy}{marginal posterior distribution of recruitment trajectory (reconstructed: \Sexpr{paste0(startYear,"-",currYear)}, projected: \Sexpr{paste0(currYear+1,"-",pgenYear)}) in 1,000s of age-1 fish.}{CAR base run: }{}
+
+\twofig{car.compo.ut}{car.compo.utumsy}{posterior distribution of (top) exploitation trajectory $u_t$ and (bottom) exploitation relative to $\umsy$.}{CAR base run: }{}
+
+\twofig{car.compo.Rt}{car.compo.Rtdev}{posterior distribution of (top) recruitment trajectory (1000s of age-0 fish) and (bottom) recruitment deviation trajectory.}{CAR base run: }{}
+
+\clearpage
+
+\onefig{car.compo.snail}{phase plot through time of the medians of the ratios $B_t/B_\text{MSY}$ (the spawning biomass in year $t$ relative to $B_\text{MSY}$) and $u_{t-1} / u_\text{MSY}$ (the exploitation rate in year $t-1$ relative to $u_\text{MSY}$) for the combined fishery (\Sexpr{paste0(tolower(gseries),collapse="+")}). The filled green circle is the equilibtium starting year (\Sexpr{startYear}). Years then proceed along lines gradually darkening from light \Sexpr{switch(Ngear.mcmc,"grey","grey/blue")}, with the final year (\currYear) as a filled \Sexpr{switch(Ngear.mcmc,"cyan","cyan/purple")} circle, and the \Sexpr{switch(Ngear.mcmc,"blue","blue/purple")} cross lines represent the \Sexpr{texThatVec(quants3[c(1,3)])} quantiles of the posterior distributions for the final year. Red and green vertical dashed lines indicate the PA provisional limit and upper stock reference points (0.4, 0.8 $\Bmsy$), and the horizontal grey dotted line indicates $u$ at MSY.}{CAR base run: }{}
+
+\onefig{car.compo.stock.status}{stock status at beginning of \currYear{} relative to the PA provisional reference points of 0.4$\Bmsy$ and 0.8$\Bmsy$ for a base run comprising \Sexpr{NrefM} model runs. The top quantile plot shows the composite distribution and below are the \Sexpr{NrefM} contributing runs. Quantile plots show the \Sexpr{texThatVec(quants5)} quantiles from the MCMC posteriors.}{CAR base run: }{}
+
+\clearpage \newpage
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{GMU -- Guidance for setting TACs}
+
+Decision tables for the base run provide advice to managers as probabilities that current and projected biomass $B_t$ ($t = \currYear, ..., \projYear$) will exceed biomass-based reference points (or that projected exploitation rate $u_t$ will fall below harvest-based reference points) under constant catch (CC) policies. Note that years for biomass-based reference points refer to the start of years, whereas years for harvest-based reference points refer to years prior to the start ($\sim$mid-year).
+Four suspicious samples were dropped before constructing the decision tables because the estimated MSY was 0\,t, $h$ was <0.4, and $\Bmsy$ was > 12,000\,t, well outside the posterior distribution of $\Bmsy$.
+Additionally, forecast values for these samples were not all finite.
+
+Decision tables in the document (all under a constant catch policy):
+\begin{itemize_csas}{-0.5}{}
+\item Table~\ref{tab:car.gmu.LRP.CCs} -- probability of $B_t$ exceeding the LRP, P$(B_t > 0.4 \Bmsy)$; %% \& \ref{tab:car.gmu.LRP.HRs} 
+\item Table~\ref{tab:car.gmu.USR.CCs} -- probability of $B_t$ exceeding the USR, P$(B_t > 0.8 \Bmsy)$; %% \& \ref{tab:car.gmu.USR.HRs}
+\item Table~\ref{tab:car.gmu.Bmsy.CCs} -- probability of $B_t$ exceeding biomass at MSY, P$(B_t > \Bmsy)$; %% \& \ref{tab:car.gmu.Bmsy.HRs}
+\item Table~\ref{tab:car.gmu.umsy.CCs} -- probability of $u_t$ falling below harvest rate at MSY, P$(u_t < \umsy)$; %% \& \ref{tab:car.gmu.umsy.HRs}
+\item Table~\ref{tab:car.gmu.Bcurr.CCs} -- probability of $B_t$ exceeding current-year biomass, P$(B_t > B_{\currYear})$; %% \& \ref{tab:car.gmu.Bcurr.HRs}
+\item Table~\ref{tab:car.gmu.ucurr.CCs} -- probability of $u_t$ falling below current-year harvest rate, P$(u_t < u_{\prevYear})$; %% \& \ref{tab:car.gmu.ucurr.HRs}
+\item Table~\ref{tab:car.gmu.20B0.CCs} -- probability of $B_t$ exceeding a non-DFO `soft limit', P$(B_t > 0.2 B_0)$; %% \& \ref{tab:car.gmu.20B0.HRs}
+\item Table~\ref{tab:car.gmu.40B0.CCs} -- probability of $B_t$ exceeding a non-DFO `target' biomass, P$(B_t > 0.4 B_0)$; %% \& \ref{tab:car.gmu.40B0.HRs}
+\end{itemize_csas}
+
+MSY-based reference points estimated within a stock assessment model can be highly sensitive to model assumptions about natural mortality and stock recruitment dynamics \citep{Forrest-etal:2018}.
+As a result, other jurisdictions use reference points that are expressed in terms of $B_0$ rather than $\Bmsy$ (e.g., \citealt{NZMF:2011}), because $\Bmsy$ is often poorly estimated as it depends on estimated parameters and a consistent fishery (although $B_0$ shares several of these same problems).
+Therefore, the reference points of 0.2$B_0$ and 0.4$B_0$ are also presented here.
+These are default values used in New Zealand respectively as a `soft limit', below which management action needs to be taken, and a `target' biomass for low productivity stocks, a mean around which the biomass is expected to vary.
+The `soft limit' is equivalent to the upper stock reference (USR, 0.8$\Bmsy$) in the provisional DFO Sustainable Fisheries Framework while a `target' biomass is not specified by the provisional DFO SFF.
+Additionally, results are provided comparing projected biomass to $\Bmsy$ and to current spawning biomass $B_{\currYear}$, and comparing projected harvest rate to current harvest rate $u_{\prevYear}$.
+
+COSEWIC indicator A1 is reserved for those species where the causes of the reduction are clearly reversible, understood, and ceased.
+Indicator A2 is used when the population reduction may not be reversible, may not be understood, or may not have ceased.
+%%N/A: The 2011 Yellowmouth Rockfish recovery potential analysis \citep{Edwards-etal:2012_ymr} placed CAR into category A2b (where the `b' indicates that the designation was based on `an index of abundance appropriate to the taxon').
+Under A2, a species is considered Endangered or Threatened if the decline has been >50\pc{} or >30\pc{} below $B_0$, respectively.
+%%Using these guidelines, the recovery reference criteria become $0.5B_{t-3G}$ (a 50\pc{} decline) and $0.7B_{t-3G}$ (a 30\pc{} decline), where $B_{t-3G}$ is the biomass three generations (90 years) previous to the biomass in year $t$, e.g., P($B_{2023,...,2112} > 0.5\vee0.7 B_{1933,...,2022}$). 
+
+Additional short-term tables for COSEWIC's A2 criterion:
+\begin{itemize_csas}{-0.5}{}
+\item Table~\ref{tab:car.cosewic.50B0.CCs}  -- probability of $B_t$ exceeding `Endangered' status (P($B_t > 0.5B_0$);
+\item Table~\ref{tab:car.cosewic.70B0.CCs}  -- probability of $B_t$ exceeding `Threatened' status (P($B_t > 0.7B_0$).
+%%\item Table~\ref{tab:car.cosewic.30Gen.CCs} -- probability of $\leq 30\pc{}$ decline over \Sexpr{Ngen} generations (\Sexpr{Ngen*gen1} years);
+%%\item Table~\ref{tab:car.cosewic.50Gen.CCs} -- probability of $\leq 50\pc{}$ decline over \Sexpr{Ngen} generations (\Sexpr{Ngen*gen1} years).
+\end{itemize_csas}
+
+\newpage
+
+%%------------------------------------------------------------------------------
+\subsubsection{Decision Tables}
+
+%%-----Tables: Decision Tables ----------
+\setlength{\tabcolsep}{0pt}%% for texArray, otherwise 6pt for xtable
+\renewcommand*{\arraystretch}{1.0}
+
+<<tab.prob.gmu.tac, results=tex, echo=FALSE, strip.white=false>>=
+redoTabs=redoTABS[2]
+
+if (redoTabs) {
+	source(file.path(sub("/$","",d.synth), "tabSS.decision.r"))
+	tabSS.decision(istock=istock, compo=compo)
+}
+load("car.decision.tables.rda")  ## always need to load the tables
+
+cat(gmu.LRP.CCs.out, sep="\n")
+#cat(gmu.LRP.HRs.out, sep="\n")
+#cat("\\clearpage\n")
+
+cat(gmu.USR.CCs.out, sep="\n")
+#cat(gmu.USR.HRs.out, sep="\n")
+#cat("\\clearpage\n")
+
+cat(gmu.Bmsy.CCs.out, sep="\n")
+#cat(gmu.Bmsy.HRs.out, sep="\n")
+cat("\\clearpage\n")
+
+cat(gmu.umsy.CCs.out, sep="\n")
+#cat(gmu.umsy.HRs.out, sep="\n")
+#cat("\\clearpage\n")
+
+cat(gmu.Bcurr.CCs.out, sep="\n")
+#cat(gmu.Bcurr.HRs.out, sep="\n")
+#cat("\\clearpage\n")
+
+cat(gmu.ucurr.CCs.out, sep="\n")
+#cat(gmu.ucurr.HRs.out, sep="\n")
+cat("\\clearpage\n")
+
+cat(gmu.20B0.CCs.out, sep="\n")
+#cat(gmu.20B0.HRs.out, sep="\n")
+#cat("\\clearpage\n")
+
+cat(gmu.40B0.CCs.out, sep="\n")
+#cat(gmu.40B0.HRs.out, sep="\n")
+
+cat(cosewic.50B0.CCs.out, sep="\n")
+cat("\\clearpage\n")
+
+cat(cosewic.70B0.CCs.out, sep="\n")
+#cat(cosewic.30Gen.CCs.out, sep="\n")
+#cat(cosewic.50Gen.CCs.out, sep="\n")
+#cat("\\clearpage\n")
+@
+\renewcommand*{\arraystretch}{1.1}
+%%\clearpage \newpage
+
+%------------------------------------------------------------------------------
+\subsection{Sensitivity Analyses}\label{ss:sensruns} 
+
+<<CAR_senso, echo=FALSE, eval=TRUE, results=hide>>= # hide the results 
+##------------------------------------------------
+
+## Get sensitivity MCMCs
+## ---------------------
+redo.senso=F; redoFigs=redoFIGS[2]; redoTabs=redoTABS[3]
+
+if (redo.senso) {
+	##senso.run = c(75,78:88); senso.rwt=rep(1,length(senso.run)); senso.mcmc = rep(mcmc.dir.suffix,length(senso.run))  ## sensitivity runs (specified in set.controls)
+	senso.run = c(central.run,sen.run.num); senso.rwt=c(central.rwt,sen.rwt.num); senso.mcmc = rep(mcmc.dir.suffix,length(senso.run))  ## include base run in first place
+	senso.run.rwt = paste0( pad0(senso.run,2), pad0(senso.rwt,2) )
+	senso.dir = paste0("Run", pad0(senso.run,2), "/MCMC.", senso.run.rwt, senso.mcmc)
+	.flush.cat("Gathering sensitivity runs...\n")
+	senso = gatherMCMC(mcdir=senso.dir, pyrs=proYrs, basedir="C:/Users/haighr/Files/GFish/PSARC21/CAR/Data/SS/CAR2021", type="senso")
+	save("senso", file=paste0("senso.", format(Sys.Date(), "%y%m%d"), ".rda"))
+} else {
+	load(max(list.files(".",pattern="^senso\\.[[:digit:]]+\\.rda")))
+}
+unpackList(senso)
+
+if (redoFigs){
+	so("plotSS.senso.r","synth")
+	plotSS.senso(senso=senso, ptypes="png", lang=c("f","e"), redo.figs=T, redo.panels=T)
+}
+if (redoTabs) {
+	source(file.path(sub("/$","",d.synth), "tabSS.senso.r"))
+	tabSS.senso(senso=senso)
+}
+load("car.senso.tabs.rda")  ## always need to load the tables
+
+resetGraph(); expandGraph(); eop()
+
+sen.lab2 =  sub("\\%","\\\\\\\\pc{}",gsub("_","~",sen.lab))
+
+#BtBmsy.med = sapply(tcall(Bsens)[["BtBmsy"]],median)
+#lowSS      = which(BtBmsy.med[-1]==min(BtBmsy.med[-1]))
+#BtB0.min   = apply(sapply(tcall(Bsens)[["BtB0"]], function(x){sapply(x,median)}),2,min)
+#lowB0      = which(BtB0.min[-1]==min(BtB0.min[-1]))
+@
+
+\Numberstringnum{\Sexpr{Nsens}} sensitivity analyses were run (with full MCMC simulations) relative to the base run (Run\Sexpr{central.run}: $M$ and $h$ estimated, \cvpro=\Sexpr{cvp1}) to test the sensitivity of the outputs to alternative model assumptions:
+\begin{itemize_csas}{-0.5}{}
+  \item \textbf{S01}~(Run\Sexpr{pad0(sen.run.num[1],2)})  -- \Sexpr{sen.long[1]}  (label:~``\Sexpr{sen.lab2[1]}'');
+  \item \textbf{S02}~(Run\Sexpr{pad0(sen.run.num[2],2)})  -- \Sexpr{sen.long[2]}  (label:~``\Sexpr{sen.lab2[2]}'');
+  \item \textbf{S03}~(Run\Sexpr{pad0(sen.run.num[3],2)})  -- \Sexpr{sen.long[3]}  (label:~``\Sexpr{sen.lab2[3]}'');
+  \item \textbf{S04}~(Run\Sexpr{pad0(sen.run.num[4],2)})  -- \Sexpr{sen.long[4]}  (label:~``\Sexpr{sen.lab2[4]}'');
+  \item \textbf{S05}~(Run\Sexpr{pad0(sen.run.num[5],2)})  -- \Sexpr{sen.long[5]}  (label:~``\Sexpr{sen.lab2[5]}'');
+  \item \textbf{S06}~(Run\Sexpr{pad0(sen.run.num[6],2)})  -- \Sexpr{sen.long[6]}  (label:~``\Sexpr{sen.lab2[6]}'');
+  \item \textbf{S07}~(Run\Sexpr{pad0(sen.run.num[7],2)})  -- \Sexpr{sen.long[7]}  (label:~``\Sexpr{sen.lab2[7]}'');
+  \item \textbf{S08}~(Run\Sexpr{pad0(sen.run.num[8],2)})  -- \Sexpr{sen.long[8]}  (label:~``\Sexpr{sen.lab2[8]}'');
+  \item \textbf{S09}~(Run\Sexpr{pad0(sen.run.num[9],2)})  -- \Sexpr{sen.long[9]}  (label:~``\Sexpr{sen.lab2[9]}'');
+  \item \textbf{S10}~(Run\Sexpr{pad0(sen.run.num[10],2)}) -- \Sexpr{sen.long[10]} (label:~``\Sexpr{sen.lab2[10]}'');
+  \item \textbf{S11}~(Run\Sexpr{pad0(sen.run.num[11],2)}) -- \Sexpr{sen.long[11]} (label:~``\Sexpr{sen.lab2[11]}'');
+  \item \textbf{S12}~(Run\Sexpr{pad0(sen.run.num[12],2)}) -- \Sexpr{sen.long[12]} (label:~``\Sexpr{sen.lab2[12]}'');
+  \item \textbf{S13}~(Run\Sexpr{pad0(sen.run.num[13],2)}) -- \Sexpr{sen.long[13]} (label:~``\Sexpr{sen.lab2[13]}'');
+\end{itemize_csas}
+
+All sensitivity runs were reweighted once for abundance, by adding process error to the commercial CPUE (except for S12 Tweedie because error was already high). 
+The process error added to the commercial CPUE for all sensitivities (except S12) was the same as that adopted in the base run B1 (R\Sexpr{central.run}) (CPUE=\Sexpr{cvp1}), based on a spline analysis (\AppEqn).
+No additional process error was added to survey indices because observed error was already high.
+As relative error on the HBLL surveys was lower than that for the synoptic surveys, we ran an MPD with added process error of 25\pc{}, but the MPD parameter estimates were very similar to those with no added process error; therefore, we used the MCMC results for the original run in S11.
+No explicit composition reweighting was applied; instead the parameter $\log\,\text{DM}\,\theta_g$, which governs the ratio of nominal and effective sample size (\AppEqn),  was estimated.
+
+%%\setlength{\tabcolsep}{4pt}
+%%\begin{table}[!h]
+%%\centering
+%%\caption{Age frequency weights used for the base run (B1) and fourteen sensitivity runs.}
+%%\label{tab:sensAFwts}
+%%\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\small
+%%\begin{tabular}{lcrrrrr}
+%%\hline \\ [-1.5ex]
+%%{\bf Sens} & {\bf Run} & {\bf Trawl} & {\bf QCS} & {\bf WCVI} & {\bf WCHG} & {\bf GIG} \\ [0.2ex]
+%%\hline \\ [-1.5ex]
+%%B1 & R75 & 6.321921 & 0.25 & 0.25 & 0.25 & 0.25 \\
+%%\hdashline \\ [-1.75ex]
+%%S01 & R78 &  6.325070 & 0.25 & 0.25 & 0.25 & 0.25 \\
+%%S02 & R79 &  6.408812 & 0.25 & 0.25 & 0.25 & 0.25 \\
+%%S03 & R80 & 10.279413 & 0.25 & 0.25 & 0.25 & 0.25 \\
+%%S04 & R81 & 10.440879 & 0.25 & 0.25 & 0.25 & 0.25 \\
+%%S05 & R82 &  6.449762 & 0.25 & 0.25 & 0.25 & 0.25 \\
+%%S06 & R83 &  6.222421 & 0.25 & 0.25 & 0.25 & 0.25 \\
+%%S07 & R84 &  6.253996 & 0.25 & 0.25 & 0.25 & 0.25 \\
+%%S08 & R85 &  6.389155 & 0.25 & 0.25 & 0.25 & 0.25 \\
+%%S09 & R86 &  6.321921 & 3.50 & 0.25 & 0.25 & 0.25 \\
+%%S10 & R87 &  5.997195 & 0.25 & 0.25 & 0.25 & 0.25 \\
+%%S11 & R88 &  5.241267 & 0.25 & 0.25 & 0.25 & 0.25 \\
+%%S12 & R91 &  6.326616 & 0.25 & 0.25 & 0.25 & 0.25 \\
+%%S13 & R92 &  6.358515 & 0.25 & 0.25 & 0.25 & 0.25 \\
+%%S14 & R93 &  6.055056 & 0.25 & 0.25 & 0.25 & 0.25 \\
+%%\hline
+%%\end{tabular}
+%%\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\normalsize
+%%\end{table}
+
+The Bayesian procedure used for the base run (Section~\ref{sssMCMC}) was also applied to the above \numberstringnum{\Sexpr{Nsens}} sensitivity analyses.
+All sensitivity runs were judged to have converged for the NUTS algorithm using \nChains{} parallel chains of \cSims{} each and discarding the first \cBurn{} from each. 
+The remaining \nChains{} sets of \cSamps{} samples were merged to yield \Nmcmc{} samples per sensitivity run.
+
+The differences among the sensitivity runs (including the base run) are summarised in tables of median parameter estimates (Table~\ref{tab:car.sens.pars}) and median MSY-based quantities (Table~\ref{tab:car.sens.rfpt}).
+Sensitivity plots appear in:
+\begin{itemize_csas}{-0.5}{}
+  \item Figure~\ref{fig:car.senso.LN(R0).traces} -- trace plots for chains of $\log\,R_0$ MCMC samples;
+  \item Figure~\ref{fig:car.senso.LN(R0).chains} -- diagnostic split-chain plots for $\log\,R_0$ MCMC samples;
+  \item Figure~\ref{fig:car.senso.LN(R0).acfs} -- diagnostic autocorrelation plots for $\log\,R_0$ MCMC sample;
+  \item Figure~\ref{fig:car.senso.traj.Bt} -- trajectories of median $B_t$ (tonnes);
+  \item Figure~\ref{fig:car.senso.traj.BtB0} -- trajectories of median $B_t/B_0$;
+  \item Figure~\ref{fig:car.senso.traj.RD} -- trajectories of median recruitment deviations;
+  \item Figure~\ref{fig:car.senso.traj.R} -- trajectories of median recruitment $R_t$ (1000s age-0 fish);
+  \item Figure~\ref{fig:car.senso.traj.U} -- trajectories of median exploitation rate $u_t$;
+  \item Figure~\ref{fig:car.senso.pars.qbox} -- quantile plots of selected parameters for the sensitivity runs;
+  \item Figure~\ref{fig:car.senso.rfpt.qbox} -- quantile plots of selected derived quantities for the sensitivity runs;
+  \item Figure~\ref{fig:car.senso.stock.status} -- stock status plots of $B_{\currYear}/\Bmsy$.
+ \end{itemize_csas}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsubsubsection{Sensitivity diagnostics}
+
+The diagnostic plots (Figures~\ref{fig:car.senso.LN(R0).traces} to \ref{fig:car.senso.LN(R0).acfs}) suggest that six sensitivity runs exhibited good MCMC behaviour and seven were fair.
+None were in the poor or unacceptable categories.
+\begin{itemize_csas}{-0.5}{}
+  \item Good -- no trend in traces, split-chains align, no autocorrelation:
+  \begin{itemize_csas}{}{0}
+    \item S01 (\Sexpr{sen.lab2[1]})
+    \item S03 (\Sexpr{sen.lab2[3]})
+    \item S04 (\Sexpr{sen.lab2[4]})
+    \item S06 (\Sexpr{sen.lab2[6]})
+    \item S08 (\Sexpr{sen.lab2[8]})
+    \item S11 (\Sexpr{sen.lab2[11]})
+  \end{itemize_csas}
+  \item Fair -- trace trend temporarily interrupted, split-chains somewhat frayed, some autocorrelation:
+  \begin{itemize_csas}{}{}
+    \item S02 (\Sexpr{sen.lab2[2]})
+    \item S05 (\Sexpr{sen.lab2[5]})
+    \item S07 (\Sexpr{sen.lab2[7]})
+    \item S09 (\Sexpr{sen.lab2[9]})
+    \item S10 (\Sexpr{sen.lab2[10]})
+    \item S12 (\Sexpr{sen.lab2[12]})
+    \item S13 (\Sexpr{sen.lab2[13]})
+  \end{itemize_csas}
+%%  \item Poor -- trace trend fluctuates substantially or shows a persistent increase/decrease, split-chains differ from each other, substantial autocorrelation:
+%%  \begin{itemize_csas}{}{}
+%%  \end{itemize_csas}
+%%  \item Unacceptable -- trace trend shows a persistent increase/decrease that has not levelled, split-chains differ markedly from each other, persistent autocorrelation:
+%%  \begin{itemize_csas}{}{}
+%%  \end{itemize_csas}
+\end{itemize_csas}
+
+\onefig{car.senso.LN(R0).traces}{MCMC traces for the estimated parameters. Grey lines show the \Nmcmc~samples for each parameter, solid blue lines show the cumulative median (up to that sample), and dashed lines show the cumulative \Sexpr{texThatVec(quants5[c(1,5)])} quantiles. Red circles are the MPD estimates.}{CAR sensitivity $R_0$: }{}
+
+\onefig{car.senso.LN(R0).chains}{diagnostic plots obtained by dividing the MCMC chain of \Nmcmc~MCMC samples into three segments, and overplotting the cumulative distributions of the first segment (red), second segment (blue) and final segment (black).}{CAR sensitivity $R_0$: }{}
+
+\onefig{car.senso.LN(R0).acfs}{autocorrelation plots for the estimated parameters from the MCMC output. Horizontal dashed blue lines delimit the 95\pc{} confidence interval for each parameter's set of lagged correlations.}{CAR sensitivity $R_0$: }{}
+
+\clearpage
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsubsubsection{Sensitivity comparisons}
+
+The trajectories of the $B_t$ medians relative to $B_0$ (Figure~\ref{fig:car.senso.traj.BtB0}) indicate that all sensitivities followed a similar trajectory to the base run trajectory with some variation.
+The median final-year depletion ranged from a low of 0.622 by S11 (add HBLL) to a high of 0.973 by S01 (split M).
+As the split-M scenario was the most optimistic, with respect to depletion in \currYear, the selected base run (single~M) can be considered a conservative choice.
+
+Two of the sensitivity runs resulted in notably less optimistic estimates of stock depletion. 
+These were S11 (adding the HBLL surveys) and S12 (using Tweedie CPUE).
+Both these runs provided good or acceptable MCMC diagnostics and can be considered alternative interpretations for the CAR stock.
+These runs use different data inputs, either additional survey data or an alternative interpretation of CPUE data.
+The Tweedie CPUE analysis is credible and represents an alternative interpretation of the catch/effort data. 
+It is notable that a third Tweedie analysis, using a full interaction model between DFO locality and year, finishes quite closely to the delta/lognnormal model used in the base run (Figure C.20) and would return a model which was intermediate between the base run and run S12.
+
+Both CPUE series may be compromised through changes in the collection procedure of catch/effort data as a result of administrative responses to COVID-19 pandemic. 
+The observer programme was suspended in March 2020 and was replaced by an audited electronic monitoring logbook programme in April 2020.
+Although individual landings are audited, there has been no overall audit of the post-March 2020 data collection process.
+
+The sensitivity run which omitted the CPUE data entirely (S13) resulted in a less optimistic stock depletion estimate than in the base run but greater than the Tweedie sensitivity run (S12) (median estimate $B\currYear/B_0$=0.67 compared to 0.78 for the base run and 0.63 for S12).
+
+Sensitivity S01, which emulated the previous CAR stock assessment (Stanley et al. 2009) by estimating a lower $M$ for both males and females and then allowing $M$ to increase for females after age 14, resulted in a much more optimistic stock depletion than the base run (median estimate $B\currYear/B_0$=0.97 compared to 0.78 in the base run).
+
+The other hypothesis to explain the lack of older females in this population, represented in sensitivity (S09), which uses female dome-shaped selectivity to explain this, results in larger biomass and a more optimistic stock depletion than the base run (median estimate $B\currYear/B_0$=0.84) (Figure~\ref{fig:car.senso.traj.BtB0}).
+The larger $B_0$ estimate stems from the cryptic biomass that is created by this model run which  acts as a reservoir of additional female spawners.
+
+An interesting sensitivity is S10, adding the AF data for the HS and WCHG surveys, data that were not included in the base run because the model could not fit to these data very well.
+However, the HS survey observed younger ages and sizes (see Figure D.6) compared to the other synoptic surveys.
+When the model was offered the HS AF data, it estimated a very large year class for 2014 compared to the base run (Figures~\ref{fig:car.senso.traj.RD} and \ref{fig:car.senso.traj.R}).
+While this year class may be as large as the run S10 estimate, it seemed prudent to investigate this possibility as a sensitivity run without including such an optimistic estimate in the base run projections.
+
+Three of the sensitivity runs addressed ageing error issues: S02 dropped ageing error entirely; S03 used an alternative ageing error vector based on the error between alternative reads of the same otolith; and S04 which implemented a constant 10\pc{} error term for every age.
+These alternative ageing error vectors are plotted concurrently in Figure D.9.
+The sensitivity runs employing the alternative ageing error vectors (S03 and S04) resulted in model runs that were almost identical to the base run when plotted as a percentage of $B_0$ (Figure~\ref{fig:car.senso.traj.BtB0}).
+When plotted as an absolute biomass (Figure~\ref{fig:car.senso.traj.Bt}), sensitivity S04 lies slightly below the base run while sensitivity S03 lies on top of the base run.
+Sensitivity S02, which drops ageing error entirely, is less optimistic in terms of percentage $B_0$ and is considerably larger in terms of absolute $B_t$ than the base run.
+
+The two sensitivity runs which adjusted early (1965-1995) catches downward (S05) and upward (S06) provided predictable results relative to the base run, with S05 returning a similar $B_0$ while S06 proved to be a much larger stock.
+In terms of percent $B_0$, S05 returned more optimistic results compared to the base run (especially after about 1990) while S06 was consistently below the base run, returning one of the least optimistic trajectories.
+
+The two sensitivity runs which varied the $\sigma_R$ parameter showed mixed results.
+Run S07 (sigmaR=0.6) was nearly identical to the base run, apart from estimating a smaller stock (about 10\pc{} smaller) but with no difference in terms of stock depletion.
+Run S08 (sigmaR=1.2) did the opposite: stock size increased (by about 15\pc{}) but stock depletion, and consequently the advice, changed very little.
+
+Apart from $\log\,R_0$, there was little variation in the key leading parameter estimates among the \numberstringnum{\Sexpr{Nsens}} sensitivity runs (Figure~\ref{fig:car.senso.pars.qbox})
+The one exception is sensitivity run S01 (split $M$) because only the $M$ for young (ages 0-13) fish is plotted.
+The $M$ parameters for young and mature (ages 14+) fish are not comparable to the $M$ values estimated for the other sensitivity runs.
+Derived quantities based on MSY (Figure~\ref{fig:car.senso.rfpt.qbox}) exhibited divergences that are consistent with the sensitivity, e.g., high $B_0$ for S09 (female dome-shaped selectivity) and high $u_\text{max}$ for S06 (increased catch in 1965-95).
+
+The stock status ($B_{\Sexpr{currYear}}/\Bmsy$) for the sensitivities (Figure~\ref{fig:car.senso.stock.status}) are all in the DFO Healthy zone, including the most pessimistic S12 run that uses the Tweedie distribution for fitting CPUE index data.
+
+<<tab_sens_pars, results=tex, echo=FALSE>>=
+## Ridiculous manipulation to get landscapepage macro to work:
+writeLines(c("\\setlength{\\tabcolsep}{1pt}", xtab.sens.pars.out), con="xtab.sens.pars.txt")
+@
+\begin{landscapepage}{\input{xtab.sens.pars.txt}}{\LH}{\RH}{\LF}{\RF}
+\end{landscapepage}
+
+<<tab_sens_pars2, results=tex, echo=FALSE>>=
+## Ridiculous manipulation to get landscapepage macro to work:
+writeLines(c("\\setlength{\\tabcolsep}{6pt}", xtab.sens.pars2.out), con="xtab.sens.pars2.txt")
+@
+\begin{landscapepage}{\input{xtab.sens.pars2.txt}}{\LH}{\RH}{\LF}{\RF}
+\end{landscapepage}
+
+<<tab_sens_rfpt, results=tex, echo=FALSE>>=
+## Ridiculous manipulation to get landscapepage macro to work:
+writeLines(c("\\setlength{\\tabcolsep}{1pt}", xtab.sens.rfpt.out), con="xtab.sens.rfpt.txt")
+@
+\begin{landscapepage}{
+\input{xtab.sens.rfpt.txt}
+}{\LH}{\RH}{\LF}{\RF} \end{landscapepage}
+
+<<tab_sens_ll, results=tex, echo=FALSE>>=
+writeLines(c("\\setlength{\\tabcolsep}{3pt}", xtab.sruns.ll.out),  con="xtab.sruns.ll.txt")
+@
+\begin{landscapepage}{
+	\input{xtab.sruns.ll.txt}
+}{\LH}{\RH}{\LF}{\RF} \end{landscapepage}
+
+\setlength{\tabcolsep}{3pt}
+\clearpage
+
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%%\subsubsection{Sensitivity figures}
+
+\onefig{car.senso.traj.BtB0}{model trajectories of median spawning biomass as a proportion of unfished equilibrium biomass ($B_t/B_0$) for the base run of the composite base run and \Sexpr{Nsens} sensitivity runs. Horizontal dashed lines show alternative reference points used by other jurisdictions: 0.2$B_0$ ($\sim$DFO's USR), 0.4$B_0$ (often a target level above $\Bmsy$), and $B_0$ ( equilibrium spawning biomass).}{CAR sensitivity: }{}
+
+\onefig{car.senso.traj.Bt}{model trajectories of median spawning biomass (tonnes) for the base run of the composite base run and \Sexpr{Nsens} sensitivity runs.}{CAR sensitivity: }{}
+
+\clearpage
+
+\onefig{car.senso.traj.RD}{model trajectories of median recruitment deviations for the base run of the composite base run and \Sexpr{Nsens} sensitivity runs.}{CAR sensitivity: }{}
+
+\onefig{car.senso.traj.R}{model trajectories of median recruitment of one-year old fish ($R_t$, 1000s) for the base run of the composite base run and \Sexpr{Nsens} sensitivity runs.}{CAR sensitivity: }{}
+
+\onefig{car.senso.traj.U}{model trajectories of median exploitation rate of vulnerable biomass ($u_t$) for the base run of the composite base run and \Sexpr{Nsens} sensitivity runs.}{CAR sensitivity: }{}
+
+\clearpage
+
+\onefig{car.senso.pars.qbox}{quantile plots of selected parameter estimates ($\log R_0$, $\mu_{g=1,2,3}$, $\log v_{\text{L}g=1,2}$) comparing the base run with \Sexpr{Nsens} sensitivity runs. See text on sensitivity numbers. The boxplots delimit the \Sexpr{texThatVec(quants5)} quantiles; outliers are excluded.}{CAR sensitivity: }{}
+
+\onefig{car.senso.rfpt.qbox}{quantile plots of selected derived quantities ($B_{\currYear}$, $B_0$, $B_{\currYear}/B_0$, MSY, $\Bmsy$, $\Bmsy/B_0$, $u_{\prevYear}$, $\umsy$, $u_\text{max}$) comparing the base run with \Sexpr{Nsens-2} sensitivity runs (S02 and S10 omitted because biomass scale overwhelms that of the others, see Table~\ref{tab:car.sens.rfpt}). See text on sensitivity numbers. The boxplots delimit the \Sexpr{texThatVec(quants5)} quantiles; outliers are excluded.}{CAR sensitivity: }{}
+
+\onefig{car.senso.stock.status}{stock status at beginning of \Sexpr{currYear} relative to the DFO PA provisional reference points of 0.4$\Bmsy$ and 0.8$\Bmsy$ for the base run of the composite base run (Run\Sexpr{central.run}) and \Sexpr{Nsens} sensitivity runs. Vertical dotted line uses median of the base run to faciliate comparisons with sensitivity runs. Boxplots show the \Sexpr{texThatVec(quants5)} quantiles from the MCMC posterior.}{CAR sensitivity: }{}
+
+\clearpage
+

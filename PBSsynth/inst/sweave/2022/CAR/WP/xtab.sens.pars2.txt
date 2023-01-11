@@ -1,0 +1,49 @@
+\setlength{\tabcolsep}{6pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Fri Jul 22 11:16:54 2022
+\begin{table}[ht]
+\centering
+\caption{CAR~BC: median values of MCMC samples for remaining estimated parameters for 4 sensitivity runs (\Nmcmc{} samples each). R~= Run, S~= Sensitivity. Numeric subscripts other than those for $M2$ indicate the following gear types $g$: 1~= Trawl, 3~= QCS Synoptic, 4~= WCVI Synoptic, 6~= HS Synoptic, 7~= WCHG Synoptic, 9~= HBLL North, and 10~= HBLL South. Sensitivity runs: S01~= split M ages(13,14), S09~= female dome select, S10~= use AF HS WCHG, S11~= add HBLL surveys} 
+\label{tab:car.sens.pars2}
+\begingroup\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\footnotesize
+\begin{tabular}{crrrr}
+  \\[-1.0ex] \hline
+ & S01(R25) & S09(R33) & S10(R34) & S11(R35) \\ 
+  \hline
+$M2_{1}$ & 0.1454 & --- & --- & --- \\ 
+  $M2_{2}$ & 0.06902 & --- & --- & --- \\ 
+  $\log~v_{\text{R}1}~(\text{TRAWL})$ & --- & 2.648 & --- & --- \\ 
+  $\beta6_{1}~(\text{TRAWL})$ & --- & 10.00 & --- & --- \\ 
+  $\Delta2_{1}~(\text{TRAWL})$ & --- & -0.3502 & --- & --- \\ 
+  $\Delta3_{1}~(\text{TRAWL})$ & --- & 2.358 & --- & --- \\ 
+  $\Delta4_{1}~(\text{TRAWL})$ & --- & -14.06 & --- & --- \\ 
+  $\log~v_{\text{R}3}~(\text{QCS})$ & --- & 2.590 & --- & --- \\ 
+  $\beta6_{3}~(\text{QCS})$ & --- & 10.00 & --- & --- \\ 
+  $\Delta2_{3}~(\text{QCS})$ & --- & -0.2002 & --- & --- \\ 
+  $\Delta3_{3}~(\text{QCS})$ & --- & 1.907 & --- & --- \\ 
+  $\Delta4_{3}~(\text{QCS})$ & --- & -10.23 & --- & --- \\ 
+  $\log~v_{\text{R}4}~(\text{WCVI})$ & --- & 2.591 & --- & --- \\ 
+  $\beta6_{4}~(\text{WCVI})$ & --- & 10.00 & --- & --- \\ 
+  $\Delta2_{4}~(\text{WCVI})$ & --- & -0.1616 & --- & --- \\ 
+  $\Delta3_{4}~(\text{WCVI})$ & --- & 1.468 & --- & --- \\ 
+  $\Delta4_{4}~(\text{WCVI})$ & --- & -5.215 & --- & --- \\ 
+  $\mu_{6}~(\text{HS})$ & --- & --- & 6.963 & --- \\ 
+  $\log~v_{\text{L}6}~(\text{HS})$ & --- & --- & 2.662 & --- \\ 
+  $\Delta1_{6}~(\text{HS})$ & --- & --- & -0.4069 & --- \\ 
+  $\mu_{7}~(\text{WCHG})$ & --- & --- & 16.24 & --- \\ 
+  $\log~v_{\text{L}7}~(\text{WCHG})$ & --- & --- & 2.728 & --- \\ 
+  $\Delta1_{7}~(\text{WCHG})$ & --- & --- & -0.3937 & --- \\ 
+  $\mu_{9}~(\text{HBLLN})$ & --- & --- & --- & 8.978 \\ 
+  $\log~v_{\text{L}9}~(\text{HBLLN})$ & --- & --- & --- & 1.610 \\ 
+  $\Delta1_{9}~(\text{HBLLN})$ & --- & --- & --- & -0.3715 \\ 
+  $\mu_{10}~(\text{HBLLS})$ & --- & --- & --- & 9.488 \\ 
+  $\log~v_{\text{L}10}~(\text{HBLLS})$ & --- & --- & --- & 2.042 \\ 
+  $\Delta1_{10}~(\text{HBLLS})$ & --- & --- & --- & -0.3686 \\ 
+  $\log~(\text{DM}~\theta)_{6}$ & --- & --- & 4.916 & --- \\ 
+  $\log~(\text{DM}~\theta)_{7}$ & --- & --- & 5.322 & --- \\ 
+  $\log~(\text{DM}~\theta)_{9}$ & --- & --- & --- & 4.884 \\ 
+  $\log~(\text{DM}~\theta)_{10}$ & --- & --- & --- & 5.202 \\ 
+   \hline
+\end{tabular}
+\endgroup
+\end{table}

@@ -35,9 +35,10 @@ allEqual <- function(x)
 }
 
 ## calcStdRes---------------------------2022-11-01
-##  This implements standardised residuals for the Awatea
-##  implementation of the Fournier robustified normal likelihood
-##  for proportions at length. Based on PJS summary of CASAL doc and ACH change to length.
+##  This implements standardised residuals for the
+##  Awatea implementation of the Fournier robustified
+##  normal likelihood for proportions at length. 
+##  Based on PJS summary of CASAL doc and ACH change to length.
 ##------------------------------------------AME|RH
 calcStdRes <- function( obj, trunc=3, myLab="Age Residuals", prt=TRUE, type="Multinomial",
    afld="Bin", yfld="Yr", ofld="Obs", ffld="Exp", nfld="Nsamp_adj" )
@@ -76,11 +77,12 @@ calcStdRes <- function( obj, trunc=3, myLab="Age Residuals", prt=TRUE, type="Mul
 		SD      <- sqrt(
 			switch(type, 'Multinomial'=Mprime, 'Fournier'=Fprime, 'Coleraine'=Oprime) / Nprime )  
 		result$stdRes[idx] <- res[idx]/SD                             ## Pearson residuals = Normalised residuals for normal error distributions
-#browser();return()
+
 		## For Dirichlet-Multinomial, SS code "SS_write_report.tpl" shows:
 		##   show_Pearson = value((ocomp - ecomp) / sqrt(ecomp * (1.0 - ecomp) / nsamp * (nsamp + dirichlet_Parm) / (1. + dirichlet_Parm))); // Pearson for Dirichlet-multinomial using negative-exponential parameterization
 		## But this is too complicated to replicated here (for now)
 	}
+	## Pearson residuals truncated
 	if ( prt ) {
 		sdRes <- sqrt( var( result$stdRes,na.rm=TRUE ) )
 		sdTrunc <- ifelse( result$stdRes > trunc, trunc, result$stdRes )
@@ -294,6 +296,9 @@ findTarget=function(Vmat, yrU=as.numeric(dimnames(Vmat)[[2]]), yrG=90,
 ##   Setting 2021 as the final year of the model allows 2021 catch.
 ##   The values for derived quantities like SSB_2021 and Bratio_2021 represent the beginning of the year values at the start of 2021 in the main time series.
 ##   The SSB_2022 is one year later but will only depend on catches up through 2021, so changes in 2022 catch won't impact the 2022 quantities.
+## Chantel Wetzel (Jun 27, 2022)
+##   The F value in 2023 would be calculated from the total catch at the end of the model year.
+##   If the final year in your model with catches input into the data file is 2022, then the F_2023 would be based off the forecast catch from that year.
 ## ---------------------------------------------RH
 gatherMCMC = function( mcdir=".", type="compo", strSpp="CAR",
    basedir="C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/YMR2022",
@@ -301,7 +306,7 @@ gatherMCMC = function( mcdir=".", type="compo", strSpp="CAR",
 {
 	ayrs  = c(ryrs, pyrs); nyrs = length(ayrs)
 	currYr = rev(ryrs)[1]; byr = cyr = as.character(currYr)
-	#prevYr = currYr-1;     byr = as.character(prevYr) ## see note above
+	#prevYr = currYr-1;     byr = as.character(prevYr) ## see notes above
 	mclst = Nmcmc = rowN = valPAs = valLLs = list()
 
 	for (m in 1:length(mcdir)){
@@ -1452,7 +1457,3 @@ weightAF = function(replist, fleets, abase="agedbase", afld="Nsamp_adj",
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~weightAF
 
-
-## Flush the cat down the console (change to '.flash.cat' to avoid conflict with function in PBStools)
-## Note: `.flush.cat' already in PBStools but this package is not assumed to be loaded.
-.flash.cat = function(...) { cat(...); flush.console() }

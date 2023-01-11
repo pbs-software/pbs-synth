@@ -1,19 +1,19 @@
 Package: PBSsynth
-Version: 0.3.0
-Date:    2022-11-01
-Title:   Tools for Running Stock Synthesis and Visualising Results
+Version: 0.4.0
+Date:    2023-01-11
+Title:   Tools for Manipulating Stock Synthesis 3
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
-   person(c("Andrew", "M."), "Edwards", role = "ctb", email = "sean.anderson@dfo-mpo.gc.ca"),
+   person(c("Andrew", "M."), "Edwards", role = "ctb", email = "andrew.edwards@dfo-mpo.gc.ca"),
    person(c("Paul", "J."), "Starr", role = "ctb", email = "paul@starrfish.net"),
-   person("Chris", "Grandin", role = "ctb", email = "chris.grandin@dfo-mpo.gc.ca"),
+   person("Chris", "Grandin", role = "ctb", email = "chris.grandin@dfo-mpo.gc.ca")
    )
-Author:      Rowan Haigh [aut, cre], Andrew M. Edwards [ctb], Paul J. Starr [ctb], Chris Grandin [ctb]
+Author:      Rowan Haigh [aut, cre], Paul J. Starr [ctb], Andrew M. Edwards [ctb], Chris Grandin [ctb]
 Maintainer:  Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
-Copyright:   2020-2022, Fisheries and Oceans Canada
+Copyright:   2020-2023, Fisheries and Oceans Canada
 Depends:     R (>= 3.5.0), PBSmapping, PBSmodelling, PBStools, PBSdata
-Imports:     nada
-Suggests:    nada
+#Imports:     nada
+#Suggests:    nada
 Description: A collection of finicky functions to titillate Stock Synthesis users.
    Helpful or not, this code repository represents an evolution of frustration
    when dealing with `r4ss' and `adnuts'.

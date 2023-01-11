@@ -1,0 +1,12 @@
+# Export all functions that do NOT begin with a dot (period)
+exportPattern("^[^\\.]")
+
+# Export dot functions by action (explicit list just to keep track)
+exportPattern("^\\.PBS")
+exportPattern("^\\.flash")
+
+# Packages declared in the 'Depends' field should not also be in the 'Imports' field (I guess in DESCRIPTION file only) (from R-exts.pdf).
+import(
+  PBSmapping, PBSmodelling, PBStools, PBSdata
+)
+

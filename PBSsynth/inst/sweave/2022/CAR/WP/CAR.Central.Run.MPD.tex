@@ -1,0 +1,139 @@
+\subsubsubsection{Tables MPD base run}
+
+%%---Table 2-----------------------------
+\setlength{\tabcolsep}{2pt}
+\begin{table}[!h]
+\centering
+\caption{Priors and MPD estimates for estimated parameters. Prior information -- distributions: 0~=~uniform, 2~=~beta, 6~=~normal}
+\label{tab:parest}
+\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\small
+\begin{tabular}{lcccccr}
+\hline \\ [-1.5ex]
+%\multicolumn{6}{l}{{\bf Parameter in write-up, Awatea input name, Awatea export name}} \\
+{\bf Parameter} & {\bf Phase} & {\bf Range} & {\bf Type} & {\bf (Mean,SD)} & {\bf Initial} & {\bf MPD} \\ [1ex]
+\hline \\ [-1.5ex]
+M Female & 4 & (0.02, 0.2) & 6 & (0.06, 0.018) & 0.06 & 0.093 \\
+M Male & 4 & (0.02, 0.2) & 6 & (0.06, 0.018) & 0.06 & 0.065 \\
+LN(R0) & 1 & (1, 16) & 6 & (7, 7) & 7 & 7.913 \\
+BH h & 5 & (0.2, 1) & 2 & (0.67, 0.17) & 0.76 & 0.877 \\
+mu(1) TRAWL & 3 & (5, 40) & 6 & (14, 4.2) & 14 & 13.321 \\
+varL(1) TRAWL & 4 & (-15, 15) & 6 & (2.5, 0.75) & 2.5 & 2.395 \\
+delta1(1) TRAWL & 4 & (-8, 10) & 6 & (-0.4, 0.12) & -0.4 & -0.391 \\
+mu(3) QCS & 3 & (5, 40) & 6 & (14, 4.2) & 14 & 12.416 \\
+varL(3) QCS & 4 & (-15, 15) & 6 & (2.5, 0.75) & 2.5 & 2.677 \\
+delta1(3) QCS & 4 & (-8, 10) & 6 & (-0.4, 0.12) & -0.4 & -0.390 \\
+mu(4) WCVI & 3 & (5, 40) & 6 & (14, 4.2) & 14 & 10.427 \\
+varL(4) WCVI & 4 & (-15, 15) & 6 & (2.5, 0.75) & 2.5 & 2.786 \\
+delta1(4) WCVI & 4 & (-8, 10) & 6 & (-0.4, 0.12) & -0.4 & -0.391 \\
+mu(5) NMFS & 3 & (5, 40) & 6 & (14, 4.2) & 14 & 12.272 \\
+varL(5) NMFS & 4 & (-15, 15) & 6 & (2.5, 0.75) & 2.5 & 2.620 \\
+delta1(5) NMFS & 4 & (-8, 10) & 6 & (-0.4, 0.12) & -0.4 & -0.400 \\
+ln(DM theta) 1 & 2 & (-5, 10) & 6 & (0, 1.813) & 0 & 6.855 \\
+ln(DM theta) 3 & 2 & (-5, 10) & 6 & (0, 1.813) & 0 & 5.720 \\
+ln(DM theta) 4 & 2 & (-5, 10) & 6 & (0, 1.813) & 0 & 5.540 \\
+ln(DM theta) 5 & 2 & (-5, 10) & 6 & (0, 1.813) & 0 & 4.873 \\
+\hline
+\end{tabular}
+\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\normalsize
+\end{table}
+
+\clearpage
+%\qquad % or \hspace{2em}
+
+%%---Tables 3-5 -------------------------
+%% Likelihoods Used from replist
+%% Get numbers from chunk above
+\setlength{\tabcolsep}{0pt}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{2.31in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.35in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.35in}}
+  \caption{Likelihood components reported in \texttt{likelihoods\_used}.} \label{tab:like1}\\  \hline\\[-2.2ex]  Likelihood Component  & values & lambdas \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  Likelihood Component  & values & lambdas \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  TOTAL & 374.8 & --- \\ 
+  Equil catch & 0 & --- \\ 
+  Survey & 40.14 & --- \\ 
+  Age comp & 302.1 & --- \\ 
+  Recruitment & 0.05506 & 1 \\ 
+  InitEQ Regime & 0 & 1 \\ 
+  Forecast Recruitment & 0.3411 & 1 \\ 
+  Parm priors & 32.08 & 1 \\ 
+  Parm softbounds & 0.002910 & --- \\ 
+  Parm devs & 0 & 1 \\ 
+  Crash Pen & 0 & 1 \\ 
+   %\hline
+\end{longtable}\setlength{\tabcolsep}{0pt}
+
+%%\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{2.6in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.2in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.2in}}
+%%  \caption{Likelihood components reported in \texttt{likelihoods\_laplace}.} \label{tab:like2}\\  \hline\\[-2.2ex]  Likelihood Component  & values & lambdas \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  Likelihood Component  & values & lambdas \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  NoBias corr Recruitment(info only) & -6.182 & 1 \\ 
+%%  Laplace obj fun(info only) & 368.5 & --- \\ 
+%%   %\hline
+%%\end{longtable}\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\small \setlength{\tabcolsep}{0pt}
+%%\begin{longtable}[c]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.68in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.56in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.59in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.59in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.56in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.59in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.64in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.56in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.59in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.64in}}
+%%  \caption{Likelihood components reported in \texttt{likelihoods\_by\_fleet}.} \label{tab:like3}\\  \hline\\[-2.2ex]  Label  & ALL & TRAWL FISHERY & OTHER FISHERY & QCS SYNOPTIC & WCVI SYNOPTIC & NMFS TRIENNIAL & HS SYNOPTIC & WCHG SYNOPTIC & GIG HISTORICAL \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  Label  & ALL & TRAWL FISHERY & OTHER FISHERY & QCS SYNOPTIC & WCVI SYNOPTIC & NMFS TRIENNIAL & HS SYNOPTIC & WCHG SYNOPTIC & GIG HISTORICAL \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  Init equ lambda & --- & 1.000 & 1 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\ 
+%%  Init equ like & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+%%  Surv lambda & --- & 1.000 & 0 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\ 
+%%  Surv like & 40.14 & -24.98 & 0 & 7.933 & 2.003 & 13.86 & 8.634 & 23.92 & 8.773 \\ 
+%%  Surv N use & --- & 26.00 & 0 & 11.00 & 9.000 & 7.000 & 9.000 & 8.000 & 8.000 \\ 
+%%  Surv N skip & --- & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+%%  Age lambda & --- & 1.000 & 0 & 1.000 & 1.000 & 1.000 & 0 & 0 & 0 \\ 
+%%  Age like & 302.1 & 195.8 & 0 & 34.05 & 26.59 & 45.69 & 0 & 0 & 0 \\ 
+%%  Age N use & --- & 36.00 & 0 & 9.000 & 8.000 & 6.000 & 0 & 0 & 0 \\ 
+%%  Age N skip & --- & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+%%   %\hline
+%%\end{longtable}\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\normalsize \clearpage
+
+%%---Table 6 -------------------------
+%% Mean ages -- sum of Stundentised residuls by fleet 
+%%\setlength{\tabcolsep}{0pt}
+%%\begin{longtable}[c]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.92in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.2in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.94in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.94in}}
+%%  \caption{Sum of residuals for observed and expected mean ages by fleet.} \label{tab:ssr}\\  \hline\\[-2.2ex]  Run Rwt  & Fleet & Sum Std Res & Sum PJS Res \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  Run Rwt  & Fleet & Sum Std Res & Sum PJS Res \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  R.24.01 & Trawl Fishery & -0.7989 & 76.3580 \\ 
+%%  R.24.01 & QCS Synoptic & 1.1957 & 17.5827 \\ 
+%%  R.24.01 & WCVI Synoptic & 1.9336 & 12.5195 \\ 
+%%  R.24.01 & NMFS Triennial & -5.9307 & 27.8662 \\ 
+%%  R.24.01 & Total & -3.6002 & 134.3264 \\ 
+%%   %\hline
+%%\end{longtable}
+%%\clearpage
+
+\newpage
+\subsubsubsection{Figures MPD base run}
+
+\onefig{mleParameters}{Likelihood profiles (thin blue curves) and prior density functions (thick black curves) for the estimated parameters. Vertical lines represent the maximum likelihood estimates; red triangles indicate initial values used in the minimization process.}
+\onefig{survIndSer}{Survey index values (points) with 95\pc{} confidence intervals (bars) and MPD model fits (curves) for the fishery-independent survey series.}
+\clearpage
+
+\onefig{agefitFleet1}{Trawl Fishery proportions-at-age (bars=observed, lines=predicted) for females and males combined.}
+\onefig{ageresFleet1}{Trawl Fishery residuals of model fits to proportion-at-age data. Vertical axes are standardised residuals. Boxplots in the three panels show residuals by age class, by year of data, and by year of birth (following a cohort through time). Cohort boxes are coloured green if recruitment deviations in birth year are positive, red if negative. Boxes give quantile ranges (0.25-0.75) with horizontal lines at medians, vertical whiskers extend to the the 0.05 and 0.95 quantiles, and outliers appear as plus signs.}
+\clearpage
+
+\onefig{agefitFleet3}{QCS Synoptic survey proportions-at-age (bars=observed, lines=predicted) for females and males combined.}
+\onefig{ageresFleet3}{QCS Synoptic survey residuals of model fits to proportion-at-age data. See Fig.~\ref{fig:ageresFleet1} caption for plot details.}
+\clearpage
+
+\onefig{agefitFleet4}{WCVI Synoptic survey proportions-at-age (bars=observed, lines=predicted) for females and males combined.}
+\onefig{ageresFleet4}{WCVI Synoptic survey residuals of model fits to proportion-at-age data. See Fig.~\ref{fig:ageresFleet1} caption for plot details.}
+\clearpage
+
+\onefig{agefitFleet5}{NMFS Triennial survey proportions-at-age (bars=observed, lines=predicted) for females and males combined.}
+\onefig{ageresFleet5}{NMFS Triennial survey residuals of model fits to proportion-at-age data. See Fig.~\ref{fig:ageresFleet1} caption for plot details.}
+\clearpage
+
+\onefig{meanAge}{Mean ages each year for the weighted data (solid circles) with 95\pc{} confidence intervals and model estimates (blue lines) for the commercial and survey age data.}
+\onefig{selectivity}{Selectivities for commercial fleet catch and surveys (all MPD values), with maturity ogive for females indicated by `m'.}
+\clearpage
+
+\twofig{spawning}{BtB0}{Top~:~Time series of biomass (spawning, female, male, total) in tonnes (bottom). Uncertainty envelope generated by SS is provided for spawning female biomass. Pink bars along the bottom show catch biomass (tonnes) for both fisheries predominant). Bottom~:~Spawning biomass $B_t$ relative to unfished equilbrium spawning biomass $B_0$. }
+\twofig{recruits}{recDev}{Recruitment (thousands of fish) over time (top) and log of annual recruitment deviations (bottom), $\epsilon_t$, where bias-corrected multiplicative deviation is  $\mbox{e}^{\epsilon_t - \sigma_R^2/2}$ and  $\epsilon_t \sim \mbox{Normal}(0, \sigma_R^2)$. Blue line designates 2023 SS fit for age-0 fish.}
+\clearpage
+
+\onefig{stockRecruit}{Deterministic stock-recruit relationship (black curve) and observed values (labelled by year of spawning).}
+\twofig{LLprof-R0}{LLprof-Mf}{Likelihood profiles for $\log R_0$ and $M_2$ (female).}
+
+\clearpage
+
+\twofig{RA-indices}{RA-SSB}{Retrospective analysis showing results for fits to the CPUE index (top) and spawning stock biomass (bottom).}
+\twofig{RA-recdevs}{RA-BtB0}{Retrospective analysis showing results for fits to the recruitment deviations (top) and spawning stock depletion (bottom).}
+
+%% Following figures not used:
+%%\onefig{meanAge0}{Mean ages each year for the \textbf{unweighted} data (solid circles) with 95\pc{} confidence intervals and model estimates (blue lines) for the commercial and survey age data.}
+%%\onefig{harmonica0}{\textbf{Unweighted AF} -- harmonic mean of effective sample size vs. arithmetic mean of adjusted sample size.}
+%%\onefig{harmonica}{\textbf{Weighted AF} -- harmonic mean of effective sample size vs. arithmetic mean of adjusted sample size.}
+%%\onefig{vulnerable}{Time series of biomass (vulnerable, total) in tonnes. Each fishery taps into a vulnerable proportion of the total population based on fleet %%selectivity. Pink bars along the bottom show catch biomass (tonnes) for both fisheries (trawl predominant).}
+%%\onefig{harvest}{Time series of harvest (or exploitation) rate by fishery. Pink bars along the bottom show catch biomass (tonnes) for both fisheries (trawl predominant).}
+%%==============================================================================

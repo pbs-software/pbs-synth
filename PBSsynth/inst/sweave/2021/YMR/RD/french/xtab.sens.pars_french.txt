@@ -1,0 +1,29 @@
+\setlength{\tabcolsep}{1pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Fri Sep 17 15:48:00 2021
+\begin{table}[ht]
+\centering
+\caption{SBJ~C.-B.~: valeurs m\'{e}dianes des \'{e}chantillons MCCM pour les principaux param\`{e}tres estim\'{e}s, comparant le cycle central aux 14 cycles de sensibilit\'{e} (\Nmcmc{} \'{e}chantillons chacun). C~=central, E~= ex\'{e}cution ou cycle, S~= sensibilit\'{e}. Les chiffres en indice autres que ceux de $R_0$ et $M$ indiquent les types d'engins suivants $g$ : 1~= CPUE chalut de fond, 2~= BRC relev\'{e} synoptique, 3~= COIV relev\'{e} synoptique, 4~= COHG relev\'{e} synoptique et 5~= GIG donn\'{e}es historiques. Cycles de sensibilit\'{e} : S01~= ajout de l'indice COHG 1997, S02~= estimation de M, S03~= omettre CPUE, S04~= CPUE de Tweedie, S05~= sigmaR=0,6, S06~= sigmaR=1,2, S07~= r\'{e}duction des prises 33\pc, S08~= augmentation des prises 50\pc, S09~= pond\'{e}rer \`{a} la hausse FA BRC, S10~= d\'{e}buter \'{e}cartsR en 1970, S11~= aucune erreur d'\^{a}ge, S12~= taux de variation h=0,5, S13~= doubler prises 2021, S14~= erreurs d'\^{a}ge provenant des lecteurs} 
+\label{tab:ymr.sens.pars}
+\begingroup\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\footnotesize
+\begin{tabular}{crrrrrrrrrrrrrrr}
+  \\[-1.0ex] \hline
+Par. & B3(E75) & S01(E78) & S02(E79) & S03(E80) & S04(E81) & S05(E82) & S06(E83) & S07(E84) & S08(E85) & S09(E86) & S10(E87) & S11(E88) & S12(E91) & S13(E92) & S14(E93) \\ 
+  \hline
+$\log R_{0}$ & 8,073 & 8,067 & 9,767 & 8,090 & 7,979 & 8,186 & 8,104 & 7,929 & 8,265 & 8,070 & 9,302 & 8,558 & 8,066 & 8,072 & 8,284 \\ 
+  $\mu_{1}$ & 11,61 & 11,60 & 11,59 & 11,72 & 11,79 & 11,54 & 11,64 & 11,62 & 11,58 & 11,32 & 11,70 & 11,75 & 11,59 & 11,59 & 11,81 \\ 
+  $\mu_{2}$ & 13,72 & 13,58 & 13,87 & 13,76 & 13,67 & 13,78 & 13,71 & 13,63 & 13,73 & 10,79 & 14,21 & 13,74 & 13,72 & 13,68 & 13,70 \\ 
+  $\mu_{3}$ & 13,68 & 13,52 & 13,80 & 13,72 & 13,65 & 13,59 & 13,80 & 13,52 & 13,68 & 13,89 & 14,03 & 13,59 & 13,72 & 13,68 & 13,85 \\ 
+  $\mu_{4}$ & 10,68 & 10,74 & 10,71 & 10,75 & 10,74 & 10,76 & 10,68 & 10,73 & 10,77 & 10,59 & 10,83 & 10,69 & 10,74 & 10,73 & 10,75 \\ 
+  $\mu_{5}$ & 15,94 & 15,78 & 15,76 & 15,68 & 15,83 & 15,84 & 15,94 & 15,88 & 15,83 & 15,99 & 15,80 & 16,02 & 15,89 & 15,84 & 15,91 \\ 
+  $\log v_{\text{L}1}$ & 2,067 & 2,063 & 2,038 & 2,152 & 2,172 & 2,038 & 2,072 & 2,061 & 2,055 & 1,956 & 2,063 & 2,197 & 2,061 & 2,062 & 2,180 \\ 
+  $\log v_{\text{L}2}$ & 3,996 & 3,972 & 3,950 & 3,990 & 4,004 & 4,029 & 3,970 & 3,988 & 3,991 & 3,193 & 4,027 & 3,977 & 3,999 & 3,991 & 3,979 \\ 
+  $\log v_{\text{L}3}$ & 3,814 & 3,847 & 3,833 & 3,832 & 3,829 & 3,838 & 3,840 & 3,827 & 3,842 & 3,756 & 3,823 & 3,833 & 3,842 & 3,827 & 3,837 \\ 
+  $\log v_{\text{L}4}$ & 2,050 & 2,040 & 2,046 & 2,044 & 2,046 & 2,054 & 2,060 & 2,041 & 2,047 & 2,055 & 2,046 & 2,055 & 2,045 & 2,044 & 2,061 \\ 
+  $\log v_{\text{L}5}$ & 4,929 & 4,908 & 4,927 & 4,935 & 4,954 & 4,910 & 4,898 & 4,983 & 4,965 & 4,939 & 4,882 & 4,906 & 4,919 & 4,941 & 4,916 \\ 
+  $M_{1}$ & --- & --- & 0,07010 & --- & --- & --- & --- & --- & --- & --- & --- & --- & --- & --- & --- \\ 
+  $M_{2}$ & --- & --- & 0,06822 & --- & --- & --- & --- & --- & --- & --- & --- & --- & --- & --- & --- \\ 
+   \hline
+\end{tabular}
+\endgroup
+\end{table}

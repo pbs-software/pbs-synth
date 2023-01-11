@@ -1,0 +1,19 @@
+\setlength{\tabcolsep}{2pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Tue Aug 24 10:13:00 2021
+\begin{table}[ht]
+\centering
+\caption{Valeurs de vraisemblance logarithmique des cycles (ou ex\'{e}cutions) composant le sc\'{e}nario de r\'{e}f\'{e}rence pour les indices de relev\'{e}s, la composition selon l'\^{a}ge (FA), le recrutement, et le total (les composants de vraisemblance logarithmique ne sont pas tous pr\'{e}sent\'{e}s ici)} 
+\label{tab:ymr.log.likes}
+\begin{tabular}{lrrrrrrrrrr}
+  \\[-1.0ex] \hline
+Cycle & M & CPUE & BRC & COIV & COHG & GIG & Index & FA & Recrut. & Total \\ 
+  \hline
+  E77 & 0,040 & -18,4 & 1,28 & 7,86 & 20,4 & 14,3 & 25,4 & 454 & 47,5 & 638 \\ 
+  E71 & 0,045 & -18,3 & 1,06 & 7,90 & 20,0 & 14,4 & 25,1 & 456 & 43,5 & 637 \\ 
+  E75 & 0,050 & -18,1 & 0,870 & 7,92 & 19,7 & 14,5 & 24,9 & 456 & 41,9 & 635 \\ 
+  E72 & 0,055 & -17,8 & 0,703 & 7,93 & 19,4 & 14,5 & 24,8 & 457 & 40,8 & 635 \\ 
+  E76 & 0,060 & -17,4 & 0,555 & 7,94 & 19,1 & 14,6 & 24,8 & 458 & 39,9 & 634 \\ 
+   \hline
+\end{tabular}
+\end{table}

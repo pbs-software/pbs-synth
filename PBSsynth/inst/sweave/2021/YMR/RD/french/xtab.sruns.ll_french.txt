@@ -1,0 +1,29 @@
+\setlength{\tabcolsep}{6pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Fri Sep 17 15:48:00 2021
+\begin{table}[ht]
+\centering
+\caption{Valeurs de vraisemblance logarithmique des cycles (ou ex\'{e}cutions) central et de sensibilit\'{e} pour les indices de relev\'{e}s, la composition selon l'\^{a}ge (FA), le recrutement, et le total (les composants de vraisemblance logarithmique ne sont pas tous pr\'{e}sent\'{e}s ici)} 
+\label{tab:ymr.log.likes}
+\begin{tabular}{rrrrrrrrrrr}
+  \\[-0.5ex] \hline
+Cycle de sens. & \'{E}tiquette & CPUE & BRC & COIV & COHG & GIG & Index & FA & Recrut. & Total \\ 
+  \hline
+S00 (E75) & cycle central & -18,1 & 0,870 & 7,92 & 19,7 & 14,5 & 24,9 & 456 & 41,9 & 635 \\ 
+   \hdashline \\[-1.75ex]S01 (E78) & ajout de l'indice COHG 1997 & -18,1 & 0,909 & 7,92 & 19,1 & 14,5 & 24,3 & 456 & 42,0 & 635 \\ 
+  S02 (E79) & estimation de M & -17,0 & 0,425 & 7,94 & 18,9 & 14,6 & 24,9 & 457 & 39,3 & 635 \\ 
+  S03 (E80) & omettre CPUE & 0 & 0,659 & 7,94 & 19,2 & 14,3 & 42,2 & 706 & 51,8 & 912 \\ 
+  S04 (E81) & CPUE de Tweedie & -22,5 & 0,957 & 7,95 & 19,7 & 14,5 & 20,7 & 715 & 52,2 & 900 \\ 
+  S05 (E82) & sigmaR=0,6 & -16,8 & 0,610 & 7,75 & 19,4 & 14,2 & 25,2 & 483 & 55,5 & 675 \\ 
+  S06 (E83) & sigmaR=1,2 & -18,5 & 0,934 & 8,03 & 19,7 & 14,6 & 24,7 & 442 & 39,6 & 619 \\ 
+  S07 (E84) & r\'{e}duction des prises 33\% & -18,4 & 1,12 & 7,89 & 20,1 & 13,7 & 24,4 & 452 & 42,4 & 630 \\ 
+  S08 (E85) & augmentation des prises 50\% & -17.4 & 0.572 & 7.94 & 19.2 & 15.4 & 25.8 & 460 & 42.9 & 640 \\ 
+  S09 (E86) & pond\'{e}rer \`{a} la hausse FA BRC & -18,5 & 0,681 & 7,84 & 20,0 & 14,4 & 24,4 & 627 & 51,0 & 818 \\ 
+  S10 (E87) & d\'{e}buter \'{e}cartsR en 1970 & -8,07 & -0,807 & 8,25 & 16,4 & 12,1 & 27,9 & 540 & 21,0 & 701 \\ 
+  S11 (E88) & aucune erreur d'\^{a}ge & -17,9 & 0,964 & 7,82 & 19,9 & 14,5 & 25,3 & 387 & 35,1 & 560 \\ 
+  S12 (E91) & taux de variation h=0,5 & -18,0 & 0,927 & 7,88 & 19,8 & 14,5 & 25,0 & 457 & 42,3 & 636 \\ 
+  S13 (E92) & doubler prises 2021 & -18,1 & 0,872 & 7,92 & 19,7 & 14,5 & 24,9 & 459 & 42,0 & 638 \\ 
+  S14 (E93) & erreur d'\^{a}ge provenant des lecteurs & -17,9 & 0,735 & 7,95 & 19,4 & 14,4 & 24,7 & 443 & 40,7 & 621 \\ 
+   \hline
+\end{tabular}
+\end{table}
