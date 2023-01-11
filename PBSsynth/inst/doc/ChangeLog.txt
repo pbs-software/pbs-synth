@@ -5,6 +5,42 @@ Authors : RH  = Rowan Haigh
           PJS = Paul Starr
           CG  = Chris Grandin
 
+0.3.0 (2022-11-01) [Rcheck=F, Rbuild=F]
+  * R code
+    + `plotFuns.r' -- accumulated changes to plotting functions since last year (2021)
+      - Numerous changes to function `make.multifig' (RH 210331)
+      - Added fleet labels in `plotSS.comps' (RH 220608)
+      - Added `agedat' to `Output' in `plotSS.francis' (RH 220224)
+      - Modified graphical parameters in `plotSS.dmcmc' (RH 220223)
+      - Made minor graphical changes in `plotSS.index' (RH 220722)
+      - Made minor graphical changes in `plotSS.pars' (RH 220615)
+      - Changed the way `catpol' is handled in `plotSS.pmcmc' (RH 220727)
+      - Completely replaced code in `plotSS.profile' (RH 220530)
+      - Changed call to `plotSnail' in `plotSS.rmcmc (RH 220628)
+      - Made very small graphical changes in `plotSS.selex' (RH 20220413)
+      - Modified `plotSS.ts' extensively (RH 220726)
+    + `appFuns.r' -- accumulated changes to appendix functions since last year (2021)
+      - Modified `plotSS.compo' in numerous ways to accommodate CAR in 2022 (RH 221011)
+      - Modified `plotSS.senso' in numerous ways to accommodate CAR in 2022 (RH 220912)
+      - Modified `tabSS.compo' in numerous ways to accommodate CAR in 2022 (RH 220723)
+      - Modified `tabSS.decision' to filter out anomalous MCMC samples that appeared in CAR in 2022 (RH 220715)
+      - Modified `tabSS.senso' in numerous ways to accommodate CAR in 2022 (RH 220722)
+    + `appFuns.r' -- accumulated changes to utility functions since last year (2021)
+      - Modified `convPN' to reflect previously unused parameter names in CAR 2022 (RH 220615)
+      - Modified `gatherMCMC' to accommodate CAR in 2022 (RH 220623)
+      - Modified `prepCP' to accommodate CAR in 2022 (RH 220630)
+      - Modified `prepMPD' to accommodate CAR in 2022 (RH 220217
+      - Modified `repeatMPD' to accommodate CAR in 2022 (RH 220526)
+      - Improved `runADnuts' when using for CAR in 2022; best to run interactively in browser mode (RH 220607)
+      - Tweaked `runSweave' to accept a `figs.only' Sweave file (RH 220606)
+      - Modified `weightAF' to deal variations on parameter names (RH 220224)
+    + `overFuns.r' -- accumulated changes to overwriting functions since last year (2021)
+      - Added new argument `alt.labs' to `pairs_admb' (RH 220614)
+  * Documentation
+    + Started to add Rd help files (RH 221101):
+      convPN, 
+    + Added YMR's base case model inputs (ss files) (RH 221101)
+
 0.2.0 (2021-09-27) [Rcheck=F, Rbuild=F]
   * Documentation
     - Added preliminary README markdown file (RH: 210927)

@@ -1,0 +1,228 @@
+%% runHistory.tex for Yellowmouth Rockfish (YMR coastwide) in 2021.
+
+\textbf{Assessment Model Runs for YMR (coastwide) using 5 fleets (1 fishery + 4 surveys), 2021}
+
+%%\textbf{Important:} using Awatea 64-bit (v.0.9.7, 2012) -- renamed Allan's `Awatea64.exe' to `Awatea.exe'.
+
+\textbf{Yellowmouth (YMR) coastwide -- run details:}
+\begin{itemize_csas}
+  \item Fix natural mortality $M$ to 0.055;
+  \item Fix steepness $h$ to 0.7;
+  \item Use accumulator age ($A$) of 60\,y as plus class;
+  \item Nfleet=~5 (WCHG Synoptic), surveys c(1) with ages;
+  \begin{itemize_csas}
+    \item Ngear~=~1 (Trawl+~= trawl + other fisheries); commercial ages available
+    \item Nsurv~=~4 (QCS Synoptic, WCVI Synoptic, WCHG Synoptic, GIG Historical); survey (1:4) ages;
+  \end{itemize_csas}
+  \item Ncpue~=~1 (bottom trawl used);
+  \item Nsex~=~2 (females, males);
+  \item Abundance reweighting -- Add CV process error, cvpro=0 for survey indices and spline-fit cvpro for commercial CPUE series;
+  \item Composition reweighting (one rweight) -- Francis (2011) method using mean ages or McAllister-Ianelli (1997) effective sample size;
+  \item Fix standard deviation of recruitment residuals ($\sigma_R$) to 0.9.
+\end{itemize_csas}
+
+\textbf{Notation:}
+
+HM   = Hastings-Metropolis algorithm (random walk)\\
+NUTS = No U-turn Sampler algorithm\\
+mu   = first age at which selectivity reaches a maximum -- SS parameter $\beta_1$\\
+plaT = plateau at top controlled by SS parameter $\beta_2$\\
+varL = variance (width) of ascending limb controlled by SS parameter $\beta_3$\\
+varR = variance (width) of descending limb controlled by SS parameter $\beta_4$\\
+selS = initial selectivity in first age bin controlled by SS parameter $\beta_5$\\
+selF = final selectivity in last age bin controlled by SS parameter $\beta_6$
+
+
+\hypertarget{R01}{\textbf{Run01}} -- Initial run using 2021 data but fixing (M, h, selectivity) to the MPD estimates from 2011's Run 29.01; no reweights; set recruitment bias to 1 from 1935 to 2021: $M$~=~0.055, $h$=0.7, $A_\mathrm{max}$~=~60 and $\sigma_R$=0.9. \underline{MCMCs} Run01.01: HM 500K sims sampled every 500 for 1000 samples.
+
+\hypertarget{R02}{\textbf{Run02}} -- Same as \hyperlink{R01}{Run01} (M=0.055) but estimate selectivity using normal priors based on YMR 2011 MPDs. \underline{MCMCs} Run02.01: HM 500K sims sampled every 500 for 1000 samples; NUTS 3000 sims for 2000 samples after burn-in.
+
+\hypertarget{R03}{\textbf{Run03}} -- Same as \hyperlink{R02}{Run02} (M=0.055) but use a normal prior (8.8,8.8) on LN(R0) based on MPD estimate (6682) from YMR 2011. \underline{MCMCs} Run03.01: HM 500K sims sampled every 500 for 1000 samples; HM 6M sims sampled every 5000 for 1200 samples.
+
+\hypertarget{R04}{\textbf{Run04}} -- Same as \hyperlink{R03}{Run03} (M=0.055) but use a normal prior (0.055,0.011) on M based on Gertseva estimate.
+
+\hypertarget{R05}{\textbf{Run05}} -- Same as \hyperlink{R04}{Run04} (est M) but use a beta prior (0.7,0.418310321) on h in Phase 5.
+
+\hypertarget{R06}{\textbf{Run06}} -- Same as \hyperlink{R03}{Run03} (M=0.055) but fix M=0.045. \underline{MCMCs} Run06.01: HM 500K sims sampled every 500 for 1000 samples; HM 6M sims sampled every 5000 for 1200 samples; NUTS 4000 sims for 2800 samples after burn-in.
+
+\hypertarget{R07}{\textbf{Run07}} -- Same as \hyperlink{R03}{Run03} (M=0.055) but use ageing error based on CVs of length-at-age. \underline{MCMCs} Run07.01: HM 1.2M sims sampled every 1000 for 1200 samples; NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R07A}{\textbf{Run07A}} -- Same as \hyperlink{R07}{Run07} (M=0.055) but increase bounds on LN(Q) from (-12,5) to (-15,15) and change initial value from -5 to -3. \underline{MCMCs} Run07A.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R08}{\textbf{Run08}} -- Same as \hyperlink{R06}{Run06} (M=0.045) but use ageing error based on CVs of length-at-age. \underline{MCMCs} Run08.01: HM 1.2M sims sampled every 1000 for 1200 samples; NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R09}{\textbf{Run09}} -- Same as \hyperlink{R07}{Run07} (M=0.055) but estimating \textit{M} and use normal prior on LN(Q) (-3,3). \underline{MCMCs} Run09.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R10}{\textbf{Run10}} -- Same as \hyperlink{R07}{Run07} (M=0.055) but use normal prior on LN(Q) (-3,3). \underline{MCMCs} Run10.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R11}{\textbf{Run11}} -- Same as \hyperlink{R10}{Run10} (M=0.055) but estimate \textit{M} and set \texttt{float}=1 to get analytical solutions to LN(Q). \underline{MCMCs} Run11.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R12}{\textbf{Run12}} -- Same as \hyperlink{R10}{Run10} (M=0.055) but set \texttt{float}=1 to get analytical solutions to LN(Q). \underline{MCMCs} Run12.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R13}{\textbf{Run13}} -- Same as \hyperlink{R12}{Run12} (M=0.055) but set LN(Q) \texttt{float}=0 with N(-3,6), R0 with N(8,8), and selectivity priors set to median MCMC estimates from POP with CV=1. \underline{MCMCs} Run13.01: HM 10K sims sampled every 10 as a test; 1.2M sims sampled every 1000 for 1200 samples.
+
+\hypertarget{R14}{\textbf{Run14}} -- Same as \hyperlink{R13}{Run13} (M=0.055) but set LN(Q) \texttt{float}=1.
+
+\hypertarget{R15}{\textbf{Run15}} -- Same as \hyperlink{R13}{Run13} (M=0.055) but reduce CVs on selectivity priors from 100\pc{} to 20\pc{}. \underline{MCMCs} Run15.01: HM 1.2M sims sampled every 1000 for 1200 samples;  NUTS failed to run  -- Hessian not positive definite when using -hbf switch.
+
+\hypertarget{R16}{\textbf{Run16}} -- Same as \hyperlink{R15}{Run15} (M=0.055) but set prior on delta (male offset) to uniform (-20,20). \underline{MCMCs} Run16.01: NUTS failed to run  -- Hessian not positive definite when using -hbf switch.
+
+\hypertarget{R17}{\textbf{Run17}} -- Same as \hyperlink{R16}{Run16} (M=0.055) but set LN(Q) \texttt{float} to 1. \underline{MCMCs} Run17.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R18}{\textbf{Run18}} -- Same as \hyperlink{R17}{Run17} (M=0.055) but set prior on \texttt{Delta} to N(0,1). \underline{MCMCs} Run18.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R19}{\textbf{Run19}} -- Same as \hyperlink{R18}{Run18} (M=0.055) but set prior on \texttt{Delta} to N(0,5). \underline{MCMCs} Run19.01: NUTS failed to run -- one node produced an error.
+
+\hypertarget{R20}{\textbf{Run20}} -- Same as \hyperlink{R18}{Run18} (M=0.055) but fix \texttt{Delta} to 0 for all fleets. \underline{MCMCs} Run20.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R21}{\textbf{Run21}} -- Same as \hyperlink{R20}{Run20} (M=0.055) but use Dirichlet-Mulinomial for AF fits. \underline{MCMCs} Run21.00: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R22}{\textbf{Run22}} -- Same as \hyperlink{R20}{Run20} (M=0.055) but change \texttt{r\_lambda} from 10 to 1. \underline{MCMCs} Run22.01: HM 6M sims sampled every 5000 for 1000 samples after 200 burn-in;  Run22.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R23}{\textbf{Run23}} -- Same as \hyperlink{R20}{Run20} (M=0.055) but change constant added to AF values from 0.0001 to 0.01 (too much).
+
+\hypertarget{R24}{\textbf{Run24}} -- Same as \hyperlink{R20}{Run20} (M=0.055) but change constant added to AF values from 0.0001 to 0.001.
+
+\hypertarget{R25}{\textbf{Run25}} -- Same as \hyperlink{R22}{Run22} (M=0.055, est.sel.) but fix selectivity for QCS and WCVI to MPD values from Awatea Run22.
+
+\hypertarget{R26}{\textbf{Run26}} -- Same as \hyperlink{R25}{Run25} (M=0.055, fix sel.) but estimate LN(Q), i.e. set float=0.
+
+\hypertarget{R27}{\textbf{Run27}} -- Same as \hyperlink{R22}{Run22} (M=0.055, est.sel.) but fix LN(Q) to MPD values from Awatea Run22.
+
+\hypertarget{R28}{\textbf{Run28}} -- Same as \hyperlink{R25}{Run25} (M=0.055, fix sel.) but fix LN(Q) to MPD values from Awatea Run22.
+
+\hypertarget{R29}{\textbf{Run29}} -- Same as \hyperlink{R22}{Run22} (M=0.055) but estimate female selectivity parameters p2, p4, p5, and p6 for QCS only.
+
+\hypertarget{R30}{\textbf{Run30}} -- Same as \hyperlink{R22}{Run22} (M=0.055) but estimate female selectivity parameters p2 U(0,60) and p4 U(-200,200).
+
+\hypertarget{R31}{\textbf{Run31}} -- Same as \hyperlink{R22}{Run22} (M=0.055) but try Adam's selectivity parameters for p2, p4, and p6 (QCS survey only).
+
+\hypertarget{R32}{\textbf{Run32}} -- Same as \hyperlink{R31}{Run31} (M=0.055) but use uniform priors for p2, p4, and p6 (QCS survey only) rather than normal priors.
+
+\hypertarget{R33}{\textbf{Run33}} -- Same as \hyperlink{R31}{Run31} (M=0.055) but fix QCS selectivity parameters to values that create a dome shape based on Adam's spreadsheet -- P = (13, -2.5, 3, 3, -999, -1).
+
+\hypertarget{R34}{\textbf{Run34}} -- Same as \hyperlink{R33}{Run33} (M=0.055) but estimate $\mu_{2}$ and $v_{2L}$ (fleet~2\,= QCS).
+
+\hypertarget{R35}{\textbf{Run35}} -- Same as \hyperlink{R34}{Run34} (M=0.055) but estimate selectivity top plateau (plaT) for QCS; also use sequential phases: 2 for mu, 3 for varL, 4 for plaT.
+
+\hypertarget{R36}{\textbf{Run36}} -- Same as \hyperlink{R34}{Run34} (M=0.055) but estimate selectivity varR for QCS; also use sequential phases: 2 for mu, 3 for varL, 4 for varR.
+
+\hypertarget{R37}{\textbf{Run37}} -- Same as \hyperlink{R34}{Run34} (M=0.055) but estimate selectivity end plateau (selF) for QCS; also use sequential phases: 2 for mu, 3 for varL, 4 for selF.
+
+\hypertarget{R38}{\textbf{Run38}} -- Same as \hyperlink{R34}{Run34} (M=0.055) but estimate selectivity top plateau (plaT), varR, and end plateau (selF) for QCS; also use sequential phases: 2 for mu, 3 for varL, 4 for plaT, 5 for varR, and 6 for selF.
+
+\hypertarget{R39}{\textbf{Run39}} -- Same as \hyperlink{R33}{Run33} (M=0.055) but estimate mu (CV=1) for all fleets and fix other selectivity parameters to QCS fixed values to get dome shape.
+
+\hypertarget{R40}{\textbf{Run40}} -- Same as \hyperlink{R39}{Run39} (M=0.055) but estimate the plateaus for all fleets using wide normal priors (CV=3) -- plaT: N(-2,6), selF: N(1,3).
+
+\hypertarget{R41}{\textbf{Run41}} -- Same as \hyperlink{R22}{Run22} (M=0.055) but use the Dirichlet-Multinomial distribution for AF fits. \underline{MCMCs} Run41.00: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in; Run41.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R42}{\textbf{Run42}} -- Same as \hyperlink{R41}{Run41} \& \hyperlink{R40}{Run40} (M=0.055, DM for AF) but estimate five of the six beta selectivity parameters for all fleets -- $\beta_1 \sim \mathcal{N}(15,15)$, $\beta_2 \sim \mathcal{N}(-2,2)$, $\beta_3 \sim \mathcal{N}(2.5,2.5)$, $\beta_4 \sim \mathcal{N}(2.5,2.5)$, $\beta_6 \sim \mathcal{N}(0,1)$. \underline{MCMCs} Run42.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R43}{\textbf{Run43}} -- Same as \hyperlink{R22}{Run22} (M=0.055) but remove AF years with CV>=3 (1991 for Trawl+, 2015 for QCS, 1996 for WCVI, 1994 for GIG).
+
+\hypertarget{R44}{\textbf{Run44}} -- Same as \hyperlink{R22}{Run22} (M=0.055) but set minimum mature age=1 (instead of 12) on L57 of control file, as per Allan Hicks' suggestion (210609). \underline{MCMCs} Run44.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R45}{\textbf{Run45}} -- Same as \hyperlink{R44}{Run44} (M=0.055) but use Allan Hicks' setting for recruitment deviation setup, use Pope's approximation for harvest rate (f\_method=1, $u_\mathrm{max}$=0.8), and turn off phase for LN(Q) (210610). \underline{MCMCs} Run45.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R46}{\textbf{Run46}} -- Same as \hyperlink{R45}{Run45} (M=0.055) but revert to hybrid method for calculating F and increase N iterations for tuning F from 4 to 7. \underline{MCMCs} Run46.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R47}{\textbf{Run47}} -- Same as \hyperlink{R45}{Run45} (M=0.055) but tighten up R0 prior based on maximum likelihood profile. \underline{MCMCs} Run46.01: NUTS 4000 sims for 3200 samples after 20\pc{} burn-in.
+
+\hypertarget{R48}{\textbf{Run48}} -- Same as \hyperlink{R45}{Run45} (M=0.055) but revert to first mature age = 12. \underline{MCMCs} Run48.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R49}{\textbf{Run49}} -- Same as \hyperlink{R45}{Run45} (M=0.055) but turn off recruitment deviation early start and reset first and last year of main rec devs to 1935 and 2020. \underline{MCMCs} Run49.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R50}{\textbf{Run50}} -- Same as \hyperlink{R45}{Run45} (M=0.055) but add CPUE abundance index for Fleet 1. \underline{MCMCs} Run50.01: NUTS failed to run.
+
+\hypertarget{R51}{\textbf{Run51}} -- Same as \hyperlink{R44}{Run44} (M=0.055) but add CPUE abundance index for fleet\,1, add cvpro=0.3296 to fleet\,1 on first reweight based on spline fits to CPUE, use Pope's method for estimating harvest rate, de-activate Q priors. \underline{MCMCs} Run51.01: NUTS 3000 sims for 2400 samples after 20\pc{} burn-in.
+
+\hypertarget{R52}{\textbf{Run52}} -- Same as \hyperlink{R50}{Run50} (M=0.055 + CPUE) but add cvpro=0.3296 to fleet\,1 on first reweight based on spline fits to CPUE. \underline{MCMCs} Run52.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in. Use Francis reweights: \{0.8223787, 0.5699611, 0.2266631, 0.6878338, 4.4181519\}.
+
+\hypertarget{R53}{\textbf{Run53}} -- Same as \hyperlink{R52}{Run52} (M=0.055 + CPUE) but set w=4 for commercial fleet AF reweighting. \underline{MCMCs} Run53.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in. Use Francis reweights except for trawl AF: \{4.0, 0.5699611, 0.2266631, 0.6878338, 4.4181519\}.
+
+\hypertarget{R54}{\textbf{Run54}} -- Same as \hyperlink{R45}{Run45} (M=0.055) but set $w_1$ = 4.863939 times higher for commercial fleet AF reweighting (in proportion to arbitrary upweighting in Run 53.01). Use Francis reweights except for trawl AF: \{12.86833, 0.6678533, 0.3923560, 2.3541610, 3.9464205\}. \underline{MCMCs} Run54.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R55}{\textbf{Run55}} -- Same as \hyperlink{R52}{Run52} (M=0.055 + CPUE) but set w=1.2 for commercial fleet AF reweighting. Use Francis reweights except for trawl AF: \{1.2, 0.5699611, 0.2266631, 0.6878338, 4.4181519\}. \underline{MCMCs} Run55.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R56}{\textbf{Run56}} -- Same as \hyperlink{R52}{Run52} (M=0.055 + CPUE) but set w=2 for commercial fleet AF reweighting. Use Francis reweights except for trawl AF: \{2.0, 0.5699611, 0.2266631, 0.6878338, 4.4181519\}. \underline{MCMCs} Run56.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R57}{\textbf{Run57}} -- Same as \hyperlink{R52}{Run52} (M=0.055 + CPUE) but set w=3 for commercial fleet AF reweighting. Use Francis reweights except for trawl AF: \{3.0, 0.5699611, 0.2266631, 0.6878338, 4.4181519\}. \underline{MCMCs} Run57.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R58}{\textbf{Run58}} -- Same as \hyperlink{R52}{Run52} (M=0.055 + CPUE) but change M=0.045 and use Francis reweights. Use Francis reweights: \{0.8048347, 0.5907067, 0.2312631, 0.6706904, 4.5950131\}. \underline{MCMCs} Run58.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R59}{\textbf{Run59}} -- Same as \hyperlink{R52}{Run52} (M=0.055 + CPUE) but estimate M and use updated QCS synoptic indices. Use Francis reweights: \{0.8350763, 0.5602271, 0.2250411, 0.7026414, 4.2915463\}. \underline{MCMCs} Run59.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R60}{\textbf{Run60}} -- Same as \hyperlink{R58}{Run58} (M=0.045 + CPUE) but use w=4 for fishery AF rather than Francis' calculated w; also use updated QCS survey index data and change final year to 2021 (begininning 2022). Use Francis reweights except for trawl AF: \{4.0, 0.5876354, 0.2311025, 0.6730737, 4.6107139\}. \underline{MCMCs} Run60.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R61}{\textbf{Run61}} -- Same as \hyperlink{R59}{Run59} (est M + CPUE) but use w=4 for fishery AF rather than Francis' calculated w; also use updated QCS survey index data and change final year to 2021. Use Francis reweights except for trawl AF: \{4.0, 0.5602260, 0.2250393, 0.7026395, 4.2915638\}. \underline{MCMCs} Run61.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R62}{\textbf{Run62}} -- Same as \hyperlink{R52}{Run52} (M=0.055 + CPUE) but use M=0.065; also use updated QCS survey index data and change final year to 2021 (begininning 2022). Use Francis reweights: \{0.8409664, 0.5551185, 0.2242488, 0.7101604, 4.2362569\}. \underline{MCMCs} Run62.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R63}{\textbf{Run63}} -- Same as \hyperlink{R62}{Run62} (M=0.065 + CPUE) but use w=4 for fishery AF rather than Francis' calculated w; also use updated QCS survey index data and change final year to 2021 (begininning 2022). Use Francis reweights except for trawl AF: \{4.0, 0.5551185, 0.2242488, 0.7101604, 4.2362569\}. \underline{MCMCs} Run63.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R64}{\textbf{Run64}} -- Same as \hyperlink{R62}{Run62} (M=0.065 + CPUE) but use w=8 for fishery AF rather than Francis' calculated w; also use updated QCS survey index data and change final year to 2021 (begininning 2022). Use Francis reweights except for trawl AF: \{8.0, 0.5551185, 0.2242488, 0.7101604, 4.2362569\}. \underline{MCMCs} Run64.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R65}{\textbf{Run65}} -- Same as \hyperlink{R58}{Run58} (M=0.045 + CPUE) but apply McAllister-Ianelli weights to AFs from all fleets. Harmonic mean of \texttt{effN} / arithmetic mean of \texttt{Nsamp\_adj}: \{6.384881, 3.575158, 2.986454, 4.682382, 6.674036\}. \underline{MCMCs} Run65.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R66}{\textbf{Run66}} -- Same as \hyperlink{R52}{Run52} (M=0.055 + CPUE) but apply McAllister-Ianelli weights to AFs from all fleets.  Harmonic mean of \texttt{effN} / arithmetic mean of \texttt{Nsamp\_adj}: \{6.514654, 3.617544, 3.021672, 4.748524, 6.385694\}. \underline{MCMCs} Run66.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R67}{\textbf{Run67}} -- Same as \hyperlink{R62}{Run62} (M=0.065 + CPUE) but apply McAllister-Ianelli weights to AFs from all fleets.  Harmonic mean of \texttt{effN} / arithmetic mean of \texttt{Nsamp\_adj}: \{6.529549, 3.650139, 3.044783, 4.802829, 6.660023\}. \underline{MCMCs} Run67.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R68}{\textbf{Run68}} -- Same as \hyperlink{R65}{Run65} (M=0.045 + CPUE) but apply McAllister-Ianelli weights, adjusted for M and Rmax, to AFs from all fleets.  Harmonic mean of \texttt{effN} / arithmetic mean of \texttt{Nsamp\_adj} (modified by M and Rmax): \{2.211889, 1.238528, 1.034586, 1.622099, 2.312060\}
+
+\hypertarget{R69}{\textbf{Run69}} -- Same as \hyperlink{R66}{Run66} (M=0.055 + CPUE) but apply McAllister-Ianelli weights, adjusted for M and Rmax, to AFs from all fleets. Harmonic mean of \texttt{effN} / arithmetic mean of \texttt{Nsamp\_adj} (modified by M and Rmax): \{3.449937, 1.915727, 1.600174, 2.514655, 3.381644\}
+
+\hypertarget{R70}{\textbf{Run70}} -- Same as \hyperlink{R67}{Run67} (M=0.065 + CPUE) but apply McAllister-Ianelli weights, adjusted for M and Rmax, to AFs from all fleets. Harmonic mean of \texttt{effN} / arithmetic mean of \texttt{Nsamp\_adj} (modified by M and Rmax): \{7.104196, 3.971377, 3.312745, 5.225512, 7.246153\}
+
+\hypertarget{R71}{\textbf{Run71 (B02) rev}} -- Same as \hyperlink{R65}{Run65} (M=0.045 + CPUE) but apply McAllister-Ianelli weight to trawl AF and downweight survey AFs. Harmonic mean of \texttt{effN} / arithmetic mean of \texttt{Nsamp\_adj}: \{6.277630, 0.25, 0.25, 0.25, 0.25\}. \underline{MCMCs} Run71.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\textbf{~~~* rev} -- Run has been revised to use the correct $\mu$ for WCVI (15.4, not 12.2). Thus far revised: R71(B2), R72(B4), R75(B3), R76(B5), and R77(B1).
+
+\hypertarget{R72}{\textbf{Run72 (B04) rev}} -- Same as \hyperlink{R66}{Run66} (M=0.055 + CPUE) but apply McAllister-Ianelli weight to trawl AF and downweight survey AFs. Harmonic mean of \texttt{effN} / arithmetic mean of \texttt{Nsamp\_adj}: \{6.363513, 0.25, 0.25, 0.25, 0.25\}. \underline{MCMCs} Run72.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R73}{\textbf{Run73}} -- Same as \hyperlink{R67}{Run67} (M=0.065 + CPUE) but apply McAllister-Ianelli weight to trawl AF and downweight survey AFs. Harmonic mean of \texttt{effN} / arithmetic mean of \texttt{Nsamp\_adj}: \{6.529549, 0.25, 0.25, 0.25, 0.25\}. \underline{MCMCs} Run73.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R74}{\textbf{Run74}} -- Same as \hyperlink{R72}{Run72} (M=0.055 + CPUE) but apply harmonic-mean weights to trawl AF, set QCS AF w to 3.5, and set remaining survey AF weights to 0.25.  Harmonic mean weights: \{6.514654, 3.5, 0.25, 0.25, 0.25\}.
+
+\hypertarget{R75}{\textbf{Run75 (B03) rev Central Run}} -- Same as \hyperlink{R52}{Run52} (M=0.055 + CPUE) but change M to 0.05, use updated QCS survey index data, change final year to 2021, apply harmonic-mean weights to trawl AF, and set remaining survey AF weights to 0.25.  Harmonic mean weights: \{6.321921, 0.25, 0.25, 0.25, 0.25\}. \underline{MCMCs} Run75.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R75a}{\textbf{Run75a}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but add cvpro first to see if the harmonic mean ratio mimics \hyperlink{R81}{Run81} where the Tweedie CPUE starts out with high SE.  Harmonic mean weights: \{10.395091, 0.25, 0.25, 0.25, 0.25\}. \underline{MCMCs} Run75a.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R76}{\textbf{Run76 (B05) rev}} -- Same as \hyperlink{R52}{Run52} (M=0.055 + CPUE) but change M to 0.06, use updated QCS survey index data, change final year to 2021, apply harmonic-mean weights to trawl AF, and set remaining survey AF weights to 0.25.  Harmonic mean weights: \{6.389239, 0.25, 0.25, 0.25, 0.25\}. \underline{MCMCs} Run76.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R77}{\textbf{Run77 (B01) rev}} -- Same as \hyperlink{R52}{Run52} (M=0.055 + CPUE) but change M to 0.04, use updated QCS survey index data, change final year to 2021, apply harmonic-mean weights to trawl AF, and set remaining survey AF weights to 0.25.  Harmonic mean weights: \{6.219091, 0.25, 0.25, 0.25, 0.25\}. \underline{MCMCs} Run77.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R78}{\textbf{Run78 (S01) rev}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but use additional WCHG index for 1997 from Ocean Selector. Harmonic mean weights: \{6.325070, 0.25, 0.25, 0.25, 0.25\}. \underline{MCMCs} Run78.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R79}{\textbf{Run79 (S02) rev}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but estimate $M$ using tight prior $\mathcal{N}(0.05,0.01)$, i.e., 20\pc{} CV.  Harmonic mean weights: \{6.408812, 0.25, 0.25, 0.25, 0.25\}. \underline{MCMCs} Run79.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R80}{\textbf{Run80 (S03) rev}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but drop the CPUE series.  Harmonic mean weights: \{10.279413, 0.25, 0.25, 0.25, 0.25\}. \underline{MCMCs} Run80.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R81}{\textbf{Run81 (S04) rev}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but use standardised Tweedie CPUE series based on Sean Anderson's analysis. Harmonic mean weights: \{10.440879, 0.25, 0.25, 0.25, 0.25\}. No additional process error added to SE of Tweedie series because SE already high.  \underline{MCMCs} Run81.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R82}{\textbf{Run82 (S05) rev}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but decrease sigmaR from 0.9 to 0.6. Harmonic mean weights: \{6.449762, 0.25, 0.25, 0.25, 0.25\}.  \underline{MCMCs} Run82.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R83}{\textbf{Run83 (S06) rev}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but increase sigmaR from 0.9 to 1.2. Harmonic mean weights: \{6.222421, 0.25, 0.25, 0.25, 0.25\}.  \underline{MCMCs} Run83.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R84}{\textbf{Run84 (S07) rev}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but reduce catch by 33\pc{} in 1965-95 (foreign fleet + pre-observer domestic). Harmonic mean weights: \{6.253996, 0.25, 0.25, 0.25, 0.25\}.  \underline{MCMCs} Run84.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R85}{\textbf{Run85 (S08) rev}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but increase catch by 50\pc{} in 1965-95 (foreign fleet + pre-observer domestic). Harmonic mean weights: \{6.389155, 0.25, 0.25, 0.25, 0.25\}.  \underline{MCMCs} Run85.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R86}{\textbf{Run86 (S09) rev}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but upweight QCS survey. Harmonic mean weights: \{6.321921, 3.5, 0.25, 0.25, 0.25\}.  \underline{MCMCs} Run86.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R87}{\textbf{Run87 (S10) rev}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but change start year of recruitment deviation estimates from 1950 to 1970. Harmonic mean weights: \{5.997195, 0.25, 0.25, 0.25, 0.25\}.  \underline{MCMCs} Run87.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R88}{\textbf{Run88 (S11) rev}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but do not use ageing error. Harmonic mean weights: \{5.241267, 0.25, 0.25, 0.25, 0.25\}.  \underline{MCMCs} Run88.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R89}{\textbf{Run89 (new B3, redefine R75)}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but use correct $\mu$ prior for WCVI selectivity (15.4y, not 12.2y). Harmonic mean weights: \{6.321921, 0.25, 0.25, 0.25, 0.25\}. 
+
+\hypertarget{R90}{\textbf{Run90}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but change M to 0.065 because new B5(R76) had stable MCMC diagnostics. Harmonic mean weights: \{6.426714, 0.25, 0.25, 0.25, 0.25\}.  \underline{MCMCs} Run90.01: NUTS 4000 sims for 2000 samples after 50\pc{} burn-in.
+
+\hypertarget{R91}{\textbf{Run91 (S12)}} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but fix h=0.5 (for Rob Kronlund).
+
+\hypertarget{R92}{\textbf{Run92} (S13)} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but double the catch in 2021 and propagate this catch into projections (for Andrew Edwards).
+
+\hypertarget{R93}{\textbf{Run93} (S14)} -- Same as \hyperlink{R75}{Run75} (M=0.05 + CPUE) but use AE based age readers' observed error (for Bruce Leaman).
+
+

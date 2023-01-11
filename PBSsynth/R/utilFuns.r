@@ -34,7 +34,7 @@ allEqual <- function(x)
   result
 }
 
-## calcStdRes---------------------------2021-04-07
+## calcStdRes---------------------------2022-11-01
 ##  This implements standardised residuals for the Awatea
 ##  implementation of the Fournier robustified normal likelihood
 ##  for proportions at length. Based on PJS summary of CASAL doc and ACH change to length.
@@ -77,6 +77,9 @@ calcStdRes <- function( obj, trunc=3, myLab="Age Residuals", prt=TRUE, type="Mul
 			switch(type, 'Multinomial'=Mprime, 'Fournier'=Fprime, 'Coleraine'=Oprime) / Nprime )  
 		result$stdRes[idx] <- res[idx]/SD                             ## Pearson residuals = Normalised residuals for normal error distributions
 #browser();return()
+		## For Dirichlet-Multinomial, SS code "SS_write_report.tpl" shows:
+		##   show_Pearson = value((ocomp - ecomp) / sqrt(ecomp * (1.0 - ecomp) / nsamp * (nsamp + dirichlet_Parm) / (1. + dirichlet_Parm))); // Pearson for Dirichlet-multinomial using negative-exponential parameterization
+		## But this is too complicated to replicated here (for now)
 	}
 	if ( prt ) {
 		sdRes <- sqrt( var( result$stdRes,na.rm=TRUE ) )
@@ -92,32 +95,42 @@ calcStdRes <- function( obj, trunc=3, myLab="Age Residuals", prt=TRUE, type="Mul
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcStdRes
 
 
-## convPN-------------------------------2021-09-05
+## convPN-------------------------------2022-06-15
 ##  Convert parameter names from SS to Awatea
 ## ---------------------------------------------RH
 convPN = function(pnams) {
 	cnams =
-		sub("NatM_p_1_Fem_GP_1|NatM_uniform_Fem_GP_1","M_Female",
-		sub("NatM_p_1_Mal_GP_1|NatM_uniform_Mal_GP_1","M_Male",
+		sub("_steep","_h",
+		sub("NatM_p_1_Fem_GP_1|NatM_uniform_Fem_GP_1|NatM_break_(\\d+)?_Fem_GP_1","M\\1_Female",
+		sub("NatM_p_1_Mal_GP_1|NatM_uniform_Mal_GP_1|NatM_break_(\\d+)?_Mal_GP_1","M\\1_Male",
 		sub("Early_RecrDev|Main_RecrDev|Late_RecrDev|ForeRecr","RecrDev",
 		sub("FISHERY","", 
 		sub("SYNOPTIC","",
 		sub("HISTORIC(AL)?","",
+		sub("TRIENNIAL","",
+		sub("HBLL_NORTH","HBLLN_",
+		sub("HBLL_SOUTH","HBLLS_",
+		sub("^AgeSel_(\\d+)?(Male|Fem)_Scale","delta5(\\1)",
+		sub("^AgeSel_(\\d+)?(Male|Fem)_Final","delta4(\\1)",
+		sub("^AgeSel_(\\d+)?(Male|Fem)_Descend","delta3(\\1)",
+		sub("^AgeSel_(\\d+)?(Male|Fem)_Ascend","delta2(\\1)",
+		sub("^AgeSel_(\\d+)?(Male|Fem)_Peak","delta1(\\1)",
 		sub("^Age_DblN_end_logit","beta6",
 		sub("^Age_DblN_top_logit","beta2",
 		sub("^Age_DblN_descend_se","varR",
 		sub("^Age_DblN_ascend_se","varL",
 		sub("^Age_DblN_peak","mu",
 		sub("^SR_","",
-		pnams))))))))))))
+		pnams)))))))))))))))))))))
 		onams   = sapply(strsplit(cnams,"_"), function(x){
 		if(length(x)==3 && x[1] %in% c("mu","beta2","varL","varR","beta6")) {
-			paste0(x[1],x[3],"_",x[2])
 #browser();return()
+			paste0(x[1],x[3],"_",x[2])
 		} else {
 			paste0(x,collapse="_")
 		}
 	})
+	onams = sub("^M1_", "M_", onams)
 	return(onams)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convPN
@@ -273,8 +286,7 @@ findTarget=function(Vmat, yrU=as.numeric(dimnames(Vmat)[[2]]), yrG=90,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findTarget
 
 
-## gatherMCMC---------------------------2021-08-10
-## Gather and combine MCMC (and MPD) values from compo and/or senso runs.
+## gatherMCMC---------------------------2022-06-23
 ## All values occur at start of year so B2022 is B at end of 2021 or start of 2022;
 ##   u2022 must be u in 2021 after final catch was specified for 2021 in the data file.
 ## Ian Taylor (Aug 9, 2021):
@@ -283,30 +295,55 @@ findTarget=function(Vmat, yrU=as.numeric(dimnames(Vmat)[[2]]), yrG=90,
 ##   The values for derived quantities like SSB_2021 and Bratio_2021 represent the beginning of the year values at the start of 2021 in the main time series.
 ##   The SSB_2022 is one year later but will only depend on catches up through 2021, so changes in 2022 catch won't impact the 2022 quantities.
 ## ---------------------------------------------RH
-gatherMCMC = function( mcdir=".", type="compo",
-   basedir="C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021",
-   ryrs=1935:2022, pyrs=2023:2032, valTS=c("SSB","F","Recr","RecrDev"), valRP=c("SSB_MSY","annF_MSY","Dead_Catch_MSY"))
+gatherMCMC = function( mcdir=".", type="compo", strSpp="CAR",
+   basedir="C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/YMR2022",
+   ryrs=1935:2023, pyrs=2024:2033, valTS=c("SSB","F","Recr","RecrDev"), valRP=c("SSB_MSY","annF_MSY","Dead_Catch_MSY"))
 {
 	ayrs  = c(ryrs, pyrs); nyrs = length(ayrs)
 	currYr = rev(ryrs)[1]; byr = cyr = as.character(currYr)
 	#prevYr = currYr-1;     byr = as.character(prevYr) ## see note above
-	mclst = list()
-	Nmcmc=list(); rowN=list()
+	mclst = Nmcmc = rowN = valPAs = valLLs = list()
+
 	for (m in 1:length(mcdir)){
 		mdir = file.path( sub("/$","",basedir), sub("/$","",mcdir[m]) )
 		if(!file.exists(mdir)) next
 		mm    = substring(basename(mdir),6,10)
+		if (penso) {
+			## Special versions for PJS
+			mm = substring(mdir,regexpr("Run",mdir)+3,regexpr("Run",mdir)+7)
+		}
+#browser();return()
 		mclst[[mm]] = list()
 		cp = "AC.00"
 
 		## Gather MPD information
-		mpd = SS_output(dir=sub("\\.mh.+","",sub("\\.hm.+","",sub("\\.nuts.+","",sub("MCMC","MPD",mdir)))), verbose=F, printstats=F)
+		d.mpd = sub("\\.mh.+","",sub("\\.hm.+","",sub("\\.nuts.+","",sub("MCMC","MPD",mdir))))
+		mpd = SS_output(dir=d.mpd, verbose=F, printstats=F)
+
+		## Grab likelihood components
+		run = as.numeric(strsplit(mm,"\\.")[[1]][1]); names(run)="Run"
+		LL.fleet  = mpd$likelihoods_by_fleet
+		LL.fleet.ex = LL.fleet[is.element(LL.fleet$Label,"Surv_like"),grep("OTHER",mpd$FleetNames,invert=T,value=T)]
+		names(LL.fleet.ex) = sapply(strsplit(names(LL.fleet.ex),"_"),function(x){return(paste0(x[1],"_",substring(x[2],1,3))) })
+		#names(LL.fleet.ex) = sub("TRAWL","CPUE",names(LL.fleet.ex))
+		names(LL.fleet.ex)[grep("TRAWL",names(LL.fleet.ex))]="CPUE_BT"
+		LL.used   = mpd$likelihoods_used
+		LL.used.ex  = LL.used[c("Survey","Age_comp","Recruitment","TOTAL"),"values"]
+		names(LL.used.ex) = c("Index","AF","Recruit","Total")
+		LL.compo = c(run, LL.fleet.ex, LL.used.ex)
+		LL.compo = unlist(LL.compo)
+		mclst[[mm]][["LL"]] = LL.compo
+		valLLs[[mm]] = names(LL.compo)  ## collect all names
+#browser();return()
+
+		## Grab parameter estimates
 		parameters = mpd$parameters
 		pactive = parameters[!is.na(parameters$Active_Cnt) & parameters$Phase>0 & !is.element(parameters$Pr_type,"dev"),]
 		pactive$Label = convPN(pactive$Label)
-		P.mpd  = pactive$Value; names(P.mpd)=pactive$Label
-		if (m==1) {
-			valPA = names(P.mpd)
+		P.mpd = pactive$Value; names(P.mpd)=pactive$Label
+		valPA = names(P.mpd)
+		valPAs[[mm]] = valPA  ## collect all
+		if (m==1 && strSpp %in% c("YMR")) {
 			valPA = setdiff(valPA,c("M_Female","M_Male"))  ## just in case R79 comes first
 			if (any(grepl("Run79",mcdir))) ## Specific to YMR sensitivity run with natural mortality
 				valPA = c(valPA, "M_Female", "M_Male")
@@ -321,12 +358,12 @@ gatherMCMC = function( mcdir=".", type="compo",
 			cp = c(cp, paste0(nn,".",sub("^[[:alpha:]]+","",ncps)))
 			mdir = c(mdir, file.path(ndir,ncps))
 		}
-#browser();return()
 		for (n in 1:length(mdir)) {
 			mmm   = mdir[n]
 			ccc   = cp[n]
 			.flush.cat(paste0("Getting MCMC: Run ", mm, "; catch policy: ", ccc), "\n")
 			mmc   = SSgetMCMC(mmm, verbose=F)
+#browser();return()
 			colnames(mmc) = convPN(colnames(mmc))
 			msid  = mmc$Iter
 			ii    = as.character(msid)
@@ -414,7 +451,13 @@ gatherMCMC = function( mcdir=".", type="compo",
 		}
 		mclst[[mm]][["MPD"]] = P.mpd
 	}
-#browser();return()
+	if (strSpp %in% "CAR") {
+		valPA = unique(unlist(valPAs))
+		valPA = c(grep("R0",valPA,value=T), grep("theta|R0",valPA,invert=T,value=T), grep("theta",valPA,value=T))
+		valLL = unique(unlist(valLLs))
+		chunk = "Index|AF|Recruit|Total"
+		valLL = c(grep(chunk,valLL,invert=T,value=T), grep(chunk,valLL,value=T))
+	}
 	mpdPA = list()
 	#avgPA = array(NA, dim=c(Nmcmc[[1]], length(P.mpd)), dimnames=list(mcmc=rowN[[1]], par=names(P.mpd)))
 	avgPA = array(NA, dim=c(Nmcmc[[1]], length(valPA)), dimnames=list(mcmc=rowN[[1]], par=valPA))
@@ -424,6 +467,10 @@ gatherMCMC = function( mcdir=".", type="compo",
 	avgTS = array(NA, dim=c(Nmcmc[[1]], length(ryrs), length(vTS)), dimnames=list(mcmc=rowN[[1]], yr=ryrs, val=vTS))
 	avgPJ = array(NA, dim=c(Nmcmc[[1]], length(pyrs), length(vTS), length(cp)), dimnames=list(mcmc=rowN[[1]], yr=pyrs, val=vTS, proj=cp))
 	avgCP = array(NA, dim=c(length(pyrs), length(mclst), length(cp)), dimnames=list(yr=pyrs, run=names(mclst), proj=cp))
+
+	avgLL =array(NA, dim=c(length(valLL), length(mclst)), dimnames=list(ll=valLL, run=names(mclst)))
+#browser();return()
+
 
 	## Build the composite run ('model average')
 	for (m in 1:length(mclst)){
@@ -440,7 +487,12 @@ gatherMCMC = function( mcdir=".", type="compo",
 		iii   = paste0(run,".",pad0(as.numeric(rownames(mcTS)),3))
 		#iii   = (lastmc+1):(lastmc+dim(mcTS)[1])
 
-		## Populate parameters array
+		## Populate likelihood array
+		for (n in 1:length(mclst[[mm]][["LL"]])){
+			lll = names(mclst[[mm]][["LL"]])[n]
+			avgLL[lll, mm] = mclst[[mm]][["LL"]][lll]
+		}
+		## Populate parameter array
 		for (n in 1:length(mclst[[mm]][["MPD"]])){
 			ppp = names(mclst[[mm]][["MPD"]])[n]
 			avgPA[iii,ppp] = mcPA[,ppp]
@@ -470,6 +522,7 @@ gatherMCMC = function( mcdir=".", type="compo",
 		avgTS[iii,dimnames(mcTS)$yr,"utumsy"] = (1 - exp(-mcTS[,,"F"])) / avgRP[iii,"umsy"]
 		avgTS[iii,dimnames(mcTS)$yr,"Rt"]     = mcTS[,,"Recr"]
 		avgTS[iii,dimnames(mcTS)$yr,"Rtdev"]  = mcTS[,,"RecrDev"]
+#browser();return()
 
 		for (n in 1:length(cp)){
 			ccc = cp[n]
@@ -491,9 +544,9 @@ gatherMCMC = function( mcdir=".", type="compo",
 	storage.mode(mpdPA)="double"
 	rownames(mpdPA) = names(mclst); colnames(mpdPA) = valPA  ## because of occasional extra parameters
 	if (type=="senso")
-		out = list(senPA=avgPA, senRP=avgRP, senTS=avgTS, senPJ=avgPJ, senCP=avgCP, smpdPA=mpdPA)
+		out = list(senPA=avgPA, senRP=avgRP, senTS=avgTS, senPJ=avgPJ, senCP=avgCP, smpdPA=mpdPA, senLL=avgLL)
 	else
-		out = list(avgPA=avgPA, avgRP=avgRP, avgTS=avgTS, avgPJ=avgPJ, avgCP=avgCP, ampdPA=mpdPA)
+		out = list(avgPA=avgPA, avgRP=avgRP, avgTS=avgTS, avgPJ=avgPJ, avgCP=avgCP, ampdPA=mpdPA, avgLL=avgLL)
 #browser();return()
 	return(out)
 }
@@ -594,9 +647,9 @@ importEva = function(eva.file)
 #test=importEva("ss.eva")
 
 
-##importLik------------------------------2012-08-08
+## importLik----------------------------2012-08-08
 ## Import Awatea likelihoods.
-##-----------------------------------------------RH
+## ---------------------------------------------RH
 #importLik = function(lik.file)
 #{
 #	lfile = readLines(lik.file)
@@ -701,25 +754,31 @@ med5.95 = function(xx.MCMC, dig=0, quants3=tcall(quants3)){  ## dig is number of
 		"-", prettyNum(round(quantile(xx.MCMC, quants3[3]), digits=dig), big.mark=options()$big.mark), ")"), collapse=""))
 }
 
-## prepCP-------------------------------2021-08-23
+
+## prepCP-------------------------------2022-06-30
 ##  Prepare Catch Policies -- 'CC'=constant catch, 'HR'=harvest rate (not implemented yet)
 ##  fyrs includes the current year (e.g., 2022=beginning of 2022, end of 2021), which is treated as a projection
+##  Update for Canary Rockfish 2022
 ## ---------------------------------------------RH
-prepCP = function(run.rwt, cp=1057, d.cp="CC", tag="nuts4K", 
-	fyrs=2022:2032, season=1, fleet=1, ## will need to alter if more than one fleet
-	d.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021",
+prepCP = function(run.rwt, cp=list('1'=800), d.cp="CC", tag="", #tag=".nuts4K", 
+	fyrs=2023:2033, season=1, fleet=1:2, ## will need to alter if more than one fleet
+	d.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022",
 	w=NULL, cvpro=NULL)
 {
 	padded = pad0(run.rwt,2)
 	t.run=padded[1]; t.rwt=padded[2]
 	tar.run.rwt = paste(t.run,t.rwt,sep=".")
-	d.target = file.path(d.base, paste0("Run", t.run), paste0("MCMC.",tar.run.rwt,".",tag))
+	d.target = file.path(d.base, paste0("Run", t.run), paste0("MCMC.",tar.run.rwt,tag))
 	poop = function(){ setwd(d.target); gdump = gc(verbose=FALSE) }
 	on.exit(poop())
+	
+	## Check for same number of catch policies by fleet
+	n.pol = sort(unique(sapply(cp,length)))
+	if (length(n.pol)>1) stop("Revise catch policy input list to have equal numbers by fleet")
 
 	need.files = c("starter.ss","forecast.ss",paste0(c("control","data"),".",tar.run.rwt,".ss"), "ss.par","ss.cor","ss.psv", paste0("admodel.",c("hes","cov")))
-	for (i in 1:length(cp)) {
-		ii = cp[i]
+	for (i in 1:n.pol) {
+		ii = sapply(cp,function(x,npol){return(x[i])},npol=i)
 		iii = pad0(i,2)
 		#d.catch.policy = file.path(d.target, d.cp, pad0(i,4))
 		d.policy.type = file.path(d.target, d.cp)
@@ -735,6 +794,7 @@ prepCP = function(run.rwt, cp=1057, d.cp="CC", tag="nuts4K",
 		
 		## Modify forecast file to reflect new catch policies
 		forecast = readLines(file.path(d.catch.policy,"forecast.ss"))
+#browser();return()
 
 		fline    = grep("#_fcast_nyrs",forecast)
 		forecast[fline] = sub(substring(forecast[fline],1,(regexpr(" #_fcast_nyrs",forecast[fline])-1)), length(fyrs), forecast[fline])
@@ -748,12 +808,14 @@ prepCP = function(run.rwt, cp=1057, d.cp="CC", tag="nuts4K",
 		f1     = grep("#_Yr Seas Fleet Catch",forecast)
 		f2     = grep("#_end_catpols",forecast)
 		nyrs   = length(fyrs)
-		newpol = data.frame(Yr=fyrs, Seas=rep(season,nyrs), Fleet=rep(fleet,nyrs), Catch=rep(ii,nyrs))
+		nfleet = length(fleet)
+		newpol = data.frame(Yr=rep(fyrs,nfleet), Seas=rep(season,nyrs*length(fleet)), Fleet=rep(fleet,each=nyrs), Catch=rep(ii,each=nyrs))
 		foopol = apply(newpol,1,paste0,collapse=" ")
 		forecast = c(forecast[1:f1], foopol, forecast[f2:length(forecast)])
-#browser();return()
 		writeLines(forecast, con=file.path(d.catch.policy,"forecast.ss"))
-
+#		};
+#browser();return()
+#	{
 		.flush.cat(paste0("CP = ", i, " -- run mceval to generate catch policies.\n"))
 		setwd(d.catch.policy)
 		gdump = gc(verbose=FALSE)
@@ -765,11 +827,11 @@ prepCP = function(run.rwt, cp=1057, d.cp="CC", tag="nuts4K",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prepCP
 
 
-## prepMPD------------------------------2021-06-16
+## prepMPD------------------------------2022-02-17
 ##  Prepare MPD runs for likelihood analysis
 ## ---------------------------------------------RH
 prepMPD = function(run.rwt, #n.run, n.rwt, l.run, l.rwt,
-	d.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021",
+	d.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022",
 	w=NULL, cvpro=NULL)
 {
 	padded = pad0(run.rwt,2)
@@ -782,23 +844,29 @@ prepMPD = function(run.rwt, #n.run, n.rwt, l.run, l.rwt,
 	d.mpd = file.path(d.run,paste("MPD",new.run.rwt,sep="."))
 
 	## Previous run from which to poach ssfiles
-	p.run = file.path(d.base,paste0("Run",l.run))
-	p.mpd = file.path(p.run,paste("MPD",pre.run.rwt,sep="."))
+	if (run.rwt[3]==0 && run.rwt[4]==0) {
+		## Preliminary run so get files from d.base
+		p.run = p.mpd = d.base
+	} else {
+		p.run = file.path(d.base,paste0("Run",l.run))
+		p.mpd = file.path(p.run,paste("MPD",pre.run.rwt,sep="."))
+	}
 	if (!all(file.exists(c(p.run,p.mpd))))
 		stop("Previous Run directory and/or MPD directory does not exist")
 	if (!file.exists(d.run)) dir.create(d.run)
 	if (!file.exists(d.mpd)) dir.create(d.mpd)
+#browser();return()
 	p.ss  = setdiff(list.files(p.mpd, pattern="\\.ss$"),"runnumber.ss")
-	pee   = file.copy(from=file.path(p.mpd,p.ss), to=d.mpd, copy.date=T, overwrite=F)
+	pee   = file.copy(from=file.path(p.mpd,p.ss), to=d.mpd, copy.date=T, overwrite=T)
 	poo   = file.rename(from=file.path(d.mpd,paste(c("data","control"),pre.run.rwt,"ss",sep=".")), to=file.path(d.mpd,paste(c("data","control"),new.run.rwt,"ss",sep=".")))
 
 	## Modify starter file to reflect new run
 	starter = readLines(file.path(d.mpd,"starter.ss"))
 	dline   = grep(paste("data",pre.run.rwt,sep="."),starter)
 	cline   = grep(paste("control",pre.run.rwt,sep="."),starter)
-#browser();return()
 	starter[dline] = sub(paste0("data\\.",l.run,"\\.",l.rwt),paste0("data.",new.run.rwt),starter[dline])
 	starter[cline] = sub(paste0("control\\.",l.run,"\\.",l.rwt),paste0("control.",new.run.rwt),starter[cline])
+#browser();return()
 	writeLines(starter, con=file.path(d.mpd,"starter.ss"))
 
 	## Modify data file to add cvpro using the Francis method
@@ -807,10 +875,9 @@ prepMPD = function(run.rwt, #n.run, n.rwt, l.run, l.rwt,
 		vline = intersect(grep("_index$",data), grep("^#",data,invert=TRUE))
 		vbits = strsplit(data[vline], split=" +")
 		if (length(.su(sapply(vbits,function(x){x[3]}))) != length(cvpro)){
-			.flush.cat("User inputs for cvpro do not match indices in data file\n"); browser();return()
+			.flush.cat("User inputs for cvpro do not match indices in data file\n")#; browser();return()
 		}
-		vdump = sapply(1:length(vbits),function(i){vbits[[i]][5] <<- sqrt(as.numeric(vbits[[i]][5])^2 + cvpro[as.numeric(vbits[[i]][3])]^2) })
-#browser();return()
+		vdump = sapply(1:length(vbits),function(i){vbits[[i]][5] <<- sqrt(as.numeric(vbits[[i]][5])^2 + cvpro[vbits[[i]][3]]^2) })
 		vnew  = sapply(vbits,function(x){ paste0(x,collapse=" ")})
 		data[vline] = vnew
 		writeLines(data, con=file.path(d.mpd,paste0("data.",new.run.rwt,".ss")))
@@ -819,11 +886,12 @@ prepMPD = function(run.rwt, #n.run, n.rwt, l.run, l.rwt,
 	control = readLines(file.path(d.mpd,paste0("control.",new.run.rwt,".ss")))
 	if (!is.null(w)){
 		fline = intersect(grep("vadj_af",control), grep("^#",control,invert=TRUE))
+#browser();return()
 		if (length(fline)!=length(w)){
 			.flush.cat("Francis reweights do not match control lines\n"); browser();return()
 		}
 		fbits = strsplit(control[fline], split=" +")
-		wdump = sapply(1:length(fbits),function(i){fbits[[i]][3] <<- w[i]})
+		wdump = sapply(1:length(fbits),function(i){fbits[[i]][3] <<- w[fbits[[i]][2]] }) #w[i]})
 		fnew  = sapply(fbits,function(x){ paste0(x,collapse=" ")})
 		control[fline] = fnew
 		writeLines(control, con=file.path(d.mpd,paste0("control.",new.run.rwt,".ss")))
@@ -837,7 +905,7 @@ prepMPD = function(run.rwt, #n.run, n.rwt, l.run, l.rwt,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prepMPD
 
 
-## ptab---------------------------------2021-04-19
+## ptab---------------------------------2022-02-18
 ##  Function to use for priors in table (adapted from PBSawatea).
 ## ---------------------------------------------RH
 ptab = function(xx) {
@@ -845,7 +913,7 @@ ptab = function(xx) {
 	xlab = gsub("\\_+"," ",xx[1])
 #browser();return()
 	xnum =xx[-1]
-	xnum[4] = switch(xnum[4], 'Normal'=6, 'No_prior'=0, 'Beta'=2)
+	xnum[4] = switch(xnum[4], 'Normal'=6, 'No_prior'=0, 'Full_Beta'=2)
 	xnum = lapply(xnum,function(x){
 		if(is.numStr(x))   as.numeric(x)
 		else if (is.na(x)) "--"
@@ -866,12 +934,13 @@ qtab = function(xx.MCMC, dig=0, quants3=tcall(quants3)) {  ## dig is number of d
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~qtab
 
 
-## repeatMPD----------------------------2021-04-28
+## repeatMPD----------------------------2022-05-26
 ## Repeat MPDs for axes of uncertainty to visualise likelihood density.
 ## Need to run from a specific Likelihood directory withing RunNN.
 ## ---------------------------------------------RH
-repeatMPD = function(M=seq(0.05,0.06,0.01), A=c(60), R0=NULL,
-   dir=getwd(), dir.pro, prefix="control.MMM.", clean=FALSE, argsMPD="")
+repeatMPD = function(Pfix=list(FFF=seq(0.05,0.06,0.01), MMM=seq(0.05,0.06,0.01), RRR=NULL), A=60, 
+   dir=getwd(), dir.pro, prefix="control.MMM.", clean=FALSE, 
+   strSpp="CAR", argsMPD="")
 {
 	## Start subfunctions
 	## Determine number of decimal places with non-trailing zeroes
@@ -879,6 +948,7 @@ repeatMPD = function(M=seq(0.05,0.06,0.01), A=c(60), R0=NULL,
 	decimalplaces <- function(x) {
 		dc = as.character(); dp = as.numeric()
 		for (xx in x) {
+#if(xx==0.10) {browser();return()}
 			if (abs(xx - round(xx)) > .Machine$double.eps^0.5) {
 				dc = c(dc, strsplit(sub('0+$', '', as.character(xx)), ".", fixed = TRUE)[[1]][2] )
 				dp = c(dp, nchar(strsplit(sub('0+$', '', as.character(xx)), ".", fixed = TRUE)[[1]][2]) )
@@ -887,13 +957,14 @@ repeatMPD = function(M=seq(0.05,0.06,0.01), A=c(60), R0=NULL,
 				dp = c(dp, 0)
 			}
 		}
-		## Automatically determine minimum number of secimal places to yield unique values
+		## Automatically determine minimum number of decimal places to yield unique values
 		udp = max(dp) + 1
 		for (i in max(dp):1){
 			#print(length(unique(round(x,i)))==length(x))
-			if (length(unique(round(x,i))) == length(x))
+			if (length(unique(round(x,i))) == length(x) && !any(round(x,i)==0))
 				udp = udp - 1
 		}
+#browser() ;return()
 		return(list(dc=dc, dp=dp, mindp=udp))
 	}
 	cleanup = function(){
@@ -904,43 +975,83 @@ repeatMPD = function(M=seq(0.05,0.06,0.01), A=c(60), R0=NULL,
 	}
 	## End subfunctions
 
-	if (clean) cleanup()
 	ncA   = max(nchar(A))
-	if (!is.null(M)) {
-		Y = Ydec = Yval = M; Ypref="MM\\."; Yvar="MMM"
-	} else if (!is.null(R0)) {  ## R0 expressed as log(R0)
-		Y = R0; Ydec=Y/100; Yval=exp(Y); Ypref="RR\\."; Yvar="RRR"
-	}
-	dcY = decimalplaces(Ydec)
-	dpY = dcY$mindp
+	Pfix = Pfix[ sapply(Pfix,function(x){!is.null(x) & all(!is.na(x)) }) ]
+	if ( !all(diff(sapply(Pfix,length))==0) )
+		stop("Pfix list elements must be vectors of equal length")
 
-	keep  = c("admodel.hes",paste0(c("Report","CompReport","covar","warning"),".sso"), paste("ss",c("cor","eva","par","rep","std","mpd"),sep=".")) ## MPD files to save
-	Nprof = length(Y) * length(A)
+	Y = Ydec = Yval = Pfix
+	Yvar  = names(Pfix)
+	Ypref = paste0(substring(Yvar,1,2),"\\.")
+	dcY   = lapply(Pfix, decimalplaces)
+	dpY   = sapply(dcY,function(x){x$mindp})
+	ipY   = sapply(Y,function(x){ max(0,ceiling(log10(x + 0.00001))) })  ## integer places
+
+#browser() ;return()
+
+	#if (!is.null(M)) {
+	#	Y = Ydec = Yval = M; Ypref="MM\\."; Yvar="MMM"
+	#} else if (!is.null(R0)) {  ## R0 expressed as log(R0)
+	#	Y = R0; Ydec=Y/100; Yval=exp(Y); Ypref="RR\\."; Yvar="RRR"
+	#}
+	#
+	#dcY = decimalplaces(Ydec)
+	#dpY = dcY$mindp
+
+	keep  = c("admodel.hes",paste0(c("Report","CompReport","covar","warning"),".sso"), paste("ss",c("cor","eva","par","rep","std","mpd"),sep="."), "data.ss_new") ## MPD files to save
+	Nprof = length(Y[[1]]) * length(A)
 	Iprof = 0
 	if (missing(dir.pro)){
-		dir.sub =  paste0("pro.M(",paste0(range(M),collapse="-"),").A(",paste0(A,collapse=","),")")
+		fornow  = lapply(Y,function(x){ paste0("(", paste0(range(x),collapse="-"),")")})
+		dir.sub =  paste0(c("Prof",paste0(substring(names(fornow),1,1),fornow)),collapse=".")
+		#dir.sub =  paste0("pro.M(",paste0(range(M),collapse="-"),").A(",paste0(A,collapse=","),")")
 		dir.pro = file.path(dir,dir.sub)
 	} else {
 		if (basename(dir.pro)==dir.pro || !grepl("^\\./|^[[:alpha:]]:/",dir.pro))  ## accept proper relative paths or those starting from a root
 			dir.pro = file.path(dir,sub("^/","",dir.pro))
 	}
-#browser();return()
+
+	if (!file.exists(dir)) dir.create(dir)
 	if (!file.exists(dir.pro)) dir.create(dir.pro)
 
 	for (a in A){
+		## Look for ss files
 		afile = file.path(dir,paste0(prefix,"A",pad0(a,ncA),".ss"))
+		sfile = file.path(dir,c("starter.base.ss", "forecast.ss", paste0(sub("Like","data",basename(dir)),".ss")))
+		for (bfile in c(afile,sfile)) {
+			if(!file.exists(bfile)) {
+				if (file.exists(sub("/Like\\.","/MPD.",bfile)))
+					file.copy(sub("/Like\\.","/MPD.",bfile), dir, copy.date=T)
+				else
+					stop(paste0("Cannot find file\n\t'", bfile, "'"))
+			}
+		}
 		aline = readLines(afile)
-		for (i in (1:length(Y))){
+		#grep(paste0(Yvar,collapse="|"),aline)
+
+		for (i in 1:Nprof){
 			Iprof = Iprof + 1
-			yval = Y[i]
-			ychr = round(Ydec[i], dpY)
-			ipref = paste0(sub(Ypref,paste0(sub("0\\.","",show0(ychr,dpY)),"."),prefix),"A",pad0(a,ncA))
+			yval = sapply(Y,function(x){x[i]})
+			ychr = sapply(Ydec,function(x){x[i]})
+			ychr = sapply(1:length(ychr),function(f){
+				if(ipY[f]==0) ochr = show0(x=round(ychr[f],dpY[f]), n=dpY[f]) 
+				else          ochr = pad0(x=ychr[f], n=ipY[f]+dpY[f], f=dpY[f])
+			return(ochr)
+#browser() ;return()
+			})
+
+## ipref need serious debugging
+			#ipref = paste0(sub(Ypref,paste0(sub("0\\.","",show0(ychr,dpY)),"."),prefix),"A",pad0(a,ncA))
+			ipref = paste0("control.",substring(gsub("control|\\.","",prefix),1,1), paste0(sub("^0\\.","",ychr),collapse=""),".A",pad0(a,ncA),collapse="")
+#browser() ;return()
 			.flush.cat(paste0("Processing run '", ipref, "' ..."), "\n")
 			ifile = paste0(ipref,".ss")
 			## for some reason, certain combos of M & A do not converge unless M is nudged
-			if (M==0.03 && A==45) smudge = 0.00001 ## necessary for WWR
+			if (strSpp=="WWR" && M==0.03 && A==45) smudge = 0.00001 ## necessary for WWR
 			else smudge = 0 
-			iline = gsub(Yvar, yval+smudge, aline)
+			iline = aline
+			for (l in 1:length(yval))
+				iline = gsub(Yvar[l], yval[l]+smudge, iline)
 			writeLines(iline, con=file.path(dir,ifile))
 
 			## Modify starter file to reflect new run
@@ -954,9 +1065,9 @@ repeatMPD = function(M=seq(0.05,0.06,0.01), A=c(60), R0=NULL,
 
 			#expr = paste("mess = shell(cmd=\"awatea -ind ",mfile,argsMPD,"\", wait=TRUE, intern=TRUE)",sep="")
 			setwd(dir)
+			if (clean) cleanup()
 			expr = paste("mpd = shell(cmd=\"ss\", wait=TRUE, intern=TRUE)",sep="")
 			.flush.cat("   ", expr, "\n")
-#browser();return()
 			eval(parse(text=expr))
 			writeLines(mpd ,con=file.path(dir,"ss.mpd"))
 
@@ -985,11 +1096,13 @@ repeatMPD = function(M=seq(0.05,0.06,0.01), A=c(60), R0=NULL,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~repeatMPD
 
 
-## runADnuts----------------------------2020-11-11
+## runADnuts----------------------------2022-06-07
 ##  Based on Chris Grandis' R code that was used to manually run adnuts.
-##  adnuts needs serious path intervention (RH 201021)
+##  Originally see Cole Monnahan:
+##    https://rdrr.io/github/Cole-Monnahan-NOAA/adnuts/src/R/samplers.R
+##  Note: adnuts needs serious path intervention (RH 201021)
 ## ------------------------------------------CG|RH
-runADnuts=function(path=getwd(), run="01.01", model="base", 
+runADnuts.off = function(path=getwd(), run="01.01", model="base", 
    rda_name, add2rda=FALSE, tag="REBSN", 
    parallel=TRUE, cores=6, syscall=c(FALSE,rep(TRUE,5)),
    iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.25),
@@ -1005,12 +1118,22 @@ runADnuts=function(path=getwd(), run="01.01", model="base",
 				pre    = gsub(paste0("\\.",ext,"$"),"",i)
 				backup = paste0(pre,"-",fstamp,".",ext)
 				if (!file.exists(backup))
-					file.copy(from=i, to=backup, overwrite=FALSE, copy.date=TRUE)
+					file.copy(from=i, to=backup, overwrite=TRUE, copy.date=TRUE)
 				file.remove(i)
 				rubbish = rubbish +1
 			}
 		}
 		invisible(paste0(rubbish, " files removed"))
+	}
+	## Generate dispersed initial values from MLE estimates
+	my_sample_inits = function(path, cv=0.025, reps) {
+		fit   = .read_mle_fit("ss", path=path)  ##
+		mle   = fit$est[1:fit$nopar]##; names(mle) = fit$par.names
+		inits = lapply(1:reps, function(i) {
+			ival = sapply(mle,function(x) { rnorm(1, mean=x, sd=abs(cv*x)) })
+		})
+		names(inits) = 1:reps
+		return(inits)
 	}
 
 	start_time <- Sys.time()
@@ -1074,8 +1197,8 @@ runADnuts=function(path=getwd(), run="01.01", model="base",
 			stop(paste0("\n",dash,"\nSystem call 1: ",mess,"\n",dash))
 	}
 	#file.remove(list.files(d.mpd, pattern="\\.log$"))  ## for now
-#browser();return()
 	replist = SS_output(dir=d.mpd, verbose=FALSE)
+#browser();return()
 	ttput(replist)
 	vals.save = c("replist")
 
@@ -1083,9 +1206,10 @@ runADnuts=function(path=getwd(), run="01.01", model="base",
 
 	## Chains to run in parallel
 	reps  <- min(cores, parallel::detectCores() - 1)
-	set.seed(352)
+	set.seed(2022)
 	seeds <- sample(1:1e4, size = reps)
 	sweep.files(d.rda)
+#browser();return()
 
 	## ----------------------------------------------------------------
 	if (syscall[2]) {
@@ -1105,7 +1229,8 @@ runADnuts=function(path=getwd(), run="01.01", model="base",
 	#warmup <- ceiling(iter/4)
 	warmup <- ceiling(0.25 * iter)
 	inits  <- NULL               ## start chains from MLE
-	vals.save = c(vals.save,c("seeds"))
+	inits  <- my_sample_inits(path=d.mpd, reps=reps)
+	vals.save = c(vals.save,c("seeds","iters"))
 
 	## ----------------------------------------------------------------
 	if (syscall[3]){
@@ -1113,20 +1238,25 @@ runADnuts=function(path=getwd(), run="01.01", model="base",
 		gdump = gc(verbose=FALSE)
 		pilot  <- sample_admb(model=basename(ssexe), path=d.nuts, iter=iter, init=inits, chains=reps, warmup=warmup, seeds=seeds, thin=thin, mceval=FALSE, duration=NULL, parallel=parallel, cores=reps, control=NULL, algorithm="RWM")
 		ttput(pilot)
+		save("pilot","inits","warmup","thin","seeds", file="pilot.rda")
+	} else {
+		ttget(pilot)
+		if (!exists("pilot", inherits=F))
+			load("pilot.rda")
 	}
-		else ttget(pilot)
-	
+
 	## Check convergence and slow mixing parameters
 #mon  <- rstan::monitor(pilot$samples, warmup=pilot$warmup, print=FALSE)
 #ttput(mon)
 	## max(mon[,'Rhat'])
 	## min(mon[,'n_eff'])
 	## Examine the slowest mixing parameters
-#slow <- names(sort(mon[,"n_eff"]))[1:8]
+#slow <- names(sort(mon[,"n_eff"]))[1:10]
 #ttput(slow)
 #vals.save = c(vals.save,c("pilot","mon","slow"))
 
 #browser();return()
+	#so("pairs_admb.r","synth")
 	#pairs_admb(fit=pilot, pars=slow, label.cex=1)
 	#pairs_admb(fit = pilot, pars = c("MGparm[1]", "SR_parm[1]", "SR_parm[2]")) ## must be specific to Hake
 	#pairs_admb(fit = pilot, pars = c("SR_parm[1]", "Q_parm[1]", "selparm[1]"), label.cex=1)
@@ -1145,10 +1275,23 @@ runADnuts=function(path=getwd(), run="01.01", model="base",
 		#	iters$test = isys4 * nsys4
 		#	.flush.cat(paste0("  System call 4, loop ", nsys4,": trying ", iters$test, " iterations\n"))
 		gdump = gc(verbose=FALSE)
-		sys4  = system(paste0(ssexe, " -hbf 1 -nox -iprint 100 -mcmc ", iters$test), intern=TRUE)
+		sys4  = system(paste0(ssexe, " -hbf 1 -nox -iprint 100 -mcmc ", iters$test), intern=TRUE) 
 		writeLines(sys4,"./sys4.txt")
-		if (any(grepl(mess,sys4)))
-			stop(paste0("\n",dash,"\nSystem call 4: ",mess,"\n",dash))
+		if (any(grepl(mess,sys4))) {
+			message( paste0("\n",dash,"\nSystem call 4: ",mess,"\n",dash) )
+			#replist <- SS_output(dir=d.nuts, verbose=F, printstats=F)
+			#rep.names = row.names(replist$parameters[!is.na(replist$parameters[,"Active_Cnt"]),])
+			fit <- .read_mle_fit("ss", path=d.nuts)
+			par.names = fit$par.names; #names(par.names) = rep.names
+			hes <- adnuts:::.getADMBHessian(path=d.nuts)
+			ev  <- eigen(hes)
+			hdiag = diag(hes); names(hdiag) = fit$par.names
+			zbad  = hdiag < 0
+			.flush.cat("Paramaters with concave (negative) 2nd derivatives :\n")
+			.flush.cat( paste0(paste0("\t",sapply( grep(T,zbad), function(i) { paste0(names(hdiag)[i], " : ",hdiag[i], collapse="") }), "\n"),collapse="") )
+			browser();return()
+			#stop(paste0("\n",dash,"\nSystem call 4: ",mess,"\n",dash))
+		}
 		#}
 #browser();return()
 	}
@@ -1158,15 +1301,20 @@ runADnuts=function(path=getwd(), run="01.01", model="base",
 	if (syscall[5]) {
 		.flush.cat("SysCall 5 -- Using MLE covariance and short parallel NUTS chains...\n")
 		sweep.files(c("ss.psv","unbounded.csv"))
-		warmup   <- ceiling(iters$pcburn * iters$mle)  ## Monnahan et al. (2019)
-		gdump = gc(verbose=FALSE)
+		warmup <- ceiling(iters$pcburn * iters$mle)  ## Monnahan et al. (2019)
+		gdump  <- gc(verbose=FALSE)
+		inits  <- my_sample_inits(path=d.mpd, reps=reps)
 
 ##=== Break here to run on the command line ===
 browser();return()
-		nuts.mle <-  sample_admb(model=ssexe, path=d.nuts, iter=iters$mle, init=NULL, chains=reps, warmup=warmup, seeds=seeds, thin=1, mceval=FALSE, duration=NULL, parallel=parallel, cores=reps, control=list(metric="mle", adapt_delta=0.8), algorithm="NUTS")
+		nuts.mle <-  sample_admb(model=ssexe, path=d.nuts, iter=iters$mle, init=inits, chains=reps, warmup=warmup, seeds=seeds, thin=1, mceval=FALSE, duration=NULL, parallel=parallel, cores=reps, control=list(metric="mle", adapt_delta=0.9), algorithm="NUTS")
 		ttput(nuts.mle)
-	} else
+		save("nuts.mle","inits","warmup","seeds", file="nuts.mle.rda")
+	} else {
 		ttget(nuts.mle)
+		if (!exists("nuts.mle", inherits=F))
+			load("nuts.mle.rda")
+	}
 	#vals.save = c(vals.save,c("nuts.mle"))
 	## Check for issues like slow mixing, divergences, max treedepths with
 	## ShinyStan and pairs_admb as above. Fix and rerun this part as needed.
@@ -1177,7 +1325,7 @@ browser();return()
 	## adapt_delta toward 1 if you have divergences (runs will take longer).
 	## Note this is in unbounded parameter space
 	## The following, nuts.updated, was used for inferences in this appendix
-	vals.save = c(vals.save,c("nuts.mle"))
+	#vals.save = c(vals.save,c("nuts.mle"))
 	mass  <- nuts.mle$covar.est
 	inits <- sample_inits(nuts.mle, reps)
 	## ----------------------------------------------------------------
@@ -1201,10 +1349,14 @@ browser();return()
 		gdump = gc(verbose=FALSE)
 		nuts.updated <- sample_admb(model=ssexe, path=d.mcmc, iter=iters$update, init=inits, chains=reps, warmup=warmup, seeds=seeds, thin=thin, mceval=TRUE, duration=NULL, parallel=parallel, cores=reps, control=list(metric=mass, adapt_delta=0.9), algorithm="NUTS")
 		ttput(nuts.updated)
+		save("nuts.updated","inits","warmup","seeds","thin","mass", file="nuts.updated.rda")
+	} else {
+		ttget(nuts.updated)
+		if (!exists("nuts.updated", inherits=F))
+			load("nuts.updated.rda")
 	}
-		else ttget(nuts.updated)
 
-	vals.save = c(vals.save,c("nuts.updated","mass","inits"))
+	#vals.save = c(vals.save,c("nuts.updated","mass","inits"))
 	tmpenv <- new.env()
 	if (file.exists(d.rda) && add2rda) {
 		load(d.rda, envir=tmpenv)
@@ -1234,16 +1386,17 @@ browser();return()
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~runADnuts
 
 
-## runSweave----------------------------2021-07-06
+## runSweave----------------------------2022-06-06
 ##  Run Sweave code to build pdfs for MPD and MCMC runs (not appendix)
 ## ---------------------------------------------RH
-runSweave = function (d.model=getwd(), d.sweave, type="MPD")
+runSweave = function (d.model=getwd(), d.sweave, type="MPD", figs.only=FALSE)
 {
 	if (missing(d.sweave))
 		d.sweave = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop"
-	f.sweave = paste0(basename(d.model),".Rnw")
+	f.sweave = paste0(basename(d.model),ifelse(figs.only,".figs",""),".Rnw")
+#browser();return()
 
-	if (!file.copy(from=file.path(d.sweave, paste0("sweave",type,".Rnw")), to=file.path(d.model,f.sweave), overwrite=TRUE, copy.date=TRUE))
+	if (!file.copy(from=file.path(d.sweave, paste0("sweave",type,ifelse(figs.only,".figs",""),".Rnw")), to=file.path(d.model,f.sweave), overwrite=TRUE, copy.date=TRUE))
 		stop("Failed to copy Sweave file to directory\n\t",d.model)
 
 	## Other 'log' files (e.g., from Sweave) interfere with r4ss::SS_output
@@ -1269,7 +1422,7 @@ stab = function(xx.MCMC, dig=3, quants3=tcall(quants3), print=T) {  ## dig is nu
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~stab
 
 
-## weightAF-----------------------------2021-08-11
+## weightAF-----------------------------2022-02-24
 ##  Weight age frequencies using harmonic mean ratio method
 ## ---------------------------------------------RH
 weightAF = function(replist, fleets, abase="agedbase", afld="Nsamp_adj",
@@ -1281,15 +1434,18 @@ weightAF = function(replist, fleets, abase="agedbase", afld="Nsamp_adj",
 	hmean  = sapply(lstbase,function(x){ 1/mean(1/x[,hfld]) })
 	amean  = sapply(lstbase,function(x){ mean(x[,afld]) })
 	wmean  = sapply(lstbase,function(x){ 1/mean(1/x[,hfld]) / mean(x[,afld]) })
+#browser();return()
 
 	## Recruitment predictions (flaky so do not use 'wadj')
 	recbase = replist[[rbase]]
 	Rmax = max(recbase[,rfld])
-	M = replist$parameters["NatM_p_1_Fem_GP_1","Value"]
+	#M = replist$parameters["NatM_p_1_Fem_GP_1","Value"]
+	midx = grep("^Nat(.+)Fem",rownames(replist$parameters))
+	M = replist$parameters[midx,"Value"]
 	wsub = 1/((Rmax/10^floor(log10(Rmax)))*M^0.7)
 	wadj = wmean / wsub
 
-	w.mcallister = list(hmean=hmean, amean=amean, wmean=wmean, Rmax=Rmax, M=M, wsub=wsub, wadj=wadj)
+	w.mcallister = list(agedat=fltbase, hmean=hmean, amean=amean, wmean=wmean, Rmax=Rmax, M=M, wsub=wsub, wadj=wadj)
 #browser();return()
 	ttput(w.mcallister)
 	return(w.mcallister)

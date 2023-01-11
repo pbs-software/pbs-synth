@@ -1,0 +1,642 @@
+## MCMC Stuff--------------------------------------
+## Run MPDs via function 'runADMB' which issues awatea command
+## on modified input files; to test use file manually, use:
+##   awatea -ind YMR-CST-18.txt
+##
+## Run MCMCs on Supercomputer, issue commands:
+##   awatea -ind YMR-CST.18.01.txt -mcmc 24000000 -mcscale 1000000 -mcsave 20000
+##   awatea -ind YMR-CST.18.01.txt -mceval
+##
+## The latter creates projections specified by the input file.
+## It also creates files like 'params.pst' that routines in 'runSweaveMCMC' need.
+##
+## Copy MCMC results to both WWRrun16/MCMC.16.01 and WWRrun16/MCMC.06.01/PRJ.06.01
+## (the latter preserves the projections as the MSY calculation will overwrite)
+##
+## If running locode=T, then issue these commands to get the software loaded:
+##  so("runADMB.r","awatea"); so("runSweave.r","awatea");  so("runSweaveMCMC.r","awatea"); endStrat=0.802; tput(endStrat); stepStrat=0.002; tput(stepStrat)
+##
+## Calculate time difference in R (e.g. start 'awarea.par', end 'awatea.psv'):
+##  strptime("2018-01-08 1:52:10", format="%Y-%m-%d %H:%M:%S") - strptime("2018-01-07 14:50:11", format="%Y-%m-%d %H:%M:%S")
+##-------------------------------------------------
+so("clearFiles.r")
+
+#=== YMR Coastwide 2021 ===
+## See file 'SS-commands-YMR_2021_beforeWP.rwh' for runs prior to WP 
+
+##=======================START BASE CASE RUNS=========================
+##--------------------------------------------------------------------
+## Run75 (B3, central run) -- Like Run89 (M=0.05 + CPUE) that uses correct mu prior for WCVI selectivity (15.4y, not 12.2y) but add one projection year.
+
+so("prepMPD.r","synth")
+run=75; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,89,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.321921 3.579758 3.173067 4.647344 6.672315
+
+so("prepMPD.r","synth")
+run=75; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=75; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+#iters=list(test=15,pilot=100,mle=750,update=750,pcburn=2/3)  ## PJS suggests increasing burn-in time
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run77 (B1) -- Like Run75 (M=0.05 + CPUE) but fix M=0.04.
+
+so("prepMPD.r","synth")
+run=77; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.219091 3.526547 3.149570 4.566871 6.654246
+
+so("prepMPD.r","synth")
+run=77; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=77; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+#iters=list(test=15,pilot=100,mle=750,update=750,pcburn=2/3)  ## PJS suggests increasing burn-in time
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run71 (B2) -- Like Run75 (M=0.05 + CPUE) but fix M=0.045.
+
+so("prepMPD.r","synth")
+run=71; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.277630 3.556199 3.162346 4.611432 6.669352
+
+so("prepMPD.r","synth")
+run=71; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=71; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+#iters=list(test=15,pilot=100,mle=750,update=750,pcburn=2/3)  ## PJS suggests increasing burn-in time
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run72 (B4) -- Like Run75 (M=0.05 + CPUE) but fix M=0.055.
+
+so("prepMPD.r","synth")
+run=72; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.363513 3.600632 3.183852 4.678104 6.693381
+
+so("prepMPD.r","synth")
+run=72; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=72; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+#iters=list(test=15,pilot=100,mle=750,update=750,pcburn=2/3)  ## PJS suggests increasing burn-in time
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run76 (B5) -- Like Run75 (M=0.05 + CPUE) but fix M=0.06.
+
+so("prepMPD.r","synth")
+run=76; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.389239 3.615832 3.191242 4.703617 6.663063 
+
+so("prepMPD.r","synth")
+run=76; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=76; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+#iters=list(test=15,pilot=100,mle=750,update=750,pcburn=2/3)  ## PJS suggests increasing burn-in time
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##=======================END BASE CASE RUNS===========================
+
+##=======================START SENSITIVITY RUNS=======================
+##--------------------------------------------------------------------
+## Run78 (S01) -- Like Run75 (M=0.05 + CPUE) but use additional WCHG index for 1997 from Ocean Selector (PJS forgot).
+
+so("prepMPD.r","synth")
+run=78; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.325070 3.580610 3.173892 4.646266 6.672258
+
+so("prepMPD.r","synth")
+run=78; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=78; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run79 (S02) -- Like Run75 (M=0.05 + CPUE) but estimate M using tight prior N(0.05,0.01).
+
+so("prepMPD.r","synth")
+run=79; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.408812 3.599557 3.183349 4.676197 6.344544
+
+so("prepMPD.r","synth")
+run=79; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=79; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run80 (S03) -- Like Run75 (M=0.05 + CPUE) but drop CPUE series.
+
+so("prepMPD.r","synth")
+run=80; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+10.279413  4.622282  4.276336  7.409538  6.663510
+
+so("prepMPD.r","synth")
+run=80; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=NULL)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=80; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run81 (S04) -- Like Run75 (M=0.05 + CPUE) but use standardised Tweedie CPUE series based on Sean Anderson's analysis.
+
+so("prepMPD.r","synth")
+run=81; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+10.440879  4.680998  4.252056  7.396047  6.773484
+
+so("prepMPD.r","synth")
+run=81; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=NULL)  ## Tweedie already has a lot of error (set cvpro=NULL)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=81; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run82 (S05) -- Like Run75 (M=0.05 + CPUE) but decrease sigmaR from 0.9 to 0.6.
+
+so("prepMPD.r","synth")
+run=82; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.449762 3.552218 3.288394 5.045843 6.297190
+
+so("prepMPD.r","synth")
+run=82; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=82; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run83 (S06) -- Like Run75 (M=0.05 + CPUE) but increase sigmaR from 0.9 to 1.2.
+
+so("prepMPD.r","synth")
+run=83; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.222421 3.546044 3.120596 4.420369 6.693332
+
+so("prepMPD.r","synth")
+run=83; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=83; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run84 (S07) -- Like Run75 (M=0.05 + CPUE) but reduce catch by 33% in 1965-95 (foreign fleet + pre-observer domestic).
+
+so("prepMPD.r","synth")
+run=84; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.253996 3.546647 3.148675 4.574006 6.686007
+
+so("prepMPD.r","synth")
+run=84; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=84; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run85 (S08) -- Like Run75 (M=0.05 + CPUE) but increase catch by 50% in 1965-95 (foreign fleet + pre-observer domestic).
+
+so("prepMPD.r","synth")
+run=85; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.389155 3.614718 3.199625 4.729267 6.649395
+
+so("prepMPD.r","synth")
+run=85; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=85; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run86 (S09) -- Like Run75 (M=0.05 + CPUE) but upweight QCS survey.
+
+so("prepMPD.r","synth")
+run=86; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.321921 3.579758 3.173067 4.647344 6.672315
+
+so("prepMPD.r","synth")
+run=86; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = c(3.5,rep(0.25,3))
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=86; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run87 (S10) -- Like Run75 (M=0.05 + CPUE) but change start year of recruitment deviation estimates from 1950 to 1970.
+
+so("prepMPD.r","synth")
+run=87; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+5.997195 3.604325 3.250158 4.801010 5.810114
+
+so("prepMPD.r","synth")
+run=87; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=87; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run88 (S11) -- Like Run75 (M=0.05 + CPUE) but do not use ageing error.
+
+so("prepMPD.r","synth")
+run=88; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+5.241267 3.174348 2.933684 3.691880 6.489181
+
+so("prepMPD.r","synth")
+run=88; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=88; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run90 -- Like Run75 (M=0.05 + CPUE) but fix M=0.065.
+
+so("prepMPD.r","synth")
+run=90; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.426714 3.631862 3.200938 4.727790 6.689306
+
+so("prepMPD.r","synth")
+run=90; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=90; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+#iters=list(test=15,pilot=100,mle=750,update=750,pcburn=2/3)  ## PJS suggests increasing burn-in time
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run91 (S12) -- Like Run75 (M=0.05 + CPUE) but fix h=0.5 (for Rob Kronlund)
+
+so("prepMPD.r","synth")
+run=91; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.326616 3.567344 3.172569 4.627826 6.650245
+
+so("prepMPD.r","synth")
+run=91; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=91; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+#iters=list(test=15,pilot=100,mle=750,update=750,pcburn=2/3)  ## PJS suggests increasing burn-in time
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run92 (S13) -- Like Run75 (M=0.05 + CPUE) but double the catch in 2021 and propagate this catch into projections (for Andrew Edwards)
+
+so("prepMPD.r","synth")
+run=92; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.358515 3.582349 3.177401 4.650658 6.373419
+
+so("prepMPD.r","synth")
+run=92; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=92; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+#iters=list(test=15,pilot=100,mle=750,update=750,pcburn=2/3)  ## PJS suggests increasing burn-in time
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run93 (S14) -- Like Run75 (M=0.05 + CPUE) but use AE based age readers' observed error (for Bruce Leaman)
+
+so("prepMPD.r","synth")
+run=93; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.055056 3.627381 3.079502 4.773543 6.119616
+
+so("prepMPD.r","synth")
+run=93; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=93; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+#iters=list(test=15,pilot=100,mle=750,update=750,pcburn=2/3)  ## PJS suggests increasing burn-in time
+ad.base = "C:/Users/haighr/Files/GFish/PSARC21/YMR/Data/SS/YMR2021"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="ymr2021rev", ssfiles=paste(c("control","data"),ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(type="MCMC")
+
+##--------------------------------------------------------------------
+## Run94 -- Like Run75 (M=0.05 + CPUE) but start estimating Rdevs in 1935
+
+so("prepMPD.r","synth")
+run=94; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,75,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1:5))
+ttcall(w.mcallister)$wmean
+6.329438 3.582608 3.175169 4.655664 6.668750
+
+so("prepMPD.r","synth")
+run=94; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean; wtemp[2:5] = rep(0.25,4)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=c(0.3296,0,0,0,0))
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+

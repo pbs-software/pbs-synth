@@ -1,6 +1,7 @@
 ##==========================================================
 ## PBS Stock Synthesis:
 ##  Overwrite existing functions from other packages (only adnuts at the moment).
+##  Originally called 'overwriteFuns.r'
 ## ---------------------------------------------------------
 ## launch_shinyadmb......Launch shiny but useless GUI system to explore fits (mod.adnuts).
 ## pairs_admb............Plot pairwise parameter posteriors (mod.adnuts).
@@ -14,25 +15,28 @@
 ## launch_shinyadmb---------------------2020-11-11
 ## adnuts Functions: launch_shinyadmb
 ## --------------------------------------adnuts|RH
-launch_shinyadmb=function(fit)
+launch_shinyadmb = function(fit)
 {
-	tmp_params=fit$sampler_params
-	nms_params=lapply(tmp_params,function(x){x[,setdiff(colnames(x),"lp__")]})
-	fit$sampler_params=nms_params
+	tmp_params = fit$sampler_params
+	nms_params = lapply(tmp_params,function(x){x[,setdiff(colnames(x),"lp__")]})
+	fit$sampler_params = nms_params
 	ttput(fit)
 	shinystan::launch_shinystan(.as.shinyadnuts(fit))
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~launch_shinyadmb
 
 
-## pairs_admb---------------------------2021-03-10
+## pairs_admb---------------------------2022-06-14
 ## adnuts function: 'pairs_admb'
 ## --------------------------------------adnuts|RH
 pairs_admb = function (fit, diag=c("trace", "acf", "hist"), acf.ylim=c(-1,1), 
-   ymult=NULL, axis.col=gray(0.5), pars=NULL, label.cex=0.5, limits=NULL, ...) 
+   ymult=NULL, axis.col=gray(0.5), pars=NULL, label.cex=0.5, limits=NULL, alt.labs=NULL, ...) 
 {
 	mle <- fit$mle
 	posterior <- extract_samples(fit, inc_lp=TRUE)
+	if (!is.null(alt.labs) && length(alt.labs) == ncol(posterior) - 1)
+		colnames(posterior) = c(alt.labs, "lp__")
+#browser();return()
 	chains <- rep(1:dim(fit$samples)[2], each=dim(fit$samples)[1] - fit$warmup)
 	divs <- if (fit$algorithm == "NUTS") 
 		extract_sampler_params(fit)$divergent__
@@ -482,8 +486,7 @@ sample_admb_rwm = function (path, model, iter=2000, thin=1, warmup=ceiling(iter/
 	setwd(path)
 	if (any(names(control) != "refresh")) 
 		warning("Only refresh control argument is used with RWM, ignoring: ", 
-			paste(names(control)[names(control) != "refresh"], 
-				collapse = ", "), call. = FALSE)
+			paste(names(control)[names(control) != "refresh"], collapse = ", "), call. = FALSE)
 	refresh <- control$refresh
 	if (!is.null(refresh) & !is.numeric(refresh)) 
 		stop("Invalid refresh value ", refresh)
@@ -526,8 +529,7 @@ sample_admb_rwm = function (path, model, iter=2000, thin=1, warmup=ceiling(iter/
 	}
 	if (!is.null(init)) {
 		cmd <- paste(cmd, "-mcpin init.pin")
-		write.table(file = "init.pin", x = unlist(init), row.names = F, 
-			col.names = F)
+		write.table(file = "init.pin", x = unlist(init), row.names = F, col.names = F)
 	}
 	if (!is.null(refresh)) 
 		cmd <- paste(cmd, "-refresh", refresh)
@@ -559,7 +561,7 @@ sample_admb_rwm = function (path, model, iter=2000, thin=1, warmup=ceiling(iter/
 	dimnames(unbounded) <- NULL
 	pars <- adnuts:::.get_psv(model)
 	par.names <- names(pars)
-	lp <- as.vector(read.table("rwm_lp.txt", header = TRUE)[, 1])
+	lp <- as.vector(read.table("rwm_lp.txt", header = TRUE)[,1])
 	pars[, "log-posterior"] <- lp
 	pars <- as.matrix(pars)
 	time.total <- time
