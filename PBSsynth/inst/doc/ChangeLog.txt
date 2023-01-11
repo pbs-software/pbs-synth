@@ -5,6 +5,10 @@ Authors : RH  = Rowan Haigh
           PJS = Paul Starr
           CG  = Chris Grandin
 
+0.2.0 (2021-09-27) [Rcheck=F, Rbuild=F]
+  * Documentation
+    - Added preliminary README markdown file (RH: 210927)
+
 0.1.0 (2021-09-23) [Rcheck=F, Rbuild=F]
   * Documentation
     + Created new SVN repo for Stock Synthesis projects (RH 210923)
