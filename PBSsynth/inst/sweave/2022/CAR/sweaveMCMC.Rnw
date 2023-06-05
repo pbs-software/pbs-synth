@@ -1,0 +1,315 @@
+\documentclass[11pt]{book}   
+% \documentclass[12pt]{article}
+%% Needs to start in the target MCMC directory
+
+\usepackage{Sweave}      %% andy added
+\usepackage{resDocSty}   %% Res Doc .sty file
+\captionsetup{figurewithin=none,tablewithin=none} %% RH: This works for resetting figure and table numbers for book class though I don't know why. Set fig/table start number to n-1.
+\usepackage{rotating}    %% for sideways table
+\usepackage{longtable,array}
+\usepackage{pdfcomment}  %% for annotating figures in the PDF
+
+%\usepackage{graphicx}   %% called in resDocSty
+%\usepackage{epsfig}     %% called in resDocSty
+% \usepackage{placeins}
+
+\def\startP{1}           %% page start (default=1)
+\def\startF{0}           %% figure start counter (default=0)
+\def\startT{0}           %% table start counter (default=0)
+\def\bfTh{{\bf \Theta}}  %% bold Theta
+
+\newcommand{\ptype}{png} %% eps or png files supported
+\newcommand{\pc}{\%}
+
+\newcommand\onefig[2]{    % filename is #1, text is #2
+  \begin{figure}[h!]
+  \begin{center}
+  \pdftooltip{
+  \includegraphics[width=6.4in,height=8in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1}}
+  \end{center}
+  \caption{#2}
+  \label{fig:#1}
+  \end{figure}
+  \clearpage
+}
+\newcommand\twofig[3]{   % figure #1 under #2, caption text #3
+  \begin{figure}[htp]     %  label will be #1
+  \centering
+  \begin{tabular}{c}
+  \pdftooltip{
+  \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1} top} \\
+  \pdftooltip{
+  \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#1} bottom}
+  \end{tabular}
+  \caption{#3}
+  \label{fig:#1}
+  \end{figure}
+  \clearpage
+}
+
+\SweaveOpts{pdf=FALSE}
+
+\begin{document}
+\setcounter{page}{\startP}
+\setcounter{figure}{\startF}
+\setcounter{table}{\startT}
+\setcounter{secnumdepth}{3}    %% to number subsubheadings-ish
+
+\setcounter{chapter}{6}    % for stand-alone chapters (5=E, 6=F)
+\renewcommand{\thechapter}{\Alph{chapter}} % ditto
+\renewcommand{\thesection}{\thechapter.\arabic{section}}   
+\renewcommand{\thesubsection}{\thechapter.\arabic{section}.\arabic{subsection}.}
+\renewcommand{\thetable}{\thechapter.\arabic{table}}    
+\renewcommand{\thefigure}{\thechapter.\arabic{figure}}  
+\renewcommand{\theequation}{\thechapter.\arabic{equation}}
+%\renewcommand{\thepage}{\arabic{page}}
+
+\newcounter{prevchapter}
+\setcounter{prevchapter}{\value{chapter}}
+\addtocounter{prevchapter}{-1}
+\newcommand{\eqnchapter}{\Alph{prevchapter}}
+
+\newcommand{\Bmsy}{B_\text{MSY}}
+\newcommand{\umsy}{u_\text{MSY}}
+
+%% First set up workspace:
+<<mcmc_setup, echo=FALSE, results=hide>>= # hide the results 
+
+type = "MCMC"
+require(r4ss)
+require(xtable)
+options(scipen=10)
+redoFigs = T
+lang=c("f","e")
+
+d.tools = "C:/Users/haighr/Files/Projects/R/Develop/PBStools/Authors/Rcode/develop/"
+r.tools = c("linguaFranca", "clearFiles","extractAges","calcStockArea","texArray","plotSnail")
+for (i in r.tools) source(paste0(d.tools,i,".r"))
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("PBSsynth", "plotFuns", "utilFuns", "calcStdRes", "ptab", "convPN", "plotSS.pars", "plotSS.pairs", "weightAF")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+d.awatea = "C:/Users/haighr/Files/Projects/R/Develop/PBSawatea/Authors/Rcode/develop/"
+r.awatea = c("mochaLatte","panelBoxes","panelChains","panelTraces","plotACFs","plotTraj")
+for (i in r.awatea) source(paste0(d.awatea,i,".r"))
+
+species.name="Canary Rockfish"; strSpp="CAR"; assyr=2022  ## also set on L169
+
+### Compare to Awatea's selectivity (B, R, selectivity, etc.)
+#d.mpd    = NULL
+#if (strSpp %in% c("REBS","REBSN") && !exists("b46")) {
+#	d.mpd  = "C:/Users/haighr/Files/GFish/PSARC20/REBS/Data/Awatea/BSR_2F/BSRrun46/MPD.46.01"
+#	maxage = 60
+#}
+#if (strSpp %in% c("440","YMR") && !exists("b29")) {  ## does not exist
+#	d.mpd  = "C:/Users/haighr/Files/GFish/PSARC11/YMR/Awatea/YMRrun29/MPD.29.01"
+#	maxage = 30
+#}
+#browser();return()
+
+## Get MPD values (replist) from MPD directory used to run MCMCs
+## (hm=Hastings-Metropolis,mh=Metropolis-Hastings,nuts=No U-turn sampler)
+replist = SS_output(dir=sub("\\.mh.+","",sub("\\.hm.+","",sub("\\.nuts.+","",sub("MCMC","MPD",getwd())))))
+
+B.mpd = replist$timeseries$SpawnBio
+R.mpd = replist$timeseries$Recruit_0
+names(B.mpd) = names(R.mpd) = replist$timeseries$Yr
+
+parameters   = replist$parameters
+pactive = parameters[!is.na(parameters$Active_Cnt) & parameters$Phase>0 & !is.element(parameters$Pr_type,"dev"),]
+pactive$Label = convPN(pactive$Label)
+
+P.mpd   = pactive$Value; names(P.mpd)=pactive$Label
+P.rc    = .findSquare(length(P.mpd))
+
+## MCMC values
+d.mcmc = SSgetMCMC(getwd()); colnames(d.mcmc) = convPN(colnames(d.mcmc))
+replist$mcmc = d.mcmc
+n.mcmc = nrow(d.mcmc)
+#browser();return()
+
+P.mcmc    = d.mcmc[,names(P.mpd)]
+B.mcmc    = d.mcmc[,grep("^SSB_[12]",colnames(d.mcmc))]
+##D.mcmc    = d.mcmc[,grep("^Bratio_[12]",colnames(d.mcmc))]  ## Bratio is not depletion
+D.mcmc    = B.mcmc/B.mcmc[,1]
+R.mcmc    = d.mcmc[,grep("^Recr_[12]",colnames(d.mcmc))]
+Rdev.mcmc = d.mcmc[,grep("^RecrDev_[12]",colnames(d.mcmc))]
+SPR.mcmc  = d.mcmc[,grep("^SPRratio_[12]",colnames(d.mcmc))]
+F.mcmc    = d.mcmc[,grep("^F_[12]",colnames(d.mcmc))]
+u.mcmc    = 1-exp(-F.mcmc); colnames(u.mcmc) = sub("^F_","u_",colnames(u.mcmc))
+MSY.mcmc  = d.mcmc[,"Dead_Catch_MSY"]
+Bmsy.mcmc = d.mcmc[,"SSB_MSY"]
+Fmsy.mcmc = d.mcmc[,"annF_MSY"]
+umsy.mcmc = 1-exp(-Fmsy.mcmc)
+BoverBmsy = B.mcmc/Bmsy.mcmc
+UoverUmsy = u.mcmc/umsy.mcmc
+
+diag.mpd  = list(B=B.mpd, R=R.mpd, P=P.mpd)
+diag.mcmc = list(B=B.mcmc, R=R.mcmc, P=P.mcmc)
+
+save("P.mpd", "P.mcmc", "B.mcmc", "D.mcmc", "R.mcmc", "Rdev.mcmc", "F.mcmc", "u.mcmc", "MSY.mcmc", "Bmsy.mcmc", "Fmsy.mcmc", "umsy.mcmc", "BoverBmsy", "UoverUmsy", file=paste0("MCMC.", paste0(pad0(run,2),".",pad0(rwt,2)), ".rda"))
+
+@
+
+<<mcmc_figs, echo=FALSE, results=hide>>= # hide the results 
+## --------SET VALUES-------------------
+pfigs  = c("pmcmc","dmcmc","rmcmc") #"nada" #"dmcmc" #
+ptypes = "png";  lang=lang
+if (all(pfigs=="nada")){
+	ptypes = "win"; lang=c("e")
+}
+do.call("assign", args=list(x="quants3", value=c(0.05,0.50,0.95), envir=.PBSmodEnv))
+do.call("assign", args=list(x="quants5", value=c(0.05,0.25,0.50,0.75,0.95), envir=.PBSmodEnv))
+
+species.name="Canary Rockfish"; strSpp="CAR"; assyr=2022  ## also set on L96
+
+run.rwt = paste0(pad0(run,2),".",pad0(rwt,2))
+currYr  = ifelse(run<=22, 2022, 2023)
+modYrs  = 1935:ifelse(run<=22, 2022, 2023)
+proYrs  = 2023:2032; if(run>22) proYrs = proYrs + 1
+assYrs  = c(1999,2005,2007,2009)
+ngear   = 2  ## number of commercial fisheries
+nfleet  = 8  ## number of fleets (fisheries + surveys)
+
+if (redoFigs && "pmcmc" %in% pfigs) { ## Parameter MCMC quantile plots
+	so("plotSS.pmcmc.r","synth")
+	plotSS.pmcmc(R.mcmc, yrs=modYrs, lang=lang, cex.axis=1.2, cex.lab=1.5, yLab="Recruitment", outnam="recruitsMCMC", ptypes=ptypes)
+	plotSS.pmcmc(F.mcmc, yrs=modYrs, lang=lang, cex.axis=1.2, cex.lab=1.5, yLab="Fishing mortality", outnam="fishmortMCMC", ptypes=ptypes)
+	plotSS.pmcmc(u.mcmc, yrs=modYrs, lang=lang, cex.axis=1.2, cex.lab=1.5, yLab="Exploitation rate", outnam="exploitMCMC", ptypes=ptypes)
+	plotSS.pmcmc(D.mcmc, yrs=modYrs, lang=lang, cex.axis=1.2, cex.lab=1.5, yLab="Depletion", outnam="depleteMCMC", ptypes=ptypes)
+	plotSS.pmcmc(B.mcmc, yrs=modYrs, lang=lang, cex.axis=1.2, cex.lab=1.5, yLab="Spawning biomass", outnam="sbiomassMCMC", ptypes=ptypes)
+	plotSS.pmcmc(SPR.mcmc, yrs=modYrs, lang=lang, cex.axis=1.2, cex.lab=1.5, yLab="Spawners per recruit", outnam="sprMCMC", ptypes=ptypes)
+	plotSS.pmcmc(Rdev.mcmc, yrs=modYrs, lang=lang, cex.axis=1.2, cex.lab=1.5, yLab="Recruitment deviations", outnam="recdevMCMC", ptypes=ptypes, y0=F)
+	plotSS.pmcmc(BoverBmsy, yrs=modYrs, lang=lang, cex.axis=1.2, cex.lab=1.5, yLab=expression(B[t] / B[MSY]), outnam="boverbmsyMCMC", xyType="envelope", ptypes=ptypes, pyrs=proYrs, LRP=0.4, USR=0.8)
+}
+if (redoFigs && "dmcmc" %in% pfigs) { ## Diagnostic for MCMCs
+	so("plotSS.dmcmc.r","synth")
+	plotSS.dmcmc(mcmcObj=diag.mcmc, mpdObj=diag.mpd, ptypes=ptypes, lang=lang)
+}
+if (redoFigs && "rmcmc" %in% pfigs) { ## Routine output for MCMCs
+	so("plotSS.rmcmc.r","synth")
+	plotSS.rmcmc(mcmcObj=diag.mcmc, mpdObj=diag.mpd, ptypes=ptypes, lang=lang)
+}
+resetGraph();expandGraph(); eop()
+@
+
+%%##############################################################################
+\chapter*{Appendix~\thechapter. MCMC Model Results}
+
+\newcommand{\LH}{Non-citable MCMC results}  %% Set to {} for final ResDoc
+\newcommand{\RH}{CSAP WP 2015GRF04}
+\newcommand{\LF}{\Sexpr{paste(strSpp,assyr,"-- MCMC:", run.rwt)}}
+\newcommand{\RF}{Appendix~\thechapter ~-- MCMC Results}
+
+\lhead{\LH}\rhead{\RH}\lfoot{\LF}\rfoot{\RF}
+
+\newcommand{\Nmcmc}{\Sexpr{prettyNum(n.mcmc, big.mark=options()$big.mark)}}
+
+\section{History of Runs}
+
+\input{\Sexpr{"../../../CAR2022/runHistory"}}
+
+\clearpage
+\section{MCMC Results -- Tables}
+
+%%---Tables 3-5 -------------------------
+%% Likelihoods Used from replist
+%% Get numbers from chunk above
+<<mcmc_tabs, echo=FALSE, results=tex>>= # create latex output
+
+##----------Table 1-----------
+xtab1  = t(sapply(P.mcmc,quantile,tcall(quants5)))
+colnames(xtab1) =  gsub("\\%","\\\\%",colnames(xtab1))
+xtabL1 = texArray(xtab1, table.label="tab:pars.mcmc", sigdig=4, zero="0", use.row.names=T, name.row.names="Parameters", tablewidth=5, table.caption="Parameter quantiles." )
+
+ttabL1 = xtabL1$tabfile
+cat(ttabL1, sep="\n")
+
+##----------Table 2-----------
+
+yrsUse = modYrs[c(1,length(modYrs)+c(-1,0))]
+yrsChr = as.character(yrsUse)  ## !!!! currYear = prevYear for F and u 
+
+B.tab      = d.mcmc[,findPat(paste0("^SSB_",yrsChr[c(1,3)]),colnames(d.mcmc)),drop=F];
+	colnames(B.tab)=gsub("SSB","B",colnames(B.tab))
+D.tab      = d.mcmc[,findPat(paste0("^SSB_",yrsChr[c(3)]),colnames(d.mcmc)),drop=F] /
+	B.tab[,findPat(paste0("^B_",yrsChr[c(1)]),colnames(B.tab)),drop=F] 
+	colnames(D.tab)=paste0(gsub("SSB","B",colnames(D.tab)),"/B_0")
+F.tab      = d.mcmc[,findPat(paste0("^F_",yrsChr[c(3)]),colnames(d.mcmc)),drop=F]
+	## use same year as B but B's start year denotes u's previous year (mid-way) so adjust name:
+	dimnames(F.tab)[[2]] = sub(yrsChr[3],yrsChr[2],dimnames(F.tab)[[2]])
+u.tab      = 1-exp(-F.tab); colnames(u.tab)=gsub("F","u",colnames(u.tab))
+MSY.tab    = d.mcmc[,"Dead_Catch_MSY",drop=F] ; colnames(MSY.tab)=gsub("Dead_Catch_","",colnames(MSY.tab))
+Bmsy.tab   = d.mcmc[,"SSB_MSY",drop=F] ; colnames(Bmsy.tab)=gsub("SSB","B",colnames(Bmsy.tab))
+B.Bmsy.tab = B.tab[,2,drop=F]/Bmsy.tab ; colnames(B.Bmsy.tab)=paste0(colnames(B.Bmsy.tab),"/B_MSY")
+Bmsy.B0.tab = Bmsy.tab/B.tab[,1,drop=F] ; colnames(Bmsy.B0.tab)="B_MSY/B_0"
+Fmsy.tab   = d.mcmc[,"annF_MSY",drop=F]; colnames(Fmsy.tab)=gsub("ann","",colnames(Fmsy.tab))
+umsy.tab   = 1-exp(-Fmsy.tab)          ; colnames(umsy.tab)=gsub("F","u",colnames(umsy.tab))
+u.umsy.tab = u.tab/umsy.tab            ; colnames(u.umsy.tab)=paste0(colnames(u.umsy.tab),"/u_MSY")
+
+A.mcmc   = cbind(B.tab, D.tab, F.tab, u.tab, MSY.tab, Bmsy.tab, B.Bmsy.tab, Bmsy.B0.tab, Fmsy.tab, umsy.tab, u.umsy.tab)
+subs     = grep("^MSY$",colnames(A.mcmc),invert=TRUE)
+colnames(A.mcmc)[1] = "B_0"
+colnames(A.mcmc) = gsub("MSY","\\\\text{MSY}",gsub("/","}/",gsub("_","\\_{",colnames(A.mcmc))))
+colnames(A.mcmc)[subs] = paste0("$",colnames(A.mcmc)[subs],"}$")
+
+#eval(parse(text=deparse("\u{005F}")))
+
+xtab2  = t(sapply(A.mcmc,quantile,tcall(quants5)))
+colnames(xtab2) =  gsub("\\%","\\\\%",colnames(xtab2))
+xtabL2 = texArray(xtab2, table.label="tab:dpars.mcmc", sigdig=4, zero="0", uscore="_", use.row.names=T, name.row.names="Derived parameters", tablewidth=5, table.caption="Derived parameter quantiles." ) ## Specify underscore character in texArray!!!
+
+ttabL2 = xtabL2$tabfile
+cat(ttabL2, sep="\n")
+@
+
+\clearpage
+\section{Figures -- MCMC Results}
+
+\onefig{pdfParameters}{Posterior distribution (vertical green bars), likelihood profile (thin blue curve), and prior density function (thick black curve) for estimated parameters. Vertical dashed line indicates the MCMC posterior median; vertical blue line represents the MPD; red triangle indicates initial value for each parameter.}
+
+\onefig{pairsPars}{Kernel density plot of \Nmcmc~MCMC samples for \Sexpr{length(P.mpd)} parameters. Numbers in the lower panels are the absolute values of the correlation coefficients.}
+
+\clearpage
+
+\onefig{traceParams}{MCMC traces for the estimated parameters. Grey lines show the \Nmcmc~samples for each parameter, solid lines show the cumulative median (up to that sample), and dashed lines show the cumulative \Sexpr{tcall(quants3)[1]} and \Sexpr{tcall(quants3)[3]} quantiles.  Red circles are the MPD estimates. For parameters other than $M$ (if estimated), subscripts \Sexpr{texThatVec(.su(c(fleets.af,fleets.idx)))} correspond to fleets (fisheries and surveys).}
+
+\onefig{splitChain}{Diagnostic plot obtained by dividing the MCMC chain of \Nmcmc~MCMC samples into three segments, and overplotting the cumulative distributions of the first segment (red), second segment (blue) and final segment (black).}
+
+\onefig{paramACFs}{Autocorrelation plots for the estimated parameters from the MCMC output. Horizontal dashed blue lines delimit the 95\pc{} confidence interval for each parameter's set of lagged correlations.}
+
+\clearpage
+
+\onefig{traceBiomass}{MCMC traces for female spawning biomass estimates at five-year intervals.  Note that vertical scales are different for each plot (to show convergence of the MCMC chain, rather than absolute differences in annual values). Grey lines show the \Nmcmc~samples for each parameter, solid lines show the cumulative  median (up to that sample), and dashed lines show the cumulative \Sexpr{tcall(quants3)[1]} and \Sexpr{tcall(quants3)[3]} quantiles.  Red circles are the MPD estimates.}
+
+\onefig{traceRecruits}{MCMC traces for recruitment estimates at five-year intervals. Note that vertical scales are different for each plot (to show convergence of the MCMC chain, rather than absolute differences in annual recruitment). Grey lines show the \Nmcmc~samples for each parameter, solid lines show the cumulative  median (up to that sample), and dashed lines show the cumulative \Sexpr{tcall(quants3)[1]} and \Sexpr{tcall(quants3)[3]} quantiles.  Red circles are the MPD estimates.}
+
+\clearpage
+
+\twofig{boverbmsyMCMC}{depleteMCMC}{Top: estimated spawning biomass $B_t$ relative to spawning biomass at maximum sustainable yield ($\Bmsy$) (boxplots). The median biomass trajectory appears as a solid curve surrounded by a 90\pc{} credibility envelope (quantiles: 0.05-0.95) in light blue and delimited by dashed lines for years $t$=\Sexpr{texThatVec(modYrs)}; projected biomass appears in light red for years $t$=\Sexpr{texThatVec(proYrs)}. Also delimited is the 50\pc{} credibility interval (quantiles: 0.25-0.75) delimited by dotted lines. The horizontal dashed lines show the median LRP and USR. Bottom: marginal posterior distribution of depletion ($B_t/B_0$), where $t$=\Sexpr{texThatVec(modYrs)}.}
+
+
+<<assYrs, results=hide, echo=FALSE>>=
+if (is.null(assYrs)) {
+	assSentence = ""
+} else {
+	NassY = length(assYrs)
+	assSentence = paste0("The filled gold circle", ifelse(NassY>1,"s",""), " indicate", ifelse(NassY>1,"","s"), " the status in ", texThatVec(assYrs), ", which coincide", ifelse(NassY>1,"","s"), " with", ifelse(NassY>1,""," a"), " previous assessment", ifelse(NassY>1,"s",""), " for this species. ")
+}
+@
+
+\onefig{snail}{Phase plot through time of the medians of the ratios $B_t/B_\text{MSY}$ (the spawning biomass in year $t$ relative to $B_\text{MSY}$) and $u_{t-1} / u_\text{MSY}$ (the exploitation rate in year $t-1$ relative to $u_\text{MSY}$). The filled green circle is the starting year (\Sexpr{modYrs[1]+1}). Years then proceed from light grey through to dark grey with the final year (\Sexpr{currYr}) as a filled cyan circle, and the blue lines represent the \Sexpr{tcall(quants3)[1]} and \Sexpr{tcall(quants3)[3]} quantiles of the posterior distributions for the final year. \Sexpr{assSentence} Red and green vertical dashed lines indicate the Precautionary Approach provisional limit and upper stock reference points (0.4, 0.8 $\Bmsy$), and the horizontal grey dotted line indicates $u$ at MSY.}
+
+\clearpage
+
+\twofig{sbiomassMCMC}{sprMCMC}{Marginal posterior distribution of spawning biomass (top) and spawners-per recruit (bottom) over time. Boxplots show the \Sexpr{texThatVec(tcall(quants5))} quantiles from the MCMC results.}
+
+\twofig{recruitsMCMC}{recdevMCMC}{Marginal posterior distribution of recruitment in 1,000s of age-0 fish (top) and recruitment deviations (bottom) over time. Boxplots show the \Sexpr{texThatVec(tcall(quants5))} quantiles from the MCMC results.}
+
+\twofig{fishmortMCMC}{exploitMCMC}{Marginal posterior distribution of fishing mortality (top) and exploitation rate (bottom) over time. Boxplots show the \Sexpr{texThatVec(tcall(quants5))} quantiles from the MCMC results.}
+
+\clearpage
+
+\end{document}
+%%==============================================================================

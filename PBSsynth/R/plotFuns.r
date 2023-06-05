@@ -4,6 +4,7 @@
 ## make.multifig.........Make a multi-panel figure (mod.r4ss)
 ## plotSS.comps..........Plot age proportions and model fit (mod.r4ss)
 ## plotSS.dmcmc..........Plot diagnostics (traces, split chains, ACFs) for MCMCs
+## plotSS.francis........Plot mean age fits using Francis (2011) methodology
 ## plotSS.index..........Plot SS model fit to abundance index series
 ## plotSS.pairs..........Pairs|density plot comparison among parameters
 ## plotSS.pars...........Plot parameter fits and priors
@@ -2419,10 +2420,385 @@ plotSS.dmcmc = function(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9))
 		} ## end p (ptypes) loop
 	}; eop()
 }
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.dmcmc
 
 
-## plotSS.index-------------------------2022-07-22
+## plotSS.francis-----------------------2023-02-16
+##  Plot mean age fits using Francis (2011) methodology
+##  Modified function 'r4ss::SSMethod.TA1.8' :
+##  Apply Francis composition weighting method TA1.8
+## ----------------------------------------r4ss|RH
+##  Uses method TA1.8 (described in Appendix A of Francis 2011) to do
+##  stage-2 weighting of composition data from a Stock Synthesis model.
+##  Outputs a multiplier, \emph{w} (with bootstrap 95\% confidence interval),
+##  so that \emph{N2y} = \emph{w} x \emph{N1y}, where \emph{N1y} and
+##  \emph{N2y} are the stage-1 and stage-2
+##  multinomial sample sizes for the data set in year y.  Optionally
+##  makes a plot of observed (with confidence limits, based on \emph{N1y})
+##  and expected mean lengths (or ages).
+##  \cr\cr
+##  CAUTIONARY/EXPLANATORY NOTE.
+##  The large number of options available in SS makes it very
+##  difficult to be sure that what this function does is
+##  appropriate for all combinations of options.  The following
+##  notes might help anyone wanting to check or correct the code.
+##  \enumerate{
+##    \item The code first takes the appropriate database (lendbase, sizedbase,
+##          agedbase, or condbase) and removes un-needed rows.
+##    \item The remaining rows of the database are grouped into individual
+##          comps (indexed by vector indx) and relevant statistics (e.g.,
+##          observed and expected mean length or age), and ancillary data,
+##          are calculated for each comp (these are stored in pldat - one row
+##          per comp).
+##          If the data are to be plotted, the comps are grouped, with each
+##          group corresponding to a panel in the plot, and groups are indexed
+##          by plindx.
+##    \item A single multiplier is calculated to apply to all the comps.
+##  }
+#'
+##  @param fit Stock Synthesis output as read by r4SS function SS_output
+##  @param type either 'len' (for length composition data), 'size' (for
+##  generalized size composition data), 'age' (for age composition data),
+##  or 'con' (for conditional age at length data)
+##  @param fleet vector of one or more fleet numbers whose data are to
+##  be analysed simultaneously (the output N multiplier applies
+##  to all fleets combined)
+##  @param fleetnames Vector of alternative fleet names to draw from for
+##  plot titles and captions. It should have length equal to the number
+##  of fleets in the model, not the number of fleets considered in this function.
+##  @param part vector of one or more partition values; analysis is restricted
+##  to composition data with one of these partition values.
+##  Default is to include all partition values (0, 1, 2).
+##  @param label.part Include labels indicating which partitions are included?
+##  @param sexes vector of one or more values for Sexes; analysis is
+##  restricted to composition data with one of these
+##  Sexes values.  Ignored if type=='con'.
+##  @param label.sex Include labels indicating which sexes are included?
+##  @param seas string indicating how to treat data from multiple seasons
+##  'comb' - combine seasonal data for each year and plot against Yr
+##  'sep' - treat seasons separately, plotting against Yr.S
+##  If is.null(seas) it is assumed that there is only one season in
+##  the selected data (a warning is output if this is not true) and
+##  option 'comb' is used.
+##  @param method a vector of one or more size-frequency method numbers
+##  (ignored unless type = 'size').
+##  If !is.null(method), analysis is restricted to size-frequency
+##  methods in this vector.  NB comps are separated by method
+##  @param plotit if TRUE, make an illustrative plot like one or more
+##  panels of Fig. 4 in Francis (2011).
+##  @param printit if TRUE, print results to R console.
+##  @param datonly if TRUE, don't show the model expectations
+##  @param plotadj if TRUE, plot the confidence intervals associated with
+##  the adjusted sample sizes (TRUE by default unless datonly = TRUE)
+##  @param maxpanel maximum number of panels within a plot
+##  @param set.pars Set the graphical parameters such as mar and mfrow.
+##  Can be set to FALSE in order to add plots form multiple calls to
+##  this function as separate panels in one larger figure.
+##  @author Chris Francis, Andre Punt, Ian Taylor
+##  @export
+##  @seealso \code{\link{SSMethod.Cond.TA1.8}}
+##  @references Francis, R.I.C.C. (2011). Data weighting in statistical
+##  fisheries stock assessment models. Canadian Journal of
+##  Fisheries and Aquatic Sciences 68: 1124-1138.
+## -------------------------------------------r4ss
+plotSS.francis <- function(
+   fit, type, fleet, part=0:2, sexes=0:3, seas=NULL, method=NULL, 
+   plotit=TRUE, printit=TRUE, datonly=FALSE, plotadj=!datonly,
+   maxpanel=1000, fleetnames=NULL, label.part=TRUE, label.sex=TRUE, 
+   set.pars=TRUE, col.obs=c("green3","green"), col.fit=lucent(c("blue2","cyan"),0.5),
+   png=FALSE, pngres=400, PIN=c(8,9), outnam, lang=c("e","f") )
+{
+	oldpar = par(no.readonly=TRUE)
+	fart = function(opar) { if (any("windows"%in%names(dev.list()))) par(opar) }
+	on.exit(fart(oldpar))
+
+	## Check the type is correct and the sexes is correct
+	is.in <- function (x, y)!is.na(match(x, y))
+	if(!is.in(type,c('age','len','size','con'))){
+		stop('Illegal value for type (should be "age", "len", "size", or "con")')
+	} else {
+		if(sum(!is.in(sexes,c(0:3)))>0){
+			stop('Unrecognised value for sexes')
+		}
+	}
+	## Replace default fleetnames with user input if requested
+	if(is.null(fleetnames)){
+		# use fleetnames in the model
+		fleetnames <- fit$FleetNames
+	} else {
+		# if custom names input, check length
+		if(length(fleetnames) != fit$nfleets){
+		stop('fleetnames needs to be NULL or have length = nfleets = ', fit$nfleets)
+		}
+	}
+	## Select the type of datbase
+	dbase <- fit[[paste(type,'dbase',sep='')]]
+	## sel is vector of row indices selected for the plot/calculations
+	## select row indices matching fleet and partition
+	sel <- is.in(dbase$Fleet,fleet) & is.in(dbase$Part,part)
+	## select row indices matching Sexes column
+	if(type!='con'){
+		## change column name on earlier SS versions to match change from
+		## Pick_sex to Sexes in 3.30.12 (July 2018)
+		names(dbase)[names(dbase)=='Pick_sex'] <- 'Sexes'
+		#sel <- sel & is.in(dbase$'Sexes',sexes)
+		sel <- sel & is.in(dbase$'Sex',sexes)
+	}
+	## For generalized size frequency comps, select chosen size method
+	if(type=='size' & !is.null(method)){
+		sel <- sel & is.in(dbase$method,method)
+	}
+	# If there are no rows selected, return empty result
+	if(sum(sel)==0) return()
+	## Subset comp database for selected rows
+	dbase <- dbase[sel,]
+	if(is.null(seas)){
+		seas <- 'comb'
+		if(length(unique(dbase$Seas))>1)
+			cat('Warning: combining data from multiple seasons\n')
+	}
+	## if generalized size comp is used, check for mix of units
+	if(type=='size'){
+		if(length(unique(dbase$units))>1){
+			cat('Warning: mix of units being compared:',unique(dbase$units),'\n')
+		}
+	}
+	## create label for partitions
+	partitions <- sort(unique(dbase$Part)) # values are 0, 1, or 2
+	partition.labels <- c("whole","discarded","retained")[partitions+1]
+	partition.labels <- paste0("(",paste(partition.labels,collapse="&")," catch)")
+	## indx is string combining fleet, year, and potentially conditional bin
+	indx <- paste(dbase$Fleet, dbase$Yr, if(type=='con') dbase$'Lbin_lo' else '', if(seas=='sep') dbase$Seas else '')
+	## if subsetting by sex, add Sexes value to the indx strings
+	sex.flag <- type!='con' & max(tapply(dbase$'Sexes', dbase$Fleet, function(x)length(unique(x))))>1
+	if(sex.flag){
+		indx <- paste(indx,dbase$'Sexes')
+	}
+	## if subsetting by generalized size-method, add that value to indx strings
+	method.flag <- type=='size' && length(unique(dbase$method))>1
+	if(method.flag){
+		indx <- paste(indx,dbase$method)
+	}
+	## unique strings in indx vector
+	uindx <- unique(indx)
+	## test for length 1 results
+	if(length(uindx)==1){
+		## presumably the method is meaningless of there's only 1 point,
+		## but it's good to be able to have the function play through
+		cat('Warning: only one point to plot\n')
+		return()
+	}
+	## create empty data.frame to store information on each observation
+	pldat <- matrix(0,length(uindx),12, dimnames=list(uindx, c('Obsmn','Obslo','Obshi','semn','Expmn','Vexp','N','Std.res','ObsloAdj','ObshiAdj','Fleet','Yr')))
+	## add columns of zeros to fill with values necessary for subsetting
+	if(type=='con') pldat <- cbind(pldat,Lbin=0)
+	if(sex.flag)    pldat <- cbind(pldat,sexes=0)
+	if(type=='size'){
+		pldat <- cbind(pldat,method=0)
+		## vector to store units (which are strings and don't fit in pldat matrix)
+		plunits <- rep(NA,nrow(pldat)) 
+	}
+	## Find the weighting factor for this combination of factors
+	for(i in 1:length(uindx)){ ## each row of pldat is an individual comp
+		subdbase <- dbase[indx==uindx[i],]
+		xvar <- subdbase$Bin
+		pldat[i,'Obsmn']   <- sum(subdbase$Obs*xvar)/sum(subdbase$Obs)
+		pldat[i,'Expmn']   <- sum(subdbase$Exp*xvar)/sum(subdbase$Exp)
+		pldat[i,'semn']    <- sqrt((sum(subdbase$Exp*xvar^2)/sum(subdbase$Exp) - pldat[i,'Expmn']^2)/mean(subdbase$Nsamp_adj))
+		pldat[i,'Vexp']    <- sum(subdbase$Exp*xvar^2) - pldat[i,'Expmn']^2  ## Francis 2011, p.1137 (RH 210225)
+		pldat[i,'N']       <- mean(subdbase$Nsamp_in,na.rm=TRUE) ## (RH 210225)
+		pldat[i,'Obslo']   <- pldat[i,'Obsmn'] - 2 * pldat[i,'semn']
+		pldat[i,'Obshi']   <- pldat[i,'Obsmn'] + 2 * pldat[i,'semn']
+		pldat[i,'Std.res'] <- (pldat[i,'Obsmn'] - pldat[i,'Expmn'])/pldat[i,'semn']
+		pldat[i,'Fleet']   <- mean(subdbase$Fleet)
+		pldat[i,'Yr']      <- mean(if(seas=='comb')subdbase$Yr else subdbase$Yr.S)
+		if(type=='con')
+			pldat[i,'Lbin'] <- mean(subdbase$'Lbin_lo')
+		if(sex.flag)
+			pldat[i,'sexes'] <- mean(subdbase$'Sexes')
+		if(type=='size'){
+			pldat[i,'method'] <- mean(subdbase$method)
+			plunits[i] <- subdbase$units[1] # units of size comps
+		}
+#if ("2 1994  " %in% uindx[i]) {browser();return()}
+	}
+	pldat = as.data.frame(pldat)
+	lldat = split(pldat, pldat$Fleet)
+	Nmult = sapply(lldat, function(x) { 1/var(x[,'Std.res'],na.rm=TRUE) })
+	#Nmult <- 1/var(pldat[,'Std.res'],na.rm=TRUE)
+#browser();return()
+	wj   = sapply(lldat, function(x) { 1 / var((x[,'Obsmn']-x[,'Expmn'])/((x[,'Vexp']/x[,'N'])^0.5), na.rm=TRUE) })
+
+	## Find the adjusted confidence intervals
+	for(i in 1:length(uindx)){
+		imult = Nmult[as.character(pldat[i,'Fleet'])]
+		pldat[i,'ObsloAdj'] <- pldat[i,'Obsmn'] - 2 * pldat[i,'semn']/sqrt(imult)
+		pldat[i,'ObshiAdj'] <- pldat[i,'Obsmn'] + 2 * pldat[i,'semn']/sqrt(imult)
+		#pldat[i,'ObsloAdj'] <- pldat[i,'Obsmn'] - 2 * pldat[i,'semn']/sqrt(Nmult)
+		#pldat[i,'ObshiAdj'] <- pldat[i,'Obsmn'] + 2 * pldat[i,'semn']/sqrt(Nmult)
+	}
+	Nfleet <- length(unique(pldat[,'Fleet']))
+
+	## make plot if requested
+	if(plotit){
+		createFdir(lang)
+		fout = fout.e = outnam
+		for (l in lang) {
+			changeLangOpts(L=l)
+			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+
+			col.obs = rep(col.obs,2)[1:2]
+			col.fit = rep(col.fit,2)[1:2]
+			plindx <- if(type=='con'){
+				paste(pldat[,'Fleet'], pldat[,'Yr'])
+			} else {
+				pldat[,'Fleet']
+			}
+			if(sex.flag)
+				plindx <- paste(plindx,pldat[,'sexes'])
+			if(method.flag)
+				plindx <- paste(plindx,pldat[,'method'])
+			uplindx <- unique(plindx)
+	
+				if (png) {
+					clearFiles(paste0(fout,".png"))
+					png(filename=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+				}
+	
+			## Select number of panels
+			Npanel <- length(uplindx)
+			## Ian T. 9/25/14: changing from having at least 4 panels to no minimum
+			#NpanelSet <- max(4,min(length(uplindx),maxpanel))
+			NpanelSet <- min(length(uplindx),maxpanel)
+			#Nr <- ceiling(sqrt(NpanelSet)); Nc <- ceiling(NpanelSet/Nr)
+			if (Npanel < 6) {
+				Nr = Npanel; Nc = 1
+			} else {
+				Nc = 2; Nr = ceiling(Npanel/2)
+			}
+#browser();return()
+			if(set.pars){
+				# save current graphical parameters
+				par_current <- par()
+				# set new parameters
+				par(mfcol=c(Nr,Nc),mar=c(1.5,2,1,1)+0.1,mgp=c(0,0.5,0),oma=c(1.2,1.2,0,0), las=1)
+				par(cex=1)
+			}
+			for(i in 1:Npanel){
+				## loop over panels
+				subpldat <- pldat[plindx==uplindx[i],,drop=FALSE]
+				x <- subpldat[,ifelse(type=='con','Lbin','Yr')]
+				# calculate ylim, including removing Inf values
+				plot(x,subpldat[,'Obsmn'], type="n", xaxt="n", #pch='-', 
+					xlim = if(length(x)>2) range(x) else c(min(x)-(0.5/length(x)),max(x)+(0.5/length(x))),
+					ylim = range(subpldat[,c('Obslo','Obshi','ObsloAdj','ObshiAdj','Expmn')], na.rm=TRUE),
+					xlab='',ylab='')
+				bigtck = intersect(seq(1900, 3000, ifelse((max(x)-min(x))<=5,1,5)), floor(min(x)):ceiling(max(x)) )
+				liltck = intersect(seq(1900, 3000, 1), floor(min(x)):ceiling(max(x)) )
+				axis(1, at=liltck, labels=FALSE, tcl=-0.2)
+				axis(1, at=bigtck, labels=bigtck, tcl=-0.4)
+				segments(x, subpldat[,'Obslo'], x, subpldat[,'Obshi'], lwd=2, lend=3, col=col.obs[1])
+				if(plotadj){
+					arrows(x,subpldat[,'ObsloAdj'],x,subpldat[,'ObshiAdj'],lwd=2, length=0.04, angle=90, code=3, col=col.obs[1])
+				}
+				points(x, subpldat[,'Obsmn'], pch=21,col=col.obs[1], bg=col.obs[2], cex=1)
+				#points(x,subpldat[,'Obsmn'],pch=21,bg='grey80')
+				ord <- order(x)
+				if(!datonly){
+					if(length(x)>1){
+						lines(x[ord], subpldat[ord,'Expmn'], lwd=2, col=col.fit[1])
+						#points(x[ord], subpldat[ord,'Expmn'], pch=22, col=col.fit[1], bg=col.fit[2], cex=0.8)
+					} else {
+						lines(c(x-0.5,x+0.5), rep(subpldat[,'Expmn'],2), col=col.fit[1])
+					}
+				}
+	#browser();return()
+				## Lines
+				fl <- fleetnames[subpldat[1,'Fleet']]
+				yr <- paste(subpldat[1,'Yr'])
+				lab <- if(type=='con')ifelse(Nfleet>1,paste(yr,fl),yr) else fl
+				if(sex.flag & label.sex){
+					lab <- paste(lab,ifelse(subpldat[1,'sexes']==0,'comb','sex'))
+				}
+				if(method.flag){
+					lab <- paste(lab,'meth',subpldat[1,'method'])
+				}
+				if(label.part){
+					lab <- paste(lab,partition.labels)
+				}
+				mtext(linguaFranca(lab,l),side=3) #,at=mean(x))
+			}
+			## define y-axis label
+			ylab <- 'Mean age' # default as age unless replaced below
+			if(type=="len"){
+				ylab <- 'Mean length'
+			}
+			if(type=="size"){
+				## probably more efficient ways to sort out these labels,
+				## but lots of if-statements make logic easier to follow
+				units <- unique(plunits[plindx %in% uplindx])
+				if(length(units)==1){ # not sure if this will always be true or not
+					if(units %in% c('kg','lb')){
+						ylab <- paste0('Mean weight (',units,')')
+					}
+					if(units %in% c('cm','in')){
+						ylab <- paste0('Mean length (',units,')')
+					}
+				} else {
+				# just in case it's possible to have multiple units in one panel
+				ylab <- paste0('Mean value (',paste(units, collapse=' or '),')')
+				}
+			}
+			mtext(linguaFranca(ylab,l), side=2,las=0,outer=TRUE)
+			mtext(linguaFranca(ifelse(type=='con','Length','Year'),l),side=1,outer=TRUE)
+			if (png) dev.off()
+	
+			## restore previous graphics parameters (if changed to begin with)
+			if(set.pars){
+				par(mfcol=par_current$mfcol, mar=par_current$mar, mgp=par_current$mgp,
+				oma=par_current$oma, las=par_current$las)
+			}
+		}; eop()
+	}
+	if(!datonly) {
+		lldat = split(pldat, pldat$Fleet)
+		lltmp = lapply(lldat, function(x){
+			matrix(sample(x[,'Std.res'],1000*nrow(x),replace=TRUE),nrow(x))
+		})
+		confint = sapply(lltmp, function(x){
+			ivar = apply(x,2,function(xx) {
+				xxx = 1/var(xx,na.rm=TRUE)
+				out = ifelse(is.finite(xxx),xxx,NA)
+				return(out)
+			})
+			## Note: if there are only two indices (with different values), there are only 3 possible random samples, and only one with non-zero variance.
+			qnts = quantile(ivar, c(0.025,0.975), na.rm=TRUE)
+			pooh = as.vector(qnts)
+			return(pooh)
+		})
+#browser();return()
+		Output <- list(agedat=pldat, w=Nmult, lo=confint[1,], hi=confint[2,], w.francis=wj)
+		Outs <- paste0("Francis Weights - ", type, ": ", fleetnames[fleet], ": ", round(Output[["w"]],4), " (", round(Output[["lo"]],4), "-", round(Output[["hi"]],4), ")")
+		
+		
+		#tmp <- matrix(sample(pldat[,'Std.res'],1000*nrow(pldat),replace=TRUE),nrow(pldat))
+#browser();return()
+		#confint <- as.vector(quantile(apply(tmp,2,function(x)1/var(x,na.rm=TRUE)), c(0.025,0.975), na.rm=TRUE))
+		#Output <- c(w=Nmult,lo=confint[1],hi=confint[2])
+		#Outs <- paste("Francis Weights - ", type, ": ", fleetnames[fleet],": ", round(Nmult,4), " (",round(confint[1],4),"-",round(confint[2],4),")", sep="")
+		if(printit){
+			print(Outs)
+		}
+		w.francis = Output; ttput(w.francis)
+		return(Output)
+	}
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.francis
+
+
+## plotSS.index-------------------------2023-02-17
 ##  Plot SS model fit to abundance index series
+##  Code based on r4ss function 'SSplotIndices'.
 ## ----------------------------------------r4ss|RH
 plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE, 
    fleets="all", fleetnames="default", smooth=TRUE, add=FALSE, 
@@ -2463,7 +2839,7 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 	}
 	## Deal with messy label details neglected by original program
 	labels.default=list("Year", "Index", "Observed index", "Expected index", "Log index", "Log observed index", "Log expected index", "Standardized index", "Catchability (Q)", "Time-varying catchability", "Vulnerable biomass", "Catchability vs. vulnerable biomass", "Residual", "Deviation")
-	names(labels.default)=1:12
+	names(labels.default)=1:length(labels.default)
 	if (is.null(names(labels)))
 		names(labels)=1:length(labels)
 	labels.new=labels.default
@@ -2471,7 +2847,7 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 	labels=labels.new
 	nlabs =sapply(labels,countVec) ## how many labels are available
 #browser();return()
-	get.lab=function(i, j, k=nlabs)
+	get.lab = function(i, j, k=nlabs)
 	{
 		labels[[i]][min(j,k[i])]
 	}
@@ -2569,8 +2945,7 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 					upper_total <- exp(upper_total)
 				}
 			}
-			segments(x[include], lower_input, x[include], upper_input, 
-				col=colvec1[s], lwd=3, lend=1)
+			segments(x[include], lower_input, x[include], upper_input, col=colvec1[s], lwd=3, lend=1)
 		}
 		#arrows(x0=x[include], y0=lower_total, x1=x[include], y1=upper_total, length=0.03, angle=90, code=3, col=colvec1[s])
 		arrows(x0=x[include], y0=lower_total, x1=x[include], y1=upper_total, length=0.03, angle=90, code=3, col="black", lwd=2)
@@ -2584,15 +2959,13 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 #browser();return()
 		}
 		else {
-			points(x=x[include], y=log(y[include]), pch=pch1, 
-				cex=cex, bg=bg, col=colvec1[s])
+			points(x=x[include], y=log(y[include]), pch=pch1, cex=cex, bg=bg, col=colvec1[s])
 			if (addexpected) {
 				lines(x, log(z), lwd=2, col=col3)
 			}
 		}
 		if (legend & length(colvec1) > 1) {
-			legend(x=legendloc, legend=seasnames, pch=pch1, 
-				col=colvec1, cex=cex)
+			legend(x=legendloc, legend=seasnames, pch=pch1, col=colvec1, cex=cex)
 		}
 	}
 
@@ -2617,16 +2990,25 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 		if (legend & length(colvec1) > 1) {
 			xlim[2] <- xlim[2] + 0.25 * diff(xlim)
 		}
-		ylim <- c(-1.05, 1.05) * max(abs(y[include]))
+		#ylim <- c(-1.05, 1.05) * max(abs(y[include]))
+		ylim <- c(1.1,1.4) * c(pmin(-1, min(y[include])), pmax(1, max(y[include])))
 		if (!add) {
-			plot(x=x[include], y=y[include], type="n", xlim=xlim, ylim=ylim, yaxs="i", xlab=linguaFranca(get.lab(1,ifleet),l), ylab=linguaFranca(ylab,l), main=linguaFranca(main,l), cex.main=cex.main, ...)
+			plot(x=x[include], y=y[include], type="n", xlim=xlim, ylim=ylim, yaxs="i", xlab=linguaFranca(get.lab(1,ifleet),l), ylab=linguaFranca(ylab,l), main=linguaFranca(main,l), cex.main=cex.main, cex.axis=1.25, cex.lab=1.5, ...)
 		}
-		points(x=x[include], y=y[include], pch=pch1, cex=cex, bg=adjustcolor(colvec1[s], alpha.f=0.7), col=adjustcolor(colvec1[s], alpha.f=0.7))
-		abline(h=0, lty=3)
+#browser();return()
+		ii = grep(ifleet,fleetvec)
+		#points(x=x[include], y=y[include], pch=pch1, cex=cex, bg=adjustcolor(colvec1[s], alpha.f=0.7), col=adjustcolor(colvec1[ii], alpha.f=0.7))
+		nx = length(x[include])
+		abline(h=-10:10, lty=3, col="gainsboro")
+		segments (x0=x[include], y0=rep(0,nx), x1=x[include], y1=y[include], lty=5, col="black", lwd=1)
+		abline(h=0, lty=1, col="grey60")
+		points(x=x[include], y=y[include], pch=21, cex=1.5, col=colvec1[ii], bg=colvec2[ii])
+		addLabel(0.975, 0.95, linguaFranca(gsub("_+","  ",fleetnames[ifleet]),l), col="grey30", cex=1.25, adj=c(1,0.25))
+#if(ifleet==4) {browser();return()}
 		if (legend & length(colvec1) > 1) {
 			legend(x=legendloc, legend=linguaFranca(seasnames,l), pch=pch1, pt.bg=colvec1, col=colvec1, cex=cex)
 		}
-	}
+	} ## end index_resids.fn
 
 	obs_vs_exp.fn <- function(log=FALSE, l="e", ...) {
 		main <- paste(get.lab(2,ifleet), Fleet, sep=" ")
@@ -2635,7 +3017,7 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 		}
 		if (!add) {
 			if (!log) {
-				plot(y[include], z[include], type="n", linguaFranca(xlab=get.lab(3,ifleet),l), 
+				plot(y[include], z[include], type="n", xlab=linguaFranca(get.lab(3,ifleet),l), 
 					ylab=linguaFranca(get.lab(4,ifleet),l), main=linguaFranca(main,l), cex.main=cex.main, 
 					ylim=c(0, 1.05 * max(z)), xlim=c(0, 1.05 * max(y)), xaxs="i", yaxs="i", ...)
 			}
@@ -2754,7 +3136,7 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 				png(filename=fout, units="in", res=res, width=PIN[1], height=PIN[2])
 			}
 			rc=.findSquare(length(fleetvec))
-			expandGraph(mfrow=rc, mar=c(3,3.5,0.5,0.5), oma=c(0,0,0,0), mgp = c(2,0.5,0))
+			expandGraph(mfcol=rc, mar=c(3,3.5,0.5,1), oma=c(1,0,0,0), mgp = c(2,0.5,0))
 			#expandGraph(mfrow=c(length(fleetvec),1), mar=c(3,3,1,1), oma=c(0,0,0,0))
 		}
 		## Loops through by fleet making it tricky to have multipanel plot
@@ -2776,7 +3158,7 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 				}
 			}
 			else {
-				colvec1 <- col1
+				colvec1 <- rep(col1,length(fleetvec))[1:length(fleetvec)]
 				if (length(colvec1) < nseasons) {
 					colvec1 <- rep(col1, nseasons)
 				}
@@ -2791,7 +3173,7 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 				}
 			}
 			else {
-				colvec2 <- col2
+				colvec2 <- rep(col2,length(fleetvec))[1:length(fleetvec)]
 				if (length(colvec1) < nseasons) {
 					colvec1 <- rep(col1, nseasons)
 				}
@@ -2957,7 +3339,7 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 					if (8 %in% subplots & time2) {
 						q_vs_vuln_bio.fn(l=lang)
 					}
-				}
+				} ## end plot
 				if (print) {
 					if (7 %in% subplots & time) {
 						file <- paste0("index7_timevarying_q_", Fleet, 
@@ -2969,8 +3351,7 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 						dev.off(); eop()
 					}
 					if (8 %in% subplots & time2) {
-						file <- paste0("index8_q_vs_vuln_bio_", Fleet, 
-						".png")
+						file <- paste0("index8_q_vs_vuln_bio_", Fleet, ".png")
 						caption <- paste0("Catchability vs. vulnerable biomass for fleet ", 
 						Fleet, "<br> \n", "This plot should illustrate curvature of nonlinear catchability relationship<br> \n", 
 						"or reveal patterns associated with random-walk catchability.")
@@ -2978,7 +3359,7 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 						q_vs_vuln_bio.fn(l=lang)
 						dev.off(); eop()
 					}
-				}
+				} ## end print
 				if (plot) {
 					if (10 %in% subplots) {
 						index_resids.fn(option=1, l=lang)
@@ -2989,25 +3370,24 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 					if (12 %in% subplots) {
 						index_resids.fn(option=3, l=lang)
 					}
-				}
+				} ## edn plot
 				if (print) {
-					if (10 %in% subplots) {
-						file <- paste0("index10_resids_SE_total_", 
-						Fleet, ".png")
-						caption <- paste0("Residuals of fit to index for ", 
-						Fleet, ".")
+					if (10 %in% subplots && !onepage) {
+						file <- paste0("index10_resids_SE_total_", Fleet, ".png")
+						caption <- paste0("Residuals of fit to index for ", Fleet, ".")
 						if (error == 0) {
-						caption <- paste0(caption, "<br>Values are (log(Obs) - log(Exp))/SE ", 
-							"where SE is the total standard error including any ", 
-							"estimated additional uncertainty.")
+							caption <- paste0(caption, "<br>Values are (log(Obs) - log(Exp))/SE ", 
+							"where SE is the total standard error including any ", "estimated additional uncertainty.")
 						}
 						else {
-						caption <- paste0(caption, "<br>Values are based on the total standard error ", 
+							caption <- paste0(caption, "<br>Values are based on the total standard error ", 
 							"including any estimated additional uncertainty.")
 						}
 						plotinfo <- pngfun(file=file, caption=caption, lang=lang)
 						index_resids.fn(option=1, l=lang)
 						dev.off(); eop()
+					} else if (10 %in% subplots && onepage) {
+						index_resids.fn(option=1, l=lang)
 					}
 					if (11 %in% subplots & show_input_uncertainty && 
 						any(!is.null(cpueuse$SE_input[include])) && 
@@ -3030,8 +3410,7 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 						dev.off(); eop()
 					}
 					if (12 %in% subplots) {
-						file <- paste0("index12_resids_SE_total_", 
-						Fleet, ".png")
+						file <- paste0("index12_resids_SE_total_", Fleet, ".png")
 						caption <- paste0("Deviations for fit to index for ", 
 						Fleet, ".")
 						if (error != -1) {
@@ -3046,11 +3425,11 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 						index_resids.fn(option=3, l=lang)
 						dev.off(); eop()
 					}
-				}
-			}
-		}
+				} ## end print
+			} ## end include
+		} ## end ifleet
 		if (onepage && print) {dev.off(); eop()}
-	}
+	} ## end j in  subplots
 	if (datplot == TRUE & nrow(allcpue) > 0) {
 		all_index.fn <- function(l="e") {
 			main <- "All index plot"
@@ -3066,8 +3445,7 @@ plotSS.index = function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 				usecols <- rich.colors.short(max(allcpue$Index, na.rm=TRUE) + 1, alpha=0.7)[-1]
 			}
 			if (!add) 
-				plot(0, type="n", xlab=get.lab(1,ifleet), main=main, 
-					cex.main=cex.main, col=usecols[1], ylab=get.lab(8,ifleet), xlim=xlim, ylim=ylim)
+				plot(0, type="n", xlab=get.lab(1,ifleet), main=main, cex.main=cex.main, col=usecols[1], ylab=get.lab(8,ifleet), xlim=xlim, ylim=ylim)
 			for (ifleet in fleetvec) {
 				points(x=allcpue$year[allcpue$Index == ifleet], 
 					y=allcpue$stdvalue[allcpue$Index == ifleet], 
@@ -3588,6 +3966,8 @@ plotSS.pmcmc=function(obj, p=tcall(quants5), xyType="quantBox",
 		if ( new ) {
 			plot(xLim, yLim, type="n", xlab=linguaFranca("Year",l), ylab=linguaFranca(yLab,l), ...)
 			if (!y0) abline(h=0,col="gainsboro")
+			if (!is.null(LRP)) abline(h=LRP, col="red", lty=5)
+			if (!is.null(USR)) abline(h=USR, col="green4", lty=5)
 		}
 #browser();return()
 		#yrs <- as.numeric(dimnames(obj)[[2]])
@@ -3604,6 +3984,7 @@ plotSS.pmcmc=function(obj, p=tcall(quants5), xyType="quantBox",
 			for ( i in 1:length(yrs) )
 				#rect( yrs[i]-delta,obj[2,i], yrs[i]+delta, obj[4,i],... ) ## AME
 				polygon(x=c(rep(yrs[i]-delta,2),rep(yrs[i]+delta,2)), y=obj[c(2,4,4,2),i], border="black", col="gainsboro", ...) ## RH (190620)
+
 			# Add the median.
 			segments( yrs-delta,obj[3,],yrs+delta,obj[3,],lty=1,col=1 )
 			if (!is.null(pyrs)){
@@ -3684,6 +4065,7 @@ plotSS.pmcmc=function(obj, p=tcall(quants5), xyType="quantBox",
 			expandGraph(mar=c(3.5,3.75,1.5,0.75), mgp=c(2,0.5,0))
 			plt.qB(result1, xLim=xLim, yLim=yLim, xyType=xyType, yrs=yrs1, pyrs=pyrs, LRP=LRP, USR=USR, pvec=projvec, ...)
 			axis(1, at=intersect(seq(1900,3000,5), xLim[1]:xLim[2]), tcl=tcl.val, labels=FALSE)
+#browser();return()
 			if (missing(yaxis.by)) {
 				yint = diff(seq(par()$yaxp[1], par()$yaxp[2], len=par()$yaxp[3]+1))[1]
 				ytck = seq(par()$yaxp[1]-yint, par()$yaxp[2]+yint, yint/ifelse(par()$yaxp[3]>6,2,4))
@@ -3955,6 +4337,8 @@ plotSS.rdevs = function (replist, subplots=1:3, plot=TRUE, print=FALSE,
 			xlim <- range(Yr[goodyrs], na.rm=TRUE)
 			ylim <- range(c(recdevEarly$Value, recdev$Value, 
 				recdevFore$Value)[goodyrs], na.rm=TRUE)
+
+			## Recruitment deviation function
 			recdevfunc <- function(uncertainty, l="e") {
 				alldevs <- rbind(recdevEarly, recdev, recdevFore)[goodyrs,]
 				colvec <- c(rep(col2, nrow(recdevEarly)), rep(col1,nrow(recdev)), rep(col2, nrow(recdevFore)))[goodyrs]
@@ -4081,7 +4465,7 @@ plotSS.rmcmc = function(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9))
 }
 
 
-## plotSS.selex-------------------------2022-04-13
+## plotSS.selex-------------------------2023-03-07
 ##  Plot selectivity curves with maturity ogive.
 ##  Source: R package 'r4ss' v.1.39.1
 ## ----------------------------------------r4ss|RH
@@ -5006,7 +5390,7 @@ plotSS.selex=function (replist, infotable=NULL, fleets="all", fleetnames="defaul
 		adbase   = ageselex[is.element(ageselex$Factor,"Asel") & is.element(ageselex$Yr,endyr) & is.element(ageselex$Sex,sexes) & is.element(ageselex$Fleet,fleets),]
 		SexNames = if (nsexes==1) "Unisex" else c("Female","Male")
 		adbase$Index = paste0(FleetNames[adbase$Fleet],": ",SexNames[adbase$Sex])
-		plt.selectivity(adbase, mainTitle=species.name, ptypes=ptypes, pngres=pngres, lang=lang, sobj=sobj, maxage=maxage, PIN=c(7,9))
+		plt.selectivity(adbase, mainTitle=species.name, ptypes=ptypes, pngres=pngres, lang=lang, sobj=sobj, maxage=maxage, PIN=c(pwidth,pheight))
 #browser();return()
 	}
 	if (!is.null(plotinfo)) 
@@ -5016,16 +5400,17 @@ plotSS.selex=function (replist, infotable=NULL, fleets="all", fleetnames="defaul
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.selex
 
 
-## plotSS.stdres------------------------2022-11-01
+## plotSS.stdres------------------------2023-05-03
 ## Plot standardised residuals -- three plots on one page.
 ## Modified from PBSawatea code in 'PBSscape.r'.
+## Resolved sex combinations (for F & M only)
 ## -----------------------------------------------
 plotSS.stdres = function(replist, kind="AGE", fleets="all",
-   fleetnames="default", sexes="all", datonly=FALSE, aggregates_by_mkt = FALSE,
+   fleetnames="default", sexes="both", datonly=FALSE, aggregates_by_mkt = FALSE,
    labels=c("Length (cm)", "Age (yr)", "Year", "Observed sample size",
    "Effective sample size", "Proportion", "cm", "Frequency", "Weight", "Length",
    "(mt)", "(numbers x1000)", "Stdev (Age)", "Conditional AAL plot, ", "Size bin"),
-   plot=TRUE, print=FALSE, type="Multinomial",
+   plot=TRUE, print=FALSE, type="Dirichlet-Multinomial",
    ptypes="png", pngres=400, PIN=c(7,9), outnam, lang="e", ...)
 {
 	oldpar = par(no.readonly=TRUE)
@@ -5064,35 +5449,35 @@ plotSS.stdres = function(replist, kind="AGE", fleets="all",
 	if (fleetnames[1] == "default") {
 		fleetnames <- FleetNames
 	}
-#browser();return()
-	if (sexes[1] == "all") {
-		sexes <- 0:nsexes
-		titlesex <- "(sexes combined)"
-	}
-	if (nsexes == 1) {
-		sexes <- 0:nsexes
-	}
-	if (nsexes == 1 && length(sexes) > 1) {
-		titlesex <- ""
-		filesex <- ""
-	}
-	if (nsexes > 1 && length(sexes) == 1) {
-		if (sexes == 0) {
+	## Figure out sex combinations
+	if (sexes[1] %in% c("all","comb")) {
+		nsexes   = 1
+		sexes    = list('comb'=1:2)
+		titlesex = "(F+M)"
+	} else if (sexes[1] %in% c("both","MF","FM")) {
+		nsexes   = 2
+		sexes    = list('female'=1, 'male'=2)
+		titlesex = "(female left, male right)"
+	} else if (nsexes==1 || sexes[1] %in% c("one","single")) {
+		#sexes <- 0:nsexes
+		nsexes   = 1
+		sexes    = list('asex' = 1)
+		titlesex = "(single sex)"
+	} else if (nsexes > 1 && length(sexes) == 1) {
+		nsexes = 1
+		if (as.character(sexes) %in% c("0","comb","all")) {
+			sexes  = list('comb'=1:2)
 			titlesex <- "(sexes combined)"
 			filesex <- "sex0"
-		}
-		if (sexes == 1) {
+		} else if (as.character(sexes) %in% c("1","F","female")) {
+			sexes  = list('female'=1)
 			titlesex <- "(female)"
 			filesex <- "sex1"
-		}
-		if (sexes == 2) {
+		} else if (as.character(sexes) %in% c("2","M","male")) {
+			sexes  = list('male'=2)
 			titlesex <- "(male)"
 			filesex <- "sex2"
 		}
-	}
-	if (length(sexes)==2 && all(sexes %in% c(1:2))) {
-		titlesex = "(M+F)"
-		filesex <- "sex12"
 	}
 #browser();return()
 	if (!(kind %in% c("LEN", "SIZE", "AGE", "cond", "GSTAGE", "GSTLEN", "L@A", "W@A"))) {
@@ -5249,9 +5634,10 @@ plotSS.stdres = function(replist, kind="AGE", fleets="all",
 		dbase_kind$YrSeasName <- paste(dbase_kind$YrSeasName, ifelse(dbase_kind$SuprPer == "Sup", "*", ""), sep="")
 	}
 	ageerr_warning <- TRUE
-	dbase_kind <- dbase_kind[dbase_kind$Fleet %in% fleets & dbase_kind$sex %in% sexes, ]
-	if (nrow(dbase_kind)==0)
-		stop ("Sum Ting Wong")
+	dbase_kind <- dbase_kind[dbase_kind$Fleet %in% fleets & dbase_kind$sex %in% .su(unlist(sexes)), ]
+	if (nrow(dbase_kind)==0) {
+		message("Sum Ting Wong"); browser(); return()
+	}
 
 	## Replace std.res. generated by r4ss using calculation in function 'calcStdRes'
 	## Note: Best to use r4ss calculation for Multinomial and Dirichlet-Multinomial
@@ -5261,18 +5647,19 @@ plotSS.stdres = function(replist, kind="AGE", fleets="all",
 		dbase_temp = calcStdRes(dbase_kind,type=type)
 		dbase_kind$Pearson = dbase_temp$stdRes
 	}
+#browser();return()
 
 	for (f in fleets) {
 		fdbase = dbase_kind[is.element(dbase_kind$Fleet,f),]
 		## Already has Pearson residuals computed
 		if (is.null(ttcall(outnam)))
 			outnam = "ageresFleet"
-		fnam = paste0(outnam,f,sub("mf$","",gsub("\\+","",tolower(extract.between(titlesex,"(",")")))))
-		fout = fout.e = fnam
+#browser();return()
+		fnam = paste0(outnam,f) ##,sub("mf$","",gsub("\\+","",tolower(extract.between(titlesex,"(",")"))))) wtf?
+		fout.e = fnam
 		for (l in lang) {
 			changeLangOpts(L=l)
 			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-#browser();return()
 			for (p in ptypes) {
 				if (print && p=="eps") {
 					clearFiles(paste0(fout,".eps"))
@@ -5281,16 +5668,21 @@ plotSS.stdres = function(replist, kind="AGE", fleets="all",
 					clearFiles(paste0(fout,".png"))
 					png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 				}
-				par(mfrow=c(3,1), mai=c(0.45,0.3,0.1,0.1), omi=c(0,0.25,0.4,0), mgp=c(2,0.75,0))
-				plt.ageResids(fdbase, main="", lang=l, ...)   ## by age class
-				plt.yearResids(fdbase, lang=l, ...)           ## by year
-				plt.cohortResids(fdbase, lang=l, ...)         ## by cohort (year of birth)
-#browser();return()
+				par(mfcol=c(3,nsexes), mai=c(0.45,0.3,0.1,0.1), omi=c(0,0.25,0.4,0), mgp=c(2,0.75,0))
+				#par(mfcol=c(3,2), mai=c(0.45,0.3,0.1,0.1), omi=c(0,0.25,0.4,0), mgp=c(2,0.75,0))
+				for ( s in 1:nsexes) {
+					ss = sexes[[s]]
+					sfdbase = fdbase[is.element(fdbase$sex,ss),]
+					plt.ageResids(sfdbase, main="", lang=l, ...)   ## by age class
+					plt.yearResids(sfdbase, lang=l, ...)           ## by year
+					plt.cohortResids(sfdbase, lang=l, ...)         ## by cohort (year of birth)
+				}
 				#title = paste(toUpper(tolower(gsub("[[:punct:]]+", " ", FleetNames[f]))),titlesex)
 				#title = paste(gsub("URVEY", "urvey", gsub("ISHERY", "ishery", gsub("YNOPTIC", "ynoptic", gsub("[[:punct:]]+", " ", FleetNames[f])))),titlesex)
 				title = paste(gsub("_", " ", FleetNames[f]),titlesex)
 				mtext(linguaFranca(title,l), side=3, outer=TRUE, line=0.25, cex=1.5)
 				mtext(linguaFranca("Standardised Residuals",l), side=2, outer=TRUE, line=0, cex=1.5)
+#browser();return()
 				if (print && p %in% c("eps","png")) dev.off()
 			} ## end p (ptypes) loop
 		}; eop()
@@ -5385,6 +5777,10 @@ plotSS.stock.recruit = function (replist, subplot = 1:3, add = FALSE, plot = TRU
 	yyy    = srFun(xxx)
 	yLimSR=c(0, 1.1*max(c(yyy,B$R),na.rm=TRUE))
 
+	## Additional columns (RH 230227)
+	B$Rexp = srFun(B$SB)
+#browser();return()
+
 	fout = fout.e = outnam
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
@@ -5410,9 +5806,9 @@ plotSS.stock.recruit = function (replist, subplot = 1:3, add = FALSE, plot = TRU
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.stock.recruit
 
 
-## plotSS.ts----------------------------2022-07-26
+## plotSS.ts----------------------------2023-05-24
 ##  Plot SS time series (Bt, BtB0, Age-0 recruits)
-##  Modified r4ss functio 'SSplotTimeseries'.
+##  Modified r4ss function 'SSplotTimeseries'.
 ## ----------------------------------------r4ss|RH
 plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="default", 
    areanames="default", forecastplot=TRUE, uncertainty=TRUE, 
@@ -5420,7 +5816,6 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
    plotdir="default", verbose=TRUE, btarg="default", minbthresh="default", 
    xlab="Year", labels=NULL, punits="in", ptsize=10, cex.main=1, sobj=NULL,
    res=400, outnam, PIN=c(9,9), lang="e") 
- 
 {
 	oldpar = par(no.readonly=TRUE)
 	fart = function(opar) { if (any("windows"%in%names(dev.list()))) par(opar) }
@@ -5445,7 +5840,26 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 	}
 	plotinfo <- NULL
 	if (is.null(labels)) {
-		labels <- c("Total biomass (t)", "Total biomass (t) at beginning of season", "Summary biomass (t)", "Summary biomass (t) at beginning of season", "Spawning biomass (t)", "Bt / B0", "Spawning output", "Age-0 recruits (1000s)", "Fraction of total age-0 recruits", "Management target", "Minimum stock size threshold")
+		## 1 Total biomass (mt) with forecast
+		## 2 Total biomass by area (spatial models only)
+		## 3 Total biomass (mt) at beginning of spawning season with forecast
+		## 4 Summary biomass (mt) with forecast
+		## 5 Summary biomass (mt) by area (spatial models only)
+		## 6 Summary biomass (mt) at beginning of season 1 with forecast
+		## 7 Spawning output with forecast with ~95% asymptotic intervals
+		## 8 Spawning output by area (spatial models only)
+		## 9 Relative spawning output with forecast with ~95% asymptotic intervals
+		## 10 Relative spawning output by area (spatial models only)
+		## 11 Age-0 recruits (1,000s) with forecast with ~95% asymptotic intervals
+		## 12 Age-0 recruits by area (spatial models only)
+		## 13 Fraction of recruits by area (spatial models only)
+		## 14 Age-0 recruits (1,000s) by birth season with forecast
+		## 15 Fraction of total Age-0 recruits by birth season with forecast
+		labels <- c("Total biomass (t)", "Total biomass (t) by area", "Total biomass (t) at beginning of season",
+			"Summary biomass (t)", "Summary biomass (t) by area", "Summary biomass (t) at beginning of season",
+			"Spawning biomass (t)", "Spawning biomass (t) by area", "Depletion (Bt / B0)",
+			"Depletion (Bt / B0) by area", "Age-0 recruits (1000s)", "Age-0 recruits (1000s) by area",
+			"Fraction recruits by area", "Age-0 recruits (1000s) by birth season", "Fraction Age-0 recruits by birth season")
 	}
 	SS_versionshort <- replist$SS_versionshort
 	timeseries      <- replist$timeseries
@@ -5465,14 +5879,21 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 	if (length(minbthresh)==1 && minbthresh == "default") 
 		minbthresh <- replist$minbthresh
 	if (areacols[1] == "default") {
-		areacols <- rich.colors.short(nareas)
-		if (nareas == 3) {
-			areacols <- c("blue", "red", "green3")
+		#if (exists("narea")) nareas = narea  ## hokey fix for now
+		areacols <- areabgs <- rich.colors.short(nareas)
+		if (nareas <= 5) {
+			defcols <- c("blue", "green4", "red", "darkgreen", "purple")
+			defbgs  <- c("cyan", "green", "pink", "yellow", "thistle")
+			areacols = defcols[1:nareas]
+			areabgs  = defbgs[1:nareas]
+			gearcols = defcols[1:ngear]
+			gearbgs  = defbgs[1:ngear]
 		}
-		if (nareas > 3) {
+		if (nareas > 5) {  ## narea = proxy for # fisheries (for now)
 			areacols <- rich.colors.short(nareas + 1)[-1]
 		}
 	}
+	
 	if (!is.null(birthseas)) {
 		nbirthseas <- length(birthseas)
 		seascols <- rich.colors.short(nbirthseas)
@@ -5543,18 +5964,19 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 		}
 		if (subplot %in% 7:8) {
 			yvals <- bioscale * ts[,"SpawnBio",drop=FALSE] ##ts$SpawnBio
-			ylab <- labels[5]
+			ylab <- labels[7]
+			#ylab <- labels[subplot]
 		}
 		if (subplot %in% 9:10) {
 			B0 = ts$SpawnBio[grep("TIME",ts$Era)[1]]  ## do not want 'VIRG' or 'INIT'
 			#B0 = ts$SpawnBio[!is.na(ts$SpawnBio)][1]
 			yvals <- ts[,"SpawnBio",drop=FALSE] / B0 # $SpawnBio/ts$SpawnBio[!is.na(ts$SpawnBio)][1]
 #browser();return()
-			ylab <- labels[6]
+			ylab <- labels[9]
 		}
 		if (subplot %in% 11:15) {
 			yvals <- ts[,"Recruit_0",drop=FALSE] ##$Recruit_0
-			ylab <- labels[8]
+			ylab <- labels[11]
 			if (all(yvals[ts$Era == "VIRG",] == 0 & max(ts$Seas == 1))) {
 				yvals[ts$Era == "VIRG",] <- derived_quants["Recr_Virgin", "Value"]
 			}
@@ -5563,31 +5985,47 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 			}
 		}
 		if (subplot %in% c(13, 15)) 
-			ylab <- labels[9]
+			ylab <- labels[13]
 		if (subplot %in% c(101)){
 			ylab = "Biomass comparisons"
-			yvals = ts[,c("Bio_all","SmryBio_SX:1_GP:1","SmryBio_SX:2_GP:1","SpawnBio")] * bioscale
+			ysub  = ts[,c("Area","Bio_all","SmryBio_SX:1_GP:1","SmryBio_SX:2_GP:1","SpawnBio")] * bioscale
+			ylist = split(ysub[,-1],ysub[,"Area"])
+			yvals = sapply(1:ncol(ylist[[1]]), function(i){Reduce("+", lapply(ylist, "[[", i))})
+			yvals = as.data.frame(yvals)
+			dimnames(yvals) = list(year=.su(ts$Yr),vals=colnames(ylist[[1]]))
 		}
-		if (subplot %in% c(102)){
-			ylab = "Vulnerable biomass"
-			#nfleets = length(.su(grep("F:",colnames(ts),value=T)))
-			nfleets = length(.su(grep("Hrate:",colnames(ts),value=T)))
+
+		if (any(grepl("^Hrate:",colnames(ts)))) { Fmeth = 1 } else { Fmeth = 3 }  ## temporary fix
+
+		if (subplot %in% c(102,103)){
+			fleets = unique(grep("^Hrate:|^F:",colnames(ts),value=T))
+			fleetn = gsub("[Fu]:_", "", fleets)
+			nfleets = length(fleets)
 			for (j in 1:nfleets) {
-				#ts[,paste0("u",j)]  = 1-exp(-ts[,paste0("F:_",j)])
-				ts[,paste0("u",j)]  = ts[,paste0("Hrate:_",j)]
-				ts[,paste0("V",j)]  = ts[,paste0("sel(B):_",j)] / ts[,paste0("u",j)]
-				ts[1,paste0("V",j)] = ts[2,paste0("V",j)]
+				jj = fleetn[j]
+				if (Fmeth==1)
+					ts[,paste0("u",jj)]  = ts[,paste0("Hrate:_",jj)]
+				else 
+					ts[,paste0("u",jj)]  = 1 - exp(-ts[,paste0("F:_",jj)])
+				uzero = ts[,paste0("u",jj)] <= 0
+				ts[uzero,paste0("V",jj)]  = 0
+				## Note: 'sel(B)' appears to be the catch (='obs_cat') in 'ts' object; V=C/u
+				ts[!uzero,paste0("V",jj)] = ts[!uzero,paste0("sel(B):_",jj)] / ts[!uzero,paste0("u",jj)]
+				ts[1,paste0("V",jj)] = ts[2,paste0("V",jj)] = 0
 			}
-			yvals = ts[,c("Bio_all",paste0("V",1:nfleets))] * bioscale
-#browser();return()
-		}
-		if (subplot %in% c(103)){
-			ylab = "Harvest Rate"
-			nfleets = length(.su(grep("Hrate:",colnames(ts),value=T)))
-			for (j in 1:nfleets) {
-				ts[,paste0("u",j)]  = ts[,paste0("Hrate:_",j)]
+			if (subplot %in% c(102)){
+				ysub  = ts[,c("Area","Bio_all",paste0("V",fleetn))] * bioscale
+				ylab = "Vulnerable biomass"
 			}
-			yvals = ts[,c(paste0("u",1:nfleets))]
+			if (subplot %in% c(103)){
+				ysub  = ts[,c("Area", paste0("u",fleetn))]
+				ylab = "Harvest Rate"
+			}
+			ylist = split(ysub[,-1],ysub[,"Area"])
+			yvals = sapply(1:ncol(ylist[[1]]), function(i){Reduce("+", lapply(ylist, "[[", i))})
+			yvals = as.data.frame(yvals)
+			dimnames(yvals) = list(year=.su(ts$Yr),vals=colnames(ylist[[1]]))
+			yvals[yvals<=0 | is.na(yvals)] = NA
 #browser();return()
 		}
 		if (!is.element(subplot, c(1:15,101:103))) {
@@ -5628,6 +6066,8 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 					yvals2[iyr,] <- sum(yvals[ts$YrSeas == y,])
 				}
 				if (subplot == 13) {
+					## yvals = "Recruit_0"
+#browser();return()
 					yvals <- yvals/yvals2
 				}
 				else {
@@ -5643,12 +6083,14 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 				}
 				yvals <- yvals/yvals[!is.na(yvals)][1]
 			}
-			ymax <- max(yvals, 1, na.rm=TRUE)
+			ymax <- max(yvals, na.rm=TRUE)
 			if (subplot == 10) {
+				ymax = 1
 				for (iarea in 1:nareas) {
 					yvals <- ts[ts$Area == iarea,"SpawnBio",drop=FALSE]/(ts$SpawnBio[ts$Area == iarea & ts$Seas == spawnseas][1])
-					ymax <- max(yvals, na.rm=TRUE)
+					ymax <- max(ymax, max(yvals, na.rm=TRUE))
 				}
+#browser();return()
 			}
 		}
 		if (subplot == 10) {
@@ -5669,6 +6111,7 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 					stdtable$Yr <- substring(stdtable$Label, 5)
 					stdtable$Yr[1:2] <- as.numeric(stdtable$Yr[3]) - (2:1) - yrshift
 					stdtable$Yr <- as.numeric(stdtable$Yr)
+#browser();return()
 				}
 				if (subplot == 9) {
 					stdtable <- derived_quants[substring(derived_quants$Label, 1, 6) == "Bratio", ]
@@ -5741,7 +6184,7 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 					ymax  = max(ymax, max(y2))
 			}
 			else use.y2 = FALSE
-			expandGraph(mfrow=c(1,1), mar=c(3,3,1,0.5))
+			expandGraph(mfrow=c(1,1), mar=c(3,3,1,0.5), mgp=c(1.75,0.5,0))
 			#plot(yrvals, yvals[plot1 | plot2 | plot3], type="n", xlab=xlab, xlim=xlim, ylim=c(0, 1.05 * ymax), yaxs="i", ylab=ylab, main=main, cex.main=cex.main, font.main=1)
 			if (subplot %in% c(103)) ylim = c(-ymax*0.075, 1.02*ymax)
 			else                     ylim = c(0, 1.05 * ymax)
@@ -5753,7 +6196,7 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 			addtarg <- function() {
 				if (btarg > 0 & btarg < 1) {
 					abline(h=btarg, col="green4",lty=2)
-					text(max(startyr, minyr) + 1, btarg + 0.02, linguaFranca(ifelse(subplot==9,paste0(btarg,"B0"),labels[10]),l), adj=0, col="green4")
+					text(max(startyr, minyr) + 1, btarg + 0.02, linguaFranca(ifelse(subplot%in%c(9,10),paste0(btarg,"B0"),labels[10]),l), adj=0, col="green4")
 				}
 				if (all(minbthresh > 0) & all(minbthresh < 1)) {
 					for (i in 1:length(minbthresh)) {
@@ -5761,7 +6204,7 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 #browser();return()
 						icol = switch(i, "red", "blue", "green4")
 						abline(h=ii, col=icol, lty=2)
-						text(max(startyr, minyr) + 1, ii + 0.02, linguaFranca(ifelse(subplot==9,paste0(ii,"B0"),labels[10]),l), adj=0, col=icol)
+						text(max(startyr, minyr) + 1, ii + 0.02, linguaFranca(ifelse(subplot%in%c(9,10),paste0(ii,"B0"),labels[10]),l), adj=0, col=icol)
 					}
 				}
 			}
@@ -5790,7 +6233,7 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 					ts$Era != "VIRG"
 				plot3 <- ts$Seas == s & ts$period == "fore" & 
 					ts$Era != "VIRG"
-				points(ts$Yr[plot1], yvals[plot1,], pch=19, col=mycol)
+				points(ts$Yr[plot1], yvals[plot1,], pch=17, col=mycol)
 				lines(ts$Yr[plot2], yvals[plot2,], type=mytype, col=mycol)
 				points(ts$Yr[plot3], yvals[plot3,], pch=19, col=mycol)
 			}
@@ -5815,13 +6258,14 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 					plot1 <- yvals.vec > 0 & ts$Area == iarea & ts$Era == "VIRG"
 					plot2 <- yvals.vec > 0 & ts$Area == iarea & ts$period == "time" & ts$Era != "VIRG"
 					plot3 <- yvals.vec > 0 & ts$Area == iarea & ts$period == "fore" & ts$Era != "VIRG"
-
 				}
 				if (subplot %in% 9:10) {
 					plot1 <- NULL
 					#plot2[3] <- FALSE ## WTF?
 				}
 				mycol <- areacols[iarea]
+				mybg  <- areabgs[iarea]
+#print(c(iarea, mycol, mybg))
 				mytype <- "o"
 				if (subplot == 11 & uncertainty) 
 					mytype <- "p"
@@ -5838,32 +6282,44 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 						legcol = c(legcol, "darkgoldenrod1")
 					}
 					for (yy in 1:ncol(yvals)) {
-						points(ts$YrSeas[plot1], yvals[plot1,yy], pch=19, col=mycol)
-						lines(ts$YrSeas[plot2], yvals[plot2,yy], type=mytype, col=mycol)
-						points(ts$YrSeas[plot3], yvals[plot3,yy], pch=19, col=mycol)
+						#points(ts$YrSeas[plot1], yvals[plot1,yy], pch=19, col=mycol)
+						#lines(ts$YrSeas[plot2], yvals[plot2,yy], type=mytype, col=mycol)
+						points(ts$YrSeas[plot1], yvals[plot1,yy], pch=24, col=mycol, bg=mybg, cex=1.2)
+						lines(ts$YrSeas[plot2], yvals[plot2,yy], type="l", col=mycol)
+						points(ts$YrSeas[plot2], yvals[plot2,yy], pch=21, col=mycol, bg=mybg)
+						points(ts$YrSeas[plot3], yvals[plot3,yy], pch=17, col=mycol)
 					}
-#browser();return()
-					legtxt = c(legtxt, paste0("SS ", switch(sp, '7'="Bt", '9'="Bt/B0", "age-0 recruits")))
+					legtxt = c(legtxt, paste0("SS3 ", switch(sp, '7'="Bt", '8'="Bt by area", '9'="Bt/B0", "age-0 recruits")))
 					leglty = c(leglty, 1)
 					legcol = c(legcol, mycol)
-					addLegend (0.975, 0.975, legend=linguaFranca(legtxt,l), lty=leglty, col=legcol, lwd=2, seg.len=3, bty="n", xjust=1, yjust=1)
 				}
 				else {
 					for (j in 1:ncol(yvals)) {
 						jj = colnames(yvals)[j]
 						if (grepl("SX:",jj)) {
 							col.sex = ifelse(grepl("SX:1",jj),"orange",.colBlind["bluegreen"])
-							points(ts$YrSeas[plot1], yvals[plot1,j], pch=22, col=col.sex, bg=colorspace::lighten(col.sex, amount=0.25)) #lucent(mycol,0.2))
+							points(ts$YrSeas[plot1], yvals[plot1,j], pch=24, col=col.sex, bg=colorspace::lighten(col.sex, amount=0.25)) #lucent(mycol,0.2))
 							lines(ts$YrSeas[plot2|plot3], yvals[plot2|plot3,j], col=col.sex, lwd=2)
-						}
-						else {
+						} else {
 							#col.pch = ifelse(grepl("Bio_all",jj),"black",mycol)
-							col.fleet = c("blue","green3","red","purple") ## may need more colours
-							col.pch = switch(jj, 'Bio_all'="black", 'V1'=col.fleet[1], 'V2'=col.fleet[2], 'V3'=col.fleet[3], 'V4'=col.fleet[4], 'u1'=col.fleet[1], 'u2'=col.fleet[2], 'u3'=col.fleet[3], 'u4'=col.fleet[4], mycol)
-							points(ts$YrSeas[plot1], yvals[plot1,j], pch=22, col=col.pch, bg=colorspace::lighten(col.pch, amount=0.25)) #lucent(mycol,0.2))
-							lines(ts$YrSeas[plot2], yvals[plot2,j], col="gainsboro", lwd=2)
-							points(ts$YrSeas[plot2], yvals[plot2,j], pch=21, col=col.pch, bg=colorspace::lighten(col.pch, amount=0.25)) #lucent(mycol,0.2))
-							points(ts$YrSeas[plot3], yvals[plot3,j], pch=24, cex=0.8, col=col.pch, bg=colorspace::lighten(col.pch, amount=0.25)) #lucent(mycol,0.2))
+							#col.fleet = c("blue","green3","red","purple") ## may need more colours
+							#col.pch = switch(jj, 'Bio_all'="black", 'V1'=col.fleet[1], 'V2'=col.fleet[2], 'V3'=col.fleet[3], 'V4'=col.fleet[4], 'u1'=col.fleet[1], 'u2'=col.fleet[2], 'u3'=col.fleet[3], 'u4'=col.fleet[4], mycol)
+							col.fleet = gearcols
+							bg.fleet  = gearbgs
+							## This is so problematic:
+							col.pch = switch(jj, 'Bio_all'="black", 'V1'=col.fleet[1], 'V2'=col.fleet[2], 'V3'=col.fleet[3], 'V10'=col.fleet[4], 'V11'=col.fleet[5], 'u1'=col.fleet[1], 'u2'=col.fleet[2], 'u3'=col.fleet[3], 'u10'=col.fleet[4], 'u11'=col.fleet[5], mycol)
+							col.bg = switch(jj, 'Bio_all'="gainsboro", 'V1'=bg.fleet[1], 'V2'=bg.fleet[2], 'V3'=bg.fleet[3], 'V10'=bg.fleet[4], 'V11'=bg.fleet[5], 'u1'=bg.fleet[1], 'u2'=bg.fleet[2], 'u3'=bg.fleet[3], 'u10'=bg.fleet[4], 'u11'=bg.fleet[5], mybg)
+#print(c(col.pch, mycol))
+#browser();retrun()
+							#points(ts$YrSeas[plot1], yvals[plot1,j], pch=22, col=col.pch, bg=colorspace::lighten(col.pch, amount=0.25)) #lucent(mycol,0.2))
+							#lines(ts$YrSeas[plot2], yvals[plot2,j], col="gainsboro", lwd=2)
+							#points(ts$YrSeas[plot2], yvals[plot2,j], pch=21, col=col.pch, bg=colorspace::lighten(col.pch, amount=0.25)) #lucent(mycol,0.2))
+							#points(ts$YrSeas[plot3], yvals[plot3,j], pch=24, cex=0.8, col=col.pch, bg=colorspace::lighten(col.pch, amount=0.25)) #lucent(mycol,0.2))
+							points(ts$YrSeas[plot1], yvals[plot1,j], pch=24, col=col.pch, bg=col.bg)
+							lines(ts$YrSeas[plot2], yvals[plot2,j], col=col.pch, lwd=2)
+							points(ts$YrSeas[plot2], yvals[plot2,j], pch=21, col=col.pch, bg=col.bg)
+							points(ts$YrSeas[plot3], yvals[plot3,j], pch=22, cex=0.8, col=col.pch, bg=col.bg) #lucent(mycol,0.2))
+#if(j==3){browser();return()}
 						}
 						if (subplot %in% c(7,9,11) || colnames(yvals)[j] %in% c("SpawnBio")) {
 							if (subplot == 7) {
@@ -5881,7 +6337,7 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 							plot3 <- stdtable$Yr %in% ts$Yr[plot3]
 							plotall <- plot1 | plot2 | plot3
 						}
-						if (subplot %in% c(7, 9) || colnames(yvals)[j] %in% c("SpawnBio")) {
+						if (subplot %in% c(7,9) || colnames(yvals)[j] %in% c("SpawnBio")) {
 							## virgin
 							arrows(x0=rep(stdtable$Yr[plot1] + 1,2), x1=rep(stdtable$Yr[plot1] + 1,2),
 								y0=rep(yvals[plot1,j],2), y1=c(stdtable$upper[plot1], stdtable$lower[plot1]), angle=90, length=0.05, col=mycol)
@@ -5904,45 +6360,84 @@ plotSS.ts = function (replist, subplot, add=FALSE, areas="all", areacols="defaul
 							arrows(x0=stdtable$Yr[plotall], y0=stdtable$lower[plotall], y1=stdtable$upper[plotall], length=0.01, angle=90, code=3, col=mycol)
 							options(warn=old_warn)
 						}
-					}
+					} ## end j loop
 				}
+			} ## end iarea loop
+			if (nareas > 1 & subplot %in% c(2, 3, 5, 6, 8, 10, 12, 13)) {
+				if (exists("area.names") && narea==length(areas))  ## need to source 'initialise.r' first
+					areanames = area.names
+				addLegend(0.975, 0.975, legend=linguaFranca(areanames[areas],l), lty=1, seg.len=3, pch=21, col=areacols[areas], pt.bg=areabgs[areas], bty="n", xjust=1, yjust=1)
+				#addLegend (0.975, 0.975, legend=linguaFranca(legtxt,l), lty=leglty, col=legcol, lwd=2, seg.len=3, bty="n", xjust=1, yjust=1)
+#browser();return()
 			}
-			if (nareas > 1 & subplot %in% c(2, 3, 5, 6, 8, 10, 12)) 
-				addLegend(0.975, 0.975, legend=linguaFranca(areanames[areas],l), lty=1, pch=1, col=areacols[areas], bty="n", xjust=1, yjust=1)
 			if (subplot %in% c(101:103)) {
-				catch       = ts[,grep("retain\\(B)",colnames(ts))]
+				years = startyr:endyr
+				cdat  = ts[is.element(ts$Yr,years),c("Area",grep("retain\\(B)",colnames(ts),value=TRUE))]
+				clist = split(cdat[,-1,drop=FALSE],cdat[,"Area"])
+				catch = sapply(1:ncol(clist[[1]]), function(i){Reduce("+", lapply(clist, "[[", i))})
+				catch =  as.data.frame(catch[,,drop=FALSE])
+				if (ncol(catch)>1)
+					cumcat = t(apply(catch[,,drop=FALSE],1,cumsum))
+				else
+					cumcat = catch
+				dimnames(catch) = dimnames(cumcat) = list(year=years,gear=gear.names)
 				catch$total = apply(catch,1,sum)
 				#ts$catch = apply(ts[,grep("retain\\(B)",colnames(ts))],1,sum)
 				base = 0
-				if (subplot %in% c(103)){ 
-					catch = sapply(catch, scaleVec, Tmin=ylim[1], Tmax=0)
+				if (subplot %in% c(103)){
+					cumcat.orig = cumcat
+					#catch = sapply(catch, scaleVec, Tmin=ylim[1], Tmax=0)
+					#catch = t(apply(catch, 1, scaleVec, Tmin=ylim[1], Tmax=0))
+					#dimnames(catch) = dimnames(catch.orig)
+					cumcat = scaleVec(cumcat.orig, Tmin=ylim[1], Tmax=0)
 					base = ylim[1]
 				}
+#browser();return()
 				#drawBars(ts$Yr[plot2|plot3], ts$catch[plot2|plot3], col="gainsboro", fill="hotpink", width=1, base=base)
 				## Quick fix for now -- plot total catch then first biggest fleet catch
-				drawBars(ts$Yr[plot2|plot3], catch[plot2|plot3,"total"], col="red", fill="red", width=1, base=base)
-				drawBars(ts$Yr[plot2|plot3], catch[plot2|plot3,1], col="red", fill="pink", width=1, base=base)
+				#drawBars(ts$Yr[plot2|plot3], catch[plot2|plot3,"total"], col="red", fill="red", width=1, base=base)
+				#drawBars(ts$Yr[plot2|plot3], catch[plot2|plot3,1], col="red", fill="pink", width=1, base=base)
+				if (subplot %in% c(101)) {
+					drawBars(years, catch[,"total"], col="grey30", fill="yellow", width=1, base=base)
+				} else {
+					for (a in 1:ngear) {
+						abase = if (a==1) base else cumcat[,gear.names[a-1]]
+						ycat  = cumcat[,gear.names[a]]
+						drawBars(x=years, y=ycat, col=gearcols[a], fill=gearbgs[a], width=1, base=abase)
+					}
 #browser();return()
+				}
 				legtxt = NULL
 				if (subplot %in% 101) {
 					legtxt = c("Total biomass","Female biomass", "Male biomass", "Spawning biomass", "Retained catch")
-					legcol = col=c("black", "orange", .colBlind["bluegreen"], mycol, "pink")
+					legcol = c("black", "orange", .colBlind["bluegreen"], mycol, "black")
+					legbg  = c("gainsboro", NA, NA, mybg, "yellow")
+					legpch = c(21,95,95,21,22)
 				}
 				else if (subplot %in% 102) {
-					legtxt = c("Total biomass",paste0("Vulnerable biomass - fleet ",1:nfleets), "Retained catch")
-					legcol = col=c("black", col.fleet[1:nfleets], "pink")
+					legtxt = c("Total biomass", paste0("Vulnerable biomass - ", gear.names), paste0("Retained catch - ", gear.names))
+					legcol = c("black", col.fleet[1:nfleets], col.fleet[1:nfleets])
+					legbg  = c("gainsboro", bg.fleet[1:nfleets], bg.fleet[1:nfleets])
+					legpch = c(21,rep(21,ngear),rep(22,ngear))
 				}
 				else if (subplot %in% 103) {
-					legtxt = c(paste0("Harvest rate - fleet ",1:nfleets), "Retained catch" )
-					legcol = c(col=col.fleet[1:nfleets], "pink")
+					legtxt = c(paste0("Harvest rate - ", gear.names), paste0("Retained catch - ", gear.names))
+					legcol = c(col=col.fleet[1:nfleets], col.fleet[1:nfleets])
+					legbg  = c(bg.fleet[1:nfleets], bg.fleet[1:nfleets])
+					legpch = c(rep(21,ngear),rep(22,ngear))
 				}
-				if (!is.null(legtxt))
-					addLegend(0.975, 0.975, legend=linguaFranca(legtxt,l), pch=22, col=legcol, pt.bg=colorspace::lighten(legcol,0.2), bty="n", xjust=1, yjust=1)
-				box()
+				if (!is.null(legtxt)){
+					if (subplot %in% c(101))
+						addLegend(0.975, 0.975, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1)
+					if (subplot %in% c(102))
+						addLegend(0.975, 0.975, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1)
+					if (subplot %in% c(103))
+						addLegend(0.025, 0.975, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=0, yjust=1)
+				}
 #browser();return()
+				box()
 			}
 		}
-#browser();return()
 		if (verbose) {
 			message("  finished time series subplot ", subplot, ": ", main)
 		}
@@ -6040,8 +6535,9 @@ plt.yearResids <- function(obj, ages=NULL, main=NULL, fill.in=TRUE, lang="e", ..
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plt.yearResids
 
-## plt.cohortResids---------------------2019-07-18
+## plt.cohortResids---------------------2023-05-02
 ## Plot age residuals by cohort.
+## Removed multiple calls to quantBox when colouring by recdevs (RH 230502)
 ## -----------------------------------------AME|RH
 plt.cohortResids <- function( obj, ages=NULL, main=NULL, lang="e", use.rdevs=T, ...)
 {
@@ -6055,39 +6551,58 @@ plt.cohortResids <- function( obj, ages=NULL, main=NULL, lang="e", use.rdevs=T, 
 	##  to assign a year of birth for each age as an extra column, then
 	##  presumably just do the boxplot split using that.
 	obj$birthyr = obj$Yr - obj$Bin
+
+	upar = tcall(boxpars)
+	if (use.rdevs) {
+		recdevs = getSS.rdevs(replist)
+		#if (!is.null(ttcall(recdevs))){ ## created by function 'getSS.rdevs'
+		if (!is.null(recdevs)){ ## created by function 'getSS.rdevs'
+			#ttget(recdevs)
+			ayrs = recdevs$Yr
+			zyrs = recdevs$Yr[recdevs$Value<=0]
+			medcol = rep("green4",length(ayrs)); names(medcol) = ayrs
+			medcol[as.character(zyrs)] = "red"
+			boxfill = rep(lucent("green",0.25),length(ayrs)); names(boxfill) = ayrs
+			boxfill[as.character(zyrs)] = lucent("red",0.25)
+			upar$medcol = medcol
+			upar$boxfill = boxfill
+		}
+	}
 	if( max(diff(sort(unique(obj$birthyr)))) > 1) {
 		allYears = min(obj$birthyr):max(obj$birthyr)
 		nodataYears = allYears[ !(allYears %in% obj$birthyr)]
 		xx = split(c(obj$Pearson, rep(NA, length(nodataYears))), c(obj$birthyr, nodataYears))
 		#xpos <- boxplot( xx, whisklty=1, xlab="", ylab="", outline=FALSE )     #AME outline=FALSE removes outliers
-		xpos = quantBox(xx, xaxt="n", yaxt="n", xlab="", ylab="", pars=tcall(boxpars))
+		#xpos = quantBox(xx, xaxt="n", yaxt="n", xlab="", ylab="", pars=tcall(boxpars), add=FALSE)
+		xpos = quantBox(xx, xaxt="n", yaxt="n", xlab="", ylab="", pars=upar, add=FALSE)
 		xyrs = setdiff(allYears, nodataYears)
 		if (length(xyrs)>20)
 			xyrs = sort(unique(ceiling(xyrs/5)*5))
 		axis(1, at=match(xyrs,as.numeric(xpos$names)), labels=xyrs, ..., mgp=c(2,0.5,0))
 	} else {
 		#xpos=boxplot( split( obj$Pearson, obj$birthyr ), whisklty=1, xlab="", ylab="", outline=FALSE )     #AME outline=FALSE removes outliers
-		xpos = quantBox(split(obj$Pearson,obj$birthyr), xaxt="n", yaxt="n", xlab="", ylab="", pars=tcall(boxpars))
+		#xpos = quantBox(split(obj$Pearson,obj$birthyr), xaxt="n", yaxt="n", xlab="", ylab="", pars=tcall(boxpars), add=FALSE)
+		xpos = quantBox(split(obj$Pearson,obj$birthyr), xaxt="n", yaxt="n", xlab="", ylab="", pars=upar, add=FALSE)
 		xyrs = sort(unique(ceiling(obj$birthyr/5)*5))
 		axis(1, at=match(xyrs,as.numeric(xpos$names)), labels=xyrs, ..., mgp=c(2,0.5,0))
 	}
-	if (use.rdevs) {
-		plotSS.rdevs(replist, subplot=1, plot=F, print=F)
-		if (!is.null(ttcall(recdevs))){ ## created by function 'plotSS.rdevs'
-			ttget(recdevs)
-			zyrs = recdevs$Yr[recdevs$Value>0]
-			zpar = upar = tcall(boxpars)
-			zpar$boxfill=lucent("green",0.25); zpar$medcol="green4"
-			upar$boxfill=lucent("red",0.25); upar$medcol="red"
-			#zpar$boxfill=lucent("red",0.5)
 #browser();return()
-			zbox = ubox = split(obj$Pearson,obj$birthyr)
-			zbox[!is.element(names(zbox),zyrs)] = NA
-			ubox[is.element(names(zbox),zyrs)] = NA
-			quantBox(zbox, xaxt="n", yaxt="n", xlab="", ylab="", pars=zpar, add=TRUE)
-			quantBox(ubox, xaxt="n", yaxt="n", xlab="", ylab="", pars=upar, add=TRUE)
-		}
-	}
+	#if (use.rdevs) {
+	#	plotSS.rdevs(replist, subplot=1, plot=F, print=F)
+	#	if (!is.null(ttcall(recdevs))){ ## created by function 'plotSS.rdevs'
+	#		ttget(recdevs)
+	#		zyrs = recdevs$Yr[recdevs$Value>0]
+	#		zpar = upar = tcall(boxpars)
+	#		zpar$boxfill=lucent("green",0.25); zpar$medcol="green4"
+	#		upar$boxfill=lucent("red",0.25); upar$medcol="red"
+	#		#zpar$boxfill=lucent("red",0.5)
+	#		zbox = ubox = split(obj$Pearson,obj$birthyr)
+	#		zbox[!is.element(names(zbox),zyrs)] = NA
+	#		ubox[is.element(names(zbox),zyrs)] = NA
+	#		quantBox(zbox, xaxt="n", yaxt="n", xlab="", ylab="", pars=zpar, add=TRUE)  ## this only seems to work if there are no more frames available
+	#		quantBox(ubox, xaxt="n", yaxt="n", xlab="", ylab="", pars=upar, add=TRUE)
+	#	}
+	#}
 	abline( h=0, lty=2, col="blue" )
 	axis(2, ...)
 	mtext( side=1, line=2, ..., text=linguaFranca("Year of birth",lang) )
@@ -6099,7 +6614,7 @@ plt.cohortResids <- function( obj, ages=NULL, main=NULL, lang="e", use.rdevs=T, 
 ##====================================== End suite of quantile boxes of age-fit residuals
 
 
-## plt.selectivity----------------------2019-07-18
+## plt.selectivity----------------------2023-03-07
 ## Transferred selectivity code from PBSscape.r
 ## into plt function (RH 190718)
 ## sobj = second object (RH 201119)
@@ -6113,7 +6628,8 @@ plt.selectivity <- function( obj, sobj=NULL, mainTitle="Rockfish", maxage,
 		unpackList(dots)
 		nsex = abs(getNpan()%%2-2)
 		#unpackList(tcall(panel.dots))
-		abline(h=seq(0.2,0.8,0.2), v=seq(10,max(x)-1,10), lty=3, col="seashell4")
+		agebin = if (maxage>25) 10 else 5
+		abline(h=seq(0.2,0.8,0.2), v=seq(agebin,max(x)-1,agebin), lty=3, col="seashell4")
 		if (!is.null(sobj)) {
 			z  = is.element(sobj$Index, sub("TRAWL\\+","TRAWL",index.e[getNpan()]))
 			x2 = sobj$Age[z]; y2=sobj$Sel[z]
@@ -6157,13 +6673,17 @@ plt.selectivity <- function( obj, sobj=NULL, mainTitle="Rockfish", maxage,
 	index.f  = linguaFranca(index.e,"f")
 	Xfile.f$Index = index.f[Xfile$Index]
 
-	rc = c(ceiling(length(index.e)/2),2)
+	if (length(index.e)<12)
+		rc = c(ceiling(length(index.e)/2),2)
+	else 
+		rc = c(ceiling(length(index.e)/4),4)
+#browser();return()
+
 
 	## Get the maturity ogive
-#browser();return()
 	mats = getSS.control(tcall(control.file))$maturity_ogive[1:length(Pvec)]
 
-	strip.list = list(col=lucent("black",0.5), bg=lucent("moccasin",0.5), height=0.1, cex=1.8)
+	strip.list = list(col=lucent("black",0.5), bg=lucent("moccasin",0.5), height=0.1, cex=1.5)
 
 	#panel.dots = list(scol=c("red","blue"), lwd=4)
 	#tput(panel.dots)
@@ -6181,9 +6701,9 @@ plt.selectivity <- function( obj, sobj=NULL, mainTitle="Rockfish", maxage,
 			#par.sel = list(layout.widths = list(left.padding=-0.5, right.padding=-0.5),
 			#	layout.heights=list(top.padding=0.5, main.key.padding=-0.75, bottom.padding=-2))
 			if (l=="f")
-				mochaLatte(Xfile.f,"Age","Sel","Index", panel=panel.selex, m=mats, strip=strip.list, scol=c("red","blue"), slwd=2, mar=c(0,0,0,0), oma=c(4,4,4,1), xlab=linguaFranca("Age (years)","f"), ylab=linguaFranca("Proportion","f"), mainTitle=paste0("s\u{00E9}lectivit\u{00E9} du ", linguaFranca(mainTitle,l)), cex.axis=1.2, cex.main=1.5, sobj=sobj, rc=rc, ylim=c(0,1))
+				mochaLatte(Xfile.f,"Age","Sel","Index", panel=panel.selex, m=mats, strip=strip.list, scol=c("red","blue"), slwd=2, mar=c(0,0,0,0), oma=c(4,4,4,1), xlab=linguaFranca("Age (years)","f"), ylab=linguaFranca("Proportion","f"), mainTitle=paste0("s\u{00E9}lectivit\u{00E9} du ", linguaFranca(mainTitle,l)), cex.axis=1.1, cex.main=1.4, sobj=sobj, rc=rc, ylim=c(0,1))
 			else{
-				mochaLatte(Xfile,"Age","Sel","Index", panel=panel.selex, m=mats, strip=strip.list, scol=c("red","blue"), slwd=2, mar=c(0,0,0,0), oma=c(4,4,4,1), xlab="Age (years)", ylab="Proportion", mainTitle = paste0(mainTitle, " Selectivity"), cex.axis=1.2, sobj=sobj, rc=rc, ylim=c(0,1))
+				mochaLatte(Xfile,"Age","Sel","Index", panel=panel.selex, m=mats, strip=strip.list, scol=c("red","blue"), slwd=2, mar=c(0,0,0,0), oma=c(4,4,4,1), xlab="Age (years)", ylab="Proportion", mainTitle = paste0(mainTitle, " Selectivity"), cex.axis=1.2, cex.lab=1.3, cex.main=1.4, sobj=sobj, rc=rc, ylim=c(0,1))
 				#mtext(paste0(mainTitle, " Selectivity"), side=3, outer=FALSE, line=0, cex=1.5)
 #browser();return()
 			}

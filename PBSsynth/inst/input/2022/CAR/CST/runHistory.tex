@@ -1,0 +1,127 @@
+%% runHistory.tex for Canary Rockfish (CAR coastwide) 2022.
+
+\subsection{Assessment Model Runs for 2022 CAR (Canary along BC coast) using 8 fleets (2 fisheries and 6 surveys)}
+
+\textbf{Important:} using SS V3.30.18.00; fast(opt); compile date: Sep 30 2021; Stock Synthesis by Richard Methot (NOAA) using ADMB 12.3.
+
+\textbf{Canary (CAR) coastwide in 2022 -- two fisheries (trawl and other) run details:}
+\begin{itemize}
+  \item Update CAR input data to end of 2021;
+  \item Fix natural mortality $M$=0.06 for both sexes;%% up to age 14, $M2$=0.12 for females and $M2$=0.06 for males at age 14 and above;
+  \item Estimate steepness $h$ using Beverton-Holt stock-recruit equation;
+  \item Float Q parameters;
+  \item Use accumulator age ($A$) of 60\,y as plus class;
+  \item Nsurvey~=~6 survey (QCS Synoptic, WCVI Synoptic, NMFS Triennial, HS Synoptic, WCHG Synoptic, GIG Historical), the first three with sensible AF data;
+  \item Ngear~=~2 (1=Trawl: bottom\,+\,midwater trawl, 2=Other: all commercial gear other than trawl);
+  \item Ncpue~=~1 (bottom trawl);
+  \item Nsex~=~2 (females, males);
+  \item Abundance reweighting -- Add CV process error, cvpro=0 for survey indices and for commercial CPUE series (initially);
+  \item Composition reweighting -- Francis (2011) method using mean ages;
+  \item Fix standard deviation of recruitment residuals ($\sigma_R$) to 0.6.
+\end{itemize}
+
+\hypertarget{R01}{\textbf{SS Run01 2022}} -- Same as \textbf{AW Run15 2022}: three AF surveys, one $M$ fixed, multinomial AF, CVpro=0.1779 added to CPUE index series.
+
+\hypertarget{R02}{\textbf{Run02}} -- Same as \hyperlink{R01}{SS Run01 2022} but use normal priors with 30\pc{} CV on estimated selectivity parameters ($\mu$:~$\mathcal{N}$(14,4.2), $v_{L}$:~$\mathcal{N}$(2.5,0.75), $\Delta$:~$\mathcal{N}$(-0.4,0.12)); change prior on LN($R_0$) from $\mathcal{N}$(8,8) to $\mathcal{N}$(7,7); change $\sigma_R$ from 0.6 to 0.9.
+
+\hypertarget{R03}{\textbf{Run03}} -- Same as \hyperlink{R02}{Run02} but reweighted using McAllister harmonic mean ratios (HMRs).
+
+\hypertarget{R04}{\textbf{Run04}} -- Same as \hyperlink{R02}{Run02} but estimate $M$ and use updated index series for GIG (220221) and NMFS (220222).
+
+\hypertarget{R05}{\textbf{Run05}} -- Same as \hyperlink{R04}{Run04} but reweight AF using McAllister harmonic mean ratios (HMRs) -- still with bad 1980 NMFS index.
+
+\hypertarget{R06}{\textbf{Run06}} -- Same as \hyperlink{R04}{Run04} but  use ageing error (AE) vector 3 (loess-smoothed SDs derived from CVs of length-at-age).
+
+\hypertarget{R07}{\textbf{Run07}} -- Same as \hyperlink{R06}{Run06} but use AE vector 5 (loess-smoothed SDs derived from CVs of age-reader data).
+
+\hypertarget{R08}{\textbf{Run08}} -- Same as \hyperlink{R06}{Run06} (AE3) but apply McAllister-Ianelli HMR weighting to AF data.
+
+\hypertarget{R09}{\textbf{Run09}} -- Same as \hyperlink{R07}{Run07} (AE5) but apply McAllister-Ianelli HMR weighting to AF data.
+
+\hypertarget{R10}{\textbf{Run10}} -- Same as \hyperlink{R06}{Run06} (AE3) but use AE1 (no bias, very little uncertainty) as in Run04, estimate two-stage natural mortality.
+
+\hypertarget{R11}{\textbf{Run11}} -- Same as \hyperlink{R10}{Run10} (AE1) but use breakpoint years 8 and 18 to span the maturity ogive from 50\pc{} to 100\pc{} mature.
+
+\hypertarget{R12}{\textbf{Run12}} -- Same as \hyperlink{R06}{Run06} (AE3) but downweight the NMFS Triennial survey using w=0.25.
+
+\hypertarget{R13}{\textbf{Run13}} -- Same as \hyperlink{R07}{Run07} (AE5) but downweight the NMFS Triennial survey using w=0.25.
+
+\hypertarget{R14}{\textbf{Run14}} -- Same as \hyperlink{R11}{Run11} (AE1) but downweight the NMFS Triennial survey using w=0.25.
+
+\hypertarget{R15}{\textbf{Run15}} -- Same as \hyperlink{R10}{Run10} (2M,\,AE1) but apply AE3 (loess-smoothed SD from L@A CVs).
+
+\hypertarget{R16}{\textbf{Run16}} -- Same as \hyperlink{R04}{Run04} (1M,\,AE1) but apply AE2 (raw SD from L@A CVs).
+
+\hypertarget{R17}{\textbf{Run17}} -- Same as \hyperlink{R04}{Run04} (1M,\,AE1) but apply AE4 (raw SD from age reader CVs).
+
+\hypertarget{R18}{\textbf{Run18}} -- Same as \hyperlink{R04}{Run04} (1M,\,AE1) but estimate dome-shaped selectivity for males with offsets for females (pattern 20, offset 4).
+
+\hypertarget{R19}{\textbf{Run19}} -- Same as \hyperlink{R18}{Run18} (1M,\,AE1) but fix $\beta_2$=-10 (peak), use $\beta_3$ (varL) prior $\mathcal{N}$(2.5,\,0.75) for $\beta_4$ (varR), apply tight prior $\mathcal{N}$(10,\,0.01) to $\beta_6$ (final), and use normal priors for the remaining delta parameters [$\Delta_2\sim\mathcal{N}$(0,3), $\Delta_3\sim\mathcal{N}$(0,3), $\Delta_4\sim\mathcal{N}$(-10,10)] and increase their bounds to (-30,30).
+
+\hypertarget{R20}{\textbf{Run20}} -- Same as \hyperlink{R19}{Run19} (1M,\,AE1) but use AE3 (loess-smoothed SD based on length-at age CVs).
+
+\hypertarget{R21}{\textbf{Run21}} -- Same as \hyperlink{R06}{Run06} (1M,\,AE3) but use Dirichlet-Multinomial to fit AF data; reweight only CPUE index data.
+
+\hypertarget{R22}{\textbf{Run22}} -- Same as \hyperlink{R06}{Run06} (1M,\,AE3) but add winter PDO indices as a separate fleet (but bypass the calculation of survey selectivity) using units=31 : exp(recruitment deviation).
+
+\hypertarget{R23}{\textbf{Run23}} -- Same as \hyperlink{R21}{Run21} (1M,\,AE3\,DM) but add catch for 2022 and AF from QCS and WCVI surveys in 2021. \emph{Tried fixing selectivity parameter mu=12 for HS, WCHG, and GIG but model output differences were minimal; therefore keep mu=14.}
+
+\hypertarget{R24}{\textbf{Run24 (Base Case or B1)}} -- Same as \hyperlink{R23}{Run23} (1M,\,AE3,\,DM, mu=14 for fixed selex) but update CPUE index series using data from May 2022 vs. Nov 2021. Re-run MCMCs with 8 chains, generating 1000 sims per chain discarding first 750 and collecting final 250 collect, for a total of 2000 samples; add SmryBio for ages 0+ (=TotBio).
+
+\hypertarget{R25}{\textbf{Run25 (S01)}} -- Same as \hyperlink{R24}{Run24 (B1)} but split natural mortality by age for young vs. mature using breakpoint ages 13 and 14 (using ages 8 and 18 to span the maturity ogive from 50\pc{} to 100\pc{} mature caused instability in parameter `\texttt{recdev\_early[23]}').
+
+\hypertarget{R26}{\textbf{Run26 (S02)}} -- Same as \hyperlink{R24}{Run24 (B1)} but use no ageing error (AE1).
+
+\hypertarget{R27}{\textbf{Run27 (S03)}} -- Same as \hyperlink{R24}{Run24 (B1)} but use smoothed ageing error (AE5) based an CVs of precision tests by age readers.
+
+\hypertarget{R28}{\textbf{Run28 (S04)}} -- Same as \hyperlink{R24}{Run24 (B1)} but use CASAL-style ageing error (AE6) based on constant CV=0.1.
+
+\hypertarget{R29}{\textbf{Run29 (S05)}} -- Same as \hyperlink{R24}{Run24 (B1)} but reduce catch in 1965-95 (foreign + unobserved domestic) by 33\pc.
+
+\hypertarget{R30}{\textbf{Run30 (S06)}} -- Same as \hyperlink{R24}{Run24 (B1)} but increase catch in 1965-95 (foreign + unobserved domestic) by 50\pc.
+
+\hypertarget{R31}{\textbf{Run31 (S07)}} -- Same as \hyperlink{R24}{Run24 (B1)} but use lower $\sigma_R$ = 0.6.
+
+\hypertarget{R32}{\textbf{Run32 (S08)}} -- Same as \hyperlink{R24}{Run24 (B1)} but use higher $\sigma_R$ = 1.2.
+
+\hypertarget{R33}{\textbf{Run33 (S09)}} -- Same as \hyperlink{R24}{Run24 (B1)} but estimate female dome-shaped selectivity as an offset to logistic male selectivity (see \hyperlink{R19}{Run19} for control file set up). Needed to fix NMFS selectivity parameters to R33 MPD estimates to get PDH for MCMC; fixed GIG and HS selectivity parameters to MPD estimates for QCS in R19.
+
+\hypertarget{R34}{\textbf{Run34 (S10)}} -- Same as \hyperlink{R24}{Run24 (B1)} but add excluded AF for HS and WCHG synoptic surveys. Ver.1:~Could not run MCMCs so experimented. Ver.2:~Fix selectivity parameters for HS and WCHG to MPD estimates of a prior estimation using control.34.01.v1.ss to get MCMCs to work using NUTS (but forgot to remove AF data). Ver3:~ Re-run without restrictions (like Ver.1) but change \texttt{`adapt\_delta'} in \texttt{`sample\_admb'} from 0.8 to 0.9 and tighten initial values using CV=0.025, which helped R35 successfully navigate MCMCs using NUTS.
+
+\hypertarget{R35}{\textbf{Run35 (S11)}} -- Same as \hyperlink{R24}{Run24 (B1)} but add index and AF data from two HBLL surveys (North and South).
+
+\hypertarget{R36}{\textbf{Run36 (S12)}} -- Same as \hyperlink{R24}{Run24 (B1)} but use Tweedie CPUE.
+
+\hypertarget{R37}{\textbf{Run37 (S13)}} -- Same as \hyperlink{R24}{Run24 (B1)} but remove the commercial CPUE index series.
+
+\hypertarget{R38}{\textbf{Run38 (PDO ver)}} -- Same as \hyperlink{R24}{Run24 (B1)} but add winter PDO as fleet 9 with units=31: index interacts with exp(recruitment deviations),  Several versions:\\
+v.1: use winter PDO (mean Dec-Mar for 1919-2021) index (x-mean); units 31 not linked to Q (mistake).\\
+v.2: use winter PDO (mean Dec-Mar for 1935-2022) index (exp(z-scores), Methot suggested Jul 5, 2022); units 31 not linked to Q (mistake).\\
+v.3: Same as v.2 but use lognormal distribution for fleet 9 and set Q parameter setup to us index 31.\\
+v.4: Same as v.3 but add process error (cp=1.154) to winter PDO.\\
+v.5: Same as v.3 but add process error (cp=0.30) to winter PDO.\\
+v.6: (E01) Same as v.3 (cp=0 for fleet 9 PDO) but recalculate exp(z-scores) for years 1950-2012 to match years for main recruitment deviation estimates.\\
+v.7: (E02) Same as v.6 but use cp=0.30 for fleet 9 PDO.\\
+v.8: (E03) Same as v.6 but use spline-derived cp=0.8258 for fleet 9 PDO.
+
+\hypertarget{R39}{\textbf{Run39 (S14)}} -- Same as \hyperlink{R24}{Run24 (B1)} but add winter PDO (mean Dec-Mar for 1935-2020) as environmental data (z-scores) to link to SR parameter labeled \texttt{`SR\_regime'}. Note: need to autogenerate SR section.
+
+\hypertarget{R40}{\textbf{Run40 (UI1)}} -- Same as \hyperlink{R24}{Run24 (B1)} but add UI every 6h smoothed using span=0.1 (mean Jan-Dec for 1967-2021) as environmental data (UI-mean) to link to SR parameter labeled \texttt{`SR\_regime'}. Note: need to autogenerate SR section.
+
+\hypertarget{R41}{\textbf{Run41 (UI2)}} -- Same as \hyperlink{R24}{Run24 (B1)} but add UI every 6h smoothed using span=2 (mean Jan-Dec for 1967-2021) as environmental data (UI-mean) to link to SR parameter labeled \texttt{`SR\_regime'}. Note: need to autogenerate SR section.
+
+\hypertarget{R42}{\textbf{Run42 (PDO)}} -- Same as \hyperlink{R38}{Run38} but promote PDO (1935-2020) to an abundance index (units=1, biomass).
+
+\hypertarget{R43}{\textbf{Run43 (PDO)}} -- Same as \hyperlink{R38}{Run38 \& 39} but use units=35: survey of a deviation vector used for an environmental time-series with soft linkage to the index (Methot's Option 2).
+
+\hypertarget{R44}{\textbf{Run44 (S15)}} -- Same as \hyperlink{R24}{Run24 (B1)} but change years to estimate recruitment deviations from 1950-2012 to 1935-2015 (prompted by Chantel Wetzel).
+
+\hypertarget{R45}{\textbf{Run45 (S16)}} -- Same as \hyperlink{R24}{Run24 (B1)} but use geospatial indices (with depth interaction) for the four synoptic surveys.
+
+\hypertarget{R46}{\textbf{Run46 (S17)}} -- Same as \hyperlink{R24}{Run24 (B1)} but remove NMFS Triennial and GIG Historical surveys.
+
+\hypertarget{R47}{\textbf{Run47}} -- Same as \hyperlink{R35}{Run35 (S11)} but add 25\pc{} process error to HBLL survey index relative errors.
+
+\hypertarget{R48}{\textbf{Run48 (S18)}} -- Same as \hyperlink{R24}{Run24 (B1)} but use catch reconstruction from Stanley et al. (2009) for years 1940-2009.
+
+\hypertarget{R49}{\textbf{Run49 (S14)}} -- Same as \hyperlink{R24}{Run24 (B1)} but apply Francis mean-age reweighting instead of using the Dirichlet-Multinomial.

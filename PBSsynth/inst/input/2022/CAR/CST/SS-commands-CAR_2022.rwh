@@ -1,0 +1,1537 @@
+## MCMC Stuff--------------------------------------
+## Run MPDs via function 'runADMB' which issues awatea command
+## on modified input files; to test use file manually, use:
+##   awatea -ind CAR-CST-18.txt
+##
+## Run MCMCs on Supercomputer, issue commands:
+##   awatea -ind CAR-CST.18.01.txt -mcmc 24000000 -mcscale 1000000 -mcsave 20000
+##   awatea -ind CAR-CST.18.01.txt -mceval
+##
+## The latter creates projections specified by the input file.
+## It also creates files like 'params.pst' that routines in 'runSweaveMCMC' need.
+##
+## Copy MCMC results to both WWRrun16/MCMC.16.01 and WWRrun16/MCMC.06.01/PRJ.06.01
+## (the latter preserves the projections as the MSY calculation will overwrite)
+##
+## If running locode=T, then issue these commands to get the software loaded:
+##  so("runADMB.r","awatea"); so("runSweave.r","awatea");  so("runSweaveMCMC.r","awatea"); endStrat=0.802; tput(endStrat); stepStrat=0.002; tput(stepStrat)
+##
+## Calculate time difference in R (e.g. start 'awarea.par', end 'awatea.psv'):
+##  strptime("2018-01-08 1:52:10", format="%Y-%m-%d %H:%M:%S") - strptime("2018-01-07 14:50:11", format="%Y-%m-%d %H:%M:%S")
+##-------------------------------------------------
+so("clearFiles.r")
+
+#=== CAR Coastwide 2022 ===
+## See file 'SS-commands-CAR_2021_beforeWP.rwh' for runs prior to WP 
+
+##=======================START NEW RUNS=========================
+##--------------------------------------------------------------------
+## Run01 -- Fix M=0.06 for both sexes, est. h, AF surveys = QCS, WCVI, NMFS (based on Awatea Run15).
+
+so("prepMPD.r","synth")
+run=1; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,0,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+0.5194119 0.6834821 2.0136885 2.3390630  ## SS Francis reweights Run 01.00
+0.15448   0.77598   1.08073   0.93331    ## Awatea Francis reweights Run 15
+
+so("prepMPD.r","synth")
+run=1; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+#wtemp = c(0.1425495, 0.2782145, 0.1119884, 0.8057998); names(wtemp) = c(1,3:5)
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+so("prepMPD.r","synth"); prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run02 -- Same as Run01 but use Normal priors on estimated selectivity parameters with 30% CV; change prior on LN(R0) from N(8,8) to N(7,7); change sigmaR from 0.6 to 0.9.
+
+so("prepMPD.r","synth")
+run=2; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,1,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+0.7187365 0.6783155 1.0081712 3.1184401
+
+so("prepMPD.r","synth")
+run=2; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+so("prepMPD.r","synth"); prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run03 -- Same as Run02 but reweighted using McAllistair Harmonic Mean ratios.
+
+## Originally, manually copied Run 02.00 to Run 03.00 and changed names of data and control files
+so("prepMPD.r","synth")
+run=3; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,2,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1,3:5))  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.mcallister)$wmean
+6.659943 3.424757 2.916330 3.891236
+
+so("prepMPD.r","synth")
+run=3; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+so("prepMPD.r","synth"); prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run04 -- Same as Run02 but use updated index series for GIG and NMFS and estimate M.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=4; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,6,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd())
+francis = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+write.csv(francis$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+ttcall(w.francis)$w
+0.8382755 0.7173387 1.0226207 4.4146814
+
+run=4; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+francis = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+write.csv(francis$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=4; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+#iters=list(test=15,pilot=100,mle=750,update=750,pcburn=2/3)  ## PJS suggests increasing burn-in time
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run05 -- Same as Run04 but reweight AF using McAllistair Harmonic Mean ratios.
+
+so("prepMPD.r","synth")
+run=5; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,4,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("weightAF.r","synth")
+out = weightAF(replist, fleets=c(1,3:5))  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.mcallister)$wmean
+7.093097 3.463077 2.820767 4.074917
+
+so("prepMPD.r","synth")
+run=5; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+so("prepMPD.r","synth"); prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=5; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+#iters=list(test=15,pilot=100,mle=750,update=750,pcburn=2/3)  ## PJS suggests increasing burn-in time
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run06 -- Same as Run04 but use updated 1980 index value and CV for NMFS Triennial survey (220222), use ageing error (AE) vector 3 (loess-smoothed SDs derived from CVs of length-at-age).
+
+so("prepMPD.r","synth")
+run=6; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,4,0)) ## c(new run, new reweight, like run, like reweight)
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+0.6429221 0.5407573 0.9403808 3.0335907
+
+so("prepMPD.r","synth")
+run=6; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+so("prepMPD.r","synth"); prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=6; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+#iters=list(test=15,pilot=100,mle=750,update=750,pcburn=2/3)  ## PJS suggests increasing burn-in time
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run07 -- Same as Run06 but use AE vector 5 (loess-smoothed SDs derived from CVs of age-reader data).
+
+so("prepMPD.r","synth")
+run=7; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,6,0)) ## c(new run, new reweight, like run, like reweight)
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+0.6663224 0.6257776 0.9585284 3.4585211
+
+so("prepMPD.r","synth")
+run=7; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+so("prepMPD.r","synth"); prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=7; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+#iters=list(test=15,pilot=100,mle=750,update=750,pcburn=2/3)  ## PJS suggests increasing burn-in time
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run08 -- Same as Run06 (AE3) but apply McAllister-Ianelli HMR weighting to AF data.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=8; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,6,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd())
+write.csv(plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+out = weightAF(replist, fleets=c(1,3:5))  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.mcallister)$wmean
+8.177930 4.207185 3.094501 4.023683 
+
+run=8; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd())
+write.csv(plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run09 -- Same as Run07 (AE5) but apply McAllister-Ianelli HMR weighting to AF data.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=9; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,7,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd())
+write.csv(plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+out = weightAF(replist, fleets=c(1,3:5))  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.mcallister)$wmean
+6.987472 3.565906 2.907469 3.936935
+
+run=9; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.mcallister)$wmean
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd())
+write.csv(plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run10 -- Same as Run06 (AE3) but use AE vector 1 (no bias, very little uncertainty) as in Run04, estimate two-stage natural mortality.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=10; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,6,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd())
+francis = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+write.csv(francis$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+ttcall(w.francis)$w
+0.9629029 0.8020084 1.0653692 5.2671778
+
+run=10; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd())
+francis = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+write.csv(francis$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+runSweave(type="MPD")
+
+## Chantel Wetzel suggested running two-stagem with values fixed to those estimated in R04
+run=10; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),".CW")
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd())
+francis = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+write.csv(francis$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".CW.csv"))
+runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=10; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run11 -- Same as Run10 (AE1) but use breakpoint years 8 and 18 to span the maturity ogive from 50% to 100% mature.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=11; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,10,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd())
+francis = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+write.csv(francis$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+ttcall(w.francis)$w
+0.9698712 0.7988374 1.0474757 5.5627399
+
+run=11; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd())
+francis = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+write.csv(francis$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run12 -- Same as Run06 (AE3) but downweight the NMFS Triennial survey using w=0.25.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=12; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,6,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd())
+francis = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+write.csv(francis$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+ttcall(w.francis)$w
+0.6429221 0.5407573 0.9403808 3.0335907
+
+run=12; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w; wtemp[4]=0.25
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd())
+francis = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+write.csv(francis$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run13 -- Same as Run07 (AE5) but downweight the NMFS Triennial survey using w=0.25.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=13; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,7,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd())
+francis = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+write.csv(francis$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+ttcall(w.francis)$w
+0.6663224 0.6257776 0.9585284 3.4585211
+
+run=13; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w; wtemp[4]=0.25
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd())
+francis = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+write.csv(francis$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run14 -- Same as Run11 (AE1) but downweight the NMFS Triennial survey using w=0.25.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=14; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,11,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+#francis = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+#write.csv(francis$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.9698712 0.7988374 1.0474757 5.5627399
+
+run=14; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w; wtemp[4]=0.25
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+#francis = plotSS.francis(replist, "age", fleet=c(1,3:5), plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+#write.csv(francis$age, file=paste0("mean.ages.",pad0(run,2),".",pad0(rwt,2),".csv"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+##--------------------------------------------------------------------
+## Run15 -- Same as Run10 (2M,AE1) but apply AE3 (loess-smoothed SD from L@A CVs).
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=15; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,10,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.7713017 0.6216015 0.9851476 3.6693954
+
+run=15; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=15; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run16 -- Same as Run04 (1M, AE1) but apply AE2 (raw SD from L@A CVs).
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=16; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,4,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6400359 0.5448304 0.9461708 3.0370657
+
+run=16; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+##--------------------------------------------------------------------
+## Run17 -- Same as Run04 (1M, AE1) but apply AE4 (raw SD from age reader CVs).
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=17; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,4,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6514393 0.6114697 0.9418267 3.3598646 
+
+run=17; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+
+##--------------------------------------------------------------------
+## Run18 -- Same as Run04 (1M, AE1) but estimate dome-shaped selectivity for males with offsets for females (pattern 20, offset 4).
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=18; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,4,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+#out=plotSS.selex(replist, subplot=102, debug=F, sobj=NULL, maxage=maxage, plot=T, print=F, lang="e")
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.9782457 0.8466629 1.0765279 3.8631188
+
+run=18; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+## ADnuts doesn't work Run18: crashes at sys call 4 (-hbf flag) -- mass matrix for NUTS not created because at least one chain is not PDH.
+
+##--------------------------------------------------------------------
+## Run19 -- Same as Run18 (1M, AE1) but fix beta2 (peak), use beta3 (varL) prior for beta4 (varR), apply tight prior to beta6 (final), and use normal priors for the remaining delta parameters [delta2~N(0,3), delta3~N(0,3), delta4~N(-10,10)] and increase their bounds to (-30,30).
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=19; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,18,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+1.5271296  0.8286632  1.1911297 14.6099978
+
+run=19; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=19; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run20 -- Same as Run19 (1M, AE1) but use AE3 (loess-smoothed SD based on length-at age CVs).
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=20; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,19,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+1.4125560  0.8312371  1.2027763 12.9514822
+
+run=20; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=20; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run21 -- Same as Run06 (1M, AE3) but use Dirichlet-Multinomial to fit AF data; reweight only CPUE index data.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=21; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,6,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6996344 0.5738664 0.9812803 3.1714758 ## Not used
+
+run=21; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = c(1,1,1,1); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=21; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run22 -- Same as Run06 (1M, AE3) but add winter PDO indices as a separate fleet (but bypass the calculation of survey selectivity) using units=31 : exp(recruitment deviation).
+##       -- Same as Run06 (1M, AE3) but add winter PDO indices and link to recruitment parameters (no big effect).
+##       -- 220318 environmental data ignored
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=22; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,6,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+1.1054992 0.5150668 0.6800527 2.5056762 (rev pdo as index, because negative is good)
+#0.6139285 0.5607271 1.1682469 5.4855427 (pdo as index)
+#0.6429172 0.5407522 0.9403727 3.0336124 (env as parameter)
+
+#so("prepMPD.r","synth")
+run=22; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+cvpro=c(0.1779,rep(0,7)); names(cvpro)=c(1,3:9)
+so("prepMPD.r","synth"); prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run23 -- Same as Run21 (1M, AE3, DM) but add catch for 2022 and AF from QCS and WCVI surveys in 2021.
+##          Tried fixing selectivity parameter mu=12 for HS, WCHG, and GIG but model output differences were minimal; therefore keep mu=14.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=23; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,21,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.7746240 0.6529749 0.7804648 3.5722758  ## not used -- mu=14
+0.7657015 0.6491991 0.7664736 3.5127315  ## not used -- mu=12
+
+run=23; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = c(1,1,1,1); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1779,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+##--------------------------------------------------------------------
+## Run24 (Base Case) -- Same as Run23 (1M, AE3, DM, mu=14 for fixed selex) but update CPUE index series using data from May 2022 vs. Nov 2021
+
+run=24; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,23,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6831330 0.6312840 0.7384356 3.2725747  ## not used because using Dirichlet-Multinomial
+
+run=24; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = c(1,1,1,1); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=24; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=1000,update=1000,pcburn=0.75)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+runSweave(d.model=getwd(), type="MCMC")
+
+so("SS_doRetro.r","synth")
+years = 0:-10
+#SS_doRetro(masterdir=".", oldsubdir="", newsubdir="retros", years=years, exefile=NULL)
+#retroModels <- SSgetoutput(dirvec=file.path(".", "retros", paste("retro", years, sep="")))
+#save("retroModels", file="retroModels.rda")
+load("retroModels.rda")
+retroSummary <- SSsummarize(retroModels)
+endyrvec <- retroSummary[["endyrs"]] + years
+SSplotComparisons(retroSummary, endyrvec=endyrvec, legendlabels=paste("Data", years, "years"), print=T, plotdir="./figs")
+
+##--------------------------------------------------------------------
+## Run25 (Sens 01) -- Same as Run24 (1M, AE3, DM, mu=14 for fixed selex) but split natural mortality by age for young vs. mature using breakpoint ages 13 and 14
+##   (using ages 8 and 18 to span the maturity ogive from 50\pc{} to 100\pc{} mature caused instability in parameter `\texttt{recdev_early[23]}').
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=25; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.7941422 0.7242487 0.7752234 4.1535379  ## not used because using Dirichlet-Multinomial
+
+run=25; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = c(1,1,1,1); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+#so("runSweave.r","synth"); runSweave(type="MPD",figs.only=T)
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=25; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run26 (Sens 02) -- Same as Run24 but use no ageing error (AE1).
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=26; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.8206527 0.8156239 0.7974928 4.4417371  ## not used because using Dirichlet-Multinomial
+
+run=26; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = c(1,1,1,1); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=26; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run27 (Sens 03) -- Same as Run24 but use smoothed ageing error (AE5) based an CVs of precision tests by age readers.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=27; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6836832 0.6262854 0.7340173 3.2772674  ## not used because using Dirichlet-Multinomial
+
+run=27; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = c(1,1,1,1); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=27; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run28 (Sens 04) -- Same as Run24 but use CASAL-style ageing error (AE6) based on constant CV=0.1.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=28; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6795918 0.6538969 0.7412085 3.1872794  ## not used because using Dirichlet-Multinomial
+
+run=28; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = c(1,1,1,1); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=28; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run29 (Sens 05) -- Same as Run24 but reduce catch in 1965-95 (foreign + unobserved domestic) by 33%.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=29; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6823768 0.6471271 0.7158056 3.2852299  ## not used because using Dirichlet-Multinomial
+
+run=29; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = c(1,1,1,1); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=29; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run30 (Sens 06) -- Same as Run24 but increase catch in 1965-95 (foreign + unobserved domestic) by 50%.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=30; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6868267 0.6300623 0.7630916 3.2422681  ## not used because using Dirichlet-Multinomial
+
+run=30; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = c(1,1,1,1); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=30; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run31 (Sens 07) -- Same as Run24 but use lower sigmaR = 0.6.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=31; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6708844 0.6194814 0.7209971 3.2382351  ## not used because using Dirichlet-Multinomial
+
+run=31; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = c(1,1,1,1); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=31; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run32 (Sens 08) -- Same as Run24 but use higher sigmaR = 1.2.
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=32; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6817409 0.6448763 0.7437665 3.2243285  ## not used because using Dirichlet-Multinomial
+
+run=32; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = c(1,1,1,1); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=32; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run33 (Sens 09) -- Same as Run24 but estimate female dome-shaped selectivity as an offset to logistic male selectivity (see Run19 for control file set up).
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=33; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+1.258643  1.137627  1.033188 12.600370  ## not used because using Dirichlet-Multinomial
+
+run=33; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = c(1,1,1,1); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=33; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run34 (Sens 10) -- Same as Run24 but add excluded AF for HS and WCHG synoptic surveys.
+
+run=34; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2)); type="MPD"
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.7128684 0.6392470 0.8085334 3.5423198 7.1794971 1.4361542  ## not used because using Dirichlet-Multinomial
+
+run=34; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2)); type="MPD"; ver=3
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = c(1,1,1,1,1,1); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+## v.2: fix selectivity parameters for HS and WCHG to MPD estimates of a prior estimation for control.34.01.v1.ss
+#wtemp = c(1,1,1,1); names(wtemp) = c(1,3,4,5) #names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,0,0,0,0,0,0); names(cvpro)=c(1,3:8)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=34; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run35 (Sens 11) -- Same as Run24 but add index and AF data from two HBLL surveys (North and South).
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+run=35; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.7013630 0.6340596 0.7289018 3.4269301 1.1690571 1.4107578 ## not used because using Dirichlet-Multinomial
+
+run=35; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2)); type="MPD"
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = rep(1,length(fleets.af)); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,rep(0,length(fleets.idx)-1)); names(cvpro)=fleets.idx
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## NUTS works after changing 'adapt_delta' from 0.8 to 0.9
+run=35; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+## Run Hastings-Metropolis (way too slow, aborted)
+ss -mcmc 1200000 -mcsave 1000 -mcscale 1000000
+#ss -mcmc 6000000 -mcsave 5000 -mcscale 1000000
+ss -mceval
+
+##--------------------------------------------------------------------
+## Run36 (Sens 12) -- Same as Run24 but use Tweedie CPUE.
+
+run=36; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+2.923942  1.356925  1.265016 12.192216 ## not used because using Dirichlet-Multinomial
+
+run=36; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = rep(1,length(fleets.af)); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0,rep(0,length(fleets.idx)-1)); names(cvpro)=fleets.idx
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## NUTS works after changing 'adapt_delta' from 0.8 to 0.9
+run=36; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run37 (Sens 13) -- Same as Run24 but remove the commercial CPUE index series.
+
+run=37; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN", "calcMA", "initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+2.939236  1.384725  1.190032 12.592191 ## not used because using Dirichlet-Multinomial
+
+run=37; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = rep(1,length(fleets.af)); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0,rep(0,length(fleets.idx)-1)); names(cvpro)=fleets.idx
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## NUTS works after changing 'adapt_delta' from 0.8 to 0.9
+run=37; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run38 (rubbish) -- Same as Run24 but add winter PDO (mean Dec-Mar for 1919-2021) as a deviation (x-mean) index that interacts with exp(recruitment deviations).
+
+run=38; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN", "calcMA", "initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.5736344 0.6472187 1.0721030 4.7303173  ## v.2 not used because using Dirichlet-Multinomial
+0.8074608 0.8630511 1.1341586 5.9885608  ## v.3, 4, 5  ## for info only, using D-M
+0.7664925 0.8685843 1.1387220 7.0607018  ## v.6, 7, 8  ## for info only, using D-M
+
+run=38; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = rep(1,length(fleets.af)); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+#cvpro=c(0.178,rep(0,length(fleets.idx)-1),0); names(cvpro)=c(fleets.idx,9)
+#cvpro=c(0.178,rep(0,length(fleets.idx)-1),0.30); names(cvpro)=c(fleets.idx,9)
+cvpro=c(0.178,rep(0,length(fleets.idx)-1),0.8258); names(cvpro)=c(fleets.idx,9)
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## NUTS works after changing 'adapt_delta' from 0.8 to 0.9
+run=38; rwt=1; ver=8; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+#ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/Versions"; ad.run=paste0("Run",pad0(run,2),".v",ver); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run39 (Sens 14) -- Same as Run24 but add winter PDO (mean Dec-Mar for 1935-2020) as environmental data (z-scores) to link to SR parameter labeled 'SR_regime'.
+## Note: need to autogenerate SR section
+
+run=39; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN", "calcMA", "initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6799629 0.6299749 0.7452159 3.2573935  ## not used because using Dirichlet-Multinomial
+
+run=39; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = rep(1,length(fleets.af)); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,rep(0,length(fleets.idx)-1)); names(cvpro)=fleets.idx
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## NUTS works after changing 'adapt_delta' from 0.8 to 0.9
+run=39; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run40 (Sens UI1) -- Same as Run24 but add UI every 6h smoothed using span=0.1 (mean Jan-Dec for 1967-2021) as environmental data (UI-mean) to link to SR parameter labeled 'SR_regime'.
+## Note: need to autogenerate SR section
+
+run=40; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN", "calcMA", "initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6803472 0.6367772 0.7387213 3.3850143  ## not used because using Dirichlet-Multinomial
+
+run=40; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = rep(1,length(fleets.af)); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,rep(0,length(fleets.idx)-1)); names(cvpro)=fleets.idx
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+##--------------------------------------------------------------------
+## Run41 (Sens UI2) -- Same as Run24 but add UI every 6h smoothed using span=2 (mean Jan-Dec for 1967-2021) as environmental data (UI-mean) to link to SR parameter labeled 'SR_regime'.
+## Note: need to autogenerate SR section
+
+run=41; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN", "calcMA", "initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6832202 0.6312197 0.7384587 3.2720650  ## not used because using Dirichlet-Multinomial
+
+run=41; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = rep(1,length(fleets.af)); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,rep(0,length(fleets.idx)-1)); names(cvpro)=fleets.idx
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+##--------------------------------------------------------------------
+## Run42 (Sens PDO) -- Same as Run38 but promote PDO (1935-2020) to an abundance index.
+
+run=42; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN", "calcMA", "initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+prepMPD(run.rwt=c(run,rwt,38,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6936233 0.6328059 0.7927280 5.2396808  ## not used because using Dirichlet-Multinomial
+
+run=42; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = rep(1,length(fleets.af)); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,rep(0,length(fleets.idx)-1)); names(cvpro)=fleets.idx
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+ss -mcmc 1000 -mcsave 10
+ss -mceval
+test[1:10,c("Totbio_unfished","SmryBio_Virg","SmryBio_InitEq","SmryBio_1935")]
+
+##--------------------------------------------------------------------
+## Run43 (Sens PDO) -- Same as Run38 & Run39 but use units=35: survey of a deviation vector used for an environmental time-series with soft linkage to the index.
+
+run=43; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN", "calcMA", "initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+prepMPD(run.rwt=c(run,rwt,38,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6936233 0.6328059 0.7927280 5.2396808  ## not used because using Dirichlet-M
+
+##--------------------------------------------------------------------
+## Run44 (Sens 14) -- Same as Run24 but change years to estimate recruitment deviations from 1950-2012 to 1935-2015.
+
+run=44; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN", "calcMA", "initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6830420 0.6314717 0.7387911 3.2740606  ## not used because using Dirichlet-M
+
+run=44; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = rep(1,length(fleets.af)); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,rep(0,length(fleets.idx)-1)); names(cvpro)=fleets.idx
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+##--------------------------------------------------------------------
+## Run45 (Sens 15) -- Same as Run24 but use geospatial indices for the four synoptic surveys.
+
+run=45; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN", "calcMA", "initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6375506 0.6380920 0.7354897 3.0440559  ## not used because using Dirichlet-M
+
+run=45; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = rep(1,length(fleets.af)); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,rep(0,length(fleets.idx)-1)); names(cvpro)=fleets.idx
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+##--------------------------------------------------------------------
+## Run46 (Sens 16) -- Same as Run24 but remove NMFS Triennial and GIG Historical surveys.
+
+run=46; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN", "calcMA", "initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.7507281 0.6644172 0.7723323  ## not used because using Dirichlet-M
+
+run=46; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = rep(1,length(fleets.af)); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,rep(0,length(fleets.idx)-1)); names(cvpro)=fleets.idx
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+##--------------------------------------------------------------------
+## Run47  -- Same as Run35 but add 25% process error to HBLL survey index relative errors.
+
+run=47; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN", "calcMA", "initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+prepMPD(run.rwt=c(run,rwt,35,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.7013630 0.6340596 0.7289018 3.4269301 1.1690571 1.4107578  ## not used because using Dirichlet-M
+
+run=47; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = rep(1,length(fleets.af)); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,rep(0,length(fleets.idx)-3),0.25,0.25); names(cvpro)=fleets.idx
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+
+##--------------------------------------------------------------------
+## Run48 (Sens 17) -- Same as Run24 but use catch reconstruction from Stanley et al. (2009) for years 1940-2009.
+
+run=48; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN", "calcMA", "initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6864006 0.6297079 0.7855020 3.8820501  ## not used because using Dirichlet-M
+
+run=48; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = rep(1,length(fleets.af)); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+cvpro=c(0.1780,rep(0,length(fleets.idx)-1)); names(cvpro)=fleets.idx
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+
+##--------------------------------------------------------------------
+## Run49 (Sens 18) -- Same as Run24 but  but apply Francis mean-age reweighting instead of using the Dirichlet-Multinomial.
+
+run=49; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN", "calcMA", "initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+prepMPD(run.rwt=c(run,rwt,24,0)) ## new run, new reweight, like run, like reweight
+## ! Modify control and/or data file before running ss.exe
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd(), verbose=F, printstats=F)
+out=calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af)
+ttcall(w.francis)$w
+0.6307719 0.5989413 0.7095577 3.1361754 
+
+run=49; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+#wtemp = rep(1,length(fleets.af)); names(wtemp) = names(ttcall(w.francis)$w)  ## Dirichlet-Multinoimial does not need reweighting
+wtemp = ttcall(w.francis)$w
+cvpro=c(0.1780,rep(0,length(fleets.idx)-1)); names(cvpro)=fleets.idx
+prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro) ## need to re-source 'prepMPD.r' if Sweave has been run previously
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+runSweave(type="MPD")  ## this calls 'calcMA' which produces the 'mean.ages' file and 'tab5'
+
+## Run ADnuts () ## NUTS works after changing 'adapt_delta' from 0.8 to 0.9
+run=49; rwt=1; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC22/CAR/Data/SS/CAR2022"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="car2022", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+

@@ -64,7 +64,11 @@ https://github.com/pbs-software
 #	), package="PBSsynth")
 
 ## Force this globally (without have to make a documentation file)
-do.call("assign", args=list(x="species.name", value="Canary Rockfish", envir=.PBSmodEnv))
+#do.call("assign", args=list(x="control.file", value="rebsn_control.ss", envir=.PBSmodEnv))
+#do.call("assign", args=list(x="species.name", value="Rougheye/Blackspotted Rockfish", envir=.PBSmodEnv))
+#do.call("assign", args=list(x="species.name", value="Yellowmouth Rockfish", envir=.PBSmodEnv))
+#do.call("assign", args=list(x="species.name", value="Canary Rockfish", envir=.PBSmodEnv))
+do.call("assign", args=list(x="species.name", value="Pacific Ocean Perch", envir=.PBSmodEnv))
 do.call("assign", args=list(x="quants3", value=c(0.05,0.50,0.95), envir=.PBSmodEnv))
 do.call("assign", args=list(x="quants5", value=c(0.05,0.25,0.50,0.75,0.95), envir=.PBSmodEnv))
 do.call("assign", args=list(x="ptypes", value=c("win","png"), envir=.PBSmodEnv))

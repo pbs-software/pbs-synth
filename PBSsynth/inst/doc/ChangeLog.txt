@@ -5,6 +5,38 @@ Authors : RH  = Rowan Haigh
           PJS = Paul Starr
           CG  = Chris Grandin
 
+0.5.1 (2023-06-05) [Rcheck=F, Rbuild=F]
+  * R code
+    + Forgot to add the updated R files from the development directory and to update the DESCRIPTION file.
+    + Haluun olla sekasin ja vapaa huolista niinku.
+
+0.5.0 (2023-06-05) [Rcheck=F, Rbuild=F]
+  * R code
+    + Added various new functions to `utilFuns.r':
+      - `calcEQyield' to calculate MSY by area (RH 230404);
+      - `calcMA' to calculate indicators for fits to mean age data (RH 230217);
+      - `calcMSY' to approximate MSY to emulate Awatea's version (not really do-able in SS3) (RH 230329);
+      - `getSS.rdevs' to get reruitment deviations from replist (RH 230502);
+      - load_extra_mcmc' to load extra MCMC information from Report files generated for every sample (RH 230414).
+    + Modified various existing functions in `utilFuns.r':
+      - `convPN' to convert SS3 parameter names from SS to simpler names; include 2023 modification for 3-area POP (RH 230214);
+      - `prepMPD' minor changes for POP 2023 (RH 230518);
+      - `readADnuts' sitched to Chris Grandin's 'run_adnuts' function on his Linux server for the 2023 POP assessment (RH 230323).
+    + Added one new (actually old but missing) function to `plotFuns.r':
+      - `plotSS.francis' to plot mean age fits using Francis (2011) methodology.
+    + Modified various existing functions in `plotFuns.r':
+      - `plotSS.index' spattering of code changes (RH 230217);
+      - `plotSS.pmcmc' added a few ablines (RH 220727, probably newer);
+      - `plotSS.stdres' resolved sex combinations (for F & M only) (RH 230503);
+      - `plotSS.ts' attempted to disentangle area names and fleet names (RH 230524);
+      - `plt.cohortResids' removed multiple calls to quantBox when colouring by recdevs (RH 230502);
+      - `plt.selectivity minor tweaks (RH 230307).
+  * Data
+    + Added `00ReadMe.txt' files to explain various SS3 runs (RH 230531).
+    + Added sensitivity SS3 input files for YMR 2021 (RH 230530).
+    + Added initial SS3 input files for POP 2023 run (RH 230531).
+    + Added stock-specific sweave files for generating tables and figures when running MPDs and MCMCs.
+
 0.4.0 (2023-01-11) [Rcheck=F, Rbuild=F]
   * R code
     + Updated `appFuns.r'
