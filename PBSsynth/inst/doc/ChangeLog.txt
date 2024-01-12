@@ -5,6 +5,15 @@ Authors : RH  = Rowan Haigh
           PJS = Paul Starr
           CG  = Chris Grandin
 
+0.5.4 (2024-01-11) [Rcheck=F, Rbuild=F]
+  * Forgot to add new directories
+
+0.5.3 (2024-01-11) [Rcheck=F, Rbuild=F]
+  * Updated SS3 model inputs
+
+0.5.2 (2023-10-03) [Rcheck=F, Rbuild=F]
+  * Interim update on SVN
+
 0.5.1 (2023-06-05) [Rcheck=F, Rbuild=F]
   * R code
     + Forgot to add the updated R files from the development directory and to update the DESCRIPTION file.
