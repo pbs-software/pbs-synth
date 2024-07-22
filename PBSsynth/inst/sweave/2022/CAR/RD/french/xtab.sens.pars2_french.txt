@@ -1,0 +1,50 @@
+\setlength{\tabcolsep}{6pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Tue Dec 20 13:28:07 2022
+\begin{table}[ht]
+\centering
+\caption{SCA~CB : valeurs m\'{e}dianes des \'{e}chantillons MCCM pour les autres param\`{e}tres estim\'{e}s pour 4 simulations de sensibilit\'{e} (\Nmcmc{} \'{e}chantillons chacun). R~= Simulation (mod\`{e}le), S~= Sensibilit\'{e}. Les indices num\'{e}riques autres que ceux de $M2$ indiquent les types d'engins suivants $g$ : 1~= Chalut, 3~= synoptique BRC, 4~= synoptique COIV, 6~= synoptique DH, 7~= synoptique COHG, 9~= RPFD zone nord et 10~= RPFD zone sud. Simulations de sensibilit\'{e} : S01~= M r\'{e}partie entre les \^{a}ges 13 et 14, S09~= s\'{e}lectivit\'{e} en forme de d\^{o}me pour femelles, S10~= utilisation des FA DH COHG, S11~= ajout des RPFD} 
+\label{tab:car.sens.pars2}
+\begingroup\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\footnotesize
+\vspace{-12pt}
+\begin{tabular}{crrrr}
+  \\[-1.0ex] \hline
+Param\`{e}tre & S01(R25) & S09(R33) & S10(R34) & S11(R35) \\ 
+  \hline
+$M2_{1}$ & 0,1454 & --- & --- & --- \\ 
+  $M2_{2}$ & 0,06902 & --- & --- & --- \\ 
+  $\log~v_{\text{R}1}~(\text{CHALUT})$ & --- & 2,648 & --- & --- \\ 
+  $\beta6_{1}~(\text{CHALUT})$ & --- & 10,00 & --- & --- \\ 
+  $\Delta2_{1}~(\text{CHALUT})$ & --- & -0,3502 & --- & --- \\ 
+  $\Delta3_{1}~(\text{CHALUT})$ & --- & 2,358 & --- & --- \\ 
+  $\Delta4_{1}~(\text{CHALUT})$ & --- & -14,06 & --- & --- \\ 
+  $\log~v_{\text{R}3}~(\text{BRC})$ & --- & 2,590 & --- & --- \\ 
+  $\beta6_{3}~(\text{BRC})$ & --- & 10,00 & --- & --- \\ 
+  $\Delta2_{3}~(\text{BRC})$ & --- & -0,2002 & --- & --- \\ 
+  $\Delta3_{3}~(\text{BRC})$ & --- & 1,907 & --- & --- \\ 
+  $\Delta4_{3}~(\text{BRC})$ & --- & -10,23 & --- & --- \\ 
+  $\log~v_{\text{R}4}~(\text{COIV})$ & --- & 2,591 & --- & --- \\ 
+  $\beta6_{4}~(\text{COIV})$ & --- & 10,00 & --- & --- \\ 
+  $\Delta2_{4}~(\text{COIV})$ & --- & -0,1616 & --- & --- \\ 
+  $\Delta3_{4}~(\text{COIV})$ & --- & 1,468 & --- & --- \\ 
+  $\Delta4_{4}~(\text{COIV})$ & --- & -5,215 & --- & --- \\ 
+  $\mu_{6}~(\text{DH})$ & --- & --- & 6,963 & --- \\ 
+  $\log~v_{\text{L}6}~(\text{DH})$ & --- & --- & 2,662 & --- \\ 
+  $\Delta1_{6}~(\text{DH})$ & --- & --- & -0,4069 & --- \\ 
+  $\mu_{7}~(\text{COHG})$ & --- & --- & 16,24 & --- \\ 
+  $\log~v_{\text{L}7}~(\text{COHG})$ & --- & --- & 2,728 & --- \\ 
+  $\Delta1_{7}~(\text{COHG})$ & --- & --- & -0,3937 & --- \\ 
+  $\mu_{9}~(\text{RPFDN})$ & --- & --- & --- & 8,978 \\ 
+  $\log~v_{\text{L}9}~(\text{RPFDN})$ & --- & --- & --- & 1,610 \\ 
+  $\Delta1_{9}~(\text{RPFDN})$ & --- & --- & --- & -0,3715 \\ 
+  $\mu_{10}~(\text{RPFDS})$ & --- & --- & --- & 9,488 \\ 
+  $\log~v_{\text{L}10}~(\text{RPFDS})$ & --- & --- & --- & 2,042 \\ 
+  $\Delta1_{10}~(\text{RPFDS})$ & --- & --- & --- & -0,3686 \\ 
+  $\log~(\text{DM}~\theta)_{6}$ & --- & --- & 4,916 & --- \\ 
+  $\log~(\text{DM}~\theta)_{7}$ & --- & --- & 5,322 & --- \\ 
+  $\log~(\text{DM}~\theta)_{9}$ & --- & --- & --- & 4,884 \\ 
+  $\log~(\text{DM}~\theta)_{10}$ & --- & --- & --- & 5,202 \\ 
+   \hline
+\end{tabular}
+\endgroup
+\end{table}

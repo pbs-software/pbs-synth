@@ -1,6 +1,6 @@
 Package: PBSsynth
-Version: 0.5.1
-Date:    2023-06-05
+Version: 0.6.0
+Date:    2024-07-22
 Title:   Tools for Manipulating Stock Synthesis 3
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
@@ -10,7 +10,7 @@ Authors@R: c(
    )
 Author:      Rowan Haigh [aut, cre], Paul J. Starr [ctb], Andrew M. Edwards [ctb], Chris Grandin [ctb]
 Maintainer:  Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
-Copyright:   2020-2023, Fisheries and Oceans Canada
+Copyright:   2020-2024, Fisheries and Oceans Canada
 Depends:     R (>= 3.5.0), PBSmapping, PBSmodelling, PBStools, PBSdata
 #Imports:     nada
 #Suggests:    nada

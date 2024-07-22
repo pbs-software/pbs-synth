@@ -1,0 +1,1005 @@
+\documentclass[11pt]{book}   
+\usepackage{Sweave}     % needs to come before resDocSty
+\usepackage{resDocSty}  % Res Doc .sty file
+
+% http://tex.stackexchange.com/questions/65919/space-between-rows-in-a-table
+\newcommand\Tstrut{\rule{0pt}{2.6ex}}       % top strut for table row",
+\newcommand\Bstrut{\rule[-1.1ex]{0pt}{0pt}} % bottom strut for table row",
+
+%\usepackage{rotating}   % for sideways table
+\usepackage{longtable,array,arydshln}
+\setlength{\dashlinedash}{0.5pt}
+\setlength{\dashlinegap}{1.0pt}
+
+\usepackage{pdfcomment}
+\usepackage{xifthen}
+\usepackage{fmtcount}    %% for rendering numbers to words
+%\usepackage{multicol}    %% for decision tables (doesn't seem to work)
+\usepackage{xcolor}
+
+\captionsetup{figurewithin=none,tablewithin=none} %RH: This works for resetting figure and table numbers for book class though I don't know why. Set fig/table start number to n-1.
+
+\newcommand{\Bmsy}{B_\text{RMD}}
+\newcommand{\umsy}{u_\text{RMD}}
+\newcommand{\super}[1]{$^\text{#1}$}
+\newcommand{\bold}[1]{\textbf{#1}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\itbf}[1]{\textit{\textbf{#1}}}
+
+\newcommand{\elof}[1]{\in\left\{#1\right\}}   %% is an element of
+\newcommand{\comment}[1]{}                    %% commenting out blocks of text
+\newcommand{\commint}[1]{\hspace{-0em}}       %% commenting out in-line text
+
+\newcommand{\AppCat}{Annexe~A}
+\newcommand{\AppSurv}{Annexe~B}
+\newcommand{\AppCPUE}{Annexe~C}
+\newcommand{\AppBio}{Annexe~D}
+\newcommand{\AppEqn}{Annexe~E}
+
+\def\startP{246}         % page start (default=1)
+\def\startF{0}           % figure start counter (default=0)
+\def\startT{0}           % table start counter (default=0)
+\def\bfTh{{\bf \Theta}}  % bold Theta
+
+%http://tex.stackexchange.com/questions/6058/making-a-shorter-minus
+\def\minus{%
+  \setbox0=\hbox{-}%
+  \vcenter{%
+    \hrule width\wd0 height 0.05pt% \the\fontdimen8\textfont3%
+  }%
+}
+\newcommand{\oldstuff}[1]{\normalsize\textcolor{red}{YMR: #1}\normalsize}
+\newcommand{\newstuff}[1]{\normalsize\textcolor{blue}{CAR: #1}\normalsize}
+\newcommand{\greystuff}[1]{\normalsize\textcolor{slategrey}{WTF: #1}\normalsize}
+
+\newcommand{\ptype}{png}
+\newcommand{\pc}{\%}
+\newcommand{\angL}{\guillemotleft\,}
+\newcommand{\angR}{\,\guillemotright}
+%\newcommand{\mr}[1]{\\\\text{#1}}
+%\newcommand{\xor}[2]{\ifthenelse{\isempty{#1}}{#2}{#1}}
+
+%% ------- GENERIC  ------------------------------
+%% #1=file name & label, #2=caption, #3=caption prefix (optional), #4=label prefix (optional)
+\newcommand\onefig[4]{
+  \begin{figure}[!htb]
+  \begin{center}
+  \ifthenelse{\equal{#4}{}}
+    {\pdftooltip{%
+      \includegraphics[width=6.4in,height=7.25in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1}}}
+    {\pdftooltip{%
+      \includegraphics[width=6.4in,height=7.25in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#4#1}}}
+  \end{center}
+  \ifthenelse{\equal{3}{}}%
+    {\caption{#2}}
+    {\caption{#3#2}}
+  \ifthenelse{\equal{#4}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#4#1}}
+  \end{figure}
+  %%\clearpage
+}
+%% #1 = file name & label, #2=height, #3=caption, #4=caption prefix (optional), #5=label prefix (optional)
+\newcommand\onefigH[5]{
+  \begin{figure}[!htb]
+  \begin{center}
+  \ifthenelse{\equal{#5}{}}
+    {\pdftooltip{%
+      \includegraphics[width=6.4in,height=#2in,keepaspectratio=TRUE]{{#1}.\ptype}}{figure~\ref{fig:#1}}}
+    {\pdftooltip{%
+      \includegraphics[width=6.4in,height=#2in,keepaspectratio=TRUE]{{#1}.\ptype}}{figure~\ref{fig:#5#1}}}
+  \end{center}
+  \vspace{-2.5ex}
+  \ifthenelse{\equal{4}{}}%
+    {\caption{#3}}
+    {\caption{#4#3}}
+  \ifthenelse{\equal{#5}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#5#1}}
+  \end{figure}
+}
+%% #1=filename 1 & label, #2=filename 2, #3=caption, #4=caption prefix (optional), #5=label prefix (optional)
+\newcommand\twofig[5]{
+  \begin{figure}[!htb]
+  \begin{center}
+  \ifthenelse{\equal{#5}{}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#1}.\ptype}}{figure~\ref{fig:#1} en haut} \\
+      \pdftooltip{
+        \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#2}.\ptype}}{figure~\ref{fig:#1} en bas}
+    \end{tabular}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#1}.\ptype}}{figure~\ref{fig:#5#1} en haut} \\
+      \pdftooltip{
+        \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#2}.\ptype}}{figure~\ref{fig:#5#1} en bas}
+    \end{tabular}}
+  \end{center}
+  \ifthenelse{\equal{4}{}}%
+    {\caption{#3}}
+    {\caption{#4#3}}
+  \ifthenelse{\equal{#5}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#5#1}}
+  \end{figure}
+  %%\clearpage
+}
+%% #1 = filename 1 & label, #2 = filename 2, #3 = filename 3, #4 = caption, #5=caption prefix (optional), #6=label prefix (optional)
+\newcommand\threefig[6]{
+  \begin{figure}[!htb]
+  \begin{center}
+  \ifthenelse{\equal{#6}{}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=3.5in,height=3.5in,keepaspectratio=TRUE]{{#1}.\ptype}}{figure~\ref{fig:#1} en haut} \\
+      \pdftooltip{
+        \includegraphics[width=3.5in,height=3.5in,keepaspectratio=TRUE]{{#2}.\ptype}}{figure~\ref{fig:#1} interm\'{e}diaire} \\
+      \pdftooltip{
+        \includegraphics[width=4in,height=4in,keepaspectratio=TRUE]{{#3}.\ptype}}{figure~\ref{fig:#1} en bas}
+    \end{tabular}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=3.5in,height=3.5in,keepaspectratio=TRUE]{{#1}.\ptype}}{figure~\ref{fig:#6#1} en haut} \\
+      \pdftooltip{
+        \includegraphics[width=3.5in,height=3.5in,keepaspectratio=TRUE]{{#2}.\ptype}}{figure~\ref{fig:#6#1} interm\'{e}diaire} \\
+      \pdftooltip{
+        \includegraphics[width=4in,height=4in,keepaspectratio=TRUE]{{#3}.\ptype}}{figure~\ref{fig:#6#1} en bas}
+    \end{tabular}}
+  \end{center}
+  \ifthenelse{\equal{5}{}}%
+    {\caption{#4}}
+    {\caption{#5#4}}
+  \ifthenelse{\equal{#6}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#6#1}}
+  \end{figure}
+}
+%% #1=fig1 filename, #2=fig2 filename, #3=caption text, #4=fig1 width #5=fig1 height, #6=fig2 width, #7=fig2 height, #8=caption prefix (optional), #9=label prefix (optional)
+\newcommand\twofigWH[9]{
+  \begin{figure}[!htp]
+  \begin{center}
+  \ifthenelse{\equal{#9}{}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=#4in,height=#5in,keepaspectratio=TRUE]{{#1}.\ptype}}{figure~\ref{fig:#1} en haut} \\
+      \pdftooltip{
+        \includegraphics[width=#6in,height=#7in,keepaspectratio=TRUE]{{#2}.\ptype}}{figure~\ref{fig:#1} en bas}
+    \end{tabular}}
+    {\begin{tabular}{c}
+      \pdftooltip{
+        \includegraphics[width=#4in,height=#5in,keepaspectratio=TRUE]{{#1}.\ptype}}{figure~\ref{fig:#9#1} en haut} \\
+      \pdftooltip{
+        \includegraphics[width=#6in,height=#7in,keepaspectratio=TRUE]{{#2}.\ptype}}{figure~\ref{fig:#9#1} en bas}
+    \end{tabular}}
+  \end{center}
+  \ifthenelse{\equal{8}{}}%
+    {\caption{#3}}
+    {\caption{#8#3}}
+  \ifthenelse{\equal{#9}{}}%
+    {\label{fig:#1}}
+    {\label{fig:#9#1}}
+  \end{figure}
+  %%\clearpage
+}
+%% ---------- Not area specific ------------------
+%% #1=figure1 #2=figure2 #3=label #4=caption #5=width (fig) #6=height (fig)
+\newcommand\figbeside[6]{
+\begin{figure}[!htb]
+  \centering
+  \pdftooltip{
+  \begin{minipage}[t]{0.45\textwidth}
+    \begin{center}
+    \includegraphics[width=#5in,height=#6in,keepaspectratio=TRUE]{{#1}.\ptype}
+    \end{center}
+    %\caption{#3}
+    %\label{fig:#1}
+  \end{minipage}}{figure~\ref{fig:#3} gauche}%
+  \quad
+  \pdftooltip{
+  \begin{minipage}[t]{0.45\textwidth}
+    \begin{center}
+    \includegraphics[width=#5in,height=#6in,keepaspectratio=TRUE]{{#2}.\ptype}
+    \end{center}
+    %\caption{#4}
+    %\label{fig:#2}
+  \end{minipage}}{figure~\ref{fig:#3} droite}
+  \caption{#4}
+  \label{fig:#3}
+  \end{figure}
+}
+
+        % keep.source=TRUE, 
+
+% Alter some LaTeX defaults for better treatment of figures:
+% See p.105 of "TeX Unbound" for suggested values.
+% See pp. 199-200 of Lamport's "LaTeX" book for details.
+%   General parameters, for ALL pages:
+\renewcommand{\topfraction}{0.85}         % max fraction of floats at top
+\renewcommand{\bottomfraction}{0.85}       % max fraction of floats at bottom
+% Parameters for TEXT pages (not float pages):
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}               % 2 may work better
+\renewcommand{\textfraction}{0.15}        % allow minimal text w. figs
+% Parameters for FLOAT pages (not text pages):
+\renewcommand{\floatpagefraction}{0.7}    % require fuller float pages
+% N.B.: floatpagefraction MUST be less than topfraction !!
+%===========================================================
+
+%% Line delimiters in this document:
+%% #####  Chapter
+%% =====  Section
+%% -----  Subsection
+%% ~~~~~  Subsubsection
+%% +++++  Tables
+%% ^^^^^  Figures
+
+\begin{document}
+\setcounter{page}{\startP}
+\setcounter{figure}{\startF}
+\setcounter{table}{\startT}
+\setcounter{secnumdepth}{4}   % To number subsubsubheadings
+\setlength{\tabcolsep}{3pt}   % table colum separator (is changed later in code depending on table)
+
+\setcounter{chapter}{6}    % temporary for standalone chapters (5=E, 6=F)
+\renewcommand{\thechapter}{\Alph{chapter}} % ditto
+\renewcommand{\thesection}{\thechapter.\arabic{section}.}
+\renewcommand{\thesubsection}{\thechapter.\arabic{section}.\arabic{subsection}.}
+\renewcommand{\thesubsubsection}{\thechapter.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.}
+\renewcommand{\thesubsubsubsection}{\thechapter.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.\arabic{subsubsubsection}.}
+\renewcommand{\thetable}{\thechapter.\arabic{table}}    
+\renewcommand{\thefigure}{\thechapter.\arabic{figure}}  
+\renewcommand{\theequation}{\thechapter.\arabic{equation}}
+%\renewcommand{\thepage}{\arabic{page}}
+
+\newcounter{prevchapter}
+\setcounter{prevchapter}{\value{chapter}}
+\addtocounter{prevchapter}{-1}
+\newcommand{\eqnchapter}{\Alph{prevchapter}}
+
+
+%###############################################################################
+\chapter*{ANNEXE~\thechapter. R\'{E}SULTATS DES MOD\`{E}LES}
+
+\newcommand{\LH}{}%{DRAFT (2/7/2023) -- Not citable}% working paper}  % Set to {} for final ResDoc
+\newcommand{\RH}{}%{CSAP WP 2015GRF04}
+\newcommand{\LF}{s\'{e}baste canari 2022}
+\newcommand{\RF}{ANNEXE~\thechapter ~--R\'{e}sultats des mod\`{e}les }%% footers don't need all caps?
+
+\lhead{\LH}\rhead{\RH}\lfoot{\LF}\rfoot{\RF}
+
+%% R objects defined in 'set.controls.r' for one or more stocks
+\newcommand{\BCa}{SCA~CB}%% new commands cannot contain numerals (use a,b,c for stocks)
+\newcommand{\SPP}{s\'{e}baste canari}
+\newcommand{\SPC}{SCA}
+\newcommand{\cvpro}{CPUE~$c_\text{p}$}
+
+%% Define them here and then renew them in CAR.Rnw
+\newcommand{\startYear}{1935}%% so can include in captions. 
+\newcommand{\currYear}{2023}%%   so can include in captions. 
+\newcommand{\prevYear}{2022}%%   so can include in captions. 
+\newcommand{\projYear}{2033}%%   so can include in captions. 
+\newcommand{\pgenYear}{2108}%%   so can include in captions. 
+
+%%==============================================================================
+\section{INTRODUCTION}
+
+Tous les simulations de mod\`{e}les ont \'{e}t\'{e} ex\'{e}cut\'{e}s \`{a} l'aide de la plateforme Stock Synthesis 3 (SS3), v.3.30.18 (\citealt{Methot-etal:2021}, voir \'{e}galement les d\'{e}tails sur le mod\`{e}le \`{a} l'\AppEqn{}).
+La pr\'{e}sente annexe d\'{e}crit les r\'{e}sultats pour le stock de \SPP{} (\SPC, \emph{Sebastes pinniger}) \`{a} l'\'{e}chelle de la c\^{o}te qui s'\'{e}tend sur la c\^{o}te ext\'{e}rieure de la Colombie-Britannique (CB) dans les zones 3CD5ABCDE de la Commission des p\^{e}ches maritimes du Pacifique (CPMP). 
+Ces r\'{e}sultats comprennent :
+\vspace{-0.5\baselineskip}
+\begin{itemize_csas}{}{}
+\item les calculs du mode de la distribution a posteriori (MDP) pour comparer les estimations du mod\`{e}le aux observations;
+\item des simulations au moyen de la m\'{e}thode de Monte Carlo par cha\^{i}ne de Markov (MCCM) pour obtenir des distributions a posteriori pour les param\`{e}tres estim\'{e}s aux fins d'un simulation de r\'{e}f\'{e}rence composite;
+\item des diagnostics MCCM pour le simulation de r\'{e}f\'{e}rence;
+\item une gamme de mod\`{e}les de sensibilit\'{e}, y compris des diagnostics MCCM.
+\end{itemize_csas}
+Les diagnostics MCCM sont \'{e}valu\'{e}s \`{a} l'aide des crit\`{e}res subjectifs ci-dessous.
+\begin{itemize_csas}{}{}
+  \item Bon -- aucune tendance dans les trac\'{e}s et pas de pic dans $\log R_0$, alignement des cha\^{i}nes fractionn\'{e}es, aucune autocorr\'{e}lation.
+  \item Passable -- tendance du trac\'{e} temporairement interrompue, pics occasionnels dans $\log R_0$, cha\^{i}nes fractionn\'{e}es quelque peu effiloch\'{e}es, un peu d'autocorr\'{e}lation.
+  \item Mauvais -- tendance du trac\'{e} qui fluctue consid\'{e}rablement ou affiche une augmentation ou une diminution persistante, les cha\^{i}nes fractionn\'{e}es diff\`{e}rent les une des autres, autocorr\'{e}lation importante.
+  \item Inacceptable -- tendance du trac\'{e} qui indique une augmentation ou une diminution persistante qui n'a pas \'{e}t\'{e} stabilis\'{e}e, cha\^{i}nes fractionn\'{e}es qui diff\`{e}rent consid\'{e}rablement les unes des autres, autocorr\'{e}lation persistante.
+\end{itemize_csas}
+
+L'avis final est constitu\'{e} d'un simulation de r\'{e}f\'{e}rence qui estime la mortalit\'{e} naturelle ($M$) et la pente ($h$), et qui fournit l'orientation principale.
+Une gamme de mod\`{e}les de sensibilit\'{e} est pr\'{e}sent\'{e}e pour montrer les effets des hypoth\`{e}ses importantes de mod\'{e}lisation. Les estimations des quantit\'{e}s importantes ainsi que les avis \`{a} l'intention des gestionnaires (tableaux de d\'{e}cision) figurent dans la pr\'{e}sente section ainsi que dans le corps du document.
+
+
+%$ !Rnw root = AppF_Results_CAR_BC_2021_WP.Rnw
+%% R scripts:
+%%   gatherMCMC.r
+%%   plotSS.pmcmc.r
+%%   plotSS.compo.r
+%%   plotSS.senso.r
+%%   tabSS.compo.r
+%%   tabSS.decision.r
+%%   tabSS.senso.r
+%%==============================================================================
+%% Canary Base Case (Runs 77, 71, 75, 72, 76) %% spanning M=0.04 to M=0.06 at 0.005 increments
+
+%%\renewcommand{\baselinestretch}{1.0}% increase spacing for all lines, text and table (maybe use \\[-1em])
+\renewcommand*{\arraystretch}{1.1}% increase spacing for table rows
+
+%% Revised to reflect the NUTS procedure
+%% Base run(s):
+\newcommand{\nSimsBase}{4\,000}% total simulations for base run(s)
+\newcommand{\cSimsBase}{1\,000}% chain simulations for base
+\newcommand{\cBurnBase}{750}% burn-in simulations for base
+%% Sensitivity runs:
+\newcommand{\nSimsSens}{2\,000}% total simulations for sensitivity runs
+\newcommand{\cSimsSens}{500}% chain simulations for base
+\newcommand{\cBurnSens}{250}% burn-in simulations for sens
+%% Common to both base and sensitivities:
+\newcommand{\nChains}{8}% number of chains
+\newcommand{\cSamps}{250}% number of retained samples per chain
+\newcommand{\Nmcmc}{2\,000}% number of samples per base component run
+\newcommand{\Nbase}{2\,000}% number of total samples per base case
+
+
+\section{S\'{E}BASTE CANARI \`{A} L'\'{E}CHELLE DE LA C\^{O}TE}
+
+%% First set up workspace:
+
+%%##############################################################################
+
+\renewcommand{\startYear}{1935} %% so can include in captions. 
+\renewcommand{\currYear}{2023}   %% so can include in captions. 
+\renewcommand{\prevYear}{2022}   %% so can include in captions. 
+\renewcommand{\projYear}{2033}   %% so can include in captions. 
+\renewcommand{\pgenYear}{2108}   %% so can include in captions. 
+
+
+Le mod\`{e}le de base pour le s\'{e}baste canari de la Colombie-Britannique a \'{e}t\'{e} choisi apr\`{e}s l'ex\'{e}cution d'une s\'{e}rie de mod\`{e}les pr\'{e}liminaires. Il comprenait les d\'{e}cisions et les hypoth\`{e}ses suivantes~: \begin{itemize_csas}{-0.5}{}
+  \item pr\'{e}sumer deux sexes (femelles, m\^{a}les);
+  \item estimer une seule mortalit\'{e} $M$ par sexe pour repr\'{e}senter tous les \^{a}ges;
+  \item fixer la classe d'\^{a}ge maximale $A$ \`{a} 60~ans;
+  \item supposer deux p\^{e}ches commerciales~: \angL{}chalut\angR{} (pr\'{e}dominante avec environ $\sim$97\pc{} des prises) et \angL{}autre\angR{};
+  \begin{itemize_csas}{-0.25}{-0.25}
+    \item la p\^{e}che au chalut comprend la p\^{e}che au chalut de fond et la p\^{e}che au chalut p\'{e}lagique;
+    \item la p\^{e}che \angL{}autre\angR{} comprend les engins autres que les chaluts (p\^{e}che du fl\'{e}tan \`{a} la palangre, p\^{e}che de la morue charbonni\`{e}re \`{a} la trappe/palangre, p\^{e}che \`{a} la tra\^{i}ne du chien de mer et de la morue-lingue, p\^{e}che du s\'{e}baste \`{a} la ligne et \`{a} l'hame\c{c}on);
+    \item les donn\'{e}es sur la fr\'{e}quence selon l'\^{a}ge n'\'{e}taient disponibles que pour la p\^{e}che au chalut;
+  \end{itemize_csas}
+  \item utiliser une s\'{e}rie d'indices de l'abondance d\'{e}riv\'{e}s de la p\^{e}che commerciale au chalut de fond (indices de la CPUE provenant de la p\^{e}che au chalut de fond, de 1996 \`{a} 2021);
+  \item utiliser \numberstringnum{6} s\'{e}ries d'indices de l'abondance provenant du relev\'{e} synoptique dans le bassin de la Reine-Charlotte (BRC), du relev\'{e} synoptique sur la c\^{o}te ouest de l'\^{i}le de Vancouver (COIV), du relev\'{e} triennal du Service National des P\^{e}ches Maritimes (SNPM) des \'{E}tats-Unis, du relev\'{e} synoptique dans le d\'{e}troit d'H\'{e}cate (DH), du relev\'{e} synoptique sur la c\^{o}te ouest de Haida Gwaii (COHG) et du relev\'{e} historique dans le canyon de l'\^{i}le Goose (CIG), avec des donn\'{e}es sur la fr\'{e}quence selon l'\^{a}ge provenant des trois premiers relev\'{e}s;
+  \item supposer une valeur a priori normale large (faible) $\mathcal{N}(7,7)$ sur $\log R_0$ pour aider \`{a} stabiliser le mod\`{e}le; 
+  \item utiliser des valeurs a priori normales inform\'{e}es pour les trois param\`{e}tres de s\'{e}lectivit\'{e} principaux ($\mu_g$, $v_{g\text{L}}$, $\Delta_{g}$, voir l'\AppEqn) pour toutes les flottes (p\^{e}che et relev\'{e}s), d'apr\`{e}s le tableau J.7 dans \citet{Stanley-etal:2009_car};
+  \item estimer les \'{e}carts du recrutement entre 1950 et 2012;
+  \item appliquer la repond\'{e}ration de l'abondance~: ajouter l'erreur de traitement des CV aux CV des indices, $c_\text{p}$=0,178 pour la s\'{e}rie d'indices de la CPUE de la p\^{e}che commerciale et $c_\text{p}$=0 pour les relev\'{e}s (voir l'\AppEqn);
+  \item utiliser la distribution d'erreur Dirichlet-multinomiale de SS3 pour ajuster les donn\'{e}es sur les fr\'{e}quences selon l'\^{a}ge au lieu d'appliquer la repond\'{e}ration de la composition;
+  \item fixer l'\'{e}cart-type des r\'{e}siduels du recrutement ($\sigma_R$) \`{a} 0,9;
+  \item utiliser un vecteur d'erreur de d\'{e}termination de l'\^{a}ge fond\'{e} sur le CV des longueurs observ\'{e}es selon l'\^{a}ge, d\'{e}crit \`{a} l'\AppBio, Section~D.2.3 et repr\'{e}sent\'{e} \`{a} la figure~D.26 (graphique de gauche).
+\end{itemize_csas}
+La simulation de r\'{e}f\'{e}rence (Run24~: estimer $M$ et $h$, \cvpro=0,178) a \'{e}t\'{e} utilis\'{e} comme mod\`{e}le de r\'{e}f\'{e}rence par rapport \`{a} \numberstringnum{14} simulations de sensibilit\'{e} ex\'{e}cut\'{e}s selon la m\'{e}thode MCCM; quatre autres simulations de sensibilit\'{e} ex\'{e}cut\'{e}s selon la m\'{e}thode MDP ont \'{e}t\'{e} compar\'{e}s.
+
+Tous les mod\`{e}les ont \'{e}t\'{e} repond\'{e}r\'{e}s une fois pour l'abondance, en ajoutant l'erreur de processus $c_\text{p}$ \`{a} la CPUE de la p\^{e}che commerciale (aucune erreur suppl\'{e}mentaire n'a \'{e}t\'{e} ajout\'{e}e aux indices des relev\'{e}s puisque l'erreur observ\'{e}e \'{e}tait d\'{e}j\`{a} \'{e}lev\'{e}e). L'erreur de traitement ajout\'{e}e \`{a} la CPUE de la p\^{e}che commerciale reposait sur une analyse par spline (\AppEqn).
+Aucune pond\'{e}ration n'a \'{e}t\'{e} appliqu\'{e}e pour la composition, car les donn\'{e}es sur la fr\'{e}quence selon l'\^{a}ge ont \'{e}t\'{e} ajust\'{e}es \`{a} l'aide de la distribution Dirichlet-multinomiale.
+
+%%------------------------------------------------------------------------------
+\subsection{Simulation de r\'{e}f\'{e}rence}
+\subsubsection{Ajustements avec le MDP}\label{sssMPD}
+
+%<<Central run MPD, echo=FALSE, eval=TRUE, results=hide>>= # hide the results 
+%unpackList(example.run)  ## includes contents of 'Bmcmc' (e.g. 'P.MCMC')
+%@
+
+La proc\'{e}dure de mod\'{e}lisation a d'abord d\'{e}termin\'{e} d'abord le meilleur ajustement (MDP = mode de distribution a posteriori) aux donn\'{e}es en minimisant la log-vraisemblance n\'{e}gative. Le MDP a servi de point de d\'{e}part des simulations MCCM.
+
+Les r\'{e}f\'{e}rences des graphiques qui suivent concernent la simulation de r\'{e}f\'{e}rence.
+\begin{itemize_csas}{-0.5}{}
+  \item figure~\ref{fig:car.survIndSer} -- ajustements du mod\`{e}le \`{a} la CPUE et aux indices des relev\'{e}s pour les diff\'{e}rentes ann\'{e}es observ\'{e}es.
+  \item figures~\ref{fig:car.agefitFleet1} \`{a} \ref{fig:car.ageresFleet5} -- ajustements du mod\`{e}le (lignes = pr\'{e}visions) aux donn\'{e}es sur la fr\'{e}quence selon l'\^{a}ge pour les femelles et les m\^{a}les (barres = observations) pour la p\^{e}che et quatre ensembles de donn\'{e}es de relev\'{e}s, ainsi que les r\'{e}siduels normalis\'{e}s respectifs des ajustements du mod\`{e}le.
+  \item figure~\ref{fig:car.meanAge} -- comparaison des estimations mod\'{e}lis\'{e}es de l'\^{a}ge moyen aux \^{a}ges moyens observ\'{e}s.
+  \item figure~\ref{fig:car.selectivity} -- s\'{e}lectivit\'{e} estim\'{e}e des engins et ogive de maturit\'{e} des femelles.
+  \item figure~\ref{fig:car.spawning} -- s\'{e}rie chronologique de la biomasse reproductrice et appauvrissement de la biomasse reproductrice.
+  \item figure~\ref{fig:car.recruits} -- s\'{e}rie chronologique du recrutement et \'{e}carts du recrutement.
+  \item figure~\ref{fig:car.stockRecruit} -- courbe du stock-recrutement.
+\end{itemize_csas}
+
+
+Dans cette \'{e}valuation du stock de \SPC{}, tant la mortalit\'{e} naturelle ($M$) que la pente ($h$) were ont \'{e}t\'{e} estim\'{e}es sans difficult\'{e}, la corr\'{e}lation entre ces deux param\`{e}tres \'{e}tant faible (figure~\ref{fig:car.mleParameters}).
+Cela a permis d'\'{e}liminer la proc\'{e}dure utilis\'{e}e dans les \'{e}valuations ant\'{e}rieures du stock, dans lesquelles plusieurs mod\`{e}les utilisant des valeurs fixes de $M$ \'{e}taient n\'{e}cessaires pour construire un sc\'{e}nario de r\'{e}f\'{e}rence composite couvrant une gamme plausible de valeurs pour ce param\`{e}tre.
+Le MDP pour la mortalit\'{e} naturelle des femelles ($M$=0, est devenu beaucoup plus \'{e}lev\'{e} que la valeur moyenne a priori ($M$=0,06), alors que celui des m\^{a}les est rest\'{e} proche de la moyenne de la valeur a priori ($M$=0,065).
+Cette divergence entre les estimations par sexe est due \`{a} la diff\'{e}rence entre les donn\'{e}es sur les fr\'{e}quences selon l'\^{a}ge par sexe et \'{e}tait n\'{e}cessaire pour ajuster les donn\'{e}es sur les fr\'{e}quences selon l'\^{a}ge de mani\`{e}re cr\'{e}dible.
+La pente estim\'{e}e \'{e}tait \'{e}galement plus \'{e}lev\'{e}e ($h$=0,88) que la moyenne de la valeur a priori ($h$=0,76).
+Les estimations des param\`{e}tres de s\'{e}lectivit\'{e} ne se sont pas \'{e}loign\'{e}es des moyennes de la valeur a priori; toutefois, l'\^{a}ge estim\'{e} \`{a} la s\'{e}lectivit\'{e} totale ($\mu_g$) \'{e}tait plus bas pour les relev\'{e}s que pour la p\^{e}che commerciale, ce qui est normal puisque les relev\'{e}s utilisent des culs de chalut \`{a} plus petites mailles.
+La valeur de $\mu$ a \'{e}t\'{e} estim\'{e}e \`{a} pr\`{e}s de 10 pour le relev\'{e} sur la COIV, mais \`{a} respectivement 12,4 et 12,3 pour le relev\'{e} dans le BRC et le relev\'{e} triennal, par rapport \`{a} l'\^{a}ge 13,3 dans la p\^{e}che commerciale, ce qui refl\`{e}te la pr\'{e}sence de poissons plus jeunes dans les donn\'{e}es des relev\'{e}s.
+Les donn\'{e}es contenaient peu d'informations permettant d'\'{e}loigner le param\`{e}tre de d\'{e}calage des m\^{a}les ($\Delta_{1g}$) de sa moyenne initiale a priori de~-0,4.
+
+Seuls les indices de la CPUE de la p\^{e}che commerciale ont \'{e}t\'{e} pond\'{e}r\'{e}s en ajoutant l'erreur de traitement aux CV des indices (\cvpro), car les erreurs-types estim\'{e}es par le mod\`{e}le lin\'{e}aire g\'{e}n\'{e}ralis\'{e} \'{e}taient extraordinairement faibles (voir le tableau C.9).
+Les erreurs relatives de l'indice de relev\'{e} par bootstrap \'{e}tant d\'{e}j\`{a} \'{e}lev\'{e}es, aucune erreur de traitement suppl\'{e}mentaire n'a \'{e}t\'{e} ajout\'{e}e. Les ajustements du mod\`{e}le aux indices de l'abondance des relev\'{e}s \'{e}taient g\'{e}n\'{e}ralement satisfaisants (figure~\ref{fig:car.survIndSer}), bien que certains points des indices aient \'{e}t\'{e} enti\`{e}rement omis (p.\,ex. CPUE de 1996, BRC de 2009, COIV de 2006, SNPM de 1980, DH de 2011 et 2021, COHG de 2016). L'ajustement aux indices de la CPUE de la p\^{e}che commerciale \'{e}tait stable de 1996 \`{a} 2002, affichant ensuite une tendance \`{a} la hausse de 2003 \`{a} 2021.
+
+Ni la repond\'{e}ration de \citet{Francis:2011} (utilisant les \^{a}ges moyens) ni celle de \citet{McAllister-Ianelli:1997} (utilisant les rapports de la moyenne harmonique) n'ont \'{e}t\'{e} utilis\'{e}es dans cette \'{e}valuation du stock, contrairement aux \'{e}valuations pr\'{e}c\'{e}dentes.
+Nous avons plut\^{o}t utilis\'{e} la distribution Dirichlet-multinomiale, telle qu'elle est mise en {\oe}uvre dans SS3, comme m\'{e}thode fond\'{e}e sur un mod\`{e}le pour estimer la taille effective de l'\'{e}chantillon \citep{Thorson-etal:2017}.
+Cette distribution int\`{e}gre un param\`{e}tre suppl\'{e}mentaire par \angL{}flotte\angR{} ($\log\,\text{DM}\,\theta_g$), qui r\'{e}git le rapport entre la taille nominale de l'\'{e}chantillon (\angL{}entr\'{e}e\angR{}) et la taille r\'{e}elle de l'\'{e}chantillon (\angL{}sortie\angR{}).
+
+Les ajustements aux donn\'{e}es sur les fr\'{e}quences selon l'\^{a}ge provenant de la p\^{e}che commerciale au chalut \'{e}taient bons, le mod\`{e}le suivant les classes d'\^{a}ge de mani\`{e}re coh\'{e}rente sur la p\'{e}riode de 41 ans repr\'{e}sent\'{e}e par ces donn\'{e}es (figure~\ref{fig:car.agefitFleet1}).
+Les r\'{e}siduels normalis\'{e}s d\'{e}passent rarement 1 pour les diff\'{e}rentes classes d'\^{a}ge (figure~\ref{fig:car.ageresFleet1}), bien qu'il y ait de nombreux petits r\'{e}siduels n\'{e}gatifs qui pourraient indiquer une tendance \`{a} sous-estimer les proportions selon l'\^{a}ge.
+Les r\'{e}siduels par ann\'{e}e d'\'{e}chantillonnage montrent que les r\'{e}siduels normalis\'{e}s ne d\'{e}passent 1 que pour quelques ann\'{e}es (p.\,ex., 2001, 2004 et 2017).
+Les ajustements des fr\'{e}quences selon l'\^{a}ge dans les trois relev\'{e}s \'{e}taient satisfaisants, certains r\'{e}siduels d\'{e}passant 2 (figures~\ref{fig:car.agefitFleet3}--\ref{fig:car.ageresFleet5}).
+Comme pour les ajustements des fr\'{e}quences selon l'\^{a}ge provenant de la p\^{e}che commerciale, les ajustements des fr\'{e}quences selon l'\^{a}ge provenant des relev\'{e}s avaient \'{e}galement tendance \`{a} faire appara\^{i}tre de petits r\'{e}siduels n\'{e}gatifs, indiquant \`{a} nouveau que le mod\`{e}le avait tendance \`{a} sous-estimer les proportions selon l'\^{a}ge.
+
+Les \^{a}ges moyens semblent \^{e}tre bien suivis (figure~\ref{fig:car.meanAge}), ce qui permet de penser que les param\`{e}tres $\theta_g$ de la distribution Dirichlet-multinomiale ont \'{e}t\'{e} repond\'{e}r\'{e}s correctement (voir cependant les mises en garde dans l'\AppEqn).
+L'ogive de maturit\'{e}, g\'{e}n\'{e}r\'{e}e \`{a} partir d'un mod\`{e}le ajust\'{e} en externe (voir l'\AppBio), \'{e}tait situ\'{e}e \`{a} gauche des ajustements de la s\'{e}lectivit\'{e} de la p\^{e}che commerciale pour tous les \^{a}ges jusqu'\`{a} l'\^{a}ge 11, indiquant que les jeunes poissons matures n'\'{e}taient pas fortement exploit\'{e}s par la p\^{e}che commerciale.
+Il en allait de m\^{e}me pour le relev\'{e} dans le BRC et le relev\'{e} triennal, alors que l'ogive de s\'{e}lectivit\'{e} du relev\'{e} sur la COIV se situait bien \`{a} gauche de celle des femelles, d\'{e}notant que ce relev\'{e} s\'{e}lectionne tous les \SPC matures et submatures..
+
+Les trajectoires de la biomasse (figure~\ref{fig:car.spawning}) r\'{e}partissent la biomasse totale en diff\'{e}rentes composantes (m\^{a}le totale, femelle totale et femelle reproductrice).
+La biomasse reproductrice est relativement faible par rapport \`{a} la biomasse totale (d'environ un tiers), car une quantit\'{e} consid\'{e}rable de la biomasse n'est pas constitu\'{e}e de femelles matures, y compris tous les m\^{a}les. Les trajectoires de la biomasse ont diminu\'{e} de 1935 \`{a} 1995.
+L'ann\'{e}e 1996 a marqu\'{e} l'introduction du programme d'observateurs \`{a} bord \`{a} 100\pc{}, suivie de la mise en {\oe}uvre d'un syst\`{e}me de quotas individuels de bateau en 1997.
+La biomasse, \`{a} partir de 1996, a cess\'{e} de diminuer et, \`{a} partir du d\'{e}but des ann\'{e}es 2000, a commenc\'{e} \`{a} augmenter.
+%% Par cons\'{e}quent, on pourrait en d\'{e}duire que la biomasse a r\'{e}agi positivement apr\`{e}s l'introduction de programmes de gestion des p\^{e}ches dans la derni\`{e}re partie des ann\'{e}es 1990.
+Avant 1996, les niveaux de la biomasse reproductrice sont rest\'{e}s inf\'{e}rieurs \`{a} 0,4$B_0$ pendant une d\'{e}cennie.
+
+Le recrutement \'{e}tait inf\'{e}rieur \`{a} la moyenne jusqu'\`{a} la fin des ann\'{e}es 1990 (figure~\ref{fig:car.recruits}), puis une longue p\'{e}riode de recrutement sup\'{e}rieur \`{a} la moyenne s'en est suivie, ponctu\'{e}e d'un certain nombre d'\'{e}pisodes de fort recrutement.
+Il y a eu au moins un \'{e}pisode de recrutement notable en 2010 (figure~\ref{fig:car.stockRecruit}).
+Bien que les profils de continuit\'{e} des cohortes pr\'{e}sent\'{e}s \`{a} l'\AppBio ne soient pas aussi convaincants que ceux d'autres esp\`{e}ces de s\'{e}bastes hauturiers (p.\,ex., le s\'{e}baste \`{a} longue m\^{a}choire), le mod\`{e}le d'\'{e}valuation du stock a r\'{e}ussi \`{a} ajuster ces donn\'{e}es de mani\`{e}re cr\'{e}dible.
+
+L'analyse du profil de vraisemblance a montr\'{e} que les donn\'{e}es sur les fr\'{e}quences selon l'\^{a}ge \'{e}taient les principales sources d'information pour le param\`{e}tre $M$ des femelles, tandis que les donn\'{e}es sur l'\^{a}ge et les donn\'{e}es sur la biomasse excluaient les estimations faibles de $\log\,R_0$ (figure~\ref{fig:car.LLprof-R0}).
+Aucun des ensembles de donn\'{e}es ne contenait beaucoup d'informations permettant de contraindre la limite sup\'{e}rieure de $\log\,R_0$.
+
+Une analyse r\'{e}trospective a \'{e}t\'{e} entreprise en utilisant la simulation de r\'{e}f\'{e}rence comme mod\`{e}le initial. Le graphique sup\'{e}rieur de la figure~\ref{fig:car.RA-indices} montre que le mod\`{e}le adapte son ajustement \`{a} la s\'{e}rie d'indices de la CPUE \`{a} mesure que des ann\'{e}es sont ajout\'{e}es \`{a} la s\'{e}rie; le graphique inf\'{e}rieur illustre une augmentation du niveau de la trajectoire de la biomasse \`{a} mesure que certaines classes d'\^{a}ge \`{a} fort recrutement sont entr\'{e}es dans la p\^{e}che. Cette analyse r\'{e}trospective n'a pas r\'{e}v\'{e}l\'{e} de probl\`{e}mes sous-jacents dans le mod\`{e}le, les changements d'une ann\'{e}e sur l'autre \'{e}tant expliqu\'{e}s par l'introduction de nouvelles informations dans le mod\`{e}le.
+
+Les figures~\ref{fig:car.RA-indices} \`{a} \ref{fig:car.RA-recdevs} (graphique sup\'{e}rieur) permettent d'\'{e}valuer l'ampleur des \'{e}pisodes de recrutement, tandis que les diff\'{e}rences entre les mod\`{e}les semblent plus faibles, relativement, lorsque le stock est repr\'{e}sent\'{e} en termes de $B_0$ (figure~\ref{fig:car.RA-recdevs}, graphique inf\'{e}rieur).
+La conclusion g\'{e}n\'{e}rale de l'analyse r\'{e}trospective \'{e}tait qu'aucune pathologie apparente n'\'{e}tait associ\'{e}e \`{a} cette \'{e}valuation du stock. Les changements observ\'{e}s dans l'\'{e}valuation du stock \'{e}taient directement imputables aux modifications des donn\'{e}es disponibles, et non \`{a} des probl\`{e}mes structurels sous-jacents li\'{e}s aux hypoth\`{e}ses du mod\`{e}le.
+
+%\newpage
+
+\graphicspath{{C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC22/CAR/Data/SS/CAR2022/Run24/MPD.24.01/french/}}
+\input{"CAR.Central.Run.MPD.relab_french"}%% Modify 'CAR.Central.Run.MPD.tex' as Sweave code relabels the references.
+\clearpage
+
+%%------------------------------------------------------------------------------
+\subsubsection{Ajustements avec la m\'{e}thode MCCM}\label{sssMCMC}
+
+
+Pour la proc\'{e}dure MCCM, nous avons utilis\'{e} l'algorithme d'\'{e}chantillonnage \angL{}sans retour\angR{}  \citep{Monnahan-Kristensen:2018, Monnahan-etal:2019} pour produire \nSimsBase{} it\'{e}rations, en analysant la charge de travail en \nChains{} cha\^{i}nes parall\`{e}les \citep{R:2015_snowfall} de \cSimsBase{} it\'{e}rations chacune. Les \cBurnBase{} premi\`{e}res it\'{e}rations \'{e}taient \'{e}limin\'{e}es et les \cSamps{} derniers \'{e}chantillons de chaque cha\^{i}ne \'{e}taient conserv\'{e}s.
+Les cha\^{i}nes parall\`{e}les ont ensuite \'{e}t\'{e} fusionn\'{e}es pour produire un total de \Nmcmc{} \'{e}chantillons, qui ont servi \`{a} l'analyse MCCM.
+
+Pour les principaux param\`{e}tres estim\'{e}s, les graphiques de la m\'{e}thode MCCM repr\'{e}sentent :
+\begin{itemize_csas}{-0.5}{}
+\item figure~\ref{fig:car.traceParams} -- les trac\'{e}s pour \Nmcmc{} \'{e}chantillons
+\item figure~\ref{fig:car.splitChain} -- les trac\'{e}s diagnostiques des cha\^{i}nes fractionn\'{e}es
+\item figure~\ref{fig:car.paramACFs} -- les trac\'{e}s diagnostiques d'autocorr\'{e}lation
+\item figure~\ref{fig:car.pdfParameters} -- les densit\'{e}s marginales a posteriori compar\'{e}es \`{a} leurs fonctions de densit\'{e} a priori respectives
+\end{itemize_csas}
+
+Les trac\'{e}s obtenus par la m\'{e}thode MCCM pour la simulation de r\'{e}f\'{e}rence montraient de bons diagnostics (aucune tendance avec un nombre croissant d'\'{e}chantillons) pour les param\`{e}tres estim\'{e}s (figure~\ref{fig:car.traceParams}).
+En particulier, l'absence d'\'{e}v\'{e}nements \`{a} forte excursion pour le param\`{e}tre LN(R0) est une caract\'{e}ristique souhait\'{e}e d'un bon ajustement.
+Lorsque cette excursion se produit, elle indique que les \'{e}chantillons convergent mal.
+Les trac\'{e}s diagnostiques des cha\^{i}nes fractionn\'{e}es (qui s\'{e}paraient les \'{e}chantillons a posteriori en trois segments cons\'{e}cutifs \'{e}gaux, figure~\ref{fig:car.splitChain}), \'{e}taient largement coh\'{e}rents (superpos\'{e}s), avec un peu d'effilochage dans le param\`{e}tre LN(R0).
+L'autocorr\'{e}lation jusqu'\`{a} 60 d\'{e}calages n'a pas r\'{e}v\'{e}l\'{e} de grands pics ou de profils pr\'{e}visibles (figure~\ref{fig:car.paramACFs}).
+Pour la plupart des param\`{e}tres, la m\'{e}diane ne s'\'{e}loignait pas beaucoup des estimations du maximum de vraisemblance par rapport aux ajustements avec le MDP, sauf peut-\^{e}tre la pente (figure~\ref{fig:car.pdfParameters}).
+
+Dans la pr\'{e}sente \'{e}valuation du stock, les projections sont \'{e}tablies sur 10 ans, jusqu'\`{a} 2033.  
+Les projections pour \numberstringnum{3} g\'{e}n\'{e}rations (75~ans), la dur\'{e}e d'une g\'{e}n\'{e}ration ayant \'{e}t\'{e} d\'{e}termin\'{e}e comme \'{e}tant de 25~ans (voir l'Annexe~D), n'ont pas \'{e}t\'{e} r\'{e}alis\'{e}es car l'\'{e}tat du stock de \SPC{} se trouvait incontestablement dans la zone saine. Diverses trajectoires du mod\`{e}le et l'\'{e}tat final du stock pour la simulation de r\'{e}f\'{e}rence sont illustr\'{e}s sur les figures ci-dessous.
+\begin{itemize_csas}{-0.5}{}
+  \item figure~\ref{fig:car.compo.Bt}     -- estimations de la biomasse reproductrice $B_t$ (en tonnes) selon les valeurs a posteriori du mod\`{e}le de 1935 \`{a} 2033
+  \item figure~\ref{fig:car.compo.BtB0}   -- estimations de la biomasse reproductrice par rapport \`{a} $B_0$ (graphique du haut) et $\Bmsy$ (graphique du bas) selon les valeurs a posteriori du mod\`{e}le
+  \item figure~\ref{fig:car.compo.ut}     -- estimations du taux d'exploitation $u_t$ (graphique du haut) et de $u_t/\umsy$ (graphique du bas) selon les valeurs a posteriori du mod\`{e}le
+  \item figure~\ref{fig:car.compo.Rt}     -- estimations du recrutement $R_t$ (en milliers de poissons d'\^{a}ge 0, graphique du haut) et des \'{e}carts du recrutement (graphique du bas) selon les valeurs a posteriori du mod\`{e}le
+  \item figure~\ref{fig:car.compo.snail}  -- diagramme de phase dans le temps des m\'{e}dianes de $B_t/\Bmsy$ et $u_{t-1}/\umsy$ par rapport aux points de r\'{e}f\'{e}rence par d\'{e}faut de l'approche de pr\'{e}caution du MPO
+  \item figure~\ref{fig:car.compo.stock.status} -- \'{e}tat du stock de SCA de la Colombie-Britannique au d\'{e}but de \currYear{}.
+\end{itemize_csas}
+
+La mortalit\'{e} naturelle des femelles semble \^{e}tre la composante la plus importante de l'incertitude dans cette \'{e}valuation du stock, car les femelles \^{a}g\'{e}es ont disparu des \'{e}chantillons. Soit elles sont rest\'{e}es cach\'{e}es des engins (p.\,ex., dans des zones non chalutables), soit leur mortalit\'{e} naturelle a augment\'{e} \`{a} partir d'un certain \^{a}ge.
+Les \'{e}valuations ant\'{e}rieures du stock de \SPC{} de la Colombie-Britannique et dans l'\'{E}tat de Washington ont utilis\'{e} une fonction de mortalit\'{e} \'{e}chelonn\'{e}e pour mod\'{e}liser ce changement. 
+Dans la pr\'{e}sente \'{e}valuation du stock, nous avons choisi de mod\'{e}liser cette observation dans la simulation de r\'{e}f\'{e}rence en estimant une mortalit\'{e} naturelle plus \'{e}lev\'{e}e pour les femelles que pour les m\^{a}les, car l'inclusion d'une fonction de mortalit\'{e} \'{e}chelonn\'{e}e n'am\'{e}liorait pas l'ajustement aux donn\'{e}es et ne modifiait pas les avis pour les gestionnaires, mais n\'{e}cessitait une hypoth\`{e}se suppl\'{e}mentaire et davantage de param\`{e}tres. Nous avons \'{e}galement explor\'{e} une s\'{e}rie d'autres incertitudes du mod\`{e}le dans les simulations de sensibilit\'{e} par rapport au simulation de r\'{e}f\'{e}rence 24.
+
+La simulation de r\'{e}f\'{e}rence a servi \`{a} calculer une s\'{e}rie d'estimations des param\`{e}tres (tableau~\ref{tab:car.base.pars}) et les quantit\'{e}s d\'{e}riv\'{e}es \`{a} l'\'{e}quilibre et celles associ\'{e}es au RMD (tableau~\ref{tab:car.base.rfpt}).
+La trajectoire de la population dans la simulation de r\'{e}f\'{e}rence, de \startYear{} \`{a} \currYear{} (figure~\ref{fig:car.compo.Bt}), a estim\'{e} la biomasse reproductrice m\'{e}diane $B_t$ les ann\'{e}es $t$=\startYear, \currYear, et \projYear{} (en supposant une prise constante de 750~t/an) \`{a} 13\,908, 10\,760, et 11\,010 tonnes, respectivement.
+On voit sur la figure~\ref{fig:car.compo.BtB0} que la biomasse m\'{e}diane du stock restera sup\'{e}rieure au point de r\'{e}f\'{e}rence sup\'{e}rieur du stock (PRS) pendant les dix prochaines ann\'{e}es si les prises annuelles sont \'{e}gales \`{a} toutes les captures (jusqu'\`{a} 2\,000~t/an) utilis\'{e}es dans les projections de prise.
+Les taux d'exploitation sont rest\'{e}s largement inf\'{e}rieurs \`{a} $\umsy$ pendant la majeure partie de l'historique de la p\^{e}che (figure~\ref{fig:car.compo.ut}).
+Le recrutement des poissons d'\^{a}ge 0 s'est av\'{e}r\'{e} relativement constant, les quatre principales ann\'{e}es de recrutement \'{e}tant 2010, 2003, 2014 et 2006 (figure~\ref{fig:car.compo.Rt}).
+
+Un diagramme de phase de l'\'{e}volution temporelle de la biomasse reproductrice et du taux d'exploitation par les p\^{e}ches mod\'{e}lis\'{e}es dans l'espace RMD (figure~\ref{fig:car.compo.snail}) donnait \`{a} penser que le stock se trouvait dans la zone saine, avec une position actuelle \`{a} $B_{\currYear}/\Bmsy$ = 3,043~(1,924,~4,886)
+et $u_{\prevYear}/\umsy$ = 0,27~(0,151,~0,474).
+(Quatre \'{e}chantillons ont \'{e}t\'{e} omis parce que le RMD estim\'{e} \'{e}tait de 0\,t, et par cons\'{e}quent $\umsy$=0, ce qui a entra\^{i}n\'{e} des erreurs de division par z\'{e}ro dans $u_{t\minus1}/\umsy$.)
+La figure de l'\'{e}tat du stock de l'ann\'{e}e en cours (figure~\ref{fig:car.compo.stock.status}) montre que la simulation de r\'{e}f\'{e}rence se trouve dans la zone saine du MPO.
+
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\newpage
+\subsubsubsection{Tableaux -- Simulation de r\'{e}f\'{e}rence (m\'{e}thode MCCM)}
+
+\setlength{\tabcolsep}{6pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Mon Dec 19\,15:20:49\,2022
+\begin{table}[ht]
+\centering
+\caption{ Simulation de r\'{e}f\'{e}rence~: les quantiles 0,05, 0,25, 0,5, 0,75 et 0,95 pour les param\`{e}tres du mod\`{e}le (d\'{e}finis \`{a} l'\AppEqn) tir\'{e}s des estimations MCCM d'une simulation de r\'{e}f\'{e}rence comportant \Nbase{} \'{e}chantillons.} 
+\label{tab:car.base.pars}
+\begin{tabular}{lrrrrr}
+  \\[-1.0ex] \hline
+Param\`{e}tre & 5\% & 25\% & 50\% & 75\% & 95\% \\ 
+  \hline
+$\log R_{0}$ & 7,534 & 7,754 & 7,933 & 8,137 & 8,432 \\ 
+  $M~(\text{femelle})$ & 0,08094 & 0,08841 & 0,09329 & 0,09839 & 0,1063 \\ 
+  $M~(\text{m\^{a}le})$ & 0,05471 & 0,06086 & 0,06543 & 0,07057 & 0,07748 \\ 
+  $\text{BH}~(h)$ & 0,5659 & 0,7025 & 0,7958 & 0,8750 & 0,9508 \\ 
+  $\mu_{1}~(\text{chalut})$ & 12,05 & 12,78 & 13,24 & 13,75 & 14,55 \\ 
+  $\log v_{\text{L}1}~(\text{chalut})$ & 1,783 & 2,160 & 2,382 & 2,588 & 2,884 \\ 
+  $\Delta1_{1}~(\text{chalut})$ & -0,5866 & -0,4681 & -0,3963 & -0,3242 & -0,2078 \\ 
+  $\mu_{3}~(\text{BRC})$ & 10,41 & 11,47 & 12,25 & 13,06 & 14,36 \\ 
+  $\log v_{\text{L}3}~(\text{BRC})$ & 1,875 & 2,357 & 2,647 & 2,930 & 3,307 \\ 
+  $\Delta1_{3}~(\text{BRC})$ & -0,5892 & -0,4712 & -0,3931 & -0,3124 & -0,2022 \\ 
+  $\mu_{4}~(\text{COIV})$ & 8,284 & 9,445 & 10,33 & 11,30 & 13,15 \\ 
+  $\log v_{\text{L}4}~(\text{COIV})$ & 2,014 & 2,478 & 2,791 & 3,100 & 3,545 \\ 
+  $\Delta1_{4}~(\text{COIV})$ & -0,5812 & -0,4702 & -0,3926 & -0,3132 & -0,2028 \\ 
+  $\mu_{5}~(\text{SNPM})$ & 9,901 & 11,15 & 12,06 & 13,04 & 14,52 \\ 
+  $\log v_{\text{L}5}~(\text{SNPM})$ & 1,642 & 2,224 & 2,584 & 2,926 & 3,363 \\ 
+  $\Delta1_{5}~(\text{SNPM})$ & -0,5904 & -0,4790 & -0,4029 & -0,3208 & -0,2002 \\ 
+  $\log\,[\text{DM}~~\theta_1]$ & 6,088 & 6,619 & 6,998 & 7,480 & 8,265 \\ 
+  $\log\,[\text{DM}~~\theta_3]$ & 4,873 & 5,405 & 5,881 & 6,393 & 7,310 \\ 
+  $\log\,[\text{DM}~~\theta_4]$ & 4,636 & 5,254 & 5,697 & 6,267 & 7,203 \\ 
+  $\log\,[\text{DM}~~\theta_5]$ & 4,048 & 4,648 & 5,123 & 5,716 & 6,572 \\ 
+   \hline
+\end{tabular}
+\end{table}
+\setlength{\tabcolsep}{6pt}
+\clearpage
+
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Mon Dec 19\,15:20:49\,2022
+\begin{table}[ht]
+\centering
+\caption{Simulation de r\'{e}f\'{e}rence~: les quantiles 0,05, 0,25, 0,5, 0,75 et 0,95 des quantit\'{e}s tir\'{e}es selon la m\'{e}thode MCCM de \Nbase{} \'{e}chantillons d'un seul simulation de r\'{e}f\'{e}rence. D\'{e}finitions~: $B_0$ -- biomasse reproductrice \`{a} l'\'{e}quilibre non exploit\'{e}e (femelles matures), $B_{2023}$ -- biomasse reproductrice au d\'{e}but de 2023, $u_{2022}$ -- taux d'exploitation (rapport prises totales/biomasse vuln\'{e}rable) au milieu de 2022, $u_\text{max}$ -- taux d'exploitation maximal (calcul\'{e} pour chaque \'{e}chantillon comme \'{e}tant le taux d'exploitation maximal de 1935 \`{a} 2022), $B_\text{RMD}$ -- biomasse reproductrice \`{a} l'\'{e}quilibre au rendement maximal durable (RMD), $u_\text{RMD}$ -- taux d'exploitation \`{a} l'\'{e}quilibre au RMD. Toutes les valeurs de la biomasse (et du RMD) sont exprim\'{e}es en tonnes. \`{A} titre indicatif, les prises moyennes au cours des 5 derni\`{e}res ann\'{e}es (de 2017 \`{a} 2021) \'{e}taient de 775~t dans la p\^{e}che au chalut et de 13,5~t dans la p\^{e}che autre.} 
+\label{tab:car.base.rfpt}
+\begin{tabular}{lrrrrr}
+  \\[-1.0ex] \hline
+Quantit\'{e} & 5\% & 25\% & 50\% & 75\% & 95\% \\ 
+  \hline
+$B_{0}$ & 10\,354 & 12\,218 & 13\,908 & 15\,994 & 20\,295 \\ 
+  $B_{2023}$ & 7\,275 & 9\,071 & 10\,761 & 12\,886 & 17\,637 \\ 
+  $B_{2023}/B_{0}$ & 0,5703 & 0,6848 & 0,7780 & 0,8757 & 1,045 \\ 
+   \hdashline \\[-1.75ex]$u_{2022}$ & 0,01335 & 0,01814 & 0,02170 & 0,02555 & 0,03226 \\ 
+  $u_\text{max}$ & 0,04564 & 0,05719 & 0,06530 & 0,07269 & 0,08360 \\ 
+   \hline
+$\text{RMD}$ & 947,5 & 1\,152 & 1\,305 & 1\,496 & 1\,886 \\ 
+  $B_\text{RMD}$ & 2\,149 & 2\,886 & 3\,580 & 4\,475 & 5\,964 \\ 
+  $0.4B_{\text{RMD}}$ & 859,8 & 1\,154 & 1\,432 & 1\,790 & 2\,385 \\ 
+  $0.8B_{\text{RMD}}$ & 1\,720 & 2\,309 & 2\,864 & 3\,580 & 4\,771 \\ 
+  $B_{2023}/B_\text{RMD}$ & 1,924 & 2,468 & 3,043 & 3,744 & 4,886 \\ 
+  $B_\text{RMD}/B_{0}$ & 0,1670 & 0,2170 & 0,2593 & 0,3019 & 0,3652 \\ 
+   \hdashline \\[-1.75ex]$u_\text{RMD}$ & 0,05108 & 0,06828 & 0,08124 & 0,09485 & 0,1141 \\ 
+  $u_{2022}/u_\text{RMD}$ & 0,1514 & 0,2128 & 0,2700 & 0,3419 & 0,4744 \\ 
+   \hline
+\end{tabular}
+\end{table}
+\setlength{\tabcolsep}{2pt}
+
+\medskip
+%%\begin{landscapepage}{
+\input{xtab.cruns.ll_french.txt}
+\clearpage
+\input{xtab.cruns.pars_french.txt}
+%%}{\LH}{\RH}{\LF}{\RF} \end{landscapepage}
+
+\medskip
+%%\begin{landscapepage}{
+\input{xtab.cruns.rfpt_french.txt}
+%%}{\LH}{\RH}{\LF}{\RF} \end{landscapepage}
+\clearpage
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\newpage
+\subsubsubsection{Figures -- Simulation de r\'{e}f\'{e}rence (m\'{e}thode MCCM)}
+
+%%-----Figures: composite base run----------
+\graphicspath{{C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC22/CAR/Data/SS/CAR2022/Run24/MCMC.24.01/french/}}
+\input{"CAR.Central.Run.MCMC.relab_french"}%% Modify 'CAR.Central.Run.MCMC.tex' as Sweave code relabels the references.
+
+\graphicspath{{C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC22/CAR/Docs/RD/AppF_Results/french/}}  %% Put english figures into english/ subdirectory for CSAP runs
+
+%%\onefig{car.compo.LN(R0).traces}{MCMC traces of $R_0$ for the 1 candidate base runs. Grey lines show the \Nmcmc~samples for the $R_0$ parameter, solid lines show the cumulative median (up to that sample), and dashed lines show the cumulative 0.05 and 0.95 quantiles.  Red circles are the MPD estimates.}{Composite base run component runs: }{}
+%%\onefig{car.compo.LN(R0).chains}{diagnostic plots obtained by dividing the $R_0$ MCMC chains of \Nmcmc~MCMC samples into three segments, and overplotting the cumulative distributions of the first segment (red), second segment (blue) and final segment (black).}{Composite base run component runs: }{}
+%%\onefig{car.compo.LN(R0).acfs}{autocorrelation plots for the $R_0$ parameters from the MCMC output. Horizontal dashed blue lines delimit the 95\pc{} confidence interval for each parameter's set of lagged correlations.}{Composite base run component runs: }{}
+
+%\clearpage
+
+%\onefig{car.compo.pars.qbox}{quantile plots of the parameter estimates from 1 component runs of the base run, where each box denotes various $M$ values (0.04, 0.045, 0.05, 0.055, 0.06). The boxplots delimit the 0.05, 0.25, 0.5, 0.75, and 0.95 quantiles.}{\SPC{} base run: }{}
+
+%\onefig{car.compo.rfpt.qbox}{quantile plots of selected derived quantities ($B_{\currYear}$, $B_0$, $B_{\currYear}/B_0$, MSY, $\Bmsy$, $\Bmsy/B_0$, $u_{\prevYear}$, $\umsy$, $u_\text{max}$) from 1 component runs of the base run, where each box denotes various $M$ values (0.04, 0.045, 0.05, 0.055, 0.06). The boxplots delimit the 0.05, 0.25, 0.5, 0.75, and 0.95 quantiles.}{\SPC{} base run: }{}
+
+%\clearpage
+
+\onefig{car.compo.Bt}{ estimations de la biomasse reproductrice $B_t$ (en tonnes) selon les valeurs a posteriori du mod\`{e}le. La trajectoire de la biomasse m\'{e}diane est repr\'{e}sent\'{e}e sous la forme d'une courbe pleine entour\'{e}e d'une enveloppe de cr\'{e}dibilit\'{e} \`{a} 90\pc{} (quantiles~: 0,05 \`{a} 0,95) en bleu clair, d\'{e}limit\'{e}e par des lignes tiret\'{e}es pour les ann\'{e}es $t$=\startYear:\currYear; la biomasse projet\'{e}e pour les ann\'{e}es $t$=2024:\projYear{} est pr\'{e}sent\'{e}e en vert pour une prise nulle, en orange pour une prise moyenne (750\,t/an), et en rouge pour une prise \'{e}lev\'{e}e (1\,500\,t/an). L'intervalle de cr\'{e}dibilit\'{e} \`{a} 50\pc{} credibility interval (quantiles: 0.25-0.75) est \'{e}galement d\'{e}limit\'{e} par des lignes pointill\'{e}es.}{\SPC{} Simulation de r\'{e}f\'{e}rence~: }{}
+
+\twofig{car.compo.BtB0}{car.compo.BtBmsy}{estimations de la biomasse reproductrice $B_t$ par rapport \`{a}  $B_0$ (en haut) et $\Bmsy$ (en bas) selon les valeurs a posteriori du mod\`{e}le. Les lignes tiret\'{e}es horizontales repr\'{e}sentent 0,2$B_0$ \& 0,4$B_0$ (en haut) et 0,4$\Bmsy$ \& 0,8$\Bmsy$ (en bas). Voir la l\'{e}gende de la figure~\ref{fig:car.compo.Bt} pour plus de pr\'{e}cisions sur les enveloppes.}{\SPC{} Simulation de r\'{e}f\'{e}rence~: }{}
+
+\clearpage
+
+\twofig{car.compo.ut}{car.compo.utumsy}{ distribution a posteriori de la trajectoire du taux d'exploitation $u_t$ (en haut) et du taux d'exploitation (en bas) par rapport \`{a} $\umsy$.}{\SPC{} Simulation de r\'{e}f\'{e}rence~: }{}
+
+\twofig{car.compo.Rt}{car.compo.Rtdev}{distribution a posteriori de la trajectoire du recrutement (en haut; en milliers de poissons d'\^{a}ge 0) et de la trajectoire des \'{e}carts du recrutement (en bas).}{\SPC{} Simulation de r\'{e}f\'{e}rence~: }{}
+
+\clearpage
+
+\onefig{car.compo.snail}{ diagramme de phase dans le temps des m\'{e}dianes des rapports $B_t/B_\text{RMD}$ (biomasse reproductrice de l'ann\'{e}e $t$ par rapport \`{a} $B_\text{RMD}$) et $u_{t-1} / u_\text{RMD}$ (taux d'exploitation l'ann\'{e}e $t-1$ par rapport \`{a} $u_\text{RMD}$) pour les p\^{e}ches combin\'{e}es (chalut + autre). Le cercle vert plein est l'ann\'{e}e de d\'{e}but \`{a} l'\'{e}quilibre (1935). Les ann\'{e}es passent ensuite du gris p\^{a}le \`{a} des teintes plus fonc\'{e}es et la derni\`{e}re ann\'{e}e (\currYear) est repr\'{e}sent\'{e}e par un cercle cyan plein; les lignes bleues en forme de croix repr\'{e}sentent les quantiles 0,05 et 0,95 des distributions a posteriori pour la derni\`{e}re ann\'{e}e. Les lignes tiret\'{e}es verticales rouges et vertes indiquent la limite selon l'approche de pr\'{e}caution et les points de r\'{e}f\'{e}rence sup\'{e}rieurs du stock (0,4, 0,8 $\Bmsy$); la ligne pointill\'{e}e horizontale grise repr\'{e}sente $u$ au RMD.}{\SPC{} Simulation de r\'{e}f\'{e}rence~: }{}
+
+\onefig{car.compo.stock.status}{\'{e}tat du stock au d\'{e}but de \currYear{} par rapport aux points de r\'{e}f\'{e}rence de l'approche de pr\'{e}caution \'{e}tablis \`{a} 0,4$\Bmsy$ et 0,8$\Bmsy$ pour la simulation de r\'{e}f\'{e}rence. Les diagrammes de quartile montrent les quantiles 0,05, 0,25, 0,5, 0,75 et 0,95 des valeurs a posteriori de la simulation MCCM.}{\SPC{} Simulation de r\'{e}f\'{e}rence~: }{}
+
+\clearpage \newpage
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Gestion du poisson de fond -- Orientations pour \'{e}tablir les TAC}
+
+Les tableaux de d\'{e}cision pour la simulation de r\'{e}f\'{e}rence fournissent des avis aux gestionnaires sous forme de probabilit\'{e}s que la biomasse actuelle et projet\'{e}e $B_t$ ($t = \currYear, ..., \projYear$) d\'{e}passe les points de r\'{e}f\'{e}rence fond\'{e}s sur la biomasse (ou que le taux d'exploitation projet\'{e} $u_t$ tombe en dessous des points de r\'{e}f\'{e}rence fond\'{e}s sur le pr\'{e}l\`{e}vement) avec des politiques de prises constantes.
+Il convient de noter que pour les points de r\'{e}f\'{e}rence fond\'{e}s sur la biomasse, les ann\'{e}es se r\'{e}f\`{e}rent au d\'{e}but de l'ann\'{e}e en question, mais que pour les points de r\'{e}f\'{e}rence fond\'{e}s sur le pr\'{e}l\`{e}vement, elles se r\'{e}f\`{e}rent aux ann\'{e}es ant\'{e}rieures au d\'{e}but (environ \`{a} mi-ann\'{e}e).
+Quatre \'{e}chantillons suspects ont \'{e}t\'{e} omis avant l'\'{e}laboration des tableaux de d\'{e}cision parce que le RMD estim\'{e} \'{e}tait de 0\,t, $h$ \'{e}tait inf\'{e}rieure \`{a} 0,4 et $\Bmsy$ \'{e}tait sup\'{e}rieure \`{a} 12\,000\,t, bien en dehors de la distribution a posteriori de $\Bmsy$.
+En outre, les valeurs pr\'{e}vues pour ces \'{e}chantillons n'\'{e}taient pas toutes finies.
+
+Tableaux de d\'{e}cision dans le document (tous pour une politique de prises constantes). \begin{itemize_csas}{-0.5}{}
+\item Tableau~\ref{tab:car.gmu.LRP.CCs} -- probabilit\'{e} que $B_t$ d\'{e}passe le PRL, P$(B_t > 0.4 \Bmsy)$; %% \& \ref{tab:car.gmu.LRP.HRs} 
+\item Tableau~\ref{tab:car.gmu.USR.CCs} -- probabilit\'{e} que $B_t$ d\'{e}passe le PRS, P$(B_t > 0.8 \Bmsy)$; %% \& \ref{tab:car.gmu.USR.HRs}
+\item Tableau~\ref{tab:car.gmu.Bmsy.CCs} -- probabilit\'{e} que $B_t$ d\'{e}passe la biomasse au RMD, P$(B_t > \Bmsy)$; %% \& \ref{tab:car.gmu.Bmsy.HRs}
+\item Tableau~\ref{tab:car.gmu.umsy.CCs} -- probabilit\'{e} que $u_t$ soit inf\'{e}rieur au taux d'exploitation au RMD, P$(u_t < \umsy)$; %% \& \ref{tab:car.gmu.umsy.HRs}
+\item Tableau~\ref{tab:car.gmu.Bcurr.CCs} -- probabilit\'{e} que $B_t$ d\'{e}passe la biomasse de l'ann\'{e}e en cours, P$(B_t > B_{\currYear})$; %% \& \ref{tab:car.gmu.Bcurr.HRs}
+\item Tableau~\ref{tab:car.gmu.ucurr.CCs} -- probabilit\'{e} que $u_t$ soit inf\'{e}rieur au taux d'exploitation de l'ann\'{e}e en cours, P$(u_t < u_{\prevYear})$; %% \& \ref{tab:car.gmu.ucurr.HRs}
+\item Tableau~\ref{tab:car.gmu.20B0.CCs} -- probabilit\'{e} que $B_t$ d\'{e}passe une \angL{}limite souple\angR{} non fix\'{e}e par le MPO, P$(B_t > 0.2 B_0)$; %% \& \ref{tab:car.gmu.20B0.HRs}
+\item Tableau~\ref{tab:car.gmu.40B0.CCs} -- probabilit\'{e} que $B_t$ d\'{e}passe une biomasse \angL{}cible\angR{} non fix\'{e}e par le MPO, P$(B_t > 0.4 B_0)$; %% \& \ref{tab:car.gmu.40B0.HRs}
+\end{itemize_csas}
+
+Les points de r\'{e}f\'{e}rence fond\'{e}s sur le RMD estim\'{e}s dans un mod\`{e}le d'\'{e}valuation du stock peuvent \^{e}tre tr\`{e}s sensibles aux hypoth\`{e}ses du mod\`{e}le concernant la mortalit\'{e} naturelle et la dynamique de recrutement du stock \citep{Forrest-etal:2018}.
+Ainsi, d'autres pays utilisent des points de r\'{e}f\'{e}rence qui sont exprim\'{e}s sous la forme de $B_0$ plut\^{o}t que de $\Bmsy$ (p.\,ex., \citealt{NZMF:2011}) \'{e}tant donn\'{e} que la $\Bmsy$ est souvent mal estim\'{e}e parce qu'elle d\'{e}pend de param\`{e}tres estimatifs et d'une p\^{e}che uniforme (m\^{e}me si plusieurs de ces probl\`{e}mes s'appliquent aussi \`{a} $B_0$).
+C'est pourquoi les points de r\'{e}f\'{e}rence 0,2$B_0$ et 0,4$B_0$ sont \'{e}galement d\'{e}crits dans la pr\'{e}sente section.
+Il s'agit des valeurs par d\'{e}faut utilis\'{e}es en Nouvelle-Z\'{e}lande respectivement comme \angL{}limite souple\angR{} en dessous de laquelle il faut prendre des mesures de gestion, et comme biomasse \angL{}cible\angR{} pour les stocks \`{a} productivit\'{e} faible, c'est-\`{a}-dire une moyenne autour de laquelle on s'attend \`{a} voir varier la biomasse.
+La \angL{}limite souple\angR{} est \'{e}quivalente au PRS (0,8$\Bmsy$) selon le Cadre pour la p\^{e}che durable du MPO, mais ce dernier ne d\'{e}finit pas de biomasse \angL{}cible\angR{}.
+En outre, des r\'{e}sultats comparant la biomasse projet\'{e}e \`{a} $\Bmsy$ et \`{a} la biomasse reproductrice actuelle $B_{\currYear}$, et comparant le taux d'exploitation projet\'{e} au taux d'exploitation actuel $u_{\prevYear}$ ont \'{e}t\'{e} fournis.
+
+L'indicateur A1 du COSEPAC est r\'{e}serv\'{e} aux esp\`{e}ces pour lesquelles les causes de d\'{e}clin sont clairement r\'{e}versibles, sont comprises et ont cess\'{e}.
+L'indicateur A2 est utilis\'{e} lorsque la r\'{e}duction de la population peut ne pas \^{e}tre r\'{e}versible, ne pas \^{e}tre comprise ou ne pas avoir cess\'{e}.
+Sous l'indicateur A2, une esp\`{e}ce est consid\'{e}r\'{e}e comme en voie de disparition ou menac\'{e}e si le d\'{e}clin a \'{e}t\'{e} sup\'{e}rieur \`{a} 50\pc{} ou inf\'{e}rieur de plus de 30\pc{} \`{a} $B_0$, respectivement.
+%%\`{A} l'aide de ces lignes directrices, les crit\`{e}res de r\'{e}f\'{e}rence de r\'{e}tablissement deviennent $0.5B_{t-3G}$ (une baisse de 50\pc{}) et $0.7B_{t-3G}$ (une baisse de 30\pc{}), o\`{u} $B_{t-3G}$ est la biomasse trois g\'{e}n\'{e}rations (90 ans) avant la biomasse en ann\'{e}e $t$, p.\,ex., P($B_{2023,...,2112} > 0.5\vee0.7 B_{1933,...,2022}$).
+
+Autres tableaux de projections \`{a} court terme pour le crit\`{e}re A2 du COSEPAC :
+\begin{itemize_csas}{-0.5}{}
+\item Tableau~\ref{tab:car.cosewic.50B0.CCs}  -- probabilit\'{e} que $B_t$ d\'{e}passe le statut \angL{}Esp\`{e}ce en voie de disparition\angR{} (P($B_t > 0.5B_0$);
+\item Tableau~\ref{tab:car.cosewic.70B0.CCs}  -- probabilit\'{e} que $B_t$ d\'{e}passe le statut \angL{}Esp\`{e}ce menac\'{e}e\angR{} (P($B_t > 0.7B_0$).
+%%\item Table~\ref{tab:car.cosewic.30Gen.CCs} -- probability of $\leq 30\pc{}$ decline over 3 generations (75 years);
+%%\item Table~\ref{tab:car.cosewic.50Gen.CCs} -- probability of $\leq 50\pc{}$ decline over 3 generations (75 years).
+\end{itemize_csas}
+
+%\newpage
+
+%%------------------------------------------------------------------------------
+\subsubsection{Tableaux de d\'{e}cision}
+
+%%-----Tables: Decision Tables ----------
+\setlength{\tabcolsep}{0pt}%% for texArray, otherwise 6pt for xtable
+\renewcommand*{\arraystretch}{1.0}
+
+%\setlength{\tabcolsep}{0pt}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.59in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.59in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.59in}}
+  \caption{SCA~CB~: tableau de d\'{e}cision pour le point de r\'{e}f\'{e}rence limite $0.4 \Bmsy$ pr\'{e}sentant l'ann\'{e}e en cours et les projections sur 10 ans pour une gamme de strat\'{e}gies de \itbf{prises constantes} (en tonnes). Les valeurs sont celles de P$(B_t > 0.4 \Bmsy)$, c'est-\`{a}-dire la probabilit\'{e} que la biomasse reproductrice (femelles matures) au d\'{e}but de l'ann\'{e}e $t$ d\'{e}passe le point de r\'{e}f\'{e}rence limite. Les probabilit\'{e}s repr\'{e}sentent la proportion (\`{a} deux d\'{e}cimales pr\`{e}s) des 1\,996 \'{e}chantillons MCCM pour lesquels $B_t > 0.4 \Bmsy$. \`{A} titre de r\'{e}f\'{e}rence, les prises moyennes pour les cinq derni\`{e}res ann\'{e}es (de 2017 \`{a} 2021) s'\'{e}l\`{e}vent \`{a} 789~t. } \label{tab:car.gmu.LRP.CCs}\\  \hline\\[-2.2ex]  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  250 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  500 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  750 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1\,000 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1\,250 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1\,500 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1\,750 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & >0,99 \\ 
+  2\,000 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & >0,99 & >0,99 & >0,99 \\ 
+   %\hline
+\end{longtable}
+
+%\setlength{\tabcolsep}{0pt}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.55in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.55in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.55in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.55in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.55in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.55in}}
+  \caption{SCA~CB~: tableau de d\'{e}cision pour le point de r\'{e}f\'{e}rence sup\'{e}rieur du stock $0.8 \Bmsy$ pr\'{e}sentant l'ann\'{e}e en cours et les projections sur 10 ans pour une gamme de strat\'{e}gies de \itbf{prises constantes} (en tonnes) pour lesquelles les valeurs sont P$(B_t > 0.8 \Bmsy)$. \`{A} titre de r\'{e}f\'{e}rence, les prises moyennes pour les cinq derni\`{e}res ann\'{e}es (de 2017 \`{a} 2021) s'\'{e}l\`{e}vent \`{a} 789~t. } \label{tab:car.gmu.USR.CCs}\\  \hline\\[-2.2ex]  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  CC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  250 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  500 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  750 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1\,000 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1\,250 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1\,500 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & >0,99 & >0,99 & >0,99 \\ 
+  1\,750 & 1 & 1 & 1 & 1 & 1 & 1 & >0,99 & >0,99 & >0,99 & 0,99 & 0,98 \\ 
+  2\,000 & 1 & 1 & 1 & 1 & 1 & >0,99 & >0,99 & 0,99 & 0,99 & 0,97 & 0,95 \\ 
+   %\hline
+\end{longtable}
+
+\newpage
+%\setlength{\tabcolsep}{0pt}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.54in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.54in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.54in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.54in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.54in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.54in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.54in}}
+  \caption{SCA~CB~: tableau de d\'{e}cision pour le point de r\'{e}f\'{e}rence $\Bmsy$ pr\'{e}sentant l'ann\'{e}e en cours et les projections sur 10 ans pour une gamme de strat\'{e}gies de \itbf{prises constantes} (en tonnes), pour lesquelles les valeurs sont P$(B_t > \Bmsy)$. \`{A} titre de r\'{e}f\'{e}rence, les prises moyennes pour les cinq derni\`{e}res ann\'{e}es (de 2017 \`{a} 2021) s'\'{e}l\`{e}vent \`{a} 789~t. } \label{tab:car.gmu.Bmsy.CCs}\\  \hline\\[-2.2ex]  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  250 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  500 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  750 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1\,000 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & >0,99 & >0,99 & 1 \\ 
+  1\,250 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & >0,99 & >0,99 & >0,99 & >0,99 \\ 
+  1\,500 & 1 & 1 & 1 & 1 & 1 & 1 & >0,99 & >0,99 & 0,99 & 0,99 & 0,98 \\ 
+  1\,750 & 1 & 1 & 1 & 1 & 1 & >0,99 & >0,99 & 0,99 & 0,98 & 0,97 & 0,95 \\ 
+  2\,000 & 1 & 1 & 1 & 1 & >0,99 & >0,99 & 0,99 & 0,97 & 0,96 & 0,92 & 0,89 \\ 
+   %\hline
+\end{longtable}
+
+%\setlength{\tabcolsep}{0pt}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}}
+  \caption{SCA~CB: tableau de d\'{e}cision pour le point de r\'{e}f\'{e}rence $\umsy$ pr\'{e}sentant l'ann\'{e}e en cours et les projections sur 10 ans pour une gamme de strat\'{e}gies de \itbf{prises constantes} (en tonnes) pour lesquelles les valeurs sont P$(u_t < \umsy)$. \`{A} titre de r\'{e}f\'{e}rence, les prises moyennes pour les cinq derni\`{e}res ann\'{e}es (de 2017 \`{a} 2021) s'\'{e}l\`{e}vent \`{a} 789~t. } \label{tab:car.gmu.umsy.CCs}\\  \hline\\[-2.2ex]  PC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  PC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  250 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  500 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  750 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1\,000 & 1 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 \\ 
+  1\,250 & 1 & 0,99 & 0,99 & 0,99 & 0,99 & 0,99 & 0,98 & 0,98 & 0,97 & 0,97 & 0,96 \\ 
+  1\,500 & 1 & 0,97 & 0,97 & 0,96 & 0,95 & 0,93 & 0,92 & 0,91 & 0,90 & 0,88 & 0,87 \\ 
+  1\,750 & 1 & 0,93 & 0,91 & 0,89 & 0,87 & 0,85 & 0,83 & 0,81 & 0,78 & 0,75 & 0,73 \\ 
+  2\,000 & 1 & 0,86 & 0,83 & 0,79 & 0,77 & 0,73 & 0,70 & 0,66 & 0,63 & 0,60 & 0,57 \\ 
+   %\hline
+\end{longtable}
+
+%\setlength{\tabcolsep}{0pt}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}}
+  \caption{SCA~CB~: tableau de d\'{e}cision pour le point de r\'{e}f\'{e}rence $B_{\currYear}$ pr\'{e}sentant l'ann\'{e}e en cours et les projections sur 10 ans pour une gamme de strat\'{e}gies de \itbf{prises constantes} (en tonnes) pour lesquelles les valeurs sont P$(B_t > B_{\currYear})$. \`{A} titre de r\'{e}f\'{e}rence, les prises moyennes pour les cinq derni\`{e}res ann\'{e}es (de 2017 \`{a} 2021) s'\'{e}l\`{e}vent \`{a} 789~t. } \label{tab:car.gmu.Bcurr.CCs}\\  \hline\\[-2.2ex]  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 0 & 0,95 & 0,97 & 0,96 & 0,95 & 0,94 & 0,93 & 0,91 & 0,91 & 0,90 & 0,89 \\ 
+  250 & 0 & 0,88 & 0,92 & 0,91 & 0,88 & 0,86 & 0,84 & 0,82 & 0,81 & 0,80 & 0,79 \\ 
+  500 & 0 & 0,78 & 0,83 & 0,81 & 0,77 & 0,74 & 0,73 & 0,70 & 0,69 & 0,67 & 0,64 \\ 
+  750 & 0 & 0,67 & 0,72 & 0,68 & 0,64 & 0,61 & 0,58 & 0,56 & 0,54 & 0,51 & 0,50 \\ 
+  1\,000 & 0 & 0,56 & 0,61 & 0,55 & 0,51 & 0,47 & 0,46 & 0,43 & 0,40 & 0,38 & 0,37 \\ 
+  1\,250 & 0 & 0,50 & 0,50 & 0,44 & 0,39 & 0,38 & 0,34 & 0,31 & 0,29 & 0,27 & 0,26 \\ 
+  1\,500 & 0 & 0,43 & 0,42 & 0,34 & 0,32 & 0,27 & 0,25 & 0,23 & 0,21 & 0,19 & 0,17 \\ 
+  1\,750 & 0 & 0,37 & 0,34 & 0,29 & 0,24 & 0,20 & 0,18 & 0,16 & 0,13 & 0,13 & 0,12 \\ 
+  2\,000 & 0 & 0,32 & 0,28 & 0,23 & 0,18 & 0,14 & 0,12 & 0,10 & 0,09 & 0,09 & 0,08 \\ 
+   %\hline
+\end{longtable}
+
+\newpage
+%\setlength{\tabcolsep}{0pt}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.54in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.54in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.54in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.54in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.54in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.54in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.54in}}
+  \caption{SCA~CB~: tableau de d\'{e}cision pour le point de r\'{e}f\'{e}rence $u_{\prevYear}$ pr\'{e}sentant l'ann\'{e}e en cours et les projections sur 10 ans pour une gamme de strat\'{e}gies de \itbf{prises constantes} (en tonnes) pour lesquelles les valeurs sont P$(u_t < u_{\prevYear})$. \`{A} titre de r\'{e}f\'{e}rence, les prises moyennes pour les cinq derni\`{e}res ann\'{e}es (de 2017 \`{a} 2021) s'\'{e}l\`{e}vent \`{a} 789~t. } \label{tab:car.gmu.ucurr.CCs}\\  \hline\\[-2.2ex]  PC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  PC  & 2022 & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  250 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  500 & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  750 & 0 & 1 & 0,99 & 0,93 & 0,85 & 0,78 & 0,72 & 0,68 & 0,64 & 0,61 & 0,59 \\ 
+  1\,000 & 0 & 0 & 0 & <0,01 & <0,01 & 0,01 & 0,02 & 0,03 & 0,04 & 0,04 & 0,05 \\ 
+  1\,250 & 0 & 0 & 0 & 0 & 0 & 0 & <0,01 & <0,01 & <0,01 & <0,01 & <0,01 \\ 
+  1\,500 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+  1\,750 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+  2\,000 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+   %\hline
+\end{longtable}
+
+%\setlength{\tabcolsep}{0pt}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.49in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.56in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.56in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.56in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.56in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.56in}}
+  \caption{SCA~CB~: tableau de d\'{e}cision pour le point de r\'{e}f\'{e}rence $0.2 B_0$ pr\'{e}sentant l'ann\'{e}e en cours et les projections sur 10 ans pour une gamme de strat\'{e}gies de \itbf{prises constantes} (en tonnes) pour lesquelles les valeurs sont P$(B_t > 0.2 B_0)$. \`{A} titre de r\'{e}f\'{e}rence, les prises moyennes pour les cinq derni\`{e}res ann\'{e}es (de 2017 \`{a} 2021) s'\'{e}l\`{e}vent \`{a} 789~t. } \label{tab:car.gmu.20B0.CCs}\\  \hline\\[-2.2ex]  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  250 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  500 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  750 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1\,000 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1\,250 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+  1\,500 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & >0,99 & >0,99 \\ 
+  1\,750 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & >0,99 & >0,99 & >0,99 & 0,99 \\ 
+  2\,000 & 1 & 1 & 1 & 1 & 1 & 1 & >0,99 & >0,99 & 0,99 & 0,98 & 0,96 \\ 
+   %\hline
+\end{longtable}
+
+%\setlength{\tabcolsep}{0pt}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.51in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}}
+  \caption{SCA~CB~: tableau de d\'{e}cision pour le point de r\'{e}f\'{e}rence $0.4 B_0$ pr\'{e}sentant l'ann\'{e}e en cours et les projections sur 10 ans pour une gamme de strat\'{e}gies de \itbf{prises constantes} (en tonnes) pour lesquelles les valeurs sont P$(B_t > 0.4 B_0)$. \`{A} titre de r\'{e}f\'{e}rence, les prises moyennes pour les cinq derni\`{e}res ann\'{e}es (de 2017 \`{a} 2021) s'\'{e}l\`{e}vent \`{a} 789~t. } \label{tab:car.gmu.40B0.CCs}\\  \hline\\[-2.2ex]  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & >0,99 & 1 & 1 & 1 \\ 
+  250 & 1 & >0,99 & 1 & 1 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & 1 & 1 \\ 
+  500 & 1 & >0,99 & 1 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & 1 & 1 \\ 
+  750 & 1 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 \\ 
+  1\,000 & 1 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & 0,99 & 0,99 & 0,98 & 0,98 \\ 
+  1\,250 & 1 & >0,99 & >0,99 & >0,99 & >0,99 & 0,99 & 0,99 & 0,98 & 0,97 & 0,96 & 0,95 \\ 
+  1\,500 & 1 & >0,99 & >0,99 & >0,99 & 0,99 & 0,99 & 0,98 & 0,96 & 0,94 & 0,92 & 0,88 \\ 
+  1\,750 & 1 & >0,99 & >0,99 & 0,99 & 0,99 & 0,97 & 0,95 & 0,92 & 0,88 & 0,84 & 0,80 \\ 
+  2\,000 & 1 & >0,99 & >0,99 & 0,99 & 0,98 & 0,95 & 0,91 & 0,86 & 0,80 & 0,76 & 0,70 \\ 
+   %\hline
+\end{longtable}
+
+\newpage
+%\setlength{\tabcolsep}{0pt}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.5in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.53in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.53in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.53in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.53in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.53in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.53in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.53in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.53in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.53in}}
+  \caption{SCA~CB~: tableau de d\'{e}cision pour le crit\`{e}re de r\'{e}f\'{e}rence A2 du COSEPAC relatif au statut \angL{}Esp\`{e}ce en voie de disparition\angR{} pr\'{e}sentant l'ann\'{e}e en cours et les projections sur 10 ans pour une gamme de strat\'{e}gies de \itbf{prises constantes} (en tonnes) pour lesquelles les valeurs sont P$(B_t > 0.5 B_0)$. \`{A} titre de r\'{e}f\'{e}rence, les prises moyennes pour les cinq derni\`{e}res ann\'{e}es (de 2017 \`{a} 2021) s'\'{e}l\`{e}vent \`{a} 789~t. } \label{tab:car.cosewic.50B0.CCs}\\  \hline\\[-2.2ex]  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 0,99 & 0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 \\ 
+  250 & 0,99 & 0,99 & 0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & >0,99 & 0,99 & 0,99 \\ 
+  500 & 0,99 & 0,99 & 0,99 & 0,99 & 0,99 & 0,99 & 0,99 & 0,99 & 0,99 & 0,99 & 0,99 \\ 
+  750 & 0,99 & 0,99 & 0,99 & 0,99 & 0,99 & 0,98 & 0,99 & 0,97 & 0,97 & 0,97 & 0,96 \\ 
+  1\,000 & 0,99 & 0,99 & 0,99 & 0,98 & 0,98 & 0,97 & 0,96 & 0,95 & 0,94 & 0,92 & 0,91 \\ 
+  1\,250 & 0,99 & 0,99 & 0,98 & 0,98 & 0,97 & 0,95 & 0,93 & 0,91 & 0,88 & 0,86 & 0,83 \\ 
+  1\,500 & 0,99 & 0,98 & 0,98 & 0,96 & 0,94 & 0,92 & 0,89 & 0,84 & 0,80 & 0,77 & 0,74 \\ 
+  1\,750 & 0,99 & 0,98 & 0,97 & 0,95 & 0,91 & 0,87 & 0,82 & 0,77 & 0,72 & 0,67 & 0,63 \\ 
+  2\,000 & 0,99 & 0,98 & 0,96 & 0,93 & 0,88 & 0,82 & 0,76 & 0,69 & 0,63 & 0,57 & 0,52 \\ 
+   %\hline
+\end{longtable}
+
+%\setlength{\tabcolsep}{0pt}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.52in}}
+  \caption{SCA~CB~: tableau de d\'{e}cision pour le crit\`{e}re de r\'{e}f\'{e}rence A2 du COSEPAC relatif au statut \angL{}Esp\`{e}ce menac\'{e}e\angR{} pr\'{e}sentant l'ann\'{e}e en cours et les projections sur 10 ans pour une gamme de strat\'{e}gies de \itbf{prises constantes} (en tonnes) pour lesquelles les valeurs sont P$(B_t > 0.7 B_0)$. \`{A} titre de r\'{e}f\'{e}rence, les prises moyennes pour les cinq derni\`{e}res ann\'{e}es (de 2017 \`{a} 2021) s'\'{e}l\`{e}vent \`{a} 789~t. } \label{tab:car.cosewic.70B0.CCs}\\  \hline\\[-2.2ex]  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  PC  & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 & 2032 & 2033 \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  0 & 0,71 & 0,80 & 0,86 & 0,88 & 0,90 & 0,91 & 0,92 & 0,92 & 0,93 & 0,93 & 0,93 \\ 
+  250 & 0,71 & 0,79 & 0,83 & 0,85 & 0,86 & 0,87 & 0,87 & 0,87 & 0,87 & 0,87 & 0,87 \\ 
+  500 & 0,71 & 0,77 & 0,81 & 0,81 & 0,82 & 0,82 & 0,81 & 0,80 & 0,80 & 0,79 & 0,78 \\ 
+  750 & 0,71 & 0,75 & 0,78 & 0,77 & 0,76 & 0,75 & 0,73 & 0,71 & 0,70 & 0,69 & 0,67 \\ 
+  1\,000 & 0,71 & 0,74 & 0,75 & 0,72 & 0,71 & 0,68 & 0,65 & 0,62 & 0,60 & 0,58 & 0,56 \\ 
+  1\,250 & 0,71 & 0,72 & 0,71 & 0,68 & 0,65 & 0,60 & 0,57 & 0,54 & 0,50 & 0,48 & 0,45 \\ 
+  1\,500 & 0,71 & 0,71 & 0,68 & 0,64 & 0,58 & 0,53 & 0,49 & 0,45 & 0,42 & 0,38 & 0,35 \\ 
+  1\,750 & 0,71 & 0,69 & 0,64 & 0,59 & 0,52 & 0,46 & 0,42 & 0,38 & 0,33 & 0,31 & 0,28 \\ 
+  2\,000 & 0,71 & 0,67 & 0,61 & 0,54 & 0,46 & 0,40 & 0,35 & 0,30 & 0,27 & 0,24 & 0,21 \\ 
+   %\hline
+\end{longtable}
+\renewcommand*{\arraystretch}{1.1}
+
+%%\clearpage \newpage
+
+%------------------------------------------------------------------------------
+\subsection{Analyses de sensibilit\'{e}}\label{ss:sensruns} 
+
+
+\Numberstringnum{14} analyses de sensibilit\'{e} ont \'{e}t\'{e} effectu\'{e}es (avec des simulations MCCM compl\`{e}tes) par rapport au simulation de r\'{e}f\'{e}rence (Run24~: $M$ et $h$ estim\'{e}es, \cvpro=0,178).
+La proc\'{e}dure MCCM utilis\'{e}e pour les simlations de sensibilit\'{e} a suivi la m\^{e}me proc\'{e}dure (algorithme \angL{}sans retour\angR{}) que celle du mod\`{e}le de base, mais le nombre de simulations \'{e}tait diff\'{e}rent (\nSimsSens{} it\'{e}rations, en analysant la charge de travail en \nChains{} cha\^{i}nes parall\`{e}les de \cSimsSens{} it\'{e}rations chacune, en rejetant les \cBurnSens{} premi\`{e}res it\'{e}rations et en conservant les \cSamps{} derniers \'{e}chantillons par cha\^{i}ne, pour produire un total de \Nmcmc{} \'{e}chantillons).
+Les analyses de sensibilit\'{e} visaient \`{a} tester la sensibilit\'{e} des donn\'{e}es de sortie par rapport aux hypoth\`{e}ses de rechange du mod\`{e}le.
+\begin{itemize_csas}{-0.5}{}
+  \item \textbf{S01}~(Run25)  -- r\'{e}partir M entre les \^{a}ges 13 et 14  (\'{e}tiquette~: `` ~M~ r\'{e}partie entre les \^{a}ges (13,14)'');
+  \item \textbf{S02}~(Run26)  -- n'appliquer aucune erreur de d\'{e}termination de l'\^{a}ge  (etiquette~: ``EA1~aucune~erreur~d'\^{a}ge'');
+  \item \textbf{S03}~(Run27)  -- utiliser l'erreur liss\'{e}e de d\'{e}termination de l'\^{a}ge \`{a} partir des CV des lecteurs d'\^{a}ge  (etiquette~: ``EA5~CV~des~lecteurs~d'\^{a}ge'');
+  \item \textbf{S04}~(Run28)  -- utiliser une erreur de d\'{e}termination de l'\^{a}ge \`{a} CV constant  (etiquette~: ``AA6~CASAL~CV=0,1'');
+  \item \textbf{S05}~(Run29)  -- r\'{e}duire les prises commerciales (de 1965 \`{a} 1995) de 30\pc{}  (etiquette~: ``prises~r\'{e}duites~de~30\pc{}'');
+  \item \textbf{S06}~(Run30)  -- augmenter les prises commerciales (de 1965 \`{a} 1995) de 50\pc{}  (etiquette~: ``prises~augment\'{e}es~de~50\pc{}'');
+  \item \textbf{S07}~(Run31)  -- r\'{e}duire $\sigma_R$ \`{a} 0,6  (etiquette~: ``sigmaR=0,6'');
+  \item \textbf{S08}~(Run32)  -- augmenter $\sigma_R$ \`{a} 1,2  (etiquette~: ``sigmaR=1,2'');
+  \item \textbf{S09}~(Run33)  -- utiliser la s\'{e}lectivit\'{e} en forme de d\^{o}me des femelles  (etiquette~: ``s\'{e}lectivit\'{e}~en~forme~de~d\^{o}me~pour~femelles'');
+  \item \textbf{S10}~(Run34) -- utiliser les donn\'{e}es sur les fr\'{e}quences selon l'\^{a}ge des relev\'{e}s synoptiques dans le DH et sur la COHG (etiquette~: ``utilisation~des~FA~DH~COHG'');
+  \item \textbf{S11}~(Run35) -- ajouter les RPFD nord et sud (etiquette~: ``ajout~des~RPFD'');
+  \item \textbf{S12}~(Run36) -- utiliser les CPUE ajust\'{e}es par la distribution de Tweedie (etiquette~: ``utilisation~des~CPUE~Tweedie'');
+  \item \textbf{S13}~(Run37) -- supprimer la s\'{e}rie des CPUE provenant des p\^{e}ches commerciales (etiquette~: ``suppression~des~CPUE~comm.'');
+  \item \textbf{S14}~(Run49) -- utiliser la repond\'{e}ration de Francis (etiquette~: `` utilisation~de~la~ repond\'{e}ration de Francis'');
+\end{itemize_csas}
+
+Tous les simulations de sensibilit\'{e} ont \'{e}t\'{e} repond\'{e}r\'{e}s une fois pour l'abondance, en ajoutant une erreur de traitement \`{a} la CPUE de la p\^{e}che commerciale (sauf pour S12 Tweedie, car l'erreur \'{e}tait d\'{e}j\`{a} \'{e}lev\'{e}e). 
+L'erreur de processus ajout\'{e}e \`{a} la CPUE de la p\^{e}che commerciale pour tous les mod\`{e}le de sensibilit\'{e} (sauf S12) \'{e}tait la m\^{e}me que celle adopt\'{e}e dans la simulation de r\'{e}f\'{e}rence B1 (R24; CPUE = 0,178) selon une analyse par spline (\AppEqn).
+Aucune erreur de traitement suppl\'{e}mentaire n'a \'{e}t\'{e} ajout\'{e}e aux indices des relev\'{e}s puisque l'erreur observ\'{e}e \'{e}tait d\'{e}j\`{a} \'{e}lev\'{e}e. \'{E}tant donn\'{e} que l'erreur relative sur les relev\'{e}s \`{a} la palangre sur fond dur (RPFD) \'{e}tait inf\'{e}rieure \`{a} celle des relev\'{e}s synoptiques, nous avons ex\'{e}cut\'{e} un MDP avec une erreur de traitement ajout\'{e}e de 25\pc{}, mais les estimations des param\`{e}tres du MDP \'{e}taient tr\`{e}s similaires \`{a} celles sans erreur de processus ajout\'{e}e; nous avons donc utilis\'{e} les r\'{e}sultats MCCM pour la simulation original dans le mod\`{e}le S11.
+Aucune repond\'{e}ration explicite de la composition n'a \'{e}t\'{e} appliqu\'{e}e; les param\`{e}tres $\log\,\text{DM}\,\theta_g$, qui r\'{e}gissent le rapport entre la taille nominale et la taille r\'{e}elle de l'\'{e}chantillon (\AppEqn), ont plut\^{o}t \'{e}t\'{e} estim\'{e}s.
+
+Les diff\'{e}rences entre les simulations de sensibilit\'{e} (y compris la simulation de r\'{e}f\'{e}rence) sont r\'{e}sum\'{e}es dans les tableaux des estimations des m\'{e}dianes des param\`{e}tres (tableaux~\ref{tab:car.sens.pars}-\ref{tab:car.sens.pars2}) et des m\'{e}dianes des quantit\'{e}s fond\'{e}es sur le RMD (tableau~\ref{tab:car.sens.rfpt}).
+Les trac\'{e}s de sensibilit\'{e} apparaissent dans les figures ci-dessous.
+\begin{itemize_csas}{-0.5}{}
+  \item Figure~\ref{fig:car.senso.LN(R0).traces} -- trac\'{e}s pour les cha\^{i}nes des \'{e}chantillons MCCM de $\log\,R_0$
+  \item Figure~\ref{fig:car.senso.LN(R0).chains} -- trac\'{e}s diagnostiques des cha\^{i}nes fractionn\'{e}es pour les \'{e}chantillons MCCM de $\log\,R_0$
+  \item Figure~\ref{fig:car.senso.LN(R0).acfs} -- trac\'{e}s diagnostiques de l'autocorr\'{e}lation pour les \'{e}chantillons MCCM de $\log\,R_0$
+  \item Figure~\ref{fig:car.senso.traj.BtB0} -- trajectoires de la m\'{e}diane de $B_t/B_0$
+  \item Figure~\ref{fig:car.senso.traj.Bt} -- trajectoires de la m\'{e}diane de $B_t$ (tonnes)
+  \item Figure~\ref{fig:car.senso.traj.RD} -- trajectoires de la m\'{e}diane des \'{e}carts du recrutement
+  \item Figure~\ref{fig:car.senso.traj.R} -- trajectoires de la m\'{e}diane du recrutement $R_t$ (en milliers de poissons d'\^{a}ge 0)
+  \item Figure~\ref{fig:car.senso.traj.U} -- trajectoires de la m\'{e}diane du taux d'exploitation $u_t$
+  \item Figure~\ref{fig:car.senso.pars.qbox} -- trac\'{e}s des quantiles de certains param\`{e}tres pour les simulations de sensibilit\'{e}
+  \item Figure~\ref{fig:car.senso.rfpt.qbox} -- trac\'{e}s des quantiles de certaines quantit\'{e}s d\'{e}riv\'{e}es pour les simulations de sensibilit\'{e}
+  \item Figure~\ref{fig:car.senso.stock.status} -- trac\'{e}s de l'\'{e}tat du stock de $B_{\currYear}/\Bmsy$
+ \end{itemize_csas}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsubsection{Diagnostics de sensibilit\'{e}}
+
+Les graphiques de diagnostic (figures~\ref{fig:car.senso.LN(R0).traces} \`{a} \ref{fig:car.senso.LN(R0).acfs}) montrent que sept simulations de sensibilit\'{e} pr\'{e}sentent un bon comportement MCCM et sept, un comportement passable. Aucun ne se trouvait dans la cat\'{e}gorie \angL{}mauvais\angR{} ou \angL{}inacceptable\angR{}.
+\begin{itemize_csas}{-0.5}{}
+  \item Bon -- aucune tendance dans les trac\'{e}s et pas de pic dans $\log R_0$, alignement des cha\^{i}nes fractionn\'{e}es, aucune autocorr\'{e}lation.
+  \begin{itemize_csas}{-0.25}{-0.25}
+    \item S01 (~M~r\'{e}partie~entre~les~\^{a}ges~13~et~14)
+    \item S03 (EA5~CV~des~lecteurs~d'\^{a}ge)
+    \item S04 (EA6~CASAL~CV=0,1)
+    \item S06 (prises~augment\'{e}es~de~50\pc{})
+    \item S08 (sigmaR=1,2)
+    \item S11 (ajout~des~RPFD)
+    \item S14 (utilisation~de~la~repond\'{e}ration~de~Francis)
+  \end{itemize_csas}
+  \item Passable -- tendance du trac\'{e} temporairement interrompue, pics occasionnels dans $\log R_0$, cha\^{i}nes fractionn\'{e}es quelque peu effiloch\'{e}es, un peu d'autocorr\'{e}lation.
+  \begin{itemize_csas}{-0.25}{-0.25}
+    \item S02 (EA1~aucune~erreur~d'\^{a}ge)
+    \item S05 (prises~r\'{e}duites~de~30\pc{})
+    \item S07 (sigmaR=0,6)
+    \item S09 (s\'{e}lectivit\'{e}~en~forme~de~d\^{o}me~pour~femelles)
+    \item S10 (utilisation~des~FA~DH~COHG)
+    \item S12 (utilisation~des~CPUE~Tweedie)
+    \item S13 (suppression~des~CPUE~comm.)
+  \end{itemize_csas}
+\end{itemize_csas}
+
+\onefig{car.senso.LN(R0).traces}{ trac\'{e}s MCCM pour les param\`{e}tres estim\'{e}s. Les lignes grises montrent les \Nmcmc~\'{e}chantillons pour chaque param\`{e}tre, les lignes pleines bleues repr\'{e}sentent la m\'{e}diane cumulative (jusqu'\`{a} l'\'{e}chantillon en question) et les lignes tiret\'{e}es indiquent les quantiles cumul\'{e}s 0,05 et 0,95. Les cercles rouges sont les estimations du MDP.}{\SPC{} sensibilit\'{e} $R_0$~: }{}
+
+\onefig{car.senso.LN(R0).chains}{ trac\'{e}s diagnostiques obtenus en divisant la cha\^{i}ne MCCM de \Nmcmc~\'{e}chantillons MCCM en trois segments et en superposant les distributions cumulatives du premier segment (en rouge), du deuxi\`{e}me segment (en bleu) et du dernier segment (en noir).}{\SPC{} sensibilit\'{e} $R_0$~: }{}
+
+\onefig{car.senso.LN(R0).acfs}{ trac\'{e}s d'autocorr\'{e}lation pour les param\`{e}tres estim\'{e}s provenant des r\'{e}sultats MCCM. Les lignes bleues horizontales tiret\'{e}es d\'{e}limitent l'intervalle de confiance \`{a} 95\pc{} pour l'ensemble de corr\'{e}lations d\'{e}cal\'{e}es de chaque param\`{e}tre.}{\SPC{} sensibilit\'{e} $R_0$~: }{}
+
+\clearpage
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsubsection{Comparaisons des mod\`{e}les de sensibilit\'{e}}
+
+Les trajectoires des m\'{e}dianes de $B_t$ par rapport \`{a} $B_0$ (figure~\ref{fig:car.senso.traj.BtB0}) indiquent que tous les mod\`{e}les de sensibilit\'{e} ont suivi une trajectoire similaire \`{a} celle du simulation de r\'{e}f\'{e}rence, avec quelques variations.
+L'\'{e}puisement m\'{e}dian de l'ann\'{e}e finale variait d'un minimum de 0,622 pour le mod\`{e}le S11 (ajout RPFD) \`{a} un maximum de 0,973 pour le mod\`{e}le S01 (M r\'{e}partie).
+Le sc\'{e}nario \angL{}$M$ r\'{e}partie\angR{} \'{e}tant le plus optimiste en ce qui concerne l'\'{e}puisement en \currYear, la simulation de r\'{e}f\'{e}rence retenu (premi\`{e}re hypoth\`{e}se de mortalit\'{e} naturelle~: valeur unique de~$M$) a \'{e}t\'{e} consid\'{e}r\'{e} comme un choix prudent.
+
+Le mod\`{e}le S01 (deuxi\`{e}me hypoth\`{e}se de $M$), qui imitait l'\'{e}valuation pr\'{e}c\'{e}dente du stock de \SPC{} \citep{Stanley-etal:2009_car, DFO-SR:2009_car} en estimant une valeur de $M$ inf\'{e}rieure pour les m\^{a}les et les femelles et en permettant ensuite \`{a} $M$ d'augmenter pour les femelles apr\`{e}s l'\^{a}ge 14, a donn\'{e} un \'{e}puisement du stock beaucoup plus optimiste que la simulation de r\'{e}f\'{e}rence (estimation m\'{e}diane $B_{\currYear}/B_0$=0,97 contre 0,78 dans la simulation de r\'{e}f\'{e}rence).
+
+La troisi\`{e}me hypoth\`{e}se de $M$ pour expliquer l'absence de femelles plus \^{a}g\'{e}es dans cette population, repr\'{e}sent\'{e}e dans le mod\`{e}le S09, qui utilisait une s\'{e}lectivit\'{e} en forme de d\^{o}me pour les femelles afin d'expliquer ce ph\'{e}nom\`{e}ne, a produit une biomasse plus importante et un \'{e}puisement du stock plus optimiste (estimation m\'{e}diane de $B_{\currYear}/B_0$=0,84) que la simulation de r\'{e}f\'{e}rence (figure~\ref{fig:car.senso.traj.BtB0}).
+L'estimation plus importante de $B_0$ provenait de la biomasse cryptique cr\'{e}\'{e}e par ce mod\`{e}le, agissant comme un r\'{e}servoir de femelles reproductrices suppl\'{e}mentaires.
+
+Deux simlations de sensibilit\'{e} ont abouti \`{a} des estimations moins optimistes de l'\'{e}puisement du stock~: le mod\`{e}le S11 (ajout des RPFD) et le mod\`{e}le S12 (utilisation des CPUE de Tweedie). Ces deux simulations ont donn\'{e} de bons diagnostics MCCM et pourraient \^{e}tre consid\'{e}r\'{e}s comme des interpr\'{e}tations de rechange pour le stock de \SPC{}.
+Ils ont utilis\'{e} des donn\'{e}es d'entr\'{e}e diff\'{e}rentes, soit des donn\'{e}es de relev\'{e}s suppl\'{e}mentaires, soit une autre interpr\'{e}tation des donn\'{e}es sur les CPUE.
+L'analyse des CPUE de Tweedie (sans les effets des interactions) \'{e}tait cr\'{e}dible et repr\'{e}sentait une autre interpr\'{e}tation des donn\'{e}es sur les prises/l'effort. Une deuxi\`{e}me analyse de Tweedie, utilisant un mod\`{e}le d'interaction complet entre la localit\'{e} du MPO et l'ann\'{e}e, suivait d'assez pr\`{e}s les r\'{e}sultats du mod\`{e}le delta-lognormal utilis\'{e} dans la simulation de r\'{e}f\'{e}rence (figure~C.20) et aurait donn\'{e} un mod\`{e}le avec des r\'{e}sultats interm\'{e}diaires entre la simulation de r\'{e}f\'{e}rence et la simulation S12.
+Ces deux s\'{e}ries de CPUE ont pu \^{e}tre compromises par des changements dans la proc\'{e}dure de collecte des donn\'{e}es sur les prises/l'effort \`{a} la suite des r\'{e}ponses administratives \`{a} la pand\'{e}mie de COVID-19.
+Le programme d'observateurs a \'{e}t\'{e} suspendu en mars 2020 et a \'{e}t\'{e} remplac\'{e} par un programme de surveillance \'{e}lectronique des journaux de bord audit\'{e} en avril 2020. Bien que des d\'{e}barquements individuels aient \'{e}t\'{e} contr\^{o}l\'{e}s, il n'y a pas eu d'audit global du processus de collecte des donn\'{e}es apr\`{e}s mars 2020.
+
+La simulation de sensibilit\'{e} qui omettait totalement les donn\'{e}es des CPUE (S13) a abouti \`{a} une estimation de l'\'{e}puisement du stock moins optimiste que la simulation de r\'{e}f\'{e}rence, mais sup\'{e}rieure au simulation de sensibilit\'{e} de Tweedie (S12; estimation m\'{e}diane de $B_{\currYear}/B_0$=0,67 contre 0,78 pour la simulation de r\'{e}f\'{e}rence et 0,63 pour la simulation S12).
+
+La simulation de sensibilit\'{e} S10, qui ajoute les donn\'{e}es sur les fr\'{e}quences selon l'\^{a}ge pour les relev\'{e}s dans le DH et sur la COHG, donn\'{e}es qui n'\'{e}taient pas incluses dans la simulation de r\'{e}f\'{e}rence parce que le mod\`{e}le n'a pas pu bien s'y ajuster, est int\'{e}ressant.
+Cependant, le relev\'{e} dans le DH a observ\'{e} des \^{a}ges et des tailles inf\'{e}rieurs (voir la figure D.6) par rapport aux autres relev\'{e}s synoptiques.
+Avec l'ajout des donn\'{e}es sur les fr\'{e}quences selon l'\^{a}ge provenant du relev\'{e} dans le DH, le mod\`{e}le a estim\'{e} une classe d'\^{a}ge tr\`{e}s importante pour 2014 par rapport au simulation de r\'{e}f\'{e}rence (figures~\ref{fig:car.senso.traj.RD} et \ref{fig:car.senso.traj.R}).
+Il est possible que cette classe d'\^{a}ge ait \'{e}t\'{e} aussi nombreuse que l'estimation du simulation S10, mais il nous a sembl\'{e} prudent d'\'{e}tudier cette possibilit\'{e} dans une simulation de sensibilit\'{e} sans inclure une estimation aussi optimiste dans les projections du simulation de r\'{e}f\'{e}rence.
+
+Trois simulations de sensibilit\'{e} abordaient des probl\`{e}mes li\'{e}s \`{a} l'erreur de d\'{e}termination de l'\^{a}ge~: la simulation S02 la supprimait enti\`{e}rement; la simulation S03 utilisait un autre vecteur de l'erreur de d\'{e}termination de l'\^{a}ge, fond\'{e} sur l'erreur entre les diff\'{e}rentes lectures d'un m\^{e}me otolithe; la simulation S04 mettait en {\oe}uvre un terme d'erreur constant de 10\pc{} pour chaque \^{a}ge.
+Ces diff\'{e}rents vecteurs de l'erreur de d\'{e}termination de l'\^{a}ge sont pr\'{e}sent\'{e}s ensemble sur la figure D.9.
+Les simulations de sensibilit\'{e} utilisant d'autres vecteurs de l'erreur de d\'{e}termination de l'\^{a}ge (S03 et S04) ont produit des simulations presque identiques au simulation de r\'{e}f\'{e}rence une fois repr\'{e}sent\'{e}s sous forme de pourcentage de $B_0$ (figure~\ref{fig:car.senso.traj.BtB0}).
+Lorsqu'elle est repr\'{e}sent\'{e}e sous la forme d'une biomasse absolue (figure~\ref{fig:car.senso.traj.Bt}), la sensibilit\'{e} du simulation S04 se situe l\'{e}g\`{e}rement en dessous de celle du mod\`{e}le de base, et celle du mod\`{e}le S03 se trouve au-dessus de celle du simulation de r\'{e}f\'{e}rence. La sensibilit\'{e} du simulation S02, qui ne tenait pas du tout compte de l'erreur de d\'{e}termination de l'\^{a}ge, \'{e}tait moins optimiste en termes de pourcentage de $B_0$ et \'{e}tait consid\'{e}rablement plus importante en termes absolus de $B_t$ que celle du simulation de r\'{e}f\'{e}rence.
+
+Les deux simulations de sensibilit\'{e} qui ont ajust\'{e} les premi\`{e}res prises (de 1965 \`{a} 1995) \`{a} la baisse (S05) et \`{a} la hausse (S06) ont donn\'{e} des r\'{e}sultats pr\'{e}visibles par rapport au simulation de r\'{e}f\'{e}rence; la simulation S05 a produit une $B_0$ similaire, mais la simulation S06 a donn\'{e} un stock beaucoup plus important.
+En termes de pourcentage de $B_0$, la simulation S05 a donn\'{e} des r\'{e}sultats plus optimistes par rapport au simulation de r\'{e}f\'{e}rence (surtout apr\`{e}s 1990 environ), tandis que la simulation S06 \'{e}tait constamment en dessous de ce dernier, donnant l'une des trajectoires les moins optimistes.
+
+Les deux simulations de sensibilit\'{e} qui ont fait varier le param\`{e}tre $\sigma_R$ ont produit des r\'{e}sultats mitig\'{e}s.
+La simulation S07 (sigmaR=0,6) \'{e}tait presque identique au mod\`{e}le de base, \`{a} l'exception de l'estimation d'un stock plus petit (environ 10\pc{} de moins), mais sans aucune diff\'{e}rence en termes d'\'{e}puisement du stock.
+La simulation S08 (sigmaR =1,2) a produit l'effet inverse~: la taille du stock a augment\'{e} (d'environ 15\pc{}) mais l'\'{e}puisement du stock, et par cons\'{e}quent l'avis, n'ont que tr\`{e}s peu chang\'{e}.
+La plateforme SS3 calcule un autre sigmaR fond\'{e} sur la variance estim\'{e}e des \'{e}carts du recrutement. 
+Cette valeur \'{e}tait de 0,81 pour la simulation de r\'{e}f\'{e}rence et correspondait bien \`{a} l'hypoth\`{e}se sigmaR pos\'{e}e par la simulation de r\'{e}f\'{e}rence.
+
+La simulation de sensibilit\'{e} qui utilisait la repond\'{e}ration de Francis (S14) avait de bons diagnostics MCCM et estimait des m\'{e}dianes des param\`{e}tres similaires \`{a} celles du simulation de r\'{e}f\'{e}rence, avec une certaine divergence dans les estimations m\'{e}dianes de la mortalit\'{e} naturelle~: $M_1$=0,097 au lieu de 0,093 et $M_2$=0,071 au lieu de 0,065.
+L'\^{a}ge estim\'{e} \`{a} pleine s\'{e}lectivit\'{e} pour la p\^{e}che au chalut \'{e}tait \'{e}galement l\'{e}g\`{e}rement plus \'{e}lev\'{e}~: $\mu_1$=14,0 contre 13,2.
+Les param\`{e}tres d\'{e}riv\'{e}s ont r\'{e}v\'{e}l\'{e} une plus grande variation, la simulation S14 estimant une valeur de $B_0$ inf\'{e}rieure de 12\pc{} \`{a} celle du simulation de r\'{e}f\'{e}rence et une taille actuelle du stock reproducteur ($B_{\currYear}$) inf\'{e}rieure de 16\pc{}. 
+Cependant, l'\'{e}puisement \'{e}tait tr\`{e}s similaire entre les simulations~: $B_{\currYear}/B_0$ = 0,75 pour la simulation S14, $B_{\currYear}/B_0$ = 0,78 pour la simulation de r\'{e}f\'{e}rence.
+
+Hormis $\log\,R_0$, les estimations des principaux param\`{e}tres variaient peu entre les \numberstringnum{14} simulations de sensibilit\'{e} (figure~\ref{fig:car.senso.pars.qbox}).
+La seule exception est la simulation de sensibilit\'{e} S01 ($M$ r\'{e}partie) car seule l'estimation de $M$ pour les jeunes poissons (\^{a}ges 0 \`{a} 13) a \'{e}t\'{e} trac\'{e}e.
+Les param\`{e}tres de $M$ pour les jeunes poissons et les poissons adultes (\^{a}ge 14 et plus) n'\'{e}taient pas comparables aux valeurs de $M$ estim\'{e}es pour les autres simulations de sensibilit\'{e}.
+Une autre exception \'{e}tait la simulation S14, o\`{u} la valeur a posteriori de l'\^{a}ge \`{a} la pleine s\'{e}lectivit\'{e} pour la p\^{e}che au chalut est plus \'{e}lev\'{e}e que pour tous les autres simulations.
+Les quantit\'{e}s d\'{e}riv\'{e}es fond\'{e}es sur le RMD (figure~\ref{fig:car.senso.rfpt.qbox}) pr\'{e}sentaient des divergences coh\'{e}rentes avec la sensibilit\'{e}, par exemple une valeur \'{e}lev\'{e}e de $B_0$ pour la simulation S09 (s\'{e}lectivit\'{e} en forme de d\^{o}me pour les femelles) et une valeur \'{e}lev\'{e}e de $u_\text{max}$ pour la simulation S06 (augmentation des prises entre 1965 et 1995).
+
+L'\'{e}tat du stock ($B_{2023}/\Bmsy$) selon les mod\`{e}les de sensibilit\'{e} (figure~\ref{fig:car.senso.stock.status}) se situait toujours dans la zone saine du MPO, y compris avec la simulation S12, le plus pessimiste, qui utilisait la distribution de Tweedie pour ajuster les donn\'{e}es sur les indices de la CPUE.
+
+\begin{landscapepage}{
+\input{xtab.sens.pars_french.txt}
+}{\LH}{\RH}{\LF}{\RF} \end{landscapepage}
+
+\begin{landscapepage}{
+\input{xtab.sens.pars2_french.txt}
+}{\LH}{\RH}{\LF}{\RF} \end{landscapepage}
+
+\begin{landscapepage}{
+\input{xtab.sens.rfpt_french.txt}
+}{\LH}{\RH}{\LF}{\RF} \end{landscapepage}
+
+\begin{landscapepage}{
+	\input{xtab.sruns.ll_french.txt}
+}{\LH}{\RH}{\LF}{\RF} \end{landscapepage}
+
+\setlength{\tabcolsep}{3pt}
+\clearpage
+
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%%\subsubsection{Figures sur les simluations de sensibilit\'{e}}
+
+\onefig{car.senso.traj.BtB0}{ trajectoires mod\'{e}lis\'{e}es de la m\'{e}diane de la biomasse reproductrice en proportion de la biomasse \`{a} l'\'{e}quilibre non exploit\'{e}e ($B_t/B_0$) pour la simulation de r\'{e}f\'{e}rence et les 14 simulations de sensibilit\'{e}. Les lignes tiret\'{e}es horizontales indiquent les points de r\'{e}f\'{e}rence utilis\'{e}s par d'autres pays~: 0,2$B_0$ ($\sim$ le PRS du MPO), 0,4$B_0$ (souvent un niveau cible sup\'{e}rieur \`{a} $\Bmsy$), et $B_0$ (biomasse reproductrice \`{a} l'\'{e}quilibre).}{\SPC{} sensibilit\'{e}~: }{}
+
+\onefig{car.senso.traj.Bt}{trajectoires mod\'{e}lis\'{e}es de la m\'{e}diane de la biomasse reproductrice (tonnes) pour la simulation de r\'{e}f\'{e}rence et les 14 simulations de sensibilit\'{e}.}{\SPC{} sensibilit\'{e}~: }{}
+
+\clearpage
+
+\onefig{car.senso.traj.RD}{trajectoires mod\'{e}lis\'{e}es de la m\'{e}diane des \'{e}carts du recrutement pour la simulation de r\'{e}f\'{e}rence et les 14 simulations de sensibilit\'{e}.}{\SPC{} sensibilit\'{e}~: }{}
+
+\onefig{car.senso.traj.R}{trajectoires mod\'{e}lis\'{e}es de la m\'{e}diane du recrutement pour les poissons d'\^{a}ge 1 ($R_t$, en milliers) pour la simulation de r\'{e}f\'{e}rence et les 14 simulations de sensibilit\'{e}.}{\SPC{} sensibilit\'{e}~: }{}
+
+\onefig{car.senso.traj.U}{ trajectoires mod\'{e}lis\'{e}es de la m\'{e}diane du taux d'exploitation de la biomasse vuln\'{e}rable ($u_t$) pour la simulation de r\'{e}f\'{e}rence et les 14 simulations de sensibilit\'{e}.}{\SPC{} sensibilit\'{e}~: }{}
+
+\clearpage
+
+\onefig{car.senso.pars.qbox}{ trac\'{e}s des quantiles des estimations de certains param\`{e}tres ($\log\,R_0$, $M_{s=1,2}$, $h$, $\mu_{g=1}$, $\log v_{\text{L}g=1}$) comparant la simulation de r\'{e}f\'{e}rence et les 14 simulations de sensibilit\'{e}. Voir les valeurs relatives \`{a} la sensibilit\'{e} dans le corps du document. Les diagrammes de quartiles d\'{e}limitent les quantiles 0,05, 0,25, 0,5, 0,75 et 0,95; les valeurs aberrantes sont exclues.}{\SPC{} sensibilit\'{e}~: }{}
+
+\onefig{car.senso.rfpt.qbox}{ trac\'{e}s des quantiles de certaines quantit\'{e}s d\'{e}riv\'{e}es ($B_{\currYear}$, $B_0$, $B_{\currYear}/B_0$, RMD, $\Bmsy$, $\Bmsy/B_0$, $u_{\prevYear}$, $\umsy$, $u_\text{max}$) comparant la simulation de r\'{e}f\'{e}rence et les 14 simulations de sensibilit\'{e}. Voir les valeurs relatives \`{a} la sensibilit\'{e} dans le corps du document. Les diagrammes de quartiles d\'{e}limitent les quantiles 0,05, 0,25, 0,5, 0,75 et 0,95; les valeurs aberrantes sont exclues.}{\SPC{} sensibilit\'{e}~: }{}
+
+\onefig{car.senso.stock.status}{ \'{e}tat du stock au d\'{e}but de 2023 par rapport aux points de r\'{e}f\'{e}rence de l'approche de pr\'{e}caution du MPO de 0,4$\Bmsy$ et 0,8$\Bmsy$ pour la simulation de r\'{e}f\'{e}rence et les 14 simulations de sensibilit\'{e}. La ligne verticale en pointill\'{e}s utilise la m\'{e}diane du simulation de r\'{e}f\'{e}rence pour faciliter les comparaisons avec les simulations de sensibilit\'{e}. Les diagrammes de quartiles montrent les quantiles 0,05, 0,25, 0,5, 0,75 et 0,95 des valeurs a posteriori de la m\'{e}thode MCCM.}{\SPC{} sensibilit\'{e}~: }{}
+
+\clearpage
+
+
+
+%%==============================================================================
+
+\clearpage
+
+\bibliographystyle{resDoc_french}
+%% Use for appendix bibliographies only: (http://www.latex-community.org/forum/viewtopic.php?f=5&t=4089)
+\renewcommand\bibsection{\section{R\'{E}F\'{E}RENCES CIT\'{E}ES -- R\'{E}SULTATS DES MOD\`{E}LES}}
+\bibliography{C:/Users/haighr/Files/GFish/CSAP/Refs/CSAPrefs_french}
+\end{document}

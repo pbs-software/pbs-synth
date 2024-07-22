@@ -1,0 +1,729 @@
+%% runHistory.tex for Pacific Ocean Perch (POP coastwide, 3 areas) 2023.
+
+\subsection{Assessment Model Runs for POP in 2023}
+
+\textbf{Important:} using SS V3.30.20.00; (safe); compile date: Sep 30 2022; Stock Synthesis by Richard Methot (NOAA) using ADMB 13.0.
+ADMB-13.0 safe libraries was compiled using GNU C++ 10.3.0 64bit on Aug 10 2022.
+
+Pacific Ocean Perch along BC coast using 3 areas (5ABC, 3CD, 5DE) and 9 fleets (3 fisheries and 6 surveys).
+
+\textbf{Baseline information:}
+\begin{itemize}
+  \item Update POP input data to end of 2023;
+  \item Estimate natural mortality $M$ for coastwide population;
+  \item Estimate steepness $h$ using Beverton-Holt stock-recruit equation;
+  \item Float Q parameters;
+  \item Use accumulator age ($A$) of 60\,y as plus class;
+  \item Nsurvey~=~6 survey (QCS Synoptic, WCVI Synoptic, WCHG Synoptic, GIG Historical, NMFS Triennial, WCVI Historical),
+        the first five with AF data (selectivity for WCVI historical mirrors GIG historical);
+  \item Ngear~=~3 predominantly trawl (plus minor amounts of non-trawl) in areas 1=5ABC, 2=3CD, 3=5DE);
+  \item Ncpue~=~0 (but it would comprise bottom trawl CPUE if used);
+  \item Nsex~=~2 (females, males);
+  \item Fit age frequency (AF) data using the Dirichlet-Multinomial error distribution;
+  \item Abundance reweighting -- Add CV process error, cvpro=0 for survey indices; none needed for commercial CPUE series (CPUE not used);
+  \item Composition reweighting -- Use Dirichlet-Multinomial distribution with estimated parameters; %%Francis (2011) method using mean ages;
+  \item Fix standard deviation of recruitment residuals ($\sigma_R$) to 0.9.
+\end{itemize}
+
+\textbf{Run details:}
+
+\hypertarget{R01}{\textbf{Run01}} -- initial run:
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, Feb 16}
+	\begin{itemize_csas}{-0.25}{0}
+		\item estimate $M$ and $h$ for one area (coastwide);
+		\item use three areas (each represented by one fishery);
+		\item use age frequncy (AF) data for all fleets except fleet 9 (WCVI historical);
+		\item use Dirichlet-Multinomial (DM) error distribution for fitting AF data and model-based reweighting.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R02}{\textbf{Run02}} -- Same as \hyperlink{R01}{Run01} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=1, Feb 16}
+	\begin{itemize_csas}{-0.25}{0}
+		\item use Multinomial error distribution for fitting AF data,
+		\item reweight composition data using Francis (2011) mean-age weighting.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R03}{\textbf{Run03}} -- Same as \hyperlink{R01}{Run01} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, Feb 20}
+	\begin{itemize_csas}{-0.25}{0}
+		\item use only 5ABC area;
+		\item change rdev years to 1935:2010.
+	\end{itemize_csas}
+	\item \textbf{v.2, rwt=0, Mar 23}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.1 but use maturity and growth parameters specific to 5ABC;
+		\item run MCMCs on Linux server using CG's adnuts code.
+	\end{itemize_csas}
+	\item \textbf{v.3, rwt=0, Mar 31}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.2 but change prior on LN(R0) to N(10,10) from N(8,8);
+		\item run MCMCs on Linux server.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R04}{\textbf{Run04}} -- Same as \hyperlink{R01}{Run01} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, Feb 20}
+	\begin{itemize_csas}{-0.25}{0}
+		\item use only 3CD area;
+		\item change rdev years to 1935:2010.
+	\end{itemize_csas}
+	\item \textbf{v.2, rwt=0, Mar 9}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.1 but use maturity and growth parameters specific to 3CD;
+		\item run MCMCs on Linux server using CG's adnuts code.
+	\end{itemize_csas}
+	\item \textbf{v.3, rwt=0, Mar 31}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.2 but change natural mortality prior to N(0.06,0.006) for both sexes, i.e., tighter CV=10\pc{} (from CV=20\pc{});
+		\item run MCMCs on Linux server.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R05}{\textbf{Run05}} -- Same as \hyperlink{R01}{Run01} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, Feb 20}
+	\begin{itemize_csas}{-0.25}{0}
+		\item use only 5DE area;
+		\item change rdev years to 1935:2010.
+	\end{itemize_csas}
+	\item \textbf{v.2, rwt=0, Feb 23}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.1 but use maturity and growth parameters specific to 5DE;
+		\item MCMCs run on Linux server using CG's adnuts code (MCMCs look good).
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R06}{\textbf{Run06}} -- Same as \hyperlink{R01}{Run01} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, Feb 21}
+	\begin{itemize_csas}{-0.25}{0}
+		\item fix 5ABC recruitment distribution parameter (3CD was fixed previously);
+		\item change rdev years to 1935:2010.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R07}{\textbf{Run07}} -- Same as \hyperlink{R06}{Run06} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, Feb 21}
+	\begin{itemize_csas}{-0.25}{0}
+		\item fix 5DE recruitment distribution parameter (5ABC was fixed previously).
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R08}{\textbf{Run08}} -- Same as \hyperlink{R06}{Run06} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, Feb 22}
+	\begin{itemize_csas}{-0.25}{0}
+		\item fix 3CD recruitment distribution parameter (5ABC was fixed previously);
+		\item essentially \hyperlink{R01}{Run01} redone to have rdev years spanning 1935:2010 as opposed to 1950:2012.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R09}{\textbf{Run09}} -- Same as \hyperlink{R07}{Run07} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, Feb 22}
+	\begin{itemize_csas}{-0.25}{0}
+		\item use time-varying additive deviation vector in the linkage function;
+		\item run using SS3 executable \code{ss\_opt\_win.v3.30.20.exe} (all prior runs except R03-R05 used the optimized SS3 version);
+	\end{itemize_csas}
+	\item \textbf{v.2, rwt=0, Mar 3}
+	\begin{itemize_csas}{-0.25}{0}
+		\item run using \code{ss\_win.v3.30.20.exe} (safe executable with same results as for optimized).
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R10}{\textbf{Run10}} -- Same as \hyperlink{R09}{Run09} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, Mar 3}
+	\begin{itemize_csas}{-0.25}{0}
+		\item use Run09 v.2 (safe executable);
+		\item use area-specific growth parameters.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R11}{\textbf{Run11}} -- Same as \hyperlink{R09}{Run09} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, Mar 6}
+	\begin{itemize_csas}{-0.25}{0}
+		\item use Run09 v.2 (safe executable);
+		\item use Adam Langley's suggestions:
+		\item estimate single selectivity for all fisheries based on 5ABC fishery with no male offsets,
+		\item start \texttt{Rdist\_area} for 3CD later (1975), and 
+		\item fix \texttt{Rdist\_area\_se} to 0.5 for areas 1 and 2.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R12}{\textbf{Run12}} -- Same as \hyperlink{R11}{Run11} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, Mar 7}
+	\begin{itemize_csas}{-0.25}{0}
+		\item fix \texttt{Rdist\_area\_se} to 1.0 for areas 1 and 2;
+		\item estimate $\Delta$ (male offset) for 5ABC fishery;
+		\item MCMCs run on Linux server using CG's adnuts code (with extra Report files in subdirectory \code{sso}).
+	\end{itemize_csas}
+	\item \textbf{v.2, rwt=0, Mar 9}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.1 but use normal prior 10(10) instead of 8(8) for LN(R0) parameter.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R13}{\textbf{Run13}} -- Same as \hyperlink{R12}{Run12} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, Mar 31}
+	\begin{itemize_csas}{-0.25}{0}
+		\item use Run12 v.2, where LN(R0) prior = N(10,10);
+		\item unlink the fishery selectivities from 5ABC, i.e., estimate separately for 5ABC, 3CD, and 5DE;
+		\item MCMCs on Linux server (no extra Reports).
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R14}{\textbf{Run14}} -- Same as \hyperlink{R12}{Run12} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, Apr 18}
+	\begin{itemize_csas}{-0.25}{0}
+		\item use Run12 v.2, where LN(R0) prior = N(10,10);
+		\item change F method from 1 (Pope's) to 3 (Hybrid) and change Fmax from 0.8 to 2.9 to emulate Adam Langley's choices;
+		\item MCMCs on Linux server (no extra Reports) to verify similarity to Run12.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R15}{\textbf{Run15}} -- Same as \hyperlink{R12}{Run12} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, May 4}
+	\begin{itemize_csas}{-0.25}{0}
+		\item use Run12 v.2, where LN(R0) prior = N(10,10);
+		\item use Hybrid method (=3) to estimate F (\hyperlink{R14}{Run14}) instead of Pope's approximation (method=1), and use 4 iterations for tuning F;
+		\item set Fmax to 2.9 (see R14);
+		\item expand range on NMFS' mu parameter from (5,40) to (1,40);
+		\item set forecast control rule to 0 (do not apply reductions, i.e., 'buffers', to either catch or F during forecast period);
+		\item update reconstucted catch (estimating trawl landings prior to 1996);
+		\item update growth parameters and AF data (new age data for years: 2003 in 3CD, 2013 \& 2015 in 5DE, 2017 in QCS, 2012 \& 2022 in WCVI, 2012 \& 2022 in WCHG).
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R16}{\textbf{Run16}} -- Same as \hyperlink{R15}{Run15} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, May 4}
+	\begin{itemize_csas}{-0.25}{0}
+		\item use catch reconstruction that uses reported POP trawl landings from 1954-95.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R17}{\textbf{Run17 -- S01 use Dirichlet-multinomial}}~: Same as \hyperlink{R16}{Run16} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, May 12}
+	\begin{itemize_csas}{-0.25}{0}
+		\item reallocate data from Moresby Gully in 5B and Flamingo Inlet/Anthony Island in 5E to the POP|YMR expanded 5C (using a new R function called `\code{expand5C}');
+		\item revise catch reconstuction, allometry, growth, and age frequencies to reflect the 5C expansion (and 5B/5E contraction);
+		\item MCMCs run on Linux server: \textbf{v.1a} nsamp=2000, nchain=8, burnin=250/chain; \textbf{v.1b} nsamp=2000, nchain=8, burnin=2250/chain.
+	\end{itemize_csas}
+	\item \textbf{v.2, rwt=0, May 15}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.1 but use revised coastwide maturity ogive (minor differences but need to base R18-R20 on R17).
+	\end{itemize_csas}
+	\item \textbf{v.3, rwt=0, May 26}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.2 but change natural mortality prior for males and females to N(0.06,0.018), i.e. CV=30\pc{}.
+		\item change initial value of steepness to equal the prior mean ($h$=0.67);
+		\item broaden 5ABC trawl selectivity priors: $\mu$= N(10,10), $v_\text{L}$= N(2,2), $\Delta$= N(0,1).
+		\item \alert{*** Inadvertently reverted to maturity ogive used in R17 v.1 ***}
+		\item \alert{Maturity ogive used in R17v1 is the same one used in \hyperlink{R01}{Run01} (before new data in \hyperlink{R15}{Run15}}).
+	\end{itemize_csas}
+	\item \textbf{v.4, rwt=0, May 31}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.3 but broaden survey selectivity priors: $\mu$= N(12,12), $v_\text{L}$= N(2.5,2.5), $\Delta$= N(0,1);
+		\item expand range for $\mu_g$ to (0,40) for fleets $g\in$~\{7=GIG, 8=NMFS\}.
+		\item MCMCs run on Linux server: \textbf{v.4a} nsamp=2000, nchain=8, burnin=250/chain.
+	\end{itemize_csas}
+	\item \textbf{v.5, rwt=0, Jun 5}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.4 but tighten selectivity priors for WCHG, GIG, and NMFS using a 30\pc{} CV: $\mu$= N(12,3.6), $v_\text{L}$= N(2.5,0.75);
+		\item MCMCs run on Linux server: \textbf{v.5a} nsamp=2000, nchain=8, burnin=250/chain.
+		\item MCMCs run on Linux server: \textbf{v.5b} nsamp=2000, nchain=8, burnin=250/chain + extra Report files for area-specific MSY values.
+	\end{itemize_csas}
+	\item \textbf{v.6, rwt=0, Jun 23}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.5 but use updated coastwide maturity from Appendix D (and used in R17v2).
+		\item MCMCs run on Linux server: \textbf{v.6a} nsamp=2000, nchain=8, burnin=250/chain + extra Report files for area-specific MSY values. \emph{Frayed chains for LN(R0) and Rdist\_area}.
+	\end{itemize_csas}
+	\item \textbf{v.7, rwt=0, Jul 5}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.6 but add missing WCHG synoptic index value for 1997 (absence detected after running retrospectives on Run20);
+		\item estimate main recruitment deviations for 1935--2010 and late recruitment deviations for 2011--2023;
+		\item calculate 2024-2034 forecast recruitment by iterating the B-H recruitment equation starting from 2023 recruitment;
+		\item MCMCs run on Linux server (230705): \textbf{v.7a} nsamp=2000, nchain=8, burnin=250/chain + extra Report files for area-specific MSY values;
+		\item MCMCs run on Linux server (230707): \textbf{v.7b} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.8, rwt=0, Jul 5} (\alert{tightening prior not needed after adding 1997 WCHG index})
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.7 but tighten natural mortality prior for males and females to N(0.06,0.012), i.e. CV=20\pc{}.
+		\item MCMCs run on Linux server (230705): \textbf{v.8a} nsamp=2000, nchain=8, burnin=250/chain + extra Report files for area-specific MSY values.
+	\end{itemize_csas}
+	\item \textbf{v.9, rwt=0, Aug 8}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.7 but set forecast recruitment (2024-2034) to average recruitment from years 1991-2010;
+		\item recdev summary -- est main recdevs from 1935--2010, late/fcst recdevs=0 for 2011--2034, set 2011-2034 late/fcst recr to avg 1991--2010 recr;
+		\item MCMCs run on Linux server (230808): \textbf{v.9a} nsamp=2000, nchain=8, burnin=250/chain, thin=1, extra=TRUE;
+		\item MCMCs run on Linux server (230811): \textbf{v.9b} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.10, rwt=0, Aug 11}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.9 but but set forecast recruitment (2024-2034) to average recruitment from years 1935--2010;
+		\item recdev summary -- est main recdevs for 1935--2010, late/fcst recdevs=0 for 2011--2034, set 2011-2034 late/fcst recr to avg 1935--2010 recr;
+		\item MCMCs run on Linux server (230811): \textbf{v.10a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.11, rwt=0, Aug 15}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.7 but estimate main recruitment deviations for years 1935--2023;
+		\item recdev summary -- est main recdevs for 1935--2023, calculate 2024-2034 fcst recr by iterating B-H recr eqn starting from 2023 recr;
+		%\item MCMCs run on Linux server (230811): \textbf{v.10a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.12, rwt=0, Aug 15}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.11 but set forecast recruitment (2024-2034) to average recruitment from years 1935--2010;
+		\item recdev summary -- est main recdevs for 1935--2023, fcst recdevs=0 for 2024--2034, set 2024-2034 fcst recr to avg 1935--2010 recr;
+		%\item MCMCs run on Linux server (230811): \textbf{v.10a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.13, rwt=0, Aug 18}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.12 but estimate main recruitment deviations for years 1935--2014 and set forecast recruitment to average over same years;
+		\item recdev summary -- est main recdevs for 1935--2014, late/fcst recdevs=0 for 2015--2034, set 2015-2034 late/fcst recr to avg 1935--2014 recr;
+		\item MCMCs run on Linux server (230819): \textbf{v.13a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.14, rwt=0, Aug 18}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.13 but use simple recruitment deviations (code=2): deviations do not have an explicit constraint to sum to zero, although they still should end up having close to a zero sum.
+		\item recdev summary -- est main recdevs for 1935--2014, late/fcst recdevs=0 for 2015--2034, set 2015-2034 late/fcst recr to avg 1935--2014 recr;
+		\item MCMCs run on Linux server (230819): \textbf{v.14a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.15, rwt=0, Aug 30}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.14 but use forecast recruitment option 1 and set r\_lambda to 1000.
+		\item recdev summary -- est main recdevs for 1935--2014, est late recdevs but dampen by r\_lamba for 2015--2023, calc 2024-2034 fcst recr from S-R equation;
+		\item MCMCs run on Linux server (230830): \textbf{v.15a} nsamp=2000, nchain=8, burnin=250/chain, thin=1, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.16, rwt=0, Aug 31}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.15 but change r\_lambda to 5 and set min age for summary biomass to 9 (to approximate vulnerable biomass).
+		\item recdev summary -- est main recdevs for 1935--2014, est late recdevs but dampen by r\_lamba for 2015--2023, calc 2024-2034 fcst recr from S-R equation;
+		\item MCMCs run on Linux server (230831): \textbf{v.16a} nsamp=2000, nchain=8, burnin=250/chain, thin=1, extra=FALSE.
+	\end{itemize_csas}
+	\item \textbf{v.17, rwt=0, Sep 1}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.16 but change r\_lambda to 1 (equivalent to R17v7).
+		\item recdev summary -- est main recdevs for 1935--2014, est late recdevs for 2015--2023 with no dampening, calc 2024-2034 fcst recr from S-R equation;
+		\item MCMCs run on Linux server (230902): \textbf{v.17a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.18, rwt=0, Sep 8}  (\marked{sensitivity run 1})
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.17 but change RecrDist final year from 2010 to 2014 (forgot in v17).
+		\item recdev summary -- est main recdevs for 1935--2014, est late recdevs for 2015--2023 with no dampening, calc 2024-2034 fcst recr from S-R equation;
+		\item MCMCs run on Linux server (230910): \textbf{v.18a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.19, rwt=0, Sep 13}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.18 but use number of fish instead of number of samples in the AF data section;
+		\item \subdue{recdev summary -- est main recdevs for 1935--2014, est late recdevs for 2015--2023 with no dampening, calc 2024-2034 fcst recr from S-R equation;}
+		%\item MCMCs run on Linux server (230910): \textbf{v.18a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R18}{\textbf{Run18}} -- Same as \hyperlink{R17}{Run17} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, May 15}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as use Run17 v.2
+		\item restrict data to 5ABC only (previously \hyperlink{R03}{Run03});
+		\item use coastwide estimates of allometry, growth, and maturity;
+		\item use correct maturity ogive from R17 v.2.
+	\end{itemize_csas}
+	\item \textbf{v.2, rwt=0, Jun 14}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.1 but change natural mortality prior for males and females to N(0.06,0.018), i.e. CV=30\pc{};
+		\item change initial value of steepness to equal the prior mean ($h$=0.67);
+		\item broaden 5ABC trawl selectivity priors: $\mu$= N(10,10), $v_\text{L}$= N(2,2), $\Delta$= N(0,1);
+		\item broaden QCS synoptic selectivity priors: $\mu$= N(12,12), $v_\text{L}$= N(2.5,2.5), $\Delta$= N(0,1);
+		\item change GIG historical selectivity priors using a 30\pc{} CV: $\mu$= N(12,3.6), $v_\text{L}$= N(2.5,0.75), $\Delta$= N(0,1);
+		\item MCMCs run on Linux server: \textbf{v.2a} nsamp=2000, nchain=8, burnin=250/chain + extra Report files for area-specific MSY values;
+		\item \alert{purposely used maturity ogive from R17v1 (and first used in R01) to match early maturity used in R17v5.}
+	\end{itemize_csas}
+	\item \textbf{v.3, rwt=0, Jun 22}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.2 but reduce CV on natural mortality prior for males and females to N(0.06,0.012), i.e. CV=20\pc{}.
+		\item MCMCs run on Linux server (230622): \textbf{v.3a} nsamp=2000, nchain=8, burnin=250/chain + extra Report files for area-specific MSY values.
+	\end{itemize_csas}
+	\item \textbf{v.4, rwt=0, Jun 23}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.3 but use updated coastwide maturity from Appendix D (and used in R17v2).
+		\item MCMCs run on Linux server (230710): \textbf{v.4a} nsamp=10000, nchain=8, burnin=1250/chain, thin=5, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.5, rwt=0, Aug 22}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.4 but use average recruitment to determine forecast recruitment.
+		\item recdev summary -- est main recdevs for 1935--2014, late/fcst recdevs=0 for 2015--2034, set 2015-2034 late/fcst recr to avg 1935--2014 recr;
+		\item use simple recruitment deviations (code=2) to parallel Run17v14.
+		\item MCMCs run on Linux server (230822): \textbf{v.5a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.6, rwt=0, Sep 1}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.5 but estimate late recdevs (using r\_lambda=1) and calculate forecasts using stock-recruitment relationship (incl. $\sigma_R$);
+		\item recdev summary -- est main recdevs for 1935--2014, est late recdevs for 2015--2023 with no dampening, calc 2024-2034 fcst recr from S-R equation;
+		\item MCMCs run on Linux server (230905): \textbf{v.6a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R19}{\textbf{Run19}} -- Same as \hyperlink{R17}{Run17} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, May 15}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as Run17 v.2
+		\item restrict data to 3CD only (previously \hyperlink{R04}{Run04});
+		\item use coastwide estimates of allometry, growth, and maturity;
+		\item use correct maturity ogive from R17 v.2.
+	\end{itemize_csas}
+	\item \textbf{v.2, rwt=0, Jun 15}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.1 but change natural mortality prior for males and females to N(0.06,0.018), i.e. CV=30\pc{};
+		\item change initial value of steepness to equal the prior mean ($h$=0.67);
+		\item broaden 3CD trawl selectivity priors: $\mu$= N(10,10), $v_\text{L}$= N(2,2), $\Delta$= N(0,1);
+		\item broaden WCVI synoptic selectivity priors: $\mu$= N(12,12), $v_\text{L}$= N(2.5,2.5), $\Delta$= N(0,1);
+		\item change NMFS triennial selectivity priors using a 30\pc{} CV: $\mu$= N(12,3.6), $v_\text{L}$= N(2.5,0.75), $\Delta$= N(0,1);
+		\item link WCVI historical selectivity to WCVI synoptic selectivity;
+		\item MCMCs run on Linux server: \textbf{v.2a} nsamp=2000, nchain=8, burnin=250/chain + extra Report files for area-specific MSY values;
+		\item \alert{purposely used maturity ogive from R17v1 (and first used in R01) to match early maturity used in R17v5.}
+	\end{itemize_csas}
+	\item \textbf{v.3, rwt=0, Jun 21}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.2 but reduce CV on natural mortality prior for males and females to N(0.06,0.006), i.e. CV=10\pc{}.
+		\item MCMCs run on Linux server (230621): \textbf{v.3a} nsamp=2000, nchain=8, burnin=250/chain + extra Report files for area-specific MSY values.
+	\end{itemize_csas}
+	\item \textbf{v.4, rwt=0, Jun 23}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.3 but use updated coastwide maturity from Appendix D (and used in R17v2).
+		\item MCMCs run on Linux server (230710): \textbf{v.4a} nsamp=10000, nchain=8, burnin=1250/chain, thin=5, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.5, rwt=0, Aug 22}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.4 but use average recruitment to determine forecast recruitment.
+		\item recdev summary -- est main recdevs for 1935--2014, late/fcst recdevs=0 for 2015--2034, set 2015-2034 late/fcst recr to avg 1935--2014 recr;
+		\item use simple recruitment deviations (code=2) to parallel Run17v14.
+		\item MCMCs run on Linux server (230822): \textbf{v.5a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.6, rwt=0, Sep 1}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.5 but estimate late recdevs (using r\_lambda=1) and calculate forecasts using stock-recruitment relationship (incl. $\sigma_R$);
+		\item recdev summary -- est main recdevs for 1935--2014, est late recdevs for 2015--2023 with no dampening, calc 2024-2034 fcst recr from S-R equation;
+		\item MCMCs run on Linux server (230905): \textbf{v.6a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R20}{\textbf{Run20}} -- Same as \hyperlink{R17}{Run17} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, May 15}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as Run17 v.2
+		\item restrict data to 5DE only (previously \hyperlink{R05}{Run05});
+		\item use coastwide estimates of allometry, growth, and maturity;
+		\item use correct maturity ogive from R17 v.2.
+	\end{itemize_csas}
+	\item \textbf{v.2, rwt=0, Jun 19}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.1 but change natural mortality prior for males and females to N(0.06,0.018), i.e. CV=30\pc{};
+		\item change initial value of steepness to equal the prior mean ($h$=0.67);
+		\item broaden 3CD trawl selectivity priors: $\mu$= N(10,10), $v_\text{L}$= N(2,2), $\Delta$= N(0,1);
+		\item change WCHG synoptic selectivity priors using a 30\pc{} CV: $\mu$= N(12,3.6), $v_\text{L}$= N(2.5,0.75), $\Delta$= N(0,1);
+		\item MCMCs run on Linux server (230621): \textbf{v.2a} nsamp=2000, nchain=8, burnin=250/chain + extra Report files for area-specific MSY values;
+		\item \alert{purposely used maturity ogive from R17v1 (and first used in R01) to match early maturity used in R17v5.}
+	\end{itemize_csas}
+	\item \textbf{v.3, rwt=0, Jun 23}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.2 but use updated coastwide maturity from Appendix D (and used in R17v2).
+	\end{itemize_csas}
+	\item \textbf{v.4, rwt=0, Jun 27}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.3 but add missing WCHG synoptic index value for 1997 (absence detected after running retrospectives).
+		\item MCMCs run on Linux server (230710): \textbf{v.4a} nsamp=10000, nchain=8, burnin=1250/chain, thin=5, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.4, rwt=1, Jun 27}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.4 but add cvpro=0.2 to the WCHG synoptic survey relative errors.
+	\end{itemize_csas}
+	\item \textbf{v.5, rwt=0, Aug 22}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.4 but use average recruitment to determine forecast recruitment.
+		\item recdev summary -- est main recdevs for 1935--2014, late/fcst recdevs=0 for 2015--2034, set 2015-2034 late/fcst recr to avg 1935--2014 recr;
+		\item use simple recruitment deviations (code=2) to parallel Run17v14.
+		\item MCMCs run on Linux server (230822): \textbf{v.5a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.6, rwt=0, Sep 1}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.5 but estimate late recdevs (using r\_lambda=1) and calculate forecasts using stock-recruitment relationship (incl. $\sigma_R$);
+		\item recdev summary -- est main recdevs for 1935--2014, est late recdevs for 2015--2023 with no dampening, calc 2024-2034 fcst recr from S-R equation;
+		\item MCMCs run on Linux server (230905): \textbf{v.6a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R21}{\textbf{Run21 -- CST}} -- Same as \hyperlink{R17}{Run17} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=1, May 18}
+	\begin{itemize_csas}{-0.25}{0}
+		\item use Run17 v.2
+		\item apply Francis weights: 2.6935, 3.1159, 2.8429, 0.5979, 1.0752, 1.1784, 0.6444, 0.4865
+		\item use Multinomial distribution for estimating AFs.
+	\end{itemize_csas}
+	\item \textbf{v.2, rwt=1, Sep 5}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as R17v7 but fit AF data using Multinomial and reweight once using Francis mean-age reweights;
+		\item apply Francis weights: 2.8020, 3.1242, 2.8829, 0.5990, 1.0759, 1.2045, 0.7354, 0.4862
+		\item MCMCs run on Linux server (230906): \textbf{v.2a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.3, rwt=0:1, Sep 8} (\marked{base run 1})
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.2 but change RecrDist final year from 2010 to 2014 (forgot in v2).
+		\item recdev summary -- est main recdevs for 1935--2014, est late recdevs for 2015--2023 with no dampening, calc 2024-2034 fcst recr from S-R equation;
+		\item apply Francis weights: 2.7923, 3.1274, 2.8821, 0.5744, 1.0766, 1.2071, 0.7348, 0.4874
+		\item MCMCs run on Linux server (230909): \textbf{v.3a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.3, rwt=2, Sep 12}
+	\begin{itemize_csas}{-0.25}{0}
+		\item apply Francis weights: 0.9707, 0.8747, 1.0747, 0.8777, 0.8372, 1.2310, 0.8328, 0.6809
+		\item \subdue{recdev summary -- est main recdevs for 1935--2014, est late recdevs for 2015--2023 with no dampening, calc 2024-2034 fcst recr from S-R equation;}
+	\end{itemize_csas}
+	\item \textbf{v.4, rwt=0:1, Sep 13}
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.3 but use number of fish instead of number of samples in the AF data section (parallel R17v19);
+		\item apply Francis weights: 0.04860, 0.04787, 0.04619, 0.01967, 0.05215, 0.09512, 0.03295, 0.01726
+		\item \subdue{recdev summary -- est main recdevs for 1935--2014, est late recdevs for 2015--2023 with no dampening, calc 2024-2034 fcst recr from S-R equation;}
+		%\item MCMCs run on Linux server (230910): \textbf{v.18a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+	\item \textbf{v.5, rwt=0:1, Oct 10} (\marked{low-productivity run})
+	\begin{itemize_csas}{-0.25}{0}
+		\item same as v.3 but set \code{scalar\_r} = 0.5 in the \code{forecast.ss} file;
+		\item apply Francis weights: 2.7917, 3.1298, 2.8754, 0.5584, 1.1115, 1.1971, 0.7344, 0.4875;
+		\item \subdue{recdev summary -- est main recdevs for 1935--2014, est late recdevs for 2015--2023 with no dampening, calc 2024-2034 fcst recr from S-R equation;}
+		\item MCMCs run on Linux server (231011): \textbf{v.5a} nsamp=10000, nchain=8, burnin=1250/chain, thin=5, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R22}{\textbf{Run22 -- add midwater}}~: Same as \hyperlink{R21}{Run21v3} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, May 24}
+	\begin{itemize_csas}{-0.25}{0}
+		\item use Run17 v.2
+		\item change prior for natural mortality of males to be the same as that for females, i.e. N(0.06,0.012);
+		\item add midwater trawl fleets in 3CD and 5ABC;
+		\item calculate midwater 1996-2022 catches from proportions of MW to (BT+MW) in modern catches; reduce 1996-2022 trawl (total) catches by calculated MW catches;
+		\item use combined (3CD + 5ABC) AFs for 3CD and link 5ABC selectivity to 3CD.
+	\end{itemize_csas}
+	\item \textbf{v.2, rwt=0:1, Sep 19} (\marked{sensitivity run 11})
+	\begin{itemize_csas}{-0.25}{0}
+		\item use Run21 v.3
+		\item add midwater trawl fleets in 3CD and 5ABC;
+		\item calculate midwater 1996-2022 catches from proportions of MW to (BT+MW) in modern catches; reduce 1996-2022 trawl (total) catches by calculated MW catches;
+		\item use combined (3CD + 5ABC) AFs for MW 3CD and link MW 5ABC selectivity to MW 3CD.
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 2.5089, 4.7872, 2.8770, 0.5705, 1.0907, 1.2134, 0.7399, 0.5203, 2.7465 (5ABC, 3CD, 5DE, QCS, WCVI, WCHG, GIG, NMFS, MW).
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R23}{\textbf{Run23 -- increase fecundity}} -- Same as \hyperlink{R17}{Run17} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0, May 25}
+	\begin{itemize_csas}{-0.25}{0}
+		\item use Run17 v.3 (uses fecundity option 2: $aL^b$ with $a$=1 and $b$=0);
+		\item choose fecundity option 1: wt * (a + b * wt) with $a$=1 and $b$=0.25.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R24}{\textbf{Run24 -- B2 single-area 5ABC}}~: Same as \hyperlink{R18}{Run18v6} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0:1, Sep 14} (\marked{base run 2})
+	\begin{itemize_csas}{-0.25}{0}
+		\item single-area model for 5ABC;
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 2.7682, 0.5926, 0.7486 (5ABC trawl, QCS synoptic, GIG historical);
+		\item MCMCs run on Linux server (230915): \textbf{v.1a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R25}{\textbf{Run25 -- B3 single-area 3CD}}~: Same as \hyperlink{R19}{Run19v6} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0:1, Sep 14} (\marked{base run 3})
+	\begin{itemize_csas}{-0.25}{0}
+		\item single-area model for 3CD;
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 3.3348, 1.0405, 0.4856 (3CD trawl, WCVI synoptic, NMFS triennial);
+		\item MCMCs run on Linux server (230915): \textbf{v.1a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R26}{\textbf{Run26 -- B4 single-area 5DE}}~: Same as \hyperlink{R20}{Run20v6} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0:1, Sep 14} (\marked{base run 4})
+	\begin{itemize_csas}{-0.25}{0}
+		\item single-area model for 5DE;
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 3.0688, 1.3401 (5DE trawl, WCHG synoptic);
+		\item MCMCs run on Linux server (230915): \textbf{v.1a} nsamp=20000, nchain=8, burnin=2500/chain, thin=10, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R27}{\textbf{Run27 -- S02 fix 5ABC Rdist}}~: Same as \hyperlink{R21}{Run21v3} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0:1, Sep 14} (\marked{sensitivity run 2})
+	\begin{itemize_csas}{-0.25}{0}
+		\item fix parameter  Rdist\_area(1), estimate  Rdist\_area(2,3);
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 2.7823, 2.8671, 3.0780, 0.5757, 0.9667, 1.2445, 0.7059, 0.4634 (5ABC, 3CD, 5DE, QCS, WCVI, WCHG, GIG, NMFS).
+		\item MCMCs run on Linux server (230916): \textbf{v.1a} nsamp=10000, nchain=8, burnin=1250/chain, thin=5, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R28}{\textbf{Run28 -- S03 fix 3CD Rdist}}~: Same as \hyperlink{R21}{Run21v3} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0:1, Sep 15} (\marked{sensitivity run 3})
+	\begin{itemize_csas}{-0.25}{0}
+		\item fix parameter  Rdist\_area(2), estimate  Rdist\_area(1,3);
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 2.7693, 2.9989, 3.1270, 0.5861, 1.0491, 1.3352, 0.7262, 0.4762 (5ABC, 3CD, 5DE, QCS, WCVI, WCHG, GIG, NMFS).
+		\item MCMCs run on Linux server (230916): \textbf{v.1a} nsamp=10000, nchain=8, burnin=1250/chain, thin=5, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R29}{\textbf{Run29 -- S04 apply AE1}}~: Same as \hyperlink{R21}{Run21v3} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0:1, Sep 15} (\marked{sensitivity run 4})
+	\begin{itemize_csas}{-0.25}{0}
+		\item apply ageing error vector that equates to no ageing error;
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 2.6171, 3.0860, 2.7799, 0.5820, 1.0435, 1.2434, 0.6843, 0.4868 (5ABC, 3CD, 5DE, QCS, WCVI, WCHG, GIG, NMFS).
+		\item MCMCs run on Linux server (230916): \textbf{v.1a} nsamp=10000, nchain=8, burnin=1250/chain, thin=5, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R30}{\textbf{Run30 -- S05 apply AE5}}~: Same as \hyperlink{R21}{Run21v3} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0:1, Sep 15} (\marked{sensitivity run 5})
+	\begin{itemize_csas}{-0.25}{0}
+		\item apply ageing error vector from age-reader CVs (smoothed SD);
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 2.7593, 3.0975, 2.8381, 0.5741, 1.0673, 1.1788, 0.6984, 0.4863 (5ABC, 3CD, 5DE, QCS, WCVI, WCHG, GIG, NMFS).
+		\item MCMCs run on Linux server (230916): \textbf{v.1a} nsamp=10000, nchain=8, burnin=1250/chain, thin=5, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R31}{\textbf{Run31 -- S06 apply AE6}}~: Same as \hyperlink{R21}{Run21v3} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0:1, Sep 15} (\marked{sensitivity run 6})
+	\begin{itemize_csas}{-0.25}{0}
+		\item apply ageing error vector from CASAL-style CV=0.1;
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 2.9101, 3.0522, 2.7957, 0.5767, 1.0773, 1.2077, 0.7569, 0.4860 (5ABC, 3CD, 5DE, QCS, WCVI, WCHG, GIG, NMFS).
+		\item MCMCs run on Linux server (230916): \textbf{v.1a} nsamp=10000, nchain=8, burnin=1250/chain, thin=5, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R32}{\textbf{Run32 -- S07 reduce catch}}~: Same as \hyperlink{R21}{Run21v3} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0:1, Sep 18} (\marked{sensitivity run 7})
+	\begin{itemize_csas}{-0.25}{0}
+		\item reduce catch in 1965-95 by 30\pc{};
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 2.8833, 3.0629, 2.8249, 0.5660, 1.0609, 1.0910, 0.7311, 0.4902 (5ABC, 3CD, 5DE, QCS, WCVI, WCHG, GIG, NMFS).
+		\item MCMCs run on Linux server (230916): \textbf{v.1a} nsamp=10000, nchain=8, burnin=1250/chain, thin=5, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R33}{\textbf{Run33 -- S08 increase catch}}~: Same as \hyperlink{R21}{Run21v3} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0:1, Sep 18} (\marked{sensitivity run 8})
+	\begin{itemize_csas}{-0.25}{0}
+		\item increase catch in 1965-95 by 50\pc{};
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 2.5216, 3.1830, 2.8400, 0.5822, 1.1006, 1.3723, 0.7304, 0.4862 (5ABC, 3CD, 5DE, QCS, WCVI, WCHG, GIG, NMFS).
+		\item MCMCs run on Linux server (230916): \textbf{v.1a} nsamp=10000, nchain=8, burnin=1250/chain, thin=5, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R34}{\textbf{Run34 -- S09 reduce sigmaR}}~: Same as \hyperlink{R21}{Run21v3} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0:1, Sep 18} (\marked{sensitivity run 9})
+	\begin{itemize_csas}{-0.25}{0}
+		\item reduce $\sigma_R$ to 0.6 from 0.9;
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 2.7267, 3.2302, 2.9101, 0.5741, 1.0934, 1.2708, 0.7125, 0.4873 (5ABC, 3CD, 5DE, QCS, WCVI, WCHG, GIG, NMFS).
+		\item MCMCs run on Linux server (230916): \textbf{v.1a} nsamp=10000, nchain=8, burnin=1250/chain, thin=5, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R35}{\textbf{Run35 -- S10 increase sigmaR}}~: Same as \hyperlink{R21}{Run21v3} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0:1, Sep 18} (\marked{sensitivity run 10})
+	\begin{itemize_csas}{-0.25}{0}
+		\item increase $\sigma_R$ to 1.2 from 0.9;
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 2.8098, 3.0808, 2.8794, 0.5733, 1.0676, 1.1977, 0.7414, 0.4876 (5ABC, 3CD, 5DE, QCS, WCVI, WCHG, GIG, NMFS).
+		\item MCMCs run on Linux server (230920): \textbf{v.1a} nsamp=10000, nchain=8, burnin=1250/chain, thin=5, extra=TRUE.
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R36}{\textbf{Run36 -- S12 add HS synoptic}}~: Same as \hyperlink{R21}{Run21v3} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0:1, Sep 19}
+	\begin{itemize_csas}{-0.25}{0}
+		\item add HS Synoptic index data (no AF data);
+		\item link HS selectivity to neighbouring QCS Synoptic (fleet 4)
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 2.7943, 3.1281, 2.9167, 0.5750, 1.0745, 1.2706, 0.7343, 0.4864 (5ABC, 3CD, 5DE, QCS, WCVI, WCHG, GIG, NMFS).
+	\end{itemize_csas}
+	\item \textbf{v.2, rwt=0:1, Sep 22} (\marked{sensitivity run 12})
+	\begin{itemize_csas}{-0.25}{0}
+		\item link HS selectivity to fleet 6 (WCHG syn) rather than fleet 4 (QCS syn);
+		\item apply Francis weights: 2.7889, 3.1266, 2.9207, 0.5744, 1.0726, 1.2861, 0.7342, 0.4862 (5ABC, 3CD, 5DE, QCS, WCVI, WCHG, GIG, NMFS).
+	\end{itemize_csas}
+\end{itemize_csas}
+
+\hypertarget{R37}{\textbf{Run37 -- S13 use empirical maturity ogive}}~: Same as \hyperlink{R21}{Run21v3} but
+\begin{itemize_csas}{-0.75}{-0.75}
+	\item \textbf{v.1, rwt=0:1, Nov 6}
+	\begin{itemize_csas}{-0.25}{0}
+		\item replace fitted maturity ogive with empirical proportions mature (requested by Noel Cadigan at RPR);
+		\item use Multinomial distribution for estimating AFs;
+		\item apply Francis weights: 2.7922, 3.1272, 2.882, 0.5745, 1.0765, 1.207, 0.7348, 0.4875 (5ABC, 3CD, 5DE, QCS, WCVI, WCHG, GIG, NMFS).
+	\end{itemize_csas}
+\end{itemize_csas}
+
+
+%%-------------------------------------------------------------------------
+\textbf{Model sensitivities using \hyperlink{R21}{Run21.v3a} as the base run:}
+\begin{enumerate_csas}{-0.75}{-0.5}
+	%\item use Francis mean-age reweighting if base run uses Dirichlet-Multinomial (D-M);
+	%\item use D-M parameterisation if base run uses Francis mean-age reweighting;
+	\item R17v18a -- use Dirichlet-Multinomial (D-M) parameterisation;
+	\item R27v1a -- fix recruitment distribution parameter for area 5ABC;
+	\item R28v1a -- fix recruitment distribution parameter for area 3CD;
+	\item R29v1a -- remove ageing error;
+	\item R30v1a -- use smoothed ageing error from age-reader CVs;
+	\item R31v1a -- use CASAL ageing error (constant CV=0.1);
+	\item R32v1a -- reduce commercial catch (1965-95) by 30\pc{};
+	\item R33v1a -- increase commercial catch (1965-95) by 50\pc{};
+	\item R34v1a -- reduce $\sigma_R$ to 0.6;
+	\item R35v1a -- increase $\sigma_R$ to 1.2;
+	\item R22v2 -- add midwater trawl fisheries for 3CD and 5ABC;
+	\item R36v1 -- add the Hecate Strait synoptic survey for area 5DE;
+	\item \st{R17v19|R21v4 -- use \# specimens instead of \# samples in AF data};  %% already done in R17v19 and R21v4 to choose between R17 and R21
+	\item \st{use catch reconstruction that estimates trawl landings of POP from TRF prior to 1996};
+	\item \st{increase fecundity};
+\end{enumerate_csas}
+
+\textbf{Forecast sensitivities using \hyperlink{R21}{Run21.v3} as the base run:}
+\begin{enumerate_csas}{-0.75}{-0.5}
+	\item use rscalar=0.5 * SSR for projections (low productivity regime);
+\end{enumerate_csas}
+

@@ -1,0 +1,1270 @@
+## MCMC Stuff--------------------------------------
+##  To run Awatea models (workflow) see previous (CAR 2022) commands history file.
+
+## If running SS3 MCMCs the old way (Hastings-Metropolis, way too slow)
+##   ss -mcmc 1200000 -mcsave 1000 -mcscale 1000000
+##   ss -mceval
+##-------------------------------------------------
+
+so("clearFiles.r")
+
+#=== POP Coastwide 2023 ===
+
+##=======================START NEW RUNS=========================
+
+##--------------------------------------------------------------------
+## Run01 -- estimate  $M$ and $h$ for one area (coastwide), but use three areas (each represented by one fishery), AF data for all fleets except fleet 9 (WCVI historical), use Dirichlet-multinomial error for AF.
+run=1; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise") #, "SS_output")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,0,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+2.2155248 1.8890103 1.6025535 0.5648432 0.6238013 1.2866111 0.4469605 0.6342105  ## normal priors
+2.1502724 1.8484369 1.4955218 0.5818998 0.6282074 1.2685322 0.4315825 0.5465130  ## uniform priors
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run02 -- Same as Run01 but use Francis mean-age reweighting.
+run=2; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,1,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+2.1697516 1.8100663 1.5461716 0.5567501 0.5978455 1.2456054 0.4423750 0.5924081
+
+## Reweigth 1
+so("prepMPD.r","synth")
+run=2; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx
+so("prepMPD.r","synth"); prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run03 -- Same as Run01 but isolate the 5ABC POP stock.
+run=3; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,1,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+2.5107970 0.5431704 0.6266970 ## v.1
+2.4922327 0.5422862 0.6247408 ## v.2 with 5ABC growth parameters and mortality ogive
+2.4914697 0.5423601 0.6247104 ## v.3 LN(R0) prior = N(10,10)
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=3; rwt=0; ## so("runADnuts.r","synth")  ## Need to tweak input first:
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run03.MCMC-230331.7z .\MCMC.03.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+
+##--------------------------------------------------------------------
+## Run04 -- Same as Run01 but isolate the 3CD POP stock.
+run=4; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,1,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+3.7524619 1.0382049 0.4530283 ## 3CD Trawl, WCVI Synoptic, NMFS Triennial
+3.7525669 1.0503998 0.4398755 ## v.2 with 3CD growth parameters and mortality ogive
+3.7525545 1.0504121 0.4398745 ## v.2 redone with bounds on mu changed from (5,40) to (1,40)
+3.7389567 1.0221278 0.4699131 ## v.3 M priors set to M(0.060,0.006), i.e., CV=10%
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=4; rwt=0; ## so("runADnuts.r","synth")  ## Need to tweak input first:
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run04.MCMC-230331.7z .\MCMC.04.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+
+##--------------------------------------------------------------------
+## Run05 -- Same as Run01 but isolate the 5DE POP stock.
+run=5; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,1,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+1.840552 1.130752 ## v.1 5DE Trawl, WCHG Synoptic
+1.820462 1.116408 ## v.2 with 5DE growth parameters and mortality ogive
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=5; rwt=0; ## so("runADnuts.r","synth")  ## Need to tweak input first:
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run05.MCMC-230323.7z .\MCMC.05.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata
+
+##--------------------------------------------------------------------
+## Run06 -- Same as Run01 but fix 5ABC recruitment distribution parameter (3CD was fixed previously).
+run=6; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,1,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+        1         2         3         4         5         6         7         8 
+2.1923079 1.8593835 1.6180793 0.5551962 0.6104624 1.3123754 0.4401126 0.6311950
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run07 -- Same as Run06 but fix 5DE recruitment distribution parameter (5ABC was fixed previously).
+run=7; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,6,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+        1         2         3         4         5         6         7         8 
+2.2127564 1.8404362 1.6014735 0.5643048 0.6092260 1.3246487 0.4458652 0.6026309
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run08 -- Same as Run06 but fix 3CD recruitment distribution parameter (5ABC was fixed in Run06).
+##          This run is basically Run01 redone to have rdev years spanning 1935:2010 as opposed to 1950:2012.
+run=8; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,6,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+        1         2         3         4         5         6         7         8 
+2.2045082 1.8859798 1.5889720 0.5618557 0.6264108 1.3001528 0.4440243 0.6284447 
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run09 -- Same as Run07 (fix 5DE recruitment distribution parameter) but use time-varying additive deviation vector in the linkage function.
+run=9; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,7,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+        1         2         3         4         5         6         7         8   ## ss full
+2.5553854 3.8142069 1.8516627 0.5496562 1.1309486 1.1854922 0.6353808 0.4351967 
+        1         2         3         4         5         6         7         8 ## ss opt
+2.5553854 3.8142069 1.8516627 0.5496562 1.1309486 1.1854922 0.6353808 0.4351967 
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=9; rwt=0; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)
+ad.base = "C:/Users/haighr/Files/GFish/PSARC23/POP/Data/SS/POP2023"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=8, syscall=c(F,T,T,T,T,T), iters=iters, tag="pop2023", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run10 -- Same as Run09 but use area-specific growth parameters.
+run=10; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,9,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+        1         2         3         4         5         6         7         8 
+2.5800689 4.3020783 1.8869630 0.5315381 1.2982942 1.2623399 0.6273921 0.5165123 
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run11 -- Same as Run09 but implement Adam Langley's suggestions.
+run=11; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,9,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+        1         2         3         4         5         6         7         8 
+2.4037639 2.7854649 1.7766227 0.5528299 0.9015891 1.0875772 0.5598676 0.4807415
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+##--------------------------------------------------------------------
+## Run12 -- Same as Run11 but fix Rdist_area_se to 1.0 for areas 1 and 2 and estimate Delta (male offset) for 5ABC fishery.
+run=12; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,11,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+2.5220402 3.1890329 1.8470941 0.5484572 1.0069903 1.1331652 0.6091439 0.4542031
+so("runSweave.r","synth"); runSweave(type="MPD")
+
+## Run ADnuts () ## changed burn to pcburn (percentage burn-in)
+run=12; rwt=0; so("runADnuts.r","synth")  ## Need to tweak input first:
+iters=list(test=15,pilot=100,mle=500,update=500,pcburn=0.5)  ## run using CG's code on Linux
+#ad.base = "C:/Users/haighr/Files/GFish/PSARC23/POP/Data/SS/POP2023"; ad.run=paste0("Run",pad0(run,2)); ad.model=paste0(pad0(run,2),".",pad0(rwt,2))
+#runADnuts(path=ad.base, run=ad.run, model=ad.model, parallel=TRUE, cores=10, syscall=c(F,T,T,T,T,T), iters=iters, tag="pop2023", ssfiles=paste(c("control","data"), ad.model,"ss",sep="."))
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+
+##--------------------------------------------------------------------
+## Run13 -- Same as Run12 but but use LN(R0) prior = N(10,10); unlink the fishery selectivities from 5ABC, i.e., estimate separately for 5ABC, 3CD, and 5DE.
+run=13; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,12,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+2.5322571 3.3583954 1.7498663 0.5543569 1.0770355 1.1236307 0.6155607 0.4825980
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run13.MPD-230331.7z .\MPD.13.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=13; rwt=0; #so("runADnuts.r","synth")  ## Need to tweak input first:
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run13.MCMC-230331.7z .\MCMC.13.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+
+##--------------------------------------------------------------------
+## Run14 -- Same as Run12 but change F method from 1 (Pope's) to 3 (Hybrid) and change Fmax from 0.8 to 2.9 to emulate Adam Langley's choices.
+run=14; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,12,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+2.5214573 3.1727732 1.8573517 0.5477725 1.0051899 1.1354360 0.6084593 0.4533791
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run14.MPD-230418.7z .\MPD.14.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=14; rwt=0; #so("runADnuts.r","synth")  ## Need to tweak input first:
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run14.MCMC-230419.7z .\MCMC.14.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+
+##--------------------------------------------------------------------
+## Run15 -- Same as Run12 but use N(10,10) prior on LN(R0); use Hybrid method (=3) to estimate F (see R14) instead of Pope's approximation (=1); set Fmax to 2.9 (see R14); expand range on NMFS' mu parameter from (5,40) to (1,40); set forecast control rule to 0 (do not apply reductions, i.e., 'buffers', to either catch or F during forecast period).
+run=15; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,14,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+2.5209628 3.1729021 1.8571106 0.5478352 1.0052696 1.1352938 0.6084315 0.4534118  ## preliminary
+2.4316988 2.7985244 1.6877154 0.6012221 0.9899260 1.4017566 0.5908186 0.6356949  ## no AE (mistake)
+2.5531617 2.7466502 1.7565833 0.5887880 1.0148891 1.3563562 0.5974839 0.6278852 
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run15.MPD-230504.7z .\MPD.15.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=15; rwt=0; #so("runADnuts.r","synth")  ## Need to tweak input first:
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run15.MCMC-230504.7z .\MCMC.15.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+
+##--------------------------------------------------------------------
+## Run16 -- Same as Run15 but use catch reconstruction that uses reported POP trawl landings from 1954-95.
+run=16; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,15,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+2.3741480 3.1671367 1.7331311 0.6004590 1.0878697 1.3673143 0.6309677 0.5249001  ## no AE (mistake)
+2.4756682 3.2004905 1.7952792 0.5896718 1.1247172 1.3104704 0.6556555 0.5202161
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run16.MPD-230504.7z .\MPD.16.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=16; rwt=0; #so("runADnuts.r","synth")  ## Need to tweak input first:
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run16.MCMC-230504.7z .\MCMC.16.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+
+##--------------------------------------------------------------------
+## Run17 (S01) -- Same as Run16 but reallocate data from Moresby Gully in 5B and Flamingo Inlet/Anthony Island in 5E to the POP|YMR expanded 5C.
+run=17; rwt=0; ver=19; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,ver,17,0,18)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+2.6804584  3.2000351  2.8926525  0.6033349  1.1222114  1.2158010  0.6433717  0.5273470  ## v.1
+2.6804108  3.2001355  2.8926887  0.6033664  1.1221963  1.2159632  0.6433562  0.5273414  ## v.2 (revised maturity)
+2.7186901  3.2290551  2.9418100  0.6032916  1.1196299  1.2127408  0.6471767  0.5276306  ## v.3 (widen M priors, widen trawl selectivity priors, forgot revised maturity)
+2.7003079  3.2180026  2.9350796  0.6013779  1.1236713  1.2216287  0.6096930  0.5610090  ## v.4 (broaden survey selectivity priors)
+2.7949316  3.2069592  2.9378742  0.6065723  1.1197305  1.2268703  0.7374565  0.5299540  ## v.5 (tighten survey selectivity priors)
+2.7949122  3.2070884  2.9379604  0.6066034  1.1197184  1.2270425  0.7374438  0.5299484  ## v.6 (used revised maturity encore)
+2.7956321  3.2104944  2.9399282  0.6066713  1.1208628  1.2382147  0.7372825  0.5300602  ## v.7 (add 1997 WCHG)
+2.7748672  3.2016235  2.9072230  0.6070159  1.1201293  1.2348690  0.7355673  0.5299564  ## v.8 (tighten CV on M prior to 20%)
+2.7936921  3.2076831  2.9324596  0.5993500  1.1145743  1.2273173  0.7373980  0.5300034  ## v.9 (forecast recruitment using years 1991-2010)
+2.7998543  3.2169508  2.9640849  0.6308773  1.0864021  1.2703407  0.7349240  0.5325473  ## v.10 (forecast recruitment using years 1935-2010)
+2.7930261  3.2133820  2.9376165  0.6050069  1.1240779  1.2396699  0.7374055  0.5294854  ## v.11 (main recdev = 1935:2023)
+2.7930268  3.2133833  2.9376188  0.6050073  1.1240794  1.2396709  0.7374055  0.5294867  ## v.12 (main recdev = 1935:2023, forecast recruitment using years 1935-2010)
+2.7987636  3.2143526  2.9568219  0.6278748  1.0762677  1.2620897  0.7352968  0.5320183  ## v.13 (main recdev = 1935:2014, fcst recr = avg 1935-2014 recr)
+2.7955783  3.2185592  2.9550117  0.6278209  1.0775258  1.2661389  0.7355289  0.5312507  ## v.14 (same as v.13 but simple recdevs)
+2.7911186  3.2162996  2.9408472  0.6138328  1.1100122  1.2495703  0.7377664  0.5287739  ## v.15 (same as v.14 but use fcst recr option 1 and set r_lambda to 1000)
+2.7908892  3.2163484  2.9394379  0.6110528  1.1141157  1.2474938  0.7377106  0.5288043  ## v.16 (same as v.15 but reduce r_lambda to 5 and set min age for summary biomass to 9)
+2.790462   3.216474   2.936345   0.605014   1.124628   1.242893   0.737578   0.528860   ## v.17 (same as v.16 but reduce r_lambda to 1)
+2.7813897  3.2151669  2.9354292  0.5804627  1.1209237  1.2470853  0.7370702  0.5302383  ## v.18 (change last year of RecrDist from 2010 to 2014
+0.04650981 0.06236106 0.03810677 0.02285557 0.06636481 0.12842373 0.01925523 0.02402175 ## v.19 (used #fish instead of #samples)
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v1-230512.7z .\MPD.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v2-230515.7z .\MPD.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v3-230526.7z .\MPD.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v4-230531.7z .\MPD.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v5-230605.7z .\MPD.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v6-230623.7z .\MPD.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v7-230705.7z .\MPD.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v8-230706.7z .\MPD.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v9-230808.7z .\MPD.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v10-230811.7z .\MPD.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v11-230815.7z .\MPD.17.00.v11 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v12-230815.7z .\MPD.17.00.v12 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v13-230818.7z .\MPD.17.00.v13 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v14-230818.7z .\MPD.17.00.v14 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v15-230830.7z .\MPD.17.00.v15 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v16-230831.7z .\MPD.17.00.v16 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v17-230901.7z .\MPD.17.00.v17 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v18-230908.7z .\MPD.17.00.v18 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MPD.v19-230913.7z .\MPD.17.00.v19 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=17; rwt=0; ver="18a"; #so("runADnuts.r","synth")
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v1a-230512.7z .\MCMC.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v1b-230524.7z .\MCMC.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v4a-230601.7z .\MCMC.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v5a-230605.7z .\MCMC.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v5b-230606.7z .\MCMC.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v6a-230704.7z .\MCMC.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v7a-230705.7z .\MCMC.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v8a-230705.7z .\MCMC.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v7b-230707.7z .\MCMC.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v9a-230808.7z .\MCMC.17.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v9b-230812.7z .\MCMC.17.00.v9b -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v10a-230812.7z .\MCMC.17.00.v10a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v13a-230819.7z .\MCMC.17.00.v13a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v13a-230819.7z .\MCMC.17.00.v13a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v14a-230819.7z .\MCMC.17.00.v14a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v15a-230830.7z .\MCMC.17.00.v15a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v16a-230831.7z .\MCMC.17.00.v16a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v17a-230902.7z .\MCMC.17.00.v17a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run17.MCMC.v18a-230910.7z .\MCMC.17.00.v18a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\* -xr!*\french\*
+
+##--------------------------------------------------------------------
+## Run18 (old 5ABC base run) -- Same as Run17 but use only data for 5ABC.
+run=18; rwt=0; ver=6; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,ver,18,0,5)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+2.6953045 0.5980304 0.6497000  ## v.1
+2.8592288 0.6024464 0.7551079  ## v.2
+2.8308905 0.6026330 0.7529294  ## v.3
+2.8307694 0.6027187 0.7529084  ## v.4
+2.7876619 0.6178111 0.7503277  ## v.5
+2.7861566 0.5994241 0.7506836  ## v.6
+2.7681644 0.5926448 0.7485538  ## v.7
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run18.MPD.v1-230512.7z .\MPD.18.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run18.MPD.v2-230614.7z .\MPD.18.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run18.MPD.v3-230622.7z .\MPD.18.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run18.MPD.v4-230623.7z .\MPD.18.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run18.MPD.v5-230822.7z .\MPD.18.00.v5 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run18.MPD.v6-230901.7z .\MPD.18.00.v6 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+
+## Retrospective patterns
+"C:\Program Files\7-Zip\7z.exe" a -r Retro.18.00.v4a-230626.7z .\Retro.18.00 -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=18; rwt=0; ver="6a"; #so("runADnuts.r","synth")
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run18.MCMC.v2a-230615.7z .\MCMC.18.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run18.MCMC.v3a-230622.7z .\MCMC.18.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run18.MCMC.v4a-230710.7z .\MCMC.18.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run18.MCMC.v5a-230822.7z .\MCMC.18.00.v5a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run18.MCMC.v6a-230905.7z .\MCMC.18.00.v6a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\* -xr!*\french\*
+
+##--------------------------------------------------------------------
+## Run19 (old 3CD base run) -- Same as Run17 but use only data for 3CD.
+run=19; rwt=0; ver=6; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+#prepMPD(run.rwt=c(run,rwt,17,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+3.4098390 1.1138563 0.5348985  ## v.1
+3.441840 1.103268 0.531991     ## v.2
+3.4488314 1.0890312 0.5342899  ## v.3
+3.4507990 1.0897387 0.5343336  ## v.4
+3.5158029 1.0878160 0.5381023  ## v.5
+3.4522607 1.0918964 0.5338047  ## v.6
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run19.MPD.v1-230512.7z .\MPD.19.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run19.MPD.v2-230615.7z .\MPD.19.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run19.MPD.v3-230621.7z .\MPD.19.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run19.MPD.v4-230623.7z .\MPD.19.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run19.MPD.v5-230822.7z .\MPD.19.00.v5 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run19.MPD.v6-230901.7z .\MPD.19.00.v6 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+
+## Retrospective patterns
+"C:\Program Files\7-Zip\7z.exe" a -r Retro.19.00.v4a-230626.7z .\Retro.19.00 -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=19; rwt=0; ver="6a"; #so("runADnuts.r","synth")
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run19.MCMC.v2a-230619.7z .\MCMC.19.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run19.MCMC.v3a-230621.7z .\MCMC.19.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run19.MCMC.v4a-230710.7z .\MCMC.19.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run19.MCMC.v5a-230822.7z .\MCMC.19.00.v5a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run19.MCMC.v6a-230905.7z .\MCMC.19.00.v6a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\* -xr!*\french\*
+
+##--------------------------------------------------------------------
+## Run20 (old 5DE base run) -- Same as Run17 but use only data for 5DE.
+run=20; rwt=0; ver=6; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+#prepMPD(run.rwt=c(run,rwt,17,0)) ## new run, new reweight, like run, like reweight
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+3.062058 1.377119  ## v.1
+3.132723 1.397718  ## v.2
+3.132991 1.398097  ## v.3
+3.131435 1.382366  ## v.4
+3.129208 1.384255  ## v.5
+3.129241 1.384098  ## v.6
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run20.MPD.v1-230512.7z .\MPD.20.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run20.MPD.v2-230619.7z .\MPD.20.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run20.MPD.v3-230623.7z .\MPD.20.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run20.MPD.v4-230627.7z .\MPD.20.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run20.MPD.v5-230822.7z .\MPD.20.00.v5 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run20.MPD.v6-230901.7z .\MPD.20.00.v6 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+
+## Reweight 1
+so("prepMPD.r","synth")
+run=20; rwt=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = rep(1,length(fleets.af));  names(wtemp)=fleets.af
+cvpro = rep(0.2,length(fleets.idx)); names(cvpro)=fleets.idx
+so("prepMPD.r","synth"); prepMPD(run.rwt=c(run,rwt,run,rwt-1),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run20.MPD.v4-(cp20pc)-230627.7z .\MPD.20.01 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+
+## Retrospective patterns
+"C:\Program Files\7-Zip\7z.exe" a -r Retro.20.00.v3a-230626.7z .\Retro.20.00 -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=20; rwt=0; ver="6a"; #so("runADnuts.r","synth")
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run20.MCMC.v2a-230619.7z .\MCMC.20.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run20.MCMC.v4a-230710.7z .\MCMC.20.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run20.MCMC.v5a-230822.7z .\MCMC.20.00.v5a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run20.MCMC.v6a-230905.7z .\MCMC.20.00.v6a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\* -xr!*\french\*
+
+##--------------------------------------------------------------------
+## Run21 (Base run) -- Same as Run17 but use Francis mean-age reweighting.
+run=21; rwt=0; ver=5; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt.ver=c(run,rwt,ver,21,0,3), modify=TRUE) ## new run, new reweight, new version,  like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+2.6804108  3.2001355  2.8926887  0.6033664  1.1221963  1.2159632  0.6433562  0.5273414  ## error: used Dirichlet-Multinomial
+2.6934933  3.1159012  2.8429326  0.5978964  1.0751910  1.1783681  0.6444147  0.4865089  ## v.1
+2.8020018  3.1241646  2.8829261  0.5990152  1.0759207  1.2044523  0.7353845  0.4861911  ## v.2
+2.7922678  3.1273684  2.8820537  0.5744363  1.0765640  1.2070980  0.7347601  0.4874496  ## v.3
+0.04860085 0.04786979 0.04618580 0.01966817 0.05214949 0.09512174 0.03295043 0.01725784 ## v.4
+2.7917389  3.1298486  2.8753809  0.5584452  1.1115158  1.1971075  0.7344211  0.4875307  ## v.5
+
+##--------Reweight 1----------
+run=21; rwt=1; ver=5; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+0.9683168 0.8685588 1.0759518 0.8902505 0.8244452 1.2445858 0.8334499 0.6838425  ## v.2
+0.9706734 0.8747001 1.0746570 0.8777030 0.8372150 1.2309974 0.8328303 0.6808533  ## v.3
+0.9432712 1.0562515 0.9103067 0.9167767 0.9812684 0.7297288 0.7449357 0.8198667  ## v.4
+0.9695070 0.8708124 1.0749218 0.8783906 0.8325775 1.2307094 0.8317098 0.6815639  ## v.5
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run21.MPD-230518.7z .\MPD.21.01 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run21.MPD.v2-230905.7z .\MPD.21.01.v2 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run21.MPD.v3-230908.7z .\MPD.21.01.v3 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run21.MPD.v4-230913.7z .\MPD.21.01.v4 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R21v5-MPD-231010.7z .\MPD.21.00.v5 .\MPD.21.01.v5 mpd.2100v5.txt mpd.2101v5.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\
+
+##--------Reweight 2----------
+run=21; rwt=2; ver=3; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+require(r4ss); replist=SS_output(dir="../MPD.21.01.v3"); so("plotSS.francis.r","synth")
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+2.8500640 3.5849543 2.7616692 0.6421382 1.2651950 1.0625352 0.8513148 0.6844451  ## v.3
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run21.02.MPD.v3-230912.7z .\MPD.21.02.v3 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=21; rwt=1; ver="5a"; #so("runADnuts.r","synth")
+so("runSweave.r","synth"); runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run21.MCMC.v2a-230906.7z .\MCMC.21.01.v2a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run21.MCMC.v3a-230909.7z .\MCMC.21.01.v3a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\* -xr!*\french\*
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R21v5a-MCMC-231011.7z .\MCMC.21.01.v5a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\ -xr!*\french\
+
+
+##--------------------------------------------------------------------
+## Run22 (Sens11) -- Same as Run21 but add midwater fleets in 3CD and 5AB.
+run=22; rwt=0; ver=2; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+prepMPD(run.rwt=c(run,rwt,ver,22,0,1)) ## new run, new reweight, new version, like run, like reweight, like version
+## Note: should be able to just copy the base run rather than refit
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial, Midwater Trawl
+2.4810168 4.8931295 2.9102537 0.6031537 1.1545583 1.2167158 0.6552906 0.5773067 3.1028142  ## v.1
+2.5088776 4.7871545 2.8769569 0.5704876 1.0907386 1.2133975 0.7399069 0.5203008 2.7465429  ## v.2
+
+##--------Reweight 1----------
+run=22; rwt=1; ver=2; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial, Midwater Trawl
+0.9828744 0.8908833 1.0731853 0.8772261 0.7619166 1.1982234 0.8379536 0.6121492 0.7525854  ## v.2
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R22v2-MPD-230919.7z .\MPD.22.00.v2 .\MPD.22.01.v2 mpd.2200v2.txt mpd.2201v2.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\
+
+##--------------------------------------------------------------------
+## Run23 (SensXX) -- Same as Run17 but increase fecundity.
+run=23; rwt=0; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2))
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+prepMPD(run.rwt=c(run,rwt,17,0)) ## new run, new reweight, like run, like reweight
+## Note: should be able to just copy the base run rather than refit
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+2.6896872 3.2298760 2.9397794 0.6008009 1.1206638 1.2139960 0.6452457 0.5256545
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3.POP.Run23.MPD-230529.7z .\MPD.23.00 -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\*
+
+##--------------------------------------------------------------------
+## Run24 (5ABC base run) -- Same as Run18 but switch to Multinomial and use Francis reweighting for AF data.
+run=24; rwt=0; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+prepMPD(run.rwt=c(run,rwt,ver,18,0,6)) ## new run, new reweight, new version, like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 5ABC trawl, QCS synoptic, GIG historical
+2.7681644 0.5926448 0.7485538  ## v.1
+
+##--------Reweight 1----------
+run=24; rwt=1; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 5ABC trawl, QCS synoptic, GIG historical
+0.9871782 0.8692977 0.8363597  ## v.1
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R24v1-MPD-230914.7z .\MPD.24.00.v1 .\MPD.24.01.v1 mpd.2400v1.txt mpd.2401v1.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=24; rwt=1; ver="1a"
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("runSweave", "convPN", "initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R24v1a-MCMC-230915.7z .\MCMC.24.01.v1a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\ -xr!*\french\
+
+## Retrospective patterns
+"C:\Program Files\7-Zip\7z.exe" a -r Retro.R24v1-230926.7z .\Retro.24.01.v1 ir!*.png -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\ -xr!*\retros\
+
+##--------------------------------------------------------------------
+## Run25 (3CD base run) -- Same as Run19 but switch to Multinomial and use Francis reweighting for AF data.
+run=25; rwt=0; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+prepMPD(run.rwt=c(run,rwt,ver,19,0,6)) ## new run, new reweight, new version, like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 3CD trawl, WCVI synoptic, NMFS triennial
+3.3348111 1.0404757 0.4856155  ## v.1
+
+##--------Reweight 1----------
+run=25; rwt=1; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 3CD trawl, WCVI synoptic, NMFS triennial
+0.9017138 0.8350977 0.7078726  ## v.1
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R25v1-MPD-230914.7z .\MPD.25.00.v1 .\MPD.25.01.v1 mpd.2500v1.txt mpd.2501v1.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=25; rwt=1; ver="1a"
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("runSweave", "convPN", "initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R25v1a-MCMC-230915.7z .\MCMC.25.01.v1a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\ -xr!*\french\
+
+## Retrospective patterns
+"C:\Program Files\7-Zip\7z.exe" a -r Retro.R25v1-230926.7z .\Retro.25.01.v1 ir!*.png -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\ -xr!*\retros\
+
+##--------------------------------------------------------------------
+## Run26 (5DE base run) -- Same as Run19 but switch to Multinomial and use Francis reweighting for AF data.
+run=26; rwt=0; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+prepMPD(run.rwt=c(run,rwt,ver,20,0,6)) ## new run, new reweight, new version, like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 5DE trawl, WCHG synoptic
+3.068771 1.340079  ## v.1
+
+##--------Reweight 1----------
+run=26; rwt=1; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 5DE trawl, WCHG synoptic
+1.029787 1.145706  ## v.1
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R26v1-MPD-230914.7z .\MPD.26.00.v1 .\MPD.26.01.v1 mpd.2600v1.txt mpd.2601v1.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=26; rwt=1; ver="1a"
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("runSweave", "convPN", "initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R26v1a-MCMC-230915.7z .\MCMC.26.01.v1a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\ -xr!*\french\
+
+## Retrospective patterns
+"C:\Program Files\7-Zip\7z.exe" a -r Retro.R26v1-230926.7z .\Retro.26.01.v1 ir!*.png -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\ -xr!*\retros\
+
+##--------------------------------------------------------------------
+## Run27 (Sen02) -- Same as R21v3 but fix Rdist_area parameter for 5ABC.
+run=27; rwt=0; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+prepMPD(run.rwt=c(run,rwt,ver,21,0,3)) ## new run, new reweight, new version, like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+2.7823499 2.8671167 3.0779929 0.5756546 0.9667495 1.2445298 0.7059124 0.4634148  ## v.1
+
+##--------Reweight 1----------
+run=27; rwt=1; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+0.9749443 0.8756558 1.0630583 0.8960368 0.8708074 1.2448105 0.8469024 0.6928094  ## v.1
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R27v1-MPD-230914.7z .\MPD.27.00.v1 .\MPD.27.01.v1 mpd.2700v1.txt mpd.2701v1.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=27; rwt=1; ver="1a"
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("runSweave", "convPN", "initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R27v1a-MCMC-230916.7z .\MCMC.27.01.v1a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\ -xr!*\french\
+
+##--------------------------------------------------------------------
+## Run28 (Sen03) -- Same as R21v3 but fix Rdist_area parameter for 3CD.
+run=28; rwt=0; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+prepMPD(run.rwt=c(run,rwt,ver,21,0,3)) ## new run, new reweight, new version, like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+2.7692950 2.9988585 3.1270067 0.5861384 1.0490523 1.3351597 0.7261869 0.4762336  ## v.1
+
+##--------Reweight 1----------
+run=28; rwt=1; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+0.9861594 0.9029195 1.0551580 0.8795170 0.8504123 1.2239160 0.8366736 0.6893434  ## v.1
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R28v1-MPD-230915.7z .\MPD.28.00.v1 .\MPD.28.01.v1 mpd.2800v1.txt mpd.2801v1.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\* -xr!*\french\*
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=28; rwt=1; ver="1a"
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("runSweave", "convPN", "initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R28v1a-MCMC-230916.7z .\MCMC.28.01.v1a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\ -xr!*\french\
+
+##--------------------------------------------------------------------
+## Run29 (Sen04) -- Same as R21v3 but remove ageing error.
+run=29; rwt=0; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+prepMPD(run.rwt=c(run,rwt,ver,21,0,3)) ## new run, new reweight, new version, like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+2.6170856 3.0859720 2.7799362 0.5820133 1.0435112 1.2434322 0.6843491 0.4868169  ## v.1
+
+##--------Reweight 1----------
+run=29; rwt=1; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+0.9730562 0.8826565 1.0734013 0.9010986 0.8393029 1.1779697 0.8441868 0.6849382  ## v.1
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R29v1-MPD-230915.7z .\MPD.29.00.v1 .\MPD.29.01.v1 mpd.2900v1.txt mpd.2901v1.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=29; rwt=1; ver="1a"
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("runSweave", "convPN", "initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R29v1a-MCMC-230916.7z .\MCMC.29.01.v1a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\ -xr!*\french\
+
+##--------------------------------------------------------------------
+## Run30 (Sen05) -- Same as R21v3 but use age-reader error.
+run=30; rwt=0; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+prepMPD(run.rwt=c(run,rwt,ver,21,0,3)) ## new run, new reweight, new version, like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+2.7593359 3.0974556 2.8380719 0.5740711 1.0673450 1.1788308 0.6983808 0.4862509  ## v.1
+
+##--------Reweight 1----------
+run=30; rwt=1; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+0.9819570 0.8741371 1.0746915 0.8846979 0.8334173 1.2143300 0.8452706 0.6859842  ## v.1
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R30v1-MPD-230915.7z .\MPD.30.00.v1 .\MPD.30.01.v1 mpd.3000v1.txt mpd.3001v1.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=30; rwt=1; ver="1a"
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("runSweave", "convPN", "initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R30v1a-MCMC-230916.7z .\MCMC.30.01.v1a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\ -xr!*\french\
+
+##--------------------------------------------------------------------
+## Run31 (Sen06) -- Same as R21v3 but use CASAL-style ageing error.
+run=31; rwt=0; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+prepMPD(run.rwt=c(run,rwt,ver,21,0,3)) ## new run, new reweight, new version, like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+2.9100911 3.0521918 2.7957460 0.5767427 1.0773216 1.2077466 0.7568532 0.4859542  ## v.1
+
+##--------Reweight 1----------
+run=31; rwt=1; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+0.9883262 0.8765646 1.0932988 0.8752235 0.8448752 1.2534908 0.8671845 0.6738881  ## v.1
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R31v1-MPD-230915.7z .\MPD.31.00.v1 .\MPD.31.01.v1 mpd.3100v1.txt mpd.3101v1.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=31; rwt=1; ver="1a"
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("runSweave", "convPN", "initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R31v1a-MCMC-230916.7z .\MCMC.31.01.v1a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\ -xr!*\french\
+
+##--------------------------------------------------------------------
+## Run32 (Sen07) -- Same as R21v3 but reduce catch in 1965-1995 by 30\pc{}.
+run=32; rwt=0; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+prepMPD(run.rwt=c(run,rwt,ver,21,0,3)) ## new run, new reweight, new version, like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+2.8833061 3.0629311 2.8249052 0.5660188 1.0608574 1.0909763 0.7311169 0.4901515  ## v.1
+
+##--------Reweight 1----------
+run=32; rwt=1; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+0.9348834 0.8816363 1.0862714 0.8813844 0.8455028 1.2397623 0.8407929 0.6874626  ## v.1
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R32v1-MPD-230918.7z .\MPD.32.00.v1 .\MPD.32.01.v1 mpd.3200v1.txt mpd.3201v1.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=32; rwt=1; ver="1a"
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("runSweave", "convPN", "initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R32v1a-MCMC-230919.7z .\MCMC.32.01.v1a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\ -xr!*\french\
+
+##--------------------------------------------------------------------
+## Run33 (Sen08) -- Same as R21v3 but increase catch in 1965-1995 by 50\pc{}.
+run=33; rwt=0; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+prepMPD(run.rwt=c(run,rwt,ver,21,0,3)) ## new run, new reweight, new version, like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+2.5215767 3.1829598 2.8399754 0.5821736 1.1006114 1.3723389 0.7303810 0.4861592  ## v.1
+
+##--------Reweight 1----------
+run=33; rwt=1; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+1.0634977 0.8821018 1.0836314 0.8839434 0.8293309 1.1874533 0.8375303 0.6777678  ## v.1
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R33v1-MPD-230918.7z .\MPD.33.00.v1 .\MPD.33.01.v1 mpd.3300v1.txt mpd.3301v1.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=33; rwt=1; ver="1a"
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("runSweave", "convPN", "initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R33v1a-MCMC-230919.7z .\MCMC.33.01.v1a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\ -xr!*\french\
+
+##--------------------------------------------------------------------
+## Run34 (Sen09) -- Same as R21v3 but reduce sigmaR to 0.6.
+run=34; rwt=0; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+prepMPD(run.rwt=c(run,rwt,ver,21,0,3)) ## new run, new reweight, new version, like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+2.7266745 3.2301959 2.9100622 0.5740960 1.0934389 1.2708284 0.7125136 0.4872819  ## v.1
+
+##--------Reweight 1----------
+run=34; rwt=1; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+0.9843446 0.8601475 1.0723068 0.8861792 0.8195607 1.1936467 0.8512319 0.6791953  ## v.1
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R34v1-MPD-230918.7z .\MPD.34.00.v1 .\MPD.34.01.v1 mpd.3400v1.txt mpd.3401v1.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=34; rwt=1; ver="1a"
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("runSweave", "convPN", "initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R34v1a-MCMC-230919.7z .\MCMC.34.01.v1a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\ -xr!*\french\
+
+##--------------------------------------------------------------------
+## Run35 (Sen10) -- Same as R21v3 but reduce sigmaR to 0.6.
+run=35; rwt=0; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+prepMPD(run.rwt=c(run,rwt,ver,21,0,3)) ## new run, new reweight, new version, like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+2.8097691 3.0808046 2.8794079 0.5733040 1.0675680 1.1977175 0.7414458 0.4876215  ## v.1
+
+##--------Reweight 1----------
+run=35; rwt=1; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+0.9686582 0.8804891 1.0755925 0.8759867 0.8462691 1.2398615 0.8274718 0.6818768  ## v.1
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R35v1-MPD-230918.7z .\MPD.35.00.v1 .\MPD.35.01.v1 mpd.3500v1.txt mpd.3501v1.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\
+
+## Run ADnuts on Linux server using CG's 'run-adnuts.R' code
+run=35; rwt=1; ver="1a"
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("runSweave", "convPN", "initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+runSweave(d.model=getwd(), type="MCMC")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R35v1a-MCMC-230920.7z .\MCMC.35.01.v1a -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*.psv -xr!*.csv -xr!*\archive\ -xr!*\french\
+
+##--------------------------------------------------------------------
+## Run36 (Sen12) -- Same as R21v3 but add the HS synoptic survey in area 5DE. (v.2 link HS Syn selectivity to WCHG selectivity)
+run=36; rwt=0; ver=2; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+#prepMPD(run.rwt=c(run,rwt,ver,21,0,3)) ## new run, new reweight, new version, like run, like reweight, like version
+prepMPD(run.rwt=c(run,rwt,ver,36,0,1)) ## new run, new reweight, new version, like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+2.7942819 3.1281199 2.9167376 0.5749936 1.0744994 1.2706090 0.7342546 0.4863608  ## v.1
+2.7888598 3.1266040 2.9207498 0.5743711 1.0726276 1.2861478 0.7341912 0.4861581  ## v.2
+
+##--------Reweight 1----------
+run=36; rwt=1; ver=2; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+0.9732512 0.8723628 1.0705724 0.8996728 0.8378353 1.2109548 0.8340847 0.6833017  ## v.1
+0.9721486 0.8738114 1.0706386 0.8766294 0.8378706 1.2166983 0.8336773 0.6820101  ## v.2
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R36v1-MPD-230919.7z .\MPD.36.00.v1 .\MPD.36.01.v1 mpd.3600v1.txt mpd.3601v1.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R36v2-MPD-230922.7z .\MPD.36.00.v2 .\MPD.36.01.v2 mpd.3600v2.txt mpd.3601v2.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\
+
+
+##--------------------------------------------------------------------
+## Run37 (Sen13) -- Same as R21v3 but use empirical proportions mature for maturity ogive)
+run=37; rwt=0; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+r.synth = c("prepMPD", "plotSS.francis", "weightAF", "runSweave", "convPN","calcMA","initialise")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+##--------Reweight 0----------
+prepMPD(run.rwt=c(run,rwt,ver,21,0,3)) ## new run, new reweight, new version, like run, like reweight, like version
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")  ##bt_cpue, qcs_syn, wcvi_syn, nmfs_tri
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+2.7922059 3.1271886 2.8820188 0.5744884 1.0765091 1.2070307 0.7347627 0.4874641  ## v.1
+
+##--------Reweight 1----------
+run=37; rwt=1; ver=1; mpd.run = paste0("mpd.",pad0(run,2),pad0(rwt,2),"v",ver)
+## assumes 'plotSS.francis' or 'weightAF' was called before reweighting (i.e., run w/ rwt=0)
+wtemp = ttcall(w.francis)$w  ## AF weights
+cvpro = rep(0,length(fleets.idx)); names(cvpro)=fleets.idx  ## Index weights
+so("prepMPD.r","synth"); prepMPD(run.rwt.ver=c(run,rwt,ver,run,rwt-1,ver),w=wtemp,cvpro=cvpro)
+assign("mpd.run.res", system("C:/Users/haighr/Files/Archive/Bat/ss.exe", intern=T))
+writeLines(mpd.run.res, con=paste0("../",mpd.run,".txt"))
+require(r4ss); replist=SS_output(dir=getwd()); so("plotSS.francis.r","synth")
+out = plotSS.francis(replist, "age", fleet=fleets.af, plotit=F, png=F, outnam="rubbish", lang="e")
+ttcall(w.francis)$w
+## 5ABC trawl, 3CD trawl, 5DE trawl, QCS synoptic, WCVI synoptic, WCHG synoptic, GIG historical, NMFS triennial
+0.9706826 0.8747237 1.0746392 0.8776852 0.8372695 1.2310286 0.8328323 0.6808416  ## v.1
+so("runSweave.r","synth"); runSweave(type="MPD")
+"C:\Program Files\7-Zip\7z.exe" a -r SS3-POP-R37v1-MPD-231106.7z .\MPD.37.00.v1 .\MPD.37.01.v1 mpd.3700v1.txt mpd.3701v1.txt -xr!Report_mce*.sso -xr!*.rda -xr!*.7z -xr!*.Rdata -xr!*\archive\ -xr!*\french\
+
+
+
+
+
+
+
+
+## ================================================================CAR
+## Previous base run for Canary (for reference):
+so("SS_doRetro.r","synth")
+years = 0:-10
+#SS_doRetro(masterdir=".", oldsubdir="", newsubdir="retros", years=years, exefile=NULL)
+#retroModels <- SSgetoutput(dirvec=file.path(".", "retros", paste("retro", years, sep="")))
+#save("retroModels", file="retroModels.rda")
+load("retroModels.rda")
+retroSummary <- SSsummarize(retroModels)
+endyrvec <- retroSummary[["endyrs"]] + years
+SSplotComparisons(retroSummary, endyrvec=endyrvec, legendlabels=paste("Data", years, "years"), print=T, plotdir="./figs")
+
+

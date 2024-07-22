@@ -1,0 +1,26 @@
+\setlength{\tabcolsep}{2pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Mon Dec 19 15:20:49 2022
+\begin{table}[!h]
+\centering
+\caption{Valeurs de la log-vraisemblance (LV) indiqu\'{e}es par la simulation de r\'{e}f\'{e}rence unique pour les indices des relev\'{e}s, la composition selon l'\^{a}ge (fr\'{e}quence selon l'\^{a}ge), le recrutement et le total (toutes les composantes de la log-vraisemblance ne sont pas pr\'{e}sent\'{e}es ici).} 
+\label{tab:car.log.likes}
+\begin{tabular}{lr}
+  \\[-1.0ex] \hline
+Valeur LV & 24.01 \\ 
+  \hline
+Simulation & 24 \\ 
+  CPUE chalut de fond & -25,0 \\ 
+  Synoptique BRC & 7,93 \\ 
+  Synoptique COIV & 2,00 \\ 
+  Triennal du NMFS & 13,9 \\ 
+  Synoptique DH & 8,63 \\ 
+  Synoptique COHG & 23,9 \\ 
+  Historique CIG & 8,77 \\ 
+  Indice de l'abondance & 40,1 \\ 
+  Fr\'{e}quence selon l'\^{a}ge & 302 \\ 
+  Recrutement & 0,0551 \\ 
+  Total & 375 \\ 
+   \hline
+\end{tabular}
+\end{table}

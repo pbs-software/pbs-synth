@@ -1,0 +1,30 @@
+\setlength{\tabcolsep}{3pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Thu Oct 12 07:27:09 2023
+\begin{table}[ht]
+\centering
+\caption{POP 2023: medians of MCMC-derived quantities from the base run and 10 sensitivity runs (\Nmcmc{} samples each) from their respective MCMC posteriors. Definitions are: $B_0$ -- unfished equilibrium spawning biomass (mature females), $B_{2024}$ -- spawning biomass at the end of 2024, $u_{2024}$ -- exploitation rate (ratio of total catch to vulnerable biomass) in the middle of 2024, $u_\text{max}$ -- maximum exploitation rate (calculated for each sample as the maximum exploitation rate from 1935 - 2024), MSY -- maximum sustainable yield at equilibrium, $B_\text{MSY}$ -- equilibrium spawning biomass at MSY, $u_\text{MSY}$ -- equilibrium exploitation rate at MSY. All biomass values (and MSY) are in tonnes. Sensitivity runs: S01~= D-M parameterisation, S02~= Rdist 5ABC fixed, S03~= Rdist 3CD fixed, S04~= AE1 no age error, S05~= AE5 age reader CV, S06~= AE6 CASAL CV=0.1, S07~= reduce catch 30\%, S08~= increase catch 50\%, S09~= sigmaR=0.6, S10~= sigmaR=1.2} 
+\label{tab:pop.sens.rfpt}
+\begingroup\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\footnotesize
+\begin{tabular}{lrrrrrrrrrrr}
+  \\[-1.0ex] \hline
+ & B(R21) & S01(R17) & S02(R27) & S03(R28) & S04(R29) & S05(R30) & S06(R31) & S07(R32) & S08(R33) & S09(R34) & S10(R35) \\ 
+  \hline
+$B_{0}$ & 106,054 & 130,221 & 101,087 & 108,553 & 168,639 & 111,740 & 102,805 & 88,586 & 149,119 & 102,912 & 116,939 \\ 
+  $B_{2024}$ & 61,965 & 84,154 & 58,649 & 63,287 & 90,769 & 65,305 & 60,460 & 56,603 & 86,227 & 60,386 & 65,008 \\ 
+  $B_{2024}/B_{0}$ & 0.582 & 0.644 & 0.576 & 0.586 & 0.543 & 0.586 & 0.584 & 0.631 & 0.578 & 0.589 & 0.554 \\ 
+   \hdashline \\[-1.75ex]$u_{2023}$ & 0.0275 & 0.0203 & 0.0291 & 0.0269 & 0.0189 & 0.0262 & 0.0282 & 0.0300 & 0.0197 & 0.0282 & 0.0263 \\ 
+  $u_\text{max}$ & 0.123 & 0.106 & 0.124 & 0.121 & 0.0993 & 0.120 & 0.122 & 0.112 & 0.124 & 0.126 & 0.119 \\ 
+   \hline
+$\text{MSY}$ & 4,865 & 6,278 & 4,707 & 5,000 & 9,770 & 5,350 & 4,576 & 4,296 & 6,603 & 4,819 & 5,465 \\ 
+  $B_\text{MSY}$ & 26,798 & 34,669 & 26,082 & 27,772 & 44,279 & 28,851 & 26,491 & 22,445 & 39,418 & 25,357 & 30,893 \\ 
+  $0.4B_{\text{MSY}}$ & 10,719 & 13,867 & 10,433 & 11,109 & 17,712 & 11,540 & 10,597 & 8,978 & 15,767 & 10,143 & 12,357 \\ 
+  $0.8B_{\text{MSY}}$ & 21,438 & 27,735 & 20,865 & 22,218 & 35,423 & 23,081 & 21,193 & 17,956 & 31,534 & 20,286 & 24,714 \\ 
+  $B_{2024}/B_\text{MSY}$ & 2.33 & 2.49 & 2.28 & 2.32 & 2.08 & 2.30 & 2.29 & 2.53 & 2.24 & 2.41 & 2.11 \\ 
+  $B_\text{MSY}/B_{0}$ & 0.254 & 0.265 & 0.259 & 0.255 & 0.264 & 0.260 & 0.260 & 0.251 & 0.265 & 0.246 & 0.266 \\ 
+   \hdashline \\[-1.75ex]$u_\text{MSY}$ & 0.0902 & 0.0888 & 0.0873 & 0.0892 & 0.107 & 0.0906 & 0.0850 & 0.0939 & 0.0817 & 0.0939 & 0.0861 \\ 
+  $u_{2023}/u_\text{MSY}$ & 0.307 & 0.221 & 0.326 & 0.300 & 0.177 & 0.282 & 0.328 & 0.321 & 0.236 & 0.302 & 0.303 \\ 
+   \hline
+\end{tabular}
+\endgroup
+\end{table}

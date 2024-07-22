@@ -1,0 +1,109 @@
+%% Modified from MCMC.21.01.v3a.tex
+%%---------------------------------
+
+%%..............................................................................
+%\subsubsubsection{MCMC Tables}
+%
+%%%---Tables 3-5 -------------------------
+%%% Likelihoods Used from replist
+%%% Get numbers from chunk above
+%\setlength{\tabcolsep}{0pt}
+%\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{1.73in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.85in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.85in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.85in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.85in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.85in}}
+%  \caption{Parameter quantiles.} \label{tab:pars.mcmc}\\  \hline\\[-2.2ex]  
+%  Parameters  & 5\% & 25\% & 50\% & 75\% & 95\% \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  
+%  Parameters  & 5\% & 25\% & 50\% & 75\% & 95\% \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  
+%  LN(R0) & 9.448 & 9.680 & 9.845 & 10.01 & 10.26 \\ 
+%  Rdist area(1) & 0.8684 & 1.049 & 1.173 & 1.299 & 1.486 \\ 
+%  Rdist area(2) & -0.09547 & -0.04481 & -0.008557 & 0.02760 & 0.08419 \\ 
+%  M Female & 0.04365 & 0.04847 & 0.05229 & 0.05575 & 0.06146 \\ 
+%  M Male & 0.05050 & 0.05572 & 0.05939 & 0.06306 & 0.06902 \\ 
+%  BH h & 0.4736 & 0.6379 & 0.7544 & 0.8482 & 0.9431 \\ 
+%  mu(1) TRAWL 5ABC & 10.93 & 11.17 & 11.33 & 11.49 & 11.72 \\ 
+%  varL(1) TRAWL 5ABC & 1.996 & 2.112 & 2.193 & 2.265 & 2.374 \\ 
+%  delta1(1) TRAWL 5ABC & -0.3206 & -0.1700 & -0.05945 & 0.05119 & 0.2221 \\ 
+%  mu(4) QCS & 13.50 & 15.69 & 17.74 & 20.32 & 24.91 \\ 
+%  varL(4) QCS & 3.561 & 3.987 & 4.315 & 4.671 & 5.172 \\ 
+%  delta1(4) QCS & -1.188 & -0.4484 & -0.003651 & 0.4669 & 1.138 \\ 
+%  mu(5) WCVI & 17.00 & 18.84 & 20.49 & 22.35 & 25.74 \\ 
+%  varL(5) WCVI & 4.290 & 4.544 & 4.741 & 4.935 & 5.259 \\ 
+%  delta1(5) WCVI & -0.8162 & -0.2012 & 0.2744 & 0.7112 & 1.403 \\ 
+%  mu(6) WCHG & 11.08 & 11.80 & 12.29 & 12.89 & 13.81 \\ 
+%  varL(6) WCHG & 1.597 & 1.988 & 2.235 & 2.484 & 2.816 \\ 
+%  delta1(6) WCHG & -0.7172 & -0.2951 & -0.01605 & 0.2739 & 0.6846 \\ 
+%  mu(7) GIG & 5.398 & 7.072 & 8.473 & 10.16 & 12.91 \\ 
+%  varL(7) GIG & 1.801 & 2.544 & 3.034 & 3.523 & 4.135 \\ 
+%  delta1(7) GIG & -1.682 & -0.9182 & -0.3249 & 0.3004 & 1.150 \\ 
+%  mu(8) NMFS & 2.820 & 4.180 & 5.222 & 6.774 & 9.789 \\ 
+%  varL(8) NMFS & 1.748 & 2.408 & 2.955 & 3.535 & 4.348 \\ 
+%  delta1(8) NMFS & -1.666 & -0.8098 & -0.2313 & 0.3689 & 1.240 \\ 
+%   %\hline
+%\end{longtable}
+%
+%\setlength{\tabcolsep}{0pt}
+%\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{2in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.8in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.8in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.8in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.8in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.8in}}
+%  \caption{Derived parameter quantiles.} \label{tab:dpars.mcmc}\\  \hline\\[-2.2ex]  
+%  Derived parameters  & 5\% & 25\% & 50\% & 75\% & 95\% \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  
+%  Derived parameters  & 5\% & 25\% & 50\% & 75\% & 95\% \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot
+%  $B_{0}$ & 84,811 & 96,679 & 106,054 & 117,619 & 140,309 \\ 
+%  $B_{2024}$ & 44,390 & 53,822 & 61,965 & 71,222 & 90,825 \\ 
+%  $B_{2024}/B_{0}$ & 0.4239 & 0.5114 & 0.5816 & 0.6621 & 0.8116 \\ 
+%  $F_{2023}$ & 0.01910 & 0.02418 & 0.02787 & 0.03218 & 0.03888 \\ 
+%  $u_{2023}$ & 0.01892 & 0.02389 & 0.02749 & 0.03166 & 0.03813 \\ 
+%  \text{MSY} & 3,090 & 4,073 & 4,865 & 5,795 & 7,262 \\ 
+%  $B_{\text{MSY}}$ & 16,692 & 22,127 & 26,798 & 32,466 & 42,658 \\ 
+%  $B_{2024}/B_{\text{MSY}}$ & 1.409 & 1.894 & 2.326 & 2.859 & 3.872 \\ 
+%  $B_{\text{MSY}}/B_{0}$ & 0.1605 & 0.2143 & 0.2544 & 0.2975 & 0.3636 \\ 
+%  $F_{\text{MSY}}$ & 0.04279 & 0.06833 & 0.09448 & 0.1241 & 0.1830 \\ 
+%  $u_{\text{MSY}}$ & 0.04189 & 0.06605 & 0.09016 & 0.1167 & 0.1672 \\ 
+%  $u_{2023}/u_{\text{MSY}}$ & 0.1442 & 0.2218 & 0.3074 & 0.4304 & 0.7210 \\ 
+%   %\hline
+%\end{longtable}
+%\clearpage
+
+%%..............................................................................
+%\subsubsubsection{MCMC Figures}
+
+\onefig{traceParams}{MCMC traces for the estimated parameters. Grey lines show the \Nmcmc~samples for each parameter, solid lines show the cumulative median (up to that sample), and dashed lines show the cumulative 0.05 and 0.95 quantiles.  Red circles are the MPD estimates. For parameters other than $M$ (if estimated), subscripts 1-9 correspond to fleets (fisheries and surveys).}
+
+\onefig{splitChain}{diagnostic plot obtained by dividing the MCMC chain of \Nmcmc~MCMC samples into eight segments (original number of chains), and overplotting the cumulative distributions of the segments from first to eighth using colours pink, brown, purple, orange, green, black, blue, and red.}
+
+\onefig{paramACFs}{autocorrelation plots for the estimated parameters from the MCMC output. Horizontal dashed blue lines delimit the 95\pc{} confidence interval for each parameter's set of lagged correlations.}
+\clearpage
+
+\subsubsubsection{Coastwide multi-area model}
+
+\onefig{pdfParameters}{posterior distribution (vertical green bars), likelihood profile (thin blue curve), and prior density function (thick black curve) for estimated parameters. Vertical dashed line indicates the MCMC posterior median; vertical blue line represents the MPD; red triangle indicates initial value for each parameter.}
+
+\onefig{pairsPars}{kernel density plot of \Nmcmc~MCMC samples for 24 parameters. Numbers in the lower panels are the absolute values of the correlation coefficients.}
+\clearpage
+
+\twofig{sbiomassMCMC}{exploitMCMC}{marginal posterior distribution of female spawning biomass $B_t$ (top) and exploitation rate $u_t$ (bottom) over time. Boxplots show the 0.05, 0.25, 0.5, 0.75, and 0.95 quantiles from the MCMC results.}
+
+\twofig{recruitsMCMC}{recdevMCMC}{marginal posterior distribution of recruitment in 1,000s of age-0 fish (top) and recruitment deviations (bottom) over time. Boxplots show the 0.05, 0.25, 0.5, 0.75, and 0.95 quantiles from the MCMC results.}
+
+%% #1=fig1 filename, #2=fig2 filename, #3=caption text, #4=fig1 width #5=fig1 height, #6=fig2 width, #7=fig2 height, #8=caption prefix (optional), #9=label prefix (optional)
+\twofigWH{boverbmsyMCMC}{uoverumsyMCMC}{estimated spawning biomass $B_t$ relative to spawning biomass at maximum sustainable yield ($\Bmsy$)(top); estimated exploitation rate $u_t$ relative to exploitation rate at MSY ($\umsy$)(bottom). The median trajectories appear as a solid curves surrounded by 90\pc{} credibility envelopes (quantiles: 0.05-0.95) in grey and delimited by dashed lines for years $t$=1935-2024; quantities appear in light blue for the late recruitment deviation period and light red for the projection years $t$=2025-2034. Also delimited is the 50\pc{} credibility interval (quantiles: 0.25-0.75) delimited by dotted lines. The horizontal dashed lines show the median LRP and USR (top) and $\umsy$ (bottom).}{6}{3.6}{6}{3.6}
+\clearpage
+
+%\onefig{snail}{Phase plot through time of the medians of the ratios $B_t/B_\text{MSY}$ (the spawning biomass in year $t$ relative to $B_\text{MSY}$) and $u_{t-1} / u_\text{MSY}$ (the exploitation rate in year $t-1$ relative to $u_\text{MSY}$). The filled green circle is the starting year (1936). Years then proceed from light grey through to dark grey with the final year (2024) as a filled cyan circle, and the blue lines represent the 0.05 and 0.95 quantiles of the posterior distributions for the final year. The filled gold circles indicate the status in 2001, 2010, 2012, and 2017, which coincide with previous assessments for this species.  Red and green vertical dashed lines indicate the Precautionary Approach provisional limit and upper stock reference points (0.4, 0.8 $\Bmsy$), and the horizontal grey dotted line indicates $u$ at MSY.}
+%\clearpage
+
+%\onefig{extra.mcmc(frecruit)-4panels(square)}{Area-specific recruitment allocation.}
+%\onefig{extra.mcmc(recruits)-4panels(square)}{Area-specific recruitment (millions age-0 fish).}
+%\clearpage
+
+%\onefig{extra.mcmc(depletion)-4panels(square)}{Area-specific depletion ($B_t/B_0$).}
+%\onefig{extra.mcmc(BtBmsy)-4panels(square)}{Area-specific trajectories of spawning biomass ($B_t$) relative to $\Bmsy$.}
+%\onefig{extra.mcmc(exploitation)-4panels(square)}{Area-specific exploitation rate (y$^{-1}$).}
+%\clearpage
+
+
+%\onefig{extra.mcmc(spawning)-4panels(square)}{Area-specific spawning stock biomass (kt).}
+%\onefig{extra.mcmc(vulnerable)-4panels(square)}{Area-specific vulnerable stock biomass (kt).}
+%\onefig{extra.mcmc(utumsy)-4panels(square)}{Area-specific trajectories of harvest rate ($u_t$) relative to $\umsy$.}
+
+
+%%Figures not needed
+%\onefig{traceBiomass}{MCMC traces for female spawning biomass estimates at five-year intervals.  Note that vertical scales are different for each plot (to show convergence of the MCMC chain, rather than absolute differences in annual values). Grey lines show the \Nmcmc~samples for each parameter, solid lines show the cumulative  median (up to that sample), and dashed lines show the cumulative 0.05 and 0.95 quantiles.  Red circles are the MPD estimates.}
+%\onefig{traceRecruits}{MCMC traces for recruitment estimates at five-year intervals. Note that vertical scales are different for each plot (to show convergence of the MCMC chain, rather than absolute differences in annual recruitment). Grey lines show the \Nmcmc~samples for each parameter, solid lines show the cumulative  median (up to that sample), and dashed lines show the cumulative 0.05 and 0.95 quantiles.  Red circles are the MPD estimates.}
+%%==============================================================================

@@ -1,0 +1,37 @@
+\setlength{\tabcolsep}{1pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Tue Dec 20 13:28:07 2022
+
+\begin{table}[ht]
+\centering
+\caption{SCA~CB : valeurs m\'{e}dianes des \'{e}chantillons MCCM pour les principaux param\`{e}tres estim\'{e}s, en comparant la simulation de r\'{e}f\'{e}rence \`{a} 14 simulations de sensibilit\'{e} ( \'{e}chantillons chacun). R~= Simulation (mod\`{e}le), S~= Sensibilit\'{e}. Les indices num\'{e}riques autres que ceux de $R_0$ et $M$ indiquent les types d'engins suivants $g$ : 1~= CPUE de la p\^{e}che au chalut de fond, 3~= relev\'{e} synoptique sur la COIV, 5~= relev\'{e} triennal du NMFS, 6~= relev\'{e} synoptique dans le DH, 7~= relev\'{e} synoptique sur la COHG, et 8~= relev\'{e} historique dans le CIG. Simulations de sensibilit\'{e} : S01~= M r\'{e}partie entre les \^{a}ges 13 et 14, S02~= EA1 aucune erreur d'\^{a}ge, S03~= EA5 CV des lecteurs d'\^{a}ge, S04~= EA6 CASAL CV = 0,1, S05~= prises r\'{e}duites de 30\pc{}, S06~= prises augment\'{e}es de 50\pc{}, S07~= sigmaR=0,6, S08~= sigmaR=1,2, S09~= s\'{e}lectivit\'{e} en forme de d\^{o}me pour femelles, S10~= utilisation des FA DH COHG, S11~= ajout des RPFD, S12~= utilisation des CPUE Tweedie, S13~= suppression des CPUE comm., S14~= utilisation de la repond\'{e}ration de Francis} 
+\label{tab:car.sens.pars}
+\begingroup\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\footnotesize
+\begin{tabular}{crrrrrrrrrrrrrrr}
+  \\[-1.0ex] \hline
+Param\`{e}tre & B1(R24) & S01(R25) & S02(R26) & S03(R27) & S04(R28) & S05(R29) & S06(R30) & S07(R31) & S08(R32) & S09(R33) & S10(R34) & S11(R35) & S12(R36) & S13(R37) & S14(R49) \\ 
+  \hline
+$\log R_0$ & 7,933 & 7,977 & 8,275 & 7,959 & 7,839 & 8,028 & 7,979 & 7,789 & 8,104 & 8,153 & 7,994 & 7,839 & 7,841 & 7,848 & 7,905 \\ 
+  $M_{1}$ & 0,09329 & 0,06097 & 0,09727 & 0,09392 & 0,09184 & 0,09808 & 0,08959 & 0,09272 & 0,09415 & 0,08609 & 0,09487 & 0,08737 & 0,09266 & 0,09264 & 0,09738 \\ 
+  $M_{2}$ & 0,06543 & 0,05393 & 0,06988 & 0,06603 & 0,06380 & 0,07082 & 0,06152 & 0,06500 & 0,06627 & 0,06870 & 0,06721 & 0,06921 & 0,06466 & 0,06481 & 0,07052 \\ 
+  $\text{BH}~h$ & 0,7958 & 0,7547 & 0,8224 & 0,7982 & 0,7942 & 0,7767 & 0,7969 & 0,8271 & 0,7829 & 0,7608 & 0,7946 & 0,7928 & 0,7768 & 0,7901 & 0,8029 \\ 
+  $\mu_{1}~(\text{Chalut})$ & 13,24 & 13,30 & 13,48 & 13,21 & 13,24 & 13,16 & 13,32 & 13,27 & 13,30 & 13,21 & 13,08 & 13,19 & 13,20 & 13,21 & 13,99 \\ 
+  $\log~v_{\text{L}1}~(\text{Chalut})$ & 2,382 & 2,432 & 2,556 & 2,334 & 2,312 & 2,346 & 2,413 & 2,380 & 2,396 & 2,524 & 2,327 & 2,351 & 2,396 & 2,387 & 2,576 \\ 
+  $\Delta1_{1}~(\text{Chalut})$ & -0,3963 & -0,4116 & -0,3931 & -0,3938 & -0,3876 & -0,3927 & -0,3903 & -0,3909 & -0,3912 & -0,3905 & -0,3902 & -0,4108 & -0,3934 & -0,3921 & -0,3905 \\ 
+  $\mu_{3}~(\text{BRC})$ & 12,25 & 12,23 & 12,34 & 12,25 & 12,31 & 12,25 & 12,19 & 12,21 & 12,30 & 11,86 & 12,33 & 12,46 & 12,20 & 12,43 & 12,31 \\ 
+  $\log~v_{\text{L}3}~(\text{BRC})$ & 2,647 & 2,680 & 2,730 & 2,640 & 2,635 & 2,647 & 2,636 & 2,669 & 2,654 & 2,631 & 2,624 & 2,712 & 2,629 & 2,677 & 2,622 \\ 
+  $\Delta1_{3}~(\text{BRC})$ & -0,3931 & -0,3967 & -0,3912 & -0,3898 & -0,3899 & -0,3930 & -0,3922 & -0,3941 & -0,3887 & -0,4022 & -0,3899 & -0,3936 & -0,3893 & -0,3941 & -0,3901 \\ 
+  $\mu_{4}~(\text{COIV})$ & 10,33 & 10,03 & 10,41 & 10,29 & 10,49 & 10,32 & 10,29 & 10,22 & 10,39 & 9,823 & 10,59 & 10,44 & 10,34 & 10,54 & 10,61 \\ 
+  $\log~v_{\text{L}4}~(\text{COIV})$ & 2,791 & 2,758 & 2,849 & 2,756 & 2,831 & 2,782 & 2,788 & 2,794 & 2,776 & 2,726 & 2,810 & 2,836 & 2,772 & 2,823 & 2,841 \\ 
+  $\Delta1_{4}~(\text{COIV})$ & -0,3926 & -0,3991 & -0,3902 & -0,3891 & -0,3910 & -0,3919 & -0,3897 & -0,3916 & -0,3908 & -0,3990 & -0,3935 & -0,3956 & -0,3899 & -0,3912 & -0,3960 \\ 
+  $\mu_{5}~(\text{NMFS})$ & 12,06 & 12,01 & 12,32 & 12,12 & 12,11 & 12,07 & 12,15 & 12,11 & 12,20 & --- & 12,07 & 12,14 & 12,00 & 12,00 & 12,13 \\ 
+  $\log~v_{\text{L}5}~(\text{NMFS})$ & 2,584 & 2,594 & 2,713 & 2,577 & 2,556 & 2,584 & 2,613 & 2,604 & 2,612 & --- & 2,577 & 2,604 & 2,583 & 2,585 & 2,488 \\ 
+  $\Delta1_{5}~(\text{NMFS})$ & -0,4029 & -0,4048 & -0,4008 & -0,3988 & -0,4000 & -0,4010 & -0,4058 & -0,3979 & -0,3965 & --- & -0,4062 & -0,4028 & -0,3983 & -0,3990 & -0,4048 \\ 
+  $\log~(\text{DM}~\theta)_{1}$ & 6,998 & 7,111 & 7,201 & 7,178 & 6,983 & 6,998 & 7,024 & 7,023 & 7,009 & 7,230 & 7,036 & 7,059 & 7,044 & 7,068 & --- \\ 
+  $\log~(\text{DM}~\theta)_{3}$ & 5,881 & 5,946 & 5,978 & 6,011 & 5,849 & 5,841 & 5,915 & 5,882 & 5,913 & 5,923 & 5,853 & 5,957 & 5,809 & 5,856 & --- \\ 
+  $\log~(\text{DM}~\theta)_{4}$ & 5,697 & 5,733 & 5,766 & 5,783 & 5,715 & 5,627 & 5,688 & 5,674 & 5,716 & 5,597 & 5,646 & 5,744 & 5,669 & 5,688 & --- \\ 
+  $\log~(\text{DM}~\theta)_{5}$ & 5,123 & 5,318 & 5,243 & 5,197 & 5,094 & 5,084 & 5,087 & 5,054 & 5,111 & 5,308 & 5,109 & 5,079 & 5,084 & 5,111 & --- \\ 
+   \hline
+\end{tabular}
+\endgroup
+\end{table}

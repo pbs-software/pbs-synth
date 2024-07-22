@@ -1,0 +1,30 @@
+\setlength{\tabcolsep}{2pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Mon Dec 19 15:20:49 2022
+\begin{table}[!h]
+\centering
+\caption{Simulation de r\'{e}f\'{e}rence : m\'{e}diane MCCM (avec les limites des quantiles 0,05 et 0,95) pour les quantit\'{e}s d\'{e}riv\'{e}es du mod\`{e}le pour la simulation de r\'{e}f\'{e}rence de \Nbase{} \'{e}chantillons.} 
+\label{tab:car.runs.rfpt}
+\begin{tabular}{lr}
+  \\[-1.0ex] \hline
+Quantit\'{e} & B1 (R24) \\ 
+  \hline
+$B_{0}$ & 13\,908 (10\,354,\,20\,295) \\ 
+  $B_{2023}$ & 10\,761 (7\,275, 17\,637) \\ 
+  $B_{2023}/B_{0}$ & 0,78 (0,57,\,1,0) \\ 
+   \hdashline 
+$u_{2022}$ & 0,022 (0,013,\,0,032) \\ 
+  $u_\text{max}$ & 0,065 (0,046,\,0,084) \\ 
+   \hline
+$\text{RMD}$ & 1\,305 (947,\,1\,886) \\ 
+  $B_\text{RMD}$ & 3\,580 (2\,149,5\,964) \\ 
+  $0.4B_{\text{RMD}}$ & 1\,432 (860,\,2\,385) \\ 
+  $0.8B_{\text{RMD}}$ & 2\,864 (1\,720,\,4\,771) \\ 
+  $B_{2023}/B_\text{RMD}$ & 3,0 (1,9,\,4,9) \\ 
+  $B_\text{RMD}/B_{0}$ & 0,26 (0,17,\,0,37) \\ 
+   \hdashline 
+$u_\text{RMD}$ & 0,081 (0,051,\,0,11) \\ 
+  $u_{2022}/u_\text{RMD}$ & 0,27 (0,15,\,0,47) \\ 
+   \hline
+\end{tabular}
+\end{table}

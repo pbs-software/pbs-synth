@@ -1,0 +1,34 @@
+\setlength{\tabcolsep}{6pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Mon Dec 19 15:20:49 2022
+\begin{table}[ht]
+\centering
+\caption{Simulation de r\'{e}f\'{e}rence : MDP des param\`{e}tres du mod\`{e}le (d\'{e}limit\'{e}s par `|') et m\'{e}dianes MCCM (avec les limites des quantiles 0,05 et 0,95) pour la simulation de r\'{e}f\'{e}rence de \Nbase{} \'{e}chantillons.} 
+\label{tab:car.runs.pars}
+\begin{tabular}{lc}
+  \\[-1.0ex] \hline
+Param\`{e}tre & B1 (R24) \\ 
+  \hline
+$\log R_{0}$ & $|$7,91$|$ 7,93 (7,53,\,8,43) \\ 
+  $M~(\text{Femelles})$ & $|$0,0927$|$ 0,0933 (0,0809,\,0,106) \\ 
+  $M~(\text{M\^{a}les})$ & $|$0,0651$|$ 0,0654 (0,0547,\,0,0775) \\ 
+  $\text{BH}~(h)$ & $|$0,877$|$ 0,796 (0,566,\,0,951) \\ 
+  $\mu_{1}$ & $|$13,3$|$ 13,2 (12,0,\,14,6) \\ 
+  $\log v_{\text{L}1}$ & $|$2,40$|$ 2,38 (1,78,\,2,88) \\ 
+  $\Delta1_{1}$ & $|$-0,391$|$ -0,396 (-0,587,\,-0,208) \\ 
+  $\mu_{3}$ & $|$12,4$|$ 12,3 (10,4,\,14,4) \\ 
+  $\log v_{\text{L}3}$ & $|$2,68$|$ 2,65 (1,88,\,3,31) \\ 
+  $\Delta1_{3}$ & $|$-0,390$|$ -0,393 (-0,589,\,-0,202) \\ 
+  $\mu_{4}$ & $|$10,4$|$ 10,3 (8,28,\,13,1) \\ 
+  $\log v_{\text{L}4}$ & $|$2,79$|$ 2,79 (2,01,\,3,54) \\ 
+  $\Delta1_{4}$ & $|$-0,391$|$ -0,393 (-0,581,\,-0,203) \\ 
+  $\mu_{5}$ & $|$12,3$|$ 12,1 (9,90,\,14,5) \\ 
+  $\log v_{\text{L}5}$ & $|$2,62$|$ 2,58 (1,64,\,3,36) \\ 
+  $\Delta1_{5}$ & $|$-0,400$|$ -0,403 (-0,590,\,-0,200) \\ 
+  $\log\,[\text{DM}~~\theta_1]$ & $|$6,85$|$ 7,00 (6,09,\,8,27) \\ 
+  $\log\,[\text{DM}~~\theta_3]$ & $|$5,72$|$ 5,88 (4,87,\,7,31) \\ 
+  $\log\,[\text{DM}~~\theta_4]$ & $|$5,54$|$ 5,70 (4,64,\,7,20) \\ 
+  $\log\,[\text{DM}~~\theta_5]$ & $|$4,87$|$ 5,12 (4,05,\,6,57) \\ 
+   \hline
+\end{tabular}
+\end{table}

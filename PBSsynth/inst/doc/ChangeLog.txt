@@ -4,6 +4,16 @@ Authors : RH  = Rowan Haigh
           AME = Andrew Edwards
           PJS = Paul Starr
           CG  = Chris Grandin
+          AE  = Anisa Egeli
+
+0.6.0 (2024-07-22) [Rcheck=F, Rbuild=F]
+  * Copied a number of functions from PBSawatea to PBSsynth (RH 240416)
+    + `mochaLatte', `panelBoxes', `panelChains', `panelTraces', `plotACFs', `plotTraj'
+      - primarily to amalgamate functions under the PBSsynth umbrella
+  * Documentation
+    + Updated the data inputs and sweave directories for CAR 2022 and POP 2023 (RH 240418)
+    + Added various Rd documentation files (RH 2404xx) -- process ongoing
+    + Added SS3 model input data files for YTR 2024 (need for referencing in AppE) (RH 240722)
 
 0.5.4 (2024-01-11) [Rcheck=F, Rbuild=F]
   * Forgot to add new directories

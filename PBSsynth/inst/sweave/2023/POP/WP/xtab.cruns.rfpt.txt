@@ -1,0 +1,30 @@
+\setlength{\tabcolsep}{2pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Thu Sep 28 13:27:46 2023
+\begin{table}[ht]
+\centering
+\caption{Base run: MCMC median (with 0.05 and 0.95 quantile limits) for derived model quantities for the base model run of \Nbase{} samples.} 
+\label{tab:pop.runs.rfpt}
+\begin{tabular}{lr}
+  \\[-1.0ex] \hline
+ & B1 (R21) \\ 
+  \hline
+$B_{0}$ & 106,054 (84,811,140,309) \\ 
+  $B_{2024}$ & 61,965 (44,390,90,825) \\ 
+  $B_{2024}/B_{0}$ & 0.58 (0.42,0.81) \\ 
+   \hdashline 
+$u_{2023}$ & 0.027 (0.019,0.038) \\ 
+  $u_\text{max}$ & 0.12 (0.11,0.14) \\ 
+   \hline
+$\text{MSY}$ & 4,865 (3,090,7,262) \\ 
+  $B_\text{MSY}$ & 26,798 (16,692,42,658) \\ 
+  $0.4B_{\text{MSY}}$ & 10,719 (6,677,17,063) \\ 
+  $0.8B_{\text{MSY}}$ & 21,438 (13,353,34,126) \\ 
+  $B_{2024}/B_\text{MSY}$ & 2.3 (1.4,3.9) \\ 
+  $B_\text{MSY}/B_{0}$ & 0.25 (0.16,0.36) \\ 
+   \hdashline 
+$u_\text{MSY}$ & 0.090 (0.042,0.17) \\ 
+  $u_{2023}/u_\text{MSY}$ & 0.31 (0.14,0.72) \\ 
+   \hline
+\end{tabular}
+\end{table}

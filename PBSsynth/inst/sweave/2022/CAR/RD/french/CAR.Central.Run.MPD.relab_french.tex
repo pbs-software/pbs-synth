@@ -1,0 +1,118 @@
+\newpage
+\subsubsubsection{Tableaux -- mod\`{e}le de base (MDP)}
+
+%%---Table 2-----------------------------
+\setlength{\tabcolsep}{2pt}
+\begin{table}[!h]
+\centering
+\caption{SCA~CB : valeurs a priori et estimations du MDP pour les param\`{e}tres estim\'{e}s. Information sur les valeurs a priori -- distributions : 0~= uniforme, 2~= b\^{e}ta, 6~= normale. Acronymes~: LN~= logarithme naturel, BH~= Beverton-Holt, BRC~= bassin de la Reine-Charlotte, COIV~= c\^{o}te ouest de l'\^{i}le de Vancouver, NMFS~= National Marine Fisheries Service (\'{e}tats-Unis), DM~= Dirichlet-multinomiale.}
+\label{tab:car.parest}
+\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\small
+\begin{tabular}{lcccccr}
+\hline \\ [-1.5ex]
+%\multicolumn{6}{l}{{\bf Param\`{e}tre en \'{e}criture, Nom d'entr\'{e}e Awatea, Nom d'exportation Awatea}} \\
+{\bf Param\`{e}tre} & {\bf Phase} & {\bf Plage} & {\bf Type} & {\bf (Moyenne, ET)} & {\bf Initial} & {\bf MDP} \\ [1ex]
+\hline \\ [-1.5ex]
+M Femelles & 4 & (0,02, 0,2) & 6 & (0,06, 0,018) & 0,06 & 0,093 \\
+M M\^{a}les & 4 & (0,02, 0,2) & 6 & (0,06, 0,018) & 0,06 & 0,065 \\
+LN(R0) & 1 & (1, 16) & 6 & (7, 7) & 7 & 7,913 \\
+BH h & 5 & (0,2, 1) & 2 & (0,67, 0,17) & 0,76 & 0,877 \\
+mu(1) Chalut & 3 & (5, 40) & 6 & (14, 4,2) & 14 & 13,321 \\
+varL(1) Chalut & 4 & (-15, 15) & 6 & (2,5, 0,75) & 2,5 & 2,395 \\
+delta1(1) Chalut & 4 & (-8, 10) & 6 & (-0,4, 0,12) & -0,4 & -0,391 \\
+mu(3) BRC & 3 & (5, 40) & 6 & (14, 4,2) & 14 & 12,416 \\
+varL(3) BRC & 4 & (-15, 15) & 6 & (2,5, 0,75) & 2,5 & 2,677 \\
+delta1(3) BRC & 4 & (-8, 10) & 6 & (-0,4, 0,12) & -0,4 & -0,390 \\
+mu(4) COIV & 3 & (5, 40) & 6 & (14, 4,2) & 14 & 10,427 \\
+varL(4) COIV & 4 & (-15, 15) & 6 & (2,5, 0,75) & 2,5 & 2,786 \\
+delta1(4) COIV & 4 & (-8, 10) & 6 & (-0,4, 0,12) & -0,4 & -0,391 \\
+mu(5) NMFS & 3 & (5, 40) & 6 & (14, 4,2) & 14 & 12,272 \\
+varL(5) NMFS & 4 & (-15, 15) & 6 & (2,5, 0,75) & 2,5 & 2,620 \\
+delta1(5) NMFS & 4 & (-8, 10) & 6 & (-0,4, 0,12) & -0,4 & -0,400 \\
+ln(DM theta) 1 & 2 & (-5, 10) & 6 & (0, 1,813) & 0 & 6,855 \\
+ln(DM theta) 3 & 2 & (-5, 10) & 6 & (0, 1,813) & 0 & 5,720 \\
+ln(DM theta) 4 & 2 & (-5, 10) & 6 & (0, 1,813) & 0 & 5,540 \\
+ln(DM theta) 5 & 2 & (-5, 10) & 6 & (0, 1,813) & 0 & 4,873 \\
+\hline
+\end{tabular}
+\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\normalsize
+\end{table}
+
+%\clearpage
+%\qquad % or \hspace{2em}
+
+%%---Tables 3-5 -------------------------
+%% Likelihoods Used from replist
+%% Get numbers from chunk above
+\setlength{\tabcolsep}{0pt}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{2.31in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.35in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.35in}}
+  \caption{SCA~CB : composantes de la vraisemblance indiqu\'{e}es dans \texttt{likelihoods\_used}.} \label{tab:car.like1}\\  \hline\\[-2.2ex]  Composante de la vraisemblance  & valeurs & lambdas \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  Composante de la vraisemblance  & valeurs & lambdas \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot
+  TOTAL & 374,8 & --- \\ 
+  Prise \`{a} l'\'{e}quilibre & 0 & --- \\ 
+  Relev\'{e} & 40,14 & --- \\ 
+  Composition selon l'\^{a}ge & 302,1 & --- \\ 
+  Recrutement & 0,05506 & 1 \\ 
+  R\'{e}gime d'\'{e}quilibre initial & 0 & 1 \\ 
+  Recrutement pr\'{e}vu & 0,3411 & 1 \\ 
+  Valeurs a priori du param\`{e}tre & 32,08 & 1 \\ 
+  Limites souples du param\`{e}tre & 0,002910 & --- \\ 
+  \'{e}carts du param\`{e}tre & 0 & 1 \\ 
+  P\'{e}nalit\'{e} d'effondrement & 0 & 1 \\ 
+   %\hline
+\end{longtable}\setlength{\tabcolsep}{0pt}
+
+\newpage
+\subsubsubsection{Figures -- Simulation de r\'{e}f\'{e}rence (MDP)}
+
+\onefig{mleParameters}{profils de vraisemblance (courbes bleues fines) et fonctions de la densit\'{e} a priori (courbes noires \'{e}paisses) des param\`{e}tres estim\'{e}s. Les lignes verticales repr\'{e}sentent les estimations du maximum de vraisemblance; les triangles rouges indiquent les valeurs initiales utilis\'{e}es dans le processus de minimisation.}{SCA~CB : }{car.}
+
+\onefig{survIndSer}{valeurs de l'indice de relev\'{e} (points) avec intervalles de confiance \`{a} 95 \pc{} (barres) et ajustements du mod\`{e}le au MDP (courbes) pour la s\'{e}rie de relev\'{e}s ind\'{e}pendants de la p\^{e}che.}{SCA~CB : }{car.}
+
+\clearpage
+
+\onefig{agefitFleet1}{proportions selon l'\^{a}ge dans la p\^{e}che au chalut (barres = observations, lignes = pr\'{e}visions) pour les femelles et les m\^{a}les combin\'{e}s.}{SCA~CB : }{car.}
+
+\onefig{ageresFleet1}{ r\'{e}siduels pour la p\^{e}che chalut des ajustements du mod\`{e}le aux donn\'{e}es sur la proportion selon l'\^{a}ge. Les axes verticaux sont les r\'{e}siduels normalis\'{e}s. Les diagrammes de quartiles dans les trois graphiques montrent les r\'{e}siduels par classe d'\^{a}ge, par ann\'{e}e de donn\'{e}es et par ann\'{e}e de naissance (en suivant une cohorte dans le temps). Les bo\^{i}tes de cohorte sont en vert si les \'{e}carts du recrutement au cours de l'ann\'{e}e de naissance sont positifs, en rouge s'ils sont n\'{e}gatifs. Elles fournissent des plages de quantiles (0,25 \`{a} 0,75) munies d'une ligne horizontale trac\'{e}e au niveau de la m\'{e}diane, des moustaches verticales s'\'{e}tendent jusqu'aux quantiles 0,05 et 0,95, et des valeurs aberrantes apparaissent sous forme de signes plus.}{SCA~CB : }{car.}
+
+\clearpage
+
+\onefig{agefitFleet3}{proportions selon l'\^{a}ge dans le relev\'{e} synoptique dans le bassin de la Reine-Charlotte (barres = observations, lignes = pr\'{e}visions) pour les femelles et les m\^{a}les combin\'{e}s.}{SCA~CB : }{car.}
+
+\onefig{ageresFleet3}{r\'{e}siduels pour le relev\'{e} synoptique dans le bassin de la Reine-Charlotte des ajustements du mod\`{e}le aux donn\'{e}es sur la proportion selon l'\^{a}ge. Voir la l\'{e}gende de la Fig.~\ref{fig:car.ageresFleet1} pour plus de pr\'{e}cisions sur le graphique.}{SCA~CB : }{car.}
+
+\clearpage
+
+\onefig{agefitFleet4}{proportions selon l'\^{a}ge dans le relev\'{e} synoptique sur la c\^{o}te ouest de l'\^{i}le de Vancouver (barres = observations, lignes = pr\'{e}visions) pour les femelles et les m\^{a}les combin\'{e}s.}{SCA~CB : }{car.}
+
+\onefig{ageresFleet4}{r\'{e}siduels pour le relev\'{e} synoptique sur la c\^{o}te ouest de l'\^{i}le de Vancouver des ajustements du mod\`{e}le aux donn\'{e}es sur la proportion selon l'\^{a}ge. Voir la l\'{e}gende de la Fig.~\ref{fig:car.ageresFleet1} pour plus de pr\'{e}cisions sur le graphique.}{SCA~CB : }{car.}
+
+\clearpage
+
+\onefig{agefitFleet5}{ proportions selon l'\^{a}ge dans le relev\'{e} triennal du NMFS (barres = observations, lignes = pr\'{e}visions) pour les femelles et les m\^{a}les combin\'{e}s.}{SCA~CB : }{car.}
+
+\onefig{ageresFleet5}{r\'{e}siduels pour le relev\'{e} triennal du NMFS des ajustements du mod\`{e}le aux donn\'{e}es sur la proportion selon l'\^{a}ge. Voir la l\'{e}gende de la Fig.~\ref{fig:car.ageresFleet1} pour plus de pr\'{e}cisions sur le graphique.}{SCA~CB : }{car.}
+
+\clearpage
+
+\onefig{meanAge}{ \^{a}ges moyens chaque ann\'{e}e pour les donn\'{e}es pond\'{e}r\'{e}es (cercles pleins) avec les intervalles de confiance \`{a} 95 \pc{} et les estimations du mod\`{e}le (lignes bleues) pour les donn\'{e}es sur l'\^{a}ge dans la p\^{e}che commerciale et les relev\'{e}s.}{SCA~CB : }{car.}
+
+\onefig{selectivity}{ s\'{e}lectivit\'{e}s pour les prises de la p\^{e}che commerciale et les relev\'{e}s (toutes les valeurs du MDP), l'ogive de maturit\'{e} des femelles \'{e}tant form\'{e}e par les lettres `m'.}{SCA~CB : }{car.}
+
+\clearpage
+
+\twofig{spawning}{BtB0}{[en haut]~ s\'{e}rie chronologique de la biomasse (reproductrice, femelle, m\^{a}le, totale) en tonnes (en bas). L'enveloppe d'incertitude g\'{e}n\'{e}r\'{e}e par la plateforme SS est fournie pour la biomasse des femelles reproductrices. Les barres roses en bas indiquent la biomasse des prises (en tonnes) pour les deux p\^{e}ches pr\'{e}dominantes. [En bas]~Biomasse reproductrice $B_t$ par rapport \`{a} la biomasse reproductrice \`{a} l'\'{e}quilibre non exploit\'{e}e $B_0$. }{SCA~CB : }{car.}
+
+\twofig{recruits}{recDev}{recrutement (en milliers de poissons) dans le temps (en haut) et log des \'{e}carts du recrutement annuels (en bas), $\epsilon_t$, o\`{u} l'\'{e}cart multiplicatif corrig\'{e} en fonction du biais est  $\mbox{e}^{\epsilon_t - \sigma_R^2/2}$ et  $\epsilon_t \sim \mbox{Normal}(0, \sigma_R^2)$. La ligne bleue repr\'{e}sente l'ajustement de 2023 dans la SS pour les poissons d'\^{a}ge 0.}{SCA~CB : }{car.}
+
+\clearpage
+
+\onefig{stockRecruit}{relation stock-recrutement d\'{e}terministe (courbe noire) et valeurs observ\'{e}es (identifi\'{e}es par l'ann\'{e}e de fraie).}{SCA~CB : }{car.}
+
+\twofig{LLprof-R0}{LLprof-Mf}{profils de vraisemblance pour $\log R_0$ et $M_2$ (femelles).}{SCA~CB : }{car.}
+
+\clearpage
+
+\twofig{RA-indices}{RA-SSB}{ analyse r\'{e}trospective montrant les r\'{e}sultats des ajustements aux indices de la CPUE (en haut) et \`{a} la biomasse du stock reproducteur (en bas).}{SCA~CB : }{car.}
+
+\twofig{RA-recdevs}{RA-BtB0}{ analyse r\'{e}trospective montrant les r\'{e}sultats des ajustements aux \'{e}carts du recrutement (en haut) et \`{a} l'\'{e}puisement du stock reproducteur (en bas).}{SCA~CB : }{car.}
+

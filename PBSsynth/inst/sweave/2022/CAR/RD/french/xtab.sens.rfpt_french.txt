@@ -1,0 +1,31 @@
+\setlength{\tabcolsep}{1pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Tue Dec 20\,13:28:07\,2022
+
+\begin{table}[ht]
+\centering
+\caption{SCA~CB : m\'{e}dianes des quantit\'{e}s d\'{e}riv\'{e}es par la m\'{e}thode MCCM \`{a} partir des valeurs a posteriori MCCM respectives du simulation de r\'{e}f\'{e}rence et des 14 simulations de sensibilit\'{e} (\Nmcmc{} \'{e}chantillons chacun). D\'{e}finitions : $B_0$ -- biomasse reproductrice \`{a} l'\'{e}quilibre non exploit\'{e}e (femelles matures), $B_{2023}$ -- biomasse reproductrice \`{a} la fin de 2023, $u_{2023}$ -- taux d'exploitation (rapport prises totales/biomasse vuln\'{e}rable) au milieu de 2023, $u_\text{max}$ -- taux d'exploitation maximal (calcul\'{e} pour chaque \'{e}chantillon comme \'{e}tant le taux d'exploitation maximal de 1935 \`{a} 2023), RMD -- rendement maximal durable \`{a} l'\'{e}quilibre, $B_\text{RMD}$ -- biomasse reproductrice \`{a} l'\'{e}quilibre au RMD, $u_\text{RMD}$ -- taux d'exploitation \`{a} l'\'{e}quilibre au RMD. Les valeurs de la biomasse (et du RMD) sont exprim\'{e}es en tonnes. Simulations de sensibilit\'{e} : S01~= M r\'{e}partie entre les \^{a}ges 13 et 14, S02~= EA1 aucune erreur d'\^{a}ge, S03~= EA5 CV des lecteurs d'\^{a}ge, S04~= EA6 CASAL CV = 0,1, S05~= prises r\'{e}duites de 30\pc{}, S06~= prises augment\'{e}es de de 50\pc{}, S07~= sigmaR=0,6, S08~= sigmaR=1,2, S09~= s\'{e}lectivit\'{e} en forme de d\^{o}me pour femelles, S10~= utilisation des FA DH COHG, S11~= ajout des RPFD, S12~= utilisation des CPUE Tweedie, S13~= suppression des CPUE comm., S14~= utilisation de la repond\'{e}ration de Francis.} 
+\label{tab:car.sens.rfpt}
+\begingroup\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\footnotesize
+\begin{tabular}{lrrrrrrrrrrrrrrr}
+  \\[-1.0ex] \hline
+Quantit\'{e} & B1(R24) & S01(R25) & S02(R26) & S03(R27) & S04(R28) & S05(R29) & S06(R30) & S07(R31) & S08(R32) & S09(R33) & S10(R34) & S11(R35) & S12(R36) & S13(R37) & S14(R49) \\ 
+  \hline
+$B_{0}$ & 13\,908 & 14\,816 & 17\,659 & 13\,915 & 13\,212 & 13\,666 & 15\,816 & 12\,327 & 15\,882 & 20\,873 & 14\,321 & 14\,528 & 12\,773 & 12\,852 & 12\,168 \\ 
+  $B_{2023}$ & 10\,761 & 14\,220 & 11\,806 & 10\,862 & 10\,185 & 12\,001 & 10\,691 & 9\,478 & 11\,664 & 17\,235 & 11\,224 & 9\,059 & 7\,996 & 8\,571 & 9\,007 \\ 
+  $B_{2023}/B_{0}$ & 0,778 & 0,973 & 0,674 & 0,774 & 0,775 & 0,890 & 0,677 & 0,772 & 0,747 & 0,837 & 0,788 & 0,622 & 0,626 & 0,672 & 0,748 \\ 
+   \hdashline \\[-1.75ex]$u_{2022}$ & 0,0217 & 0,0170 & 0,0195 & 0,0217 & 0,0231 & 0,0197 & 0,0216 & 0,0251 & 0,0196 & 0,0160 & 0,0188 & 0,0282 & 0,0284 & 0,0265 & 0,0260 \\ 
+  $u_\text{max}$ & 0,0653 & 0,0537 & 0,0599 & 0,0652 & 0,0682 & 0,0437 & 0,0905 & 0,0674 & 0,0631 & 0,0474 & 0,0620 & 0,0722 & 0,0683 & 0,0681 & 0,0753 \\ 
+   \hline
+$\text{RMD}$ & 1\,305 & 1\,712 & 1\,798 & 1\,319 & 1\,214 & 1\,302 & 1\,441 & 1\,189 & 1\,528 & 1\,550 & 1\,358 & 1\,188 & 1\,163 & 1\,192 & 1\,210 \\ 
+  $B_\text{RMD}$ & 3\,580 & 4\,579 & 4\,310 & 3\,588 & 3\,392 & 3\,608 & 4\,090 & 2\,961 & 4\,276 & 5\,605 & 3\,665 & 3\,576 & 3\,356 & 3\,347 & 3\,054 \\ 
+  $0.4B_{\text{RMD}}$ & 1\,432 & 1\,832 & 1\,724 & 1\,435 & 1\,357 & 1\,443 & 1\,636 & 1\,184 & 1\,711 & 2\,242 & 1\,466 & 1\,430 & 1\,343 & 1\,339 & 1\,222 \\ 
+  $0.8B_{\text{RMD}}$ & 2\,864 & 3\,663 & 3\,448 & 2\,870 & 2\,714 & 2\,886 & 3\,272 & 2\,369 & 3\,421 & 4\,484 & 2\,932 & 2\,861 & 2\,685 & 2\,678 & 2\,443 \\ 
+  $B_{2023}/B_\text{RMD}$ & 3,04 & 3,22 & 2,77 & 3,04 & 3,04 & 3,39 & 2,62 & 3,22 & 2,80 & 3,10 & 3,08 & 2,51 & 2,40 & 2,57 & 2,97 \\ 
+  $B_\text{RMD}/B_{0}$ & 0,259 & 0,307 & 0,245 & 0,260 & 0,257 & 0,265 & 0,261 & 0,241 & 0,272 & 0,271 & 0,256 & 0,248 & 0,266 & 0,261 & 0,254 \\ 
+   \hdashline \\[-1.75ex]$u_\text{RMD}$ & 0,0812 & 0,0915 & 0,0869 & 0,0818 & 0,0806 & 0,0795 & 0,0802 & 0,0863 & 0,0796 & 0,0742 & 0,0818 & 0,0798 & 0,0778 & 0,0802 & 0,0843 \\ 
+  $u_{2022}/u_\text{RMD}$ & 0,270 & 0,187 & 0,224 & 0,268 & 0,286 & 0,245 & 0,276 & 0,292 & 0,242 & 0,217 & 0,231 & 0,357 & 0,362 & 0,334 & 0,307 \\ 
+   \hline
+\end{tabular}
+\endgroup
+\end{table}

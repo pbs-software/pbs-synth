@@ -1,0 +1,26 @@
+\setlength{\tabcolsep}{2pt}
+% latex table generated in R 4.2.0 by xtable 1.8-4 package
+% Mon Dec 19 15:20:49 2022
+\begin{table}[ht]
+\centering
+\caption{Log likelihood (LL) values reported by the single base run for survey indices, age composition (AF), recruitment, and total (not all LL components reported here)} 
+\label{tab:car.log.likes}
+\begin{tabular}{lr}
+  \\[-1.0ex] \hline
+LL value & 24.01 \\ 
+  \hline
+Run & 24 \\ 
+  CPUE Bottom Trawl & -25.0 \\ 
+  QCS Synoptic & 7.93 \\ 
+  WCVI Synoptic & 2.00 \\ 
+  NMFS Triennial & 13.9 \\ 
+  HS Synoptic & 8.63 \\ 
+  WCHG Synoptic & 23.9 \\ 
+  GIG Historical & 8.77 \\ 
+  Abundance Index & 40.1 \\ 
+  Age Frequency & 302 \\ 
+  Recruitment & 0.0551 \\ 
+  Total & 375 \\ 
+   \hline
+\end{tabular}
+\end{table}
