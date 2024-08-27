@@ -6,13 +6,42 @@ Authors : RH  = Rowan Haigh
           CG  = Chris Grandin
           AE  = Anisa Egeli
 
+0.7.0 (2024-08-27) [Rcheck=F, Rbuild=F]
+  * Documentation
+    + Added various Rd documentation files
+      - `calcRhat', `plotSS.compo', `tabss.compo', gatherMCMC', `makeFSARfigs', `doRetros', `plotSS.comparisons'  (RH 240416)
+      - `calcMA', `plotSS.francis' (RH 240419)
+      - `mergePA', `calcQs', `plotSS.ts', `getSS.rdevs' (RH 240420)
+      - `predictRec' (RH 240421)
+      - `calcEQyield' (incl `calcMSY'), `compTS', `importCor' (incl `importEva', `importPar', `importStd'), `extract.between', `weight AF' (RH 240822)
+      - `make.multifig', `plotSS.comps', `plotSS.index', `plotSS.pars', `plotSS.profile', `plotSS.rdevs' (RH 240823)
+      - `plotSS.stock.recruit', `prepCP', `repeatMPD', `runSweave' (RH 240826)
+      - `runADnuts' (RH 240827)
+    + Modified Rd documentation files
+      - `plotSS.stdres': added functions `plt.ageResids', `plt.yearResids', `plt.cohortResids' (RH 240820)
+      - added NOAA et al. authors of the original r4ss functions to the processed `plotSS' functions to date (RH 240821)
+      - `plotSS.pmcmc': added functions `plotSS.dmcmc' and `plotSS.rmcmc' (RH 240821)
+      - `plotSS.selex': added function `plt.selectivity' (RH 240823)
+      - `agileDT': added functions `quickDT' and `tabDQs' (RH 240826)
+    + Created `smallFuns.Rd' to gather small functions in one Rd file (RH 240821)
+    + Created `runADnuts.Rd' to document CG's adnuts functions on Linux server (240827)
+  * R code
+    + Renamed module `overFuns.r' to `r4ssFuns.r' to explicitly acknowledge their origin (RH 240819)
+      - changes to r4ss functions are enhancements for use by the Slope Rockfish program
+    + Created `smallFuns.r' to gather small functions in one R module (RH 240821)
+    + Removed `overFuns.r' and replaced with new `r4ssFuns.r' (RH 240821)
+      - `overFuns' contained modified r4SS functions with original names to overwrite the original functions
+      - 'r4ssFuns' now contains modified r4ss functions, renamed something else like `plotSS.<something>'
+    + Created `nutsFuns.r' to gather CG's functions to run `adnuts' on the Linux server (RH 240827)
+
 0.6.0 (2024-07-22) [Rcheck=F, Rbuild=F]
-  * Copied a number of functions from PBSawatea to PBSsynth (RH 240416)
-    + `mochaLatte', `panelBoxes', `panelChains', `panelTraces', `plotACFs', `plotTraj'
+  * R code
+    + Copied a number of functions from PBSawatea to PBSsynth (RH 240416)
+      - `mochaLatte', `panelBoxes', `panelChains', `panelTraces', `plotACFs', `plotTraj'
       - primarily to amalgamate functions under the PBSsynth umbrella
   * Documentation
     + Updated the data inputs and sweave directories for CAR 2022 and POP 2023 (RH 240418)
-    + Added various Rd documentation files (RH 2404xx) -- process ongoing
+    + Added various Rd documentation files (RH 240422) -- process ongoing
     + Added SS3 model input data files for YTR 2024 (need for referencing in AppE) (RH 240722)
 
 0.5.4 (2024-01-11) [Rcheck=F, Rbuild=F]

@@ -105,18 +105,28 @@ plt.selectivity <- function( obj, sobj=NULL, mainTitle="Rockfish", maxage,
 \value{
   Invisibly returns a list of \code{'infotable2'} and \code{'plotinfo'}.
 }
+\references{
+  Taylor, I.G., Doering, K.L., Johnson, K.F., Wetzel, C.R., Stewart, I.J., 2021.
+  \href{https://doi.org/10.1016/j.fishres.2021.105924}{Beyond visualizing catch-at-age models: Lessons learned from the r4ss package about software to support stock assessments}.
+  \emph{Fisheries Research}, \bold{239}:105924 
+}
 \author{
+  \href{mailto:ian@iphc.int}{Ian Stewart}, International Pacific Halibut Commission, Seattle WA\cr
+  \href{mailto:ian.taylor@noaa.gov}{Ian Taylor}, Northwest Fisheries Science Center, NOAA, Seattle WA
+
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-04-16}
+  Last modified \code{Rd: 2024-08-21}
 }
-\note{
-  Thank you Ian Stewart and Ian Taylor.
+%% ~Make other sections like Warning with \section{Warning }{....} ~
+\section{Disclosure}{
+  A cheeky person \emph{borrowed} the fungible function \code{'SSplotSelex'} from
+  R-package \code{r4ss}, and modified it for a bespoke scientific use.
 }
 \seealso{
 In package \pkg{PBSsynth}:\cr
-  \code{\link[PBSsynth]{plotSS.stdres}}, and other \code{plotSS} functions.
+  \code{\link[PBSsynth]{plotSS.stdres}}, and other \code{plotSS} functions\cr
 In package \pkg{r4ss}:\cr
   \code{\link[r4ss]{SSplotSelex}}
 }

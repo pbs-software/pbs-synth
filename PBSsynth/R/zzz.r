@@ -34,33 +34,33 @@ https://github.com/pbs-software
 # No Visible Bindings
 # ===================
 #if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
-#	".",
-#	"A",
-#	"B",
-#	"C",
-#	"D",
-#	"E",
-#	"F",
-#	"G",
-#	"H",
-#	"I",
-#	"J",
-#	"K",
-#	"L",
-#	"M",
-#	"N",
-#	"O",
-#	"P",
-#	"Q",
-#	"R",
-#	"S",
-#	"T",
-#	"U",
-#	"V",
-#	"W"
-#	"X",
-#	"Y",
-#	"Z"
+#".findSquare",
+#"area.names","assyr","assYrs",
+##	"B",
+##	"C",
+##	"D",
+##	"E",
+#"fleets.af","fleets.all","fleets.gear","fleets.idx","fleets.lab","fleets.sel","fleets.use",
+#"gear.names",
+##	"H",
+##	"I",
+##	"J",
+##	"K",
+##	"L",
+#"maxage.sel",
+#"narea","nfleet","ngear",
+##	"O",
+##	"P",
+##	"Q",
+##	"R",
+#"species.code","species.name","strSpp",
+##	"T",
+##	"U",
+##	"V",
+##	"W"
+##	"X",
+##	"Y",
+##	"Z"
 #	), package="PBSsynth")
 
 ## Force this globally (without have to make a documentation file)
@@ -68,7 +68,8 @@ https://github.com/pbs-software
 #do.call("assign", args=list(x="species.name", value="Rougheye/Blackspotted Rockfish", envir=.PBSmodEnv))
 #do.call("assign", args=list(x="species.name", value="Yellowmouth Rockfish", envir=.PBSmodEnv))
 #do.call("assign", args=list(x="species.name", value="Canary Rockfish", envir=.PBSmodEnv))
-do.call("assign", args=list(x="species.name", value="Pacific Ocean Perch", envir=.PBSmodEnv))
+#do.call("assign", args=list(x="species.name", value="Pacific Ocean Perch", envir=.PBSmodEnv))
+do.call("assign", args=list(x="species.name", value="Yellowtail Rockfish", envir=.PBSmodEnv))
 do.call("assign", args=list(x="quants3", value=c(0.05,0.50,0.95), envir=.PBSmodEnv))
 do.call("assign", args=list(x="quants5", value=c(0.05,0.25,0.50,0.75,0.95), envir=.PBSmodEnv))
 do.call("assign", args=list(x="ptypes", value=c("win","png"), envir=.PBSmodEnv))
@@ -82,5 +83,5 @@ do.call("assign", args=list(x="boxpars", value=list(
 
 ## Flush the cat down the console (change to '.flash.cat' to avoid conflict with function in PBStools)
 ## Note: `.flush.cat' already in PBStools but this package may not be loaded.
-.flash.cat = function(...) { cat(...); flush.console() }
+#.flash.cat = function(...) { cat(...); flush.console() }
 

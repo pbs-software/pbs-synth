@@ -1,5 +1,7 @@
 \name{agileDT}
 \alias{agileDT}
+\alias{quickDT}
+\alias{tabDQs}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
   Agile Decision Tables
@@ -11,6 +13,11 @@
 agileDT(compo, currYear=2024, projYear=2034, Ngen=3, gen1=25, 
    area=c("5ABC","3CD","5DE"), cp=paste0("CC.", pad0(1:3, 2)), 
    onepage=TRUE, tables.per.page=3, outnam, sigdig=2)
+
+quickDT(compo, vals=c("BtLRP","BtUSR","BtBmsy","utumsy"),
+   areas=c("5ABC","3CD","5DE"), cp=paste0("CC.", pad0(1:3,2)) )
+
+tabDQs(xavgRP, xavgTS, csv=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -28,25 +35,45 @@ agileDT(compo, currYear=2024, projYear=2034, Ngen=3, gen1=25,
   \item{tables.per.page}{\code{numeric} -- number of decision tables to place on one page}
   \item{outnam}{\code{character} -- output name for the PDF file}
   \item{sigdig}{\code{numeric} -- significant digits to use for table probabilities}
+  \bold{Additional arguments:}
+  \item{vals}{\code{character} -- field names of derived quantities in projection
+    array object within \code{'compo'}}
+  \item{areas}{\code{character} -- subareas or regions along the BC coast}
+  \item{xavgRP}{\code{numeric} -- three-dimensional array of reference
+    points from a multi-area model:\cr
+    \code{'names(dimnames(xavgRP)) = c('mcmc','val','area')'}}
+  \item{xavgTS}{\code{numeric} -- four-dimensional array of time series
+    values from a multi-area model:\cr
+    \code{'names(dimnames(xavgRP)) = c('mcmc','year','val','area')'}}
+  \item{csv}{\code{logical} -- if \code{TRUE}, send tables to a CSV file}
 }
 \details{
-  Uses the function \code{'findTarget'} to calculate the probabilities and
-  arranges the information into decision tables. These are compiled using 
-  \code{'pdflatex.exe'} and \code{'latexmk.exe'}.
+  \code{'agileDT'} uses the function \code{'findTarget'} to calculate 
+  probabilities, and arranges the information into decision tables. 
+  These are compiled using \code{'pdflatex.exe'} and \code{'latexmk.exe'}.
 }
 \value{
-  Save output (\code{'agile'}, \code{'is.good'}, and \code{'Nmcmc'}) to a binary \code{'.rda'} file.
+  Save output (\code{'agile'}, \code{'is.good'}, and \code{'Nmcmc'})
+  to a binary \code{'.rda'} file.
 }
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-04-17}
+  Last modified \code{Rd: 2024-08-26}
 }
 \note{
-  Useful for a quick and dirty set of decision tables when running
-  exploratory analyses, but is also used for the final set of decision
-  tables for one base run or a base case (composite set of base runs).
+  Function \code{'quickDT'} was originally designed as a quick and dirty 
+  method for extracting a set of calculated reference points 
+  (e.g., \code{'BtLRP'}) from a single base run when using a multi-area
+  model, and printing probabilties to decision tables.
+
+  Function \code{'agileDT'} was extended from \code{'quickDT'} for use in
+  constructing the final set of decision tables for one base run or a 
+  base case (composite set of base runs).
+  
+  Function \code{'tabDQs'} provided a quick extraction of derived quantities
+  and their ratios with reference points (probably for PJS).
 }
 \seealso{
 In package \pkg{PBSsynth}:\cr

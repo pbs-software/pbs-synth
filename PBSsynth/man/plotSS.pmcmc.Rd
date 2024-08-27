@@ -1,5 +1,7 @@
 \name{plotSS.pmcmc}
 \alias{plotSS.pmcmc}
+\alias{plotSS.dmcmc}
+\alias{plotSS.rmcmc}
 \title{
   Plot MCMC Time Series
 }
@@ -13,6 +15,10 @@ plotSS.pmcmc(obj, pqs=tcall(quants5), xyType="quantBox", lineType=c(3,2,1,2,3),
    tcl.val=-0.2, yrs, y0=TRUE, pyrs=NULL, LRP=NULL, USR=NULL, catpol=NULL,
    yaxis.by, yLab="Recruitment", outnam, lang=c("e","f"), ptypes="win",
    pngres=400, PIN=c(8, 6), ...)
+
+plotSS.dmcmc(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9))
+
+plotSS.rmcmc(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -44,18 +50,33 @@ plotSS.pmcmc(obj, pqs=tcall(quants5), xyType="quantBox", lineType=c(3,2,1,2,3),
   \item{pngres}{\code{numeric} -- resolution for figure files (\code{'png'}, \code{'eps'})}
   \item{PIN}{\code{numeric} -- plot size for output figures in inches (width, height)}
   \item{\dots}{\code{dots} -- additional arguments passed to subfunction \code{'plt.qB'}}
+  \bold{Additional arguments:}
+  \item{mcmcObj}{\code{numeric} -- list of data frames of MCMC 
+    time series estimates (rows=samples, columns=years) for 
+    B=spawning biomass, R=recruitment, and P=parameters}
+  \item{mcmcObj}{\code{numeric} -- list of vectors of MPD 
+    time series estimates (rows=samples, columns=years) for 
+    B=spawning biomass, R=recruitment, and P=parameters}
 }
 \details{
   Used primarily for generating time series figures for model run summaries.
+
+  \tabular{rrl}{
+    \code{plotSS.pmcmc} \tab trajectories \tab recruits, exploit, deplete, sbiomass, recdev, boverbmsy, uoverumsy\cr
+    \code{plotSS.dmcmc} \tab diagnostics  \tab traceBiomass, traceRecruits, traceParams, splitChain, paramACFs, rhat\cr
+    \code{plotSS.rmcmc} \tab routine      \tab pairsPars, pdfParameters, snail
+  }
 }
 \value{
-  Nada, just makes beautiful figures.
+  Makes beauteous figures.
 }
 \author{
+  \href{mailto:andrew.edwards@dfo-mpo.gc.ca}{Andrew Edwards}, Quantitative Assessment Methods, PBS, Nanaimo BC
+
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-04-18}
+  Last modified \code{Rd: 2024-08-21}
 }
 \note{
   Modified from \pkg{PBSawatea}'s \code{'plotBmcmcPOP'} function by Andrew Edwards (PBS).
@@ -68,6 +89,7 @@ In package \pkg{PBSsynth}:\cr
   \code{\link[PBSsynth]{plotSS.compo}},
   \code{\link[PBSsynth]{plotSS.senso}}\cr
 In package \pkg{r4ss}:\cr
+  \code{\link[r4ss]{SS_output}},
   \code{\link[r4ss]{SSgetMCMC}}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
