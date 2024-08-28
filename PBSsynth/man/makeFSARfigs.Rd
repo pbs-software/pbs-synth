@@ -53,7 +53,7 @@ Nothing in particular.
 \seealso{
 In package \pkg{PBSsynth}:\cr
   \code{\link[PBSsynth]{gatherMCMC}},
-  \code{\link[PBSsynth]{load.extra.mcmc}},
+  \code{\link[PBSsynth]{load_extra_mcmc}},
   \code{\link[PBSsynth]{plotSS.compo}}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

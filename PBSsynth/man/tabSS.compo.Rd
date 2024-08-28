@@ -24,6 +24,9 @@ tabSS.senso(istock="YTR", prefix="ytr.", senso, sigdig=4)
   \item{prefix}{\code{character} -- prefix for table labels in LaTeX}
   \item{compo}{\code{list} -- data object containing results from MCMC base run or composite base case runs
     (see function \code{'gatherMCMC'})}
+  \item{useRlow}{\code{logical} -- if \code{TRUE}, use only MCMC samples that
+     fall below a quantile of recruitment in a specific year;
+     \emph{caution: does not appear to be applied consistently}}
   \item{qRlow}{\code{numeric} -- lower quantile of recruitments to subset MCMC data}
   \item{sigdig}{\code{numeric} -- significant digits to display for table entries}
   \item{decdig}{\code{numeric} -- decimal places to display for table entries}

@@ -50,11 +50,12 @@ plotSS.rmcmc(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9))
   \item{pngres}{\code{numeric} -- resolution for figure files (\code{'png'}, \code{'eps'})}
   \item{PIN}{\code{numeric} -- plot size for output figures in inches (width, height)}
   \item{\dots}{\code{dots} -- additional arguments passed to subfunction \code{'plt.qB'}}
+%% Specific to plotSS.dmcmc and plotSS.rmcmc
   \bold{Additional arguments:}
   \item{mcmcObj}{\code{numeric} -- list of data frames of MCMC 
     time series estimates (rows=samples, columns=years) for 
     B=spawning biomass, R=recruitment, and P=parameters}
-  \item{mcmcObj}{\code{numeric} -- list of vectors of MPD 
+  \item{mpdObj}{\code{numeric} -- list of vectors of MPD 
     time series estimates (rows=samples, columns=years) for 
     B=spawning biomass, R=recruitment, and P=parameters}
 }

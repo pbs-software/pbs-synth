@@ -20,7 +20,7 @@ plotSS.selex(replist, infotable=NULL, fleets="all", fleetnames="default",
    ptsize=12, cex.main=1, showmain=TRUE, plotdir="default", verbose=TRUE,
    debug=FALSE, sobj=NULL, lang=c("e", "f"))
 
-plt.selectivity <- function( obj, sobj=NULL, mainTitle="Rockfish", maxage,
+plt.selectivity(obj, sobj=NULL, mainTitle="Rockfish", maxage,
    ptypes="win", pngres=400, PIN=c(7,8), lang=c("e","f"))
 }
 %- maybe also 'usage' for other objects documented here.
@@ -89,8 +89,8 @@ plt.selectivity <- function( obj, sobj=NULL, mainTitle="Rockfish", maxage,
   \item{lang}{\code{character} -- language(s) to use in figures, 
     where \code{'e'} = english and \code{'f'} = french.}
 %% arguments in plt.selectivity not already specified above
+  \item{obj}{\code{numeric} -- age database from the \code{'replist'} list object}
   \item{mainTitle}{\code{character} -- main title for plot, usually the species name}
-  \item{maxage}{\code{numeric} -- maximum age for the y-axis}
   \item{ptypes}{\code{character} -- vector of plot types (\code{'win'}, \code{'png'}, \code{'eps'})}
   \item{pngres}{\code{numeric} -- resolution for figure files (\code{'png'}, \code{'eps'})}
   \item{PIN}{\code{numeric} -- plot size for output figures in inches (width, height)}

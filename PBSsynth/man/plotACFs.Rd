@@ -8,13 +8,14 @@
   Plot ACFs for a set of estimated parameters from MCMC samples.
 }
 \usage{
-plotACFs(mcmc, lag.max=60, lang="e")
+plotACFs(mcmc, lag.max=60, lang="e", ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{mcmc}{\code{data.frame} -- MCMC samples (by row) of parameters (by column).}
   \item{lag.max}{\code{numeric} -- maximum lag at which to calculate the autocorelation function (see \code{\link[stats]{acf}}).}
   \item{lang}{\code{character} -- a letter that denotes the language for output: currently only \code{"e"} (english) or \code{"f"} (french).}
+  \item{...}{\code{dots} -- additional arguments}
 }
 \details{
   Uses the estimated parameters from the data frame \code{currentMCMC$P} and 

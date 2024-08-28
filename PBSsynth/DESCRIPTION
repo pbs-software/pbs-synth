@@ -1,6 +1,6 @@
 Package: PBSsynth
-Version: 0.7.0
-Date:    2024-08-27
+Version: 1.0.0
+Date:    2024-08-28
 Title:   Tools for Manipulating Stock Synthesis 3
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
@@ -11,9 +11,9 @@ Authors@R: c(
 Author:      Rowan Haigh [aut, cre], Paul J. Starr [ctb], Andrew M. Edwards [ctb], Chris Grandin [ctb]
 Maintainer:  Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
 Copyright:   2020-2024, Fisheries and Oceans Canada
-Depends:     R (>= 3.5.0), PBSmapping, PBSmodelling, PBStools, PBSdata
-#Imports:     nada
-#Suggests:    nada
+Depends:     R (>= 3.5.0), PBSmapping, PBSmodelling, PBSdata, PBStools, r4ss
+Imports:     astsa, compResidual, colorspace, dplyr, grDevices, graphics, here, Hmisc, KernSmooth, Kmisc, MASS, nlme, stats, stringr, tictoc, utils, xtable
+Suggests:    adnuts, cli, crayon, devtools, parallel
 Description: A collection of finicky functions to titillate Stock Synthesis users.
    Helpful or not, this code repository represents an evolution of frustration
    when dealing with `r4ss' and `adnuts'.

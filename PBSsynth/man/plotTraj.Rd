@@ -8,7 +8,7 @@
 }
 \usage{
 plotTraj(sdat, index, traj="B", bdat=NULL, y0=FALSE, lab.stock, 
-   startYear=1935, currYear=2021, sen.lab,
+   startYear=1935, currYear=2025, sen.lab,
    col=c("black","green4","blue","red","purple","orange"), 
    lty=c(2:6), logR=FALSE, 
    png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"), ...)
@@ -66,9 +66,8 @@ plotTraj(sdat, index, traj="B", bdat=NULL, y0=FALSE, lab.stock,
 }
 \seealso{
 In package \pkg{PBSsynth}:
-  \code{\link[PBSsynth]{sumting}},
-  \code{\link[PBSsynth]{sumting}},
-  \code{\link[PBSsynth]{sumting}}
+  \code{\link[PBSsynth]{gatherMCMC}},
+  \code{\link[PBSsynth]{plotSS.senso}}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

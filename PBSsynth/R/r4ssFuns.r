@@ -6815,7 +6815,7 @@ plotSS.stdres <- function(replist, kind="AGE", fleets="all",
 	}
 	## Try out 'one-step-ahead' (OSA) aka forecast quantile residuals [Trijoulet et al. 2023] (RH 240405)
 	if (useOSA) {
-		require(compResidual) ## only installed in R develop
+		#require(compResidual) ## only installed in R develop
 		## Process OSA residuals by fleet
 		fbase = split(dbase_kind, dbase_kind$Fleet)
 		fappy = lapply(fbase, function(xbase) {
@@ -6851,7 +6851,7 @@ plotSS.stdres <- function(replist, kind="AGE", fleets="all",
 				pred <- yOSA[, grep(paste0("^pred",sss), colnames(yOSA))] 
 				set.seed(123)
 				## calculate residuals:
-				res <- resMulti(t(obs), t(pred))
+				res <- compResidual::resMulti(t(obs), t(pred))
 				## Add names to sample number for plotting:
 				colnames(res) <- yOSA[,"Year"]
 				OSAlist[[ifleet]][["oas_obs"]][[isex]]  = obs

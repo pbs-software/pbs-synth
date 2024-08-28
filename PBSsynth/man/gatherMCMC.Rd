@@ -8,9 +8,9 @@
   Gather MCMC samples from a variety of model runs (e.g., composite base runs, sensitivity runs).
 }
 \usage{
-gatherMCMC(mcdir=".", type="compo", strSpp="POP", 
-   basedir="C:/Users/haighr/Files/GFish/PSARC23/POP/Data/SS/POP2023",
-   ryrs=1935:2024, pyrs=2025:2034, valTS=c("SSB", "F", "Recr", "RecrDev"),
+gatherMCMC(mcdir=".", type="compo", strSpp="YTR",
+   basedir="C:/Users/haighr/Files/GFish/PSARC24/YTR/Data/SS3/YTR2024",
+   ryrs=1935:2025, pyrs=2026:2035, valTS=c("SSB", "F", "Recr", "RecrDev"),
    valRP=c("SSB_MSY", "annF_MSY", "Dead_Catch_MSY"))
 }
 %- maybe also 'usage' for other objects documented here.
@@ -98,7 +98,7 @@ An additional list of arrays are produced for multi-area models (prefixed by \co
 }
 \seealso{
 In package \pkg{PBSsynth}:\cr
-  \code{\link[PBSsynth]{load.extra.mcmc}},
+  \code{\link[PBSsynth]{load_extra_mcmc}},
   \code{\link[PBSsynth]{plotSS.compo}},
   \code{\link[PBSsynth]{plotSS.senso}},
   \code{\link[PBSsynth]{tabSS.compo}},

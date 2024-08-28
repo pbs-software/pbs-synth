@@ -96,9 +96,6 @@ plotSS.stock.recruit(replist, subplot=1:3, add=FALSE, plot=TRUE,
   \item{PIN}{\code{numeric} -- plot dimensions (width, height) for PNG file(s)}
   \item{outnam}{\code{character} -- output name for plot (and other data, if applicable)}
 }
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
 \value{
   Nothing in particular.
 }

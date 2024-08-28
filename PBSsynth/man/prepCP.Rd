@@ -74,7 +74,7 @@ In package \pkg{PBSsynth}:\cr
   \code{\link[PBSsynth]{load_extra_mcmc}},
   \code{\link[PBSsynth]{tabSS.decision}}\cr
 In package \pkg{r4ss}:\cr
-  \code{\link[r4ss]{run_SS_models}}
+  \code{\link[r4ss]{run}}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory (show via RShowDoc("KEYWORDS")):

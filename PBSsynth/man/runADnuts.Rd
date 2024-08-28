@@ -17,7 +17,7 @@
   Run Automatic Differentiation Model Builder (ADMB) using no-U-turn (NUTS) sampling.
 }
 \usage{
-run_adnuts(path, num_chains=NULL, seed=19, num_samples=2000, 
+run_adnuts(path, num_chains=NULL, seed=42, num_samples=2000, 
   num_warmup_samples=250, adapt_delta=0.9, run_extra_mcmc=FALSE, 
   hess_step=TRUE, fn_exe=ifelse(exists("ss_executable"), ss_executable, "ss3"), 
   overwrite=FALSE, fn_logfile="model_output.log", 
@@ -53,7 +53,13 @@ stop_quietly(...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{path}{\code{character} -- directory where model input files reside}
+  \item{path}{\code{character} -- path or directory name:
+    \itemize{
+      \item \code{run_adnuts} : where model input files reside
+      \item \code{modify_starter_mcmc_type} : path where \code{'starter.ss'} resides
+      \item \code{write_psv2} : directory to write the PSV file in
+      \item \code{write_admb_cov2} : path to model
+    }}
   \item{num_chains}{\code{numeric} -- number of chains to use in parallel}
   \item{seed}{\code{numeric} -- random seed start value}
   \item{num_samples}{\code{numeric} -- number of MCMC samples wanted}
@@ -77,7 +83,11 @@ stop_quietly(...)
   \item{key_posts_fn}{\code{character} -- file name for posteriors of key parameters}
   \item{nuisance_posts_fn}{\code{character} -- file name for posteriors of nuisance parameters}
   \item{printstats}{\code{logical} -- if \code{TRUE}, print the statistics}
-  \item{...}{\code{dots} -- additional arguments to function \code{'load_ss_files'}}
+  \item{...}{\code{dots} -- additional arguments:
+    \itemize{
+      \item \code{load_ss_files} : \emph{doesn't appear to be used}
+      \item \code{stop_quietly} : passed to be written out as a message
+    }}
   \bold{calc.mcmc}
   \item{mcmc}{\code{list} -- output of the \code{'r4ss::SS_getMCMC()'} function as a data.frame}
   \item{lower}{\code{numeric} -- lower quantile value}
@@ -96,22 +106,17 @@ stop_quietly(...)
   \item{model_dirs}{\code{character} -- vector of model directory names}
   \item{ret_single_list}{\code{logical} -- if \code{TRUE}, return a single-element list}
   \bold{modify_starter_mcmc_type}
-  \item{path}{\code{character} -- path where \code{'starter.ss'} resides}
   \item{value}{\code{numeric} -- value to change the MCMC setting to;
     \code{1} = do not create extra MCMC files, \code{2} or \code{3} = create extra MCMC files}
   \item{starter_fn}{\code{character} -- starter file name}
   \bold{write_psv2}
-  \item{path}{\code{character} -- directory to write the PSV file in}
   \item{fn_psv}{\code{character} -- model PSV file name with or without the PSV extension}
   \item{samples}{\code{numeric} --  matrix or data frame of samples;
     each column is a parameter, each row a sample}
   \bold{write_admb_cov2}
-  \item{path}{\code{character} -- path to model}
   \item{cov_unbounded}{\code{numeric} -- covariance matrix in unbounded space}
   \item{hbf}{\code{numeric} -- \code{'hybrid_bounded_flag'} value; use \code{'hbf=1'} for HMC}
   \item{fn_cov}{\code{character} -- name of the ADMB covariance file}
-  \bold{stop_quietly}
-  \item{...}{\code{dots} -- arguments passed to \code{'stop_quietly'} to be written out as a message}
 }
 \details{
   \code{'run_adnuts()'}\cr \code{'path'} is the directory in which the MLE will be run;

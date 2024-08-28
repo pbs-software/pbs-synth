@@ -24,11 +24,11 @@ predictRec(rec, indices, mos=1:12, ryrs=NULL, rfun=median, ifun=mean,
     (e.g., log10 for recruitments, non for deviations)}
   \item{ifun}{\code{function} -- function used to summarise monthly environmental indices}
   \item{nmcmc}{\code{numeric} -- number of MCMC samples extracted from the SS3 model run}
-  \item{refit}{\code{logical} -- if{TRUE}, refit the polynomial for every MCMC sample;
+  \item{refit}{\code{logical} -- if \code{TRUE}, refit the polynomial for every MCMC sample;
     set to FALSE if not changing the number of MCMC samples and plot tweaks are desired}
   \item{polyno}{\code{numeric} -- order of the polynomial to fit}
   \item{outnam}{\code{character} -- explicit output name desired}
-  \item{png}{\code{logical} -- if{TRUE}, send the figure to a PNG file}
+  \item{png}{\code{logical} -- if \code{TRUE}, send the figure to a PNG file}
   \item{pngres}{\code{numeric} -- resolution (pixels/inch) of the PNG file}
   \item{PIN}{\code{numeric} -- dimensions (width, height) of the PNG (inches)}
   \item{lang}{\code{character} -- figure language (\code{'e'} for english, \code{'f'} for french)}

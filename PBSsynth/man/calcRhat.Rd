@@ -55,7 +55,7 @@ Rank-normalization, folding, and localization: an improved \eqn{\widehat{R}}{R-h
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{
 In package \pkg{PBSsynth}:\cr
-  \code{\link[PBSsynth]{plotChains}}
+  \code{\link[PBSsynth]{panelChains}}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory (show via RShowDoc("KEYWORDS")):

@@ -17,12 +17,12 @@ calcMA(runs=1, rwts=0:1, vers=1, overwrite=FALSE, fleets.lab, fleets.af,
   \item{runs}{\code{numeric} -- model run number(s)}
   \item{rwts}{\code{numeric} -- model reweight number(s)}
   \item{vers}{\code{numeric} -- model run version}
-  \item{overwrite}{\code{logical} -- if {TRUE}, overwrite existing csv file(s)}
+  \item{overwrite}{\code{logical} -- if \code{TRUE}, overwrite existing csv file(s)}
   \item{fleets.lab}{\code{character} -- fleet labels}
   \item{fleets.af}{\code{numeric} -- fleet numbers of fleets with AF data}
   \item{cwd}{\code{character} -- currrent working directory where model runs are located;
     usually with a base name comprising three-letter species code and assessment year}
-  \item{use.cwd.as.is}{\code{logical} -- if {TRUE}, use the \code{'cwd'} value as is
+  \item{use.cwd.as.is}{\code{logical} -- if \code{TRUE}, use the \code{'cwd'} value as is
     (user may specify an MPD run explicitly that does not conform to the specified run, rwt, and ver)}
 }
 \details{

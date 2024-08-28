@@ -2577,14 +2577,14 @@ browser();return()
 ## ---------------------------------------------RH
 predictRec <- function(rec, indices, mos=1:12,
    ryrs=NULL, rfun=median, ifun=mean,
-   nmcmc=2000, refit=T, polyno=2, outnam,
-   png=F, pngres=400, PIN=c(10,8), lang=c("f","e"))
+   nmcmc=2000, refit=TRUE, polyno=2, outnam,
+   png=FALSE, pngres=400, PIN=c(10,8), lang=c("f","e"))
 {
 	## Subfunctions----------------------
 	## Polynomial regression (Michal Cukrowski)
 	## https://towardsdatascience.com/polynomial-autoregression-improve-your-forecasts-in-2-minutes-746d8b57d896
 	polyreg <- function(x, y, p, ar){
-		require(dplyr)
+		eval(parse(text="require(dplyr)"))
 		xdata=sapply(1:p, function(i){x^i})
 		colnames(xdata)=paste0("x.",1:p)
 		data = data.frame(y=y,xdata)
@@ -2595,7 +2595,7 @@ predictRec <- function(rec, indices, mos=1:12,
 				data[paste0("L", i, ".", j)] <- Hmisc::Lag(data1$y, i)^j  ## from here on we are adding polynomial lags
 			}
 		}
-		data = data %>% mutate_at(names(data), ~(scale(.) %>% as.vector))
+		data = data %>% dplyr::mutate_at(names(data), ~(scale(.) %>% as.vector))
 		data <- na.omit(data)  #get rid of the NAs
 		#boxplot(data)
 		model <- lm(y ~ ., data)
@@ -2625,19 +2625,19 @@ predictRec <- function(rec, indices, mos=1:12,
 	## Penn State : STAt 510 Applied time Series Analysis
 	## https://online.stat.psu.edu/stat510/lesson/8/8.1
 	goPenn <- function(regmodel, x, y) {  ## [not used]
-		require(astsa)
+		eval(parse(text="require(astsa)"))
 		trend = time(y)
 		#regmodel=lm(y~trend+x) # first ordinary regression.
 		dtx = residuals(lm (x~time(x)))  ## change in x
 #browser();return()
 		regmodel= lm(y~ trend + dtx) # first ordinary regression with detrended x, dtx.
 		summary(regmodel) # This gives us the regression results
-		acf2(resid(regmodel)) # ACF and PACF of the residuals
-		adjreg = sarima (y, 0,0,1, xreg=cbind(trend, dtx)) # This is the adjustment regression with MA(1) residuals
+		astsa::acf2(resid(regmodel)) # ACF and PACF of the residuals
+		adjreg = astsa::sarima (y, 0,0,1, xreg=cbind(trend, dtx)) # This is the adjustment regression with MA(1) residuals
 		adjreg # Results of adjustment regression. White noise should be suggested.
-		acf2(resid(adjreg$fit))
-		require(nlme)
-		glsfit = gls(y ~ dtx + trend, correlation=corARMA(form = ~ 1, p=0, q=1))
+		astsa::acf2(resid(adjreg$fit))
+		eval(parse(text="require(nlme)"))
+		glsfit = nlme::gls(y ~ dtx + trend, correlation=corARMA(form = ~ 1, p=0, q=1))
 		summary(glsfit) #For comparison
 		return(glsfit$fitted)
 	}
@@ -3098,236 +3098,225 @@ return()
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tabSS.compo
 
 
-## tabSS.decision-----------------------2022-07-15
+## tabSS.decision-----------------------2024-07-05
 ## Make Decision Tables (Probabilities)
 ## ---------------------------------------------RH
-tabSS.decision <- function(istock="YMR", prefix="ymr.", compo,
-  useRlow=FALSE, qRlow=0.25, decdig=2)
+tabSS.decision <- function(istock="YTR", prefix="ytr.", compo,
+  useRlow=FALSE, qRlow=0.25, decdig=2, cp.type="CC",
+  cp.num=c(1,3,6,9:15), use.agile=FALSE)
 {
 	on.exit(gc(verbose=FALSE))
-	require(xtable)
+	#require(xtable)
 	unpackList(stock[[istock]][["Controls"]])
+	big.mark   = ifelse(is.null(options()$big.mark), ",", options()$big.mark)
+
+	## Check to see if projections are alternative runs (e.g., low-recruitment)
+	is.renso = as.character(substitute(compo)) == "renso"
+	if (is.renso) {
+		names(compo) = sub("rmpd","ampd",sub("ren","avg",names(compo)))
+	}
 	unpackList(compo)
 
 	proYears    = (currYear+1):projYear
 	refYears    = as.character(currYear:projYear)  ## include current year in decision tables
-
-	## Diagnostics for select parameters
-	P.mpd       = ampdPA; storage.mode(P.mpd)="double"     ## For some reason, this matrix is stored as a list (maybe due to NA values?)
-	P.names     = colnames(avgPA)
-	P.runs      = as.numeric(sapply(strsplit(rownames(avgPA),"\\."),function(x){x[1]}))
-	P.run.rwt   = sapply(strsplit(rownames(avgPA),"\\."),function(x){paste0(x[1],".",x[2])}) ## vector of Runs and Rwts
-	P.run.ord   = unique(P.runs)
-	P.run.nmc   = table(P.runs)[as.character(P.run.ord)]
-	P.run.num   = rep(1:length(P.run.nmc), P.run.nmc)
-	#use.run.rwt = is.element(P.runs, P.run.ord) ## default use all runs but a subset might be used for management advice
-	use.run.rwt = unique(P.run.rwt)
-
-	B.mcmc = data.frame (
-		B0         = avgRP[,"B0"],
-		Bcurr      = avgRP[,"Bcurr"],
-		B.currB0   = avgRP[,"Bcurr"] / avgRP[,"B0"],
-		Ucurr      = avgRP[,"ucurr"],
-		Umax       = apply(avgTS[,,"ut"],1,max), ## for each mcmc sample across the time series
-		MSY        = avgRP[,"MSY"],
-		Bmsy       = avgRP[,"Bmsy"],
-		LRP        = avgRP[,"LRP"],
-		USR        = avgRP[,"USR"],
-		Bcurr.Bmsy = avgRP[,"Bcurr"] / avgRP[,"Bmsy"],
-		Bmsy.B0    = avgRP[,"Bmsy"] / avgRP[,"B0"],
-		Umsy       = avgRP[,"umsy"],
-		Ucurr.Umsy = avgRP[,"ucurr"] / avgRP[,"umsy"]
-	)
-	## Sometimes Umsy=0 for some reason
-	is.good = apply(B.mcmc,1,function(x){all(is.finite(x))})
-	if (sum(is.good)!=nrow(B.mcmc))
-		.flush.cat(paste0(nrow(B.mcmc)-sum(is.good)," unsuitable records dropped."), "\n")
-	B.mcmc  = B.mcmc[is.good,]
+#browser();return()
 
 	#lab.recentCatchYears = texThatVec(rev(rev(rownames(catch))[1:num.recentCatchYears]))
-	recentCatchMean = mean(recentCatch); num.recentCatchYears=length(recentCatch)
+	recentCatchMean = lapply(recentCatch,mean);
+	num.recentCatchYears = lapply(recentCatch,length)
 	recentHarvMean  = 0.01 ## dummy for now
+
+	lab.recentCatchYears = lapply(recentCatch,function(x){texThatVec(names(x))})
+	refCC.sentence = paste0(" For reference, the average catch over the last ", num.recentCatchYears[[1]], " years (", lab.recentCatchYears[[1]], ") was ", 
+		if (length(recentCatchMean)==1)
+			formatC(recentCatchMean[[1]], digits=0, format="f", big.mark=big.mark)
+		else
+			paste0(paste0(names(recentCatchMean),"=",sapply(recentCatchMean, round, dig=0)), collapse=", ")
+	, "~t. ")
+	#refHR.sentence = paste0(" For reference, the average harvest rate over the last ", num.recentCatchYears, " years (", lab.recentCatchYears, ") was ", round(recentHarvMean, dig=3), ". ")
 #browser();return()
 
-	lab.recentCatchYears = texThatVec(names(recentCatch))
-	refCC.sentence = paste0(" For reference, the average catch over the last ", num.recentCatchYears, " years (", lab.recentCatchYears, ") was ", round(recentCatchMean, dig=0), "~t. ")
-	refHR.sentence = paste0(" For reference, the average harvest rate over the last ", num.recentCatchYears, " years (", lab.recentCatchYears, ") was ", round(recentHarvMean, dig=3), ". ")
-
-	## Determine subset vector for low recruitment events
-	R.mcmc = avgTS[is.good,,"Rt"]
-	if (useRlow) {
-		if (spp.code=="BOR")
-			Rlow   = R.mcmc[,"2017"] < quantile(R.mcmc[,"2017"], qRlow)
-		else { 
-			R.mean = apply(R.mcmc,1,mean)  ## mean recruitment 1935-2019
-			Rlow   = R.mean < quantile(R.mean, qRlow)
-		}
+	## Use this routine developed for multi-area models
+	if (use.agile) {
+		agileDT(compo=compo, onepage=T, cp=paste0("CC.", pad0(cp.num,2)), tables.per.page=2)
+		unpackList(ttcall(agile))
+		Nmcmc.good = ttcall(Nmcmc)
+		#Nmcmc = format(ttcall(Nmcmc),big.mark=",")
+#browser();return()
 	} else {
-		Rlow = rep(TRUE,nrow(R.mcmc))
-	}
-	## Subset vector of chosen runs to use in the base composite
-	Ruse  = grepl(paste0(paste0("^",use.run.rwt),collapse="|"),rownames(B.mcmc))
-	## Combined subset vector
-	Rsub  = Rlow & Ruse
-
-	Ubase = sum(use.num)  ## may be different than Ubase in 'gather.compo.case.r' if Rlow subsets low-recruitment samples from posterior
-
-#	## Subset vector objects for composite base case (same code as in 'make.compo.figs.r')
-#	vec.nams = c("B0", "Bcurr", "Bcurr.B0", "MSY", "Bmsy", "LRP", "USR", "Bcurr.Bmsy", "Bmsy.B0", "VBmsy", "Umsy")
-#	for (v in vec.nams)
-#		eval(parse(text=paste0(v, " = ", v, "[Rsub]")))
-#	vec.list = c("VB0", "VBcurr", "VBcurr.VB0", "Ucurr", "Umax", "VBmsy.VB0", "Ucurr.Umsy")
-#	for (vv in vec.list)
-#		eval(parse(text = paste0(vv, " = lapply(", vv, ",function(x){ x[Rsub] })")))
-#
-#	## Subset data.frames for composite base case
-#	df.nams = c("B.mcmc", "R.mcmc", "P.mcmc", "BoverBmsy")
-#	for (d in df.nams)
-#		eval(parse(text=paste0(d, " = ", d, "[Rsub,]")))
-#	df.list = c("U.mcmc", "VB.mcmc","UoverUmsy")
-#	for (dd in df.list)
-#		eval(parse(text = paste0(dd, " = lapply(", dd, ",function(x){ x[Rsub,] })")))
-#
-#	B.nams = names(B.pols)
-#	B.pols = lapply(names(B.pols),function(i) { A=B.pols[[i]]; Asub=lapply(names(A),function(j) { AA=A[[j]]; AA[Rsub,] }); names(Asub)=names(A); return(Asub) })
-#	R.pols = lapply(names(R.pols),function(i) { A=R.pols[[i]]; Asub=lapply(names(A),function(j) { AA=A[[j]]; AA[Rsub,] }); names(Asub)=names(A); return(Asub) })
-#	U.pols = lapply(names(U.pols),function(i) { A=U.pols[[i]]; Asub=lapply(names(A),function(j) { AA=A[[j]]; AA[Rsub,] }); names(Asub)=names(A); return(Asub) })
-#	names(B.pols) = names(R.pols) = names(U.pols) = B.nams
-#
-#	B.proj = lapply(1:length(policies), function(i){ B.pols[[names(policies)[i]]][[as.character(policies[i])]] })
-#	R.proj = lapply(1:length(policies), function(i){ R.pols[[names(policies)[i]]][[as.character(policies[i])]] })
-#	U.proj = lapply(1:length(policies), function(i){ U.pols[[names(policies)[i]]][[as.character(policies[i])]] })
-#	names(B.proj) = names(R.proj) = names(U.proj) = names(policies)
-#browser();return()
-
-	## -----------------------------------------------
-	## 'refProbs3GenList' contains probabilities for the main
-	##   decision tables (usually only use MSY-based RefPts).
-	## Will include Bmsy and B0 RefPts already calculated above,
-	##   e.g., refProbs3GenList$'0.4Bmsy' - refProbs$LRP = matrix of 0's
-	## -----------------------------------------------
-	so("findTarget.r","synth")
-
-	## This has been taken care of above
-	#if (useRlow){
-	#	Bmsy   = Bmsy[Rlow]
-	#	Bcurr  = Bcurr[Rlow]
-	#	B0     = B0[Rlow]
-	#	B.mcmc = B.mcmc[Rlow,]
-	#	Umsy   = Umsy[Rlow]
-	#	Ucurr  = lapply(Ucurr,function(x){x[Rlow]})
-	#	B.pols = lapply(actpol, function(p){lapply(1:length(B.pols[[p]]),function(i,x){ x[[i]][Rlow,] }, x=B.pols[[p]])})
-	#	U.pols = lapply(actpol, function(p){lapply(1:length(U.pols[[p]]),function(i,x){ x[[i]][Rlow,] }, x=U.pols[[p]])})
-	#	names(B.pols) = names(U.pols) = actpol
-	#	junk = lapply(actpol,function(p){names(B.pols[[p]]) <<- policy[[p]]$projPolicy})
-	#	junk = lapply(actpol,function(p){names(U.pols[[p]]) <<- policy[[p]]$projPolicy})
-	#}
-	Bmsy  = B.mcmc$Bmsy
-	Bcurr = B.mcmc$Bcurr
-	B0    = B.mcmc$B0
-	Umsy  = B.mcmc$Umsy
-	Ucurr = B.mcmc$Ucurr
-
-	## List of targets:
-	Tlst = list(
-	  list(ratio=0.4,target=Bmsy),
-	  list(ratio=0.8,target=Bmsy),
-	  list(ratio=1.0,target=Bmsy),
-	  list(ratio=1.0,target=Bcurr),
-	  list(ratio=0.2,target=B0),
-	  list(ratio=0.4,target=B0),
-	  ##---COSEWIC---
-	  list(ratio=0.5,target=B0),
-	  list(ratio=0.7,target=B0),
-	  list(ratio=0.3,target=avgTS[,,"Bt"]),
-	  list(ratio=0.5,target=avgTS[,,"Bt"])
-	)
-	names(Tlst)=c("0.4Bmsy","0.8Bmsy","Bmsy","Bcurr","0.2B0","0.4B0","0.5B0","0.7B0","0.3Gen","0.5Gen")
-
-	## And have to do separately for u_t < u_MSY:
-	Ulst = list(
-	  list(ratio=1, target=Umsy),
-	  #list(ratio=1, target=Ucurr[[1]]*Usplit[1] + Ucurr[[2]]*Usplit[2])
-	  list(ratio=1, target=Ucurr)
-	)
-	names(Ulst) = c("umsy","ucurr")
+		## Use old routine for single-stock models
+		## Diagnostics for select parameters
+		P.mpd       = ampdPA; storage.mode(P.mpd)="double"     ## For some reason, this matrix is stored as a list (maybe due to NA values?)
+		P.names     = colnames(avgPA)
+		P.runs      = as.numeric(sapply(strsplit(rownames(avgPA),"\\."),function(x){x[1]}))
+		P.run.rwt   = sapply(strsplit(rownames(avgPA),"\\."),function(x){paste0(x[1],".",x[2],".",x[3])}) ## vector of Runs and Rwts and ver
+		P.run.ord   = unique(P.runs)
+		P.run.nmc   = table(P.runs)[as.character(P.run.ord)]
+		P.run.num   = rep(1:length(P.run.nmc), P.run.nmc)
+		#use.run.rwt = is.element(P.runs, P.run.ord) ## default use all runs but a subset might be used for management advice
+		use.run.rwt = unique(P.run.rwt)
 	
-	## Testing COSEWIC criterion
-	## findTarget(Vmat=B.pols[["CC"]][["600"]], target=Tlst[["0.5Gen"]]$target, ratio=Tlst[["0.5Gen"]]$ratio, retVal="p.hi", op=">", yrG=Ngen*gen1)
-	## findTarget(Vmat=B.pols[["CC"]][["600"]], target=Tlst[["Bmsy"]]$target, ratio=Tlst[["Bmsy"]]$ratio, retVal="p.hi", op=">", yrG=Ngen*gen1)
-	## findTarget(Vmat=B.pols[["CC"]][["600"]], target=Tlst[["Bcurr"]]$target, ratio=Tlst[["Bcurr"]]$ratio, retVal="p.hi", op=">", yrG=Ngen*gen1)
-	## findTarget(Vmat=B.pols[["HR"]][["0.08"]], target=Bmsy, ratio=0.4, retVal="N", op=">", yrG=Ngen*gen1, plotit=T)
-
-	BRPpList = URPpList = Ttab.conf = Utab.conf = list()
-
-	cp = setdiff(dimnames(avgPJ)[[4]], "AC.00")
-	CP = round(sapply(avgCP[1,1,],mean,na.rm=T)[cp])  ## should already have been rounded in 'gatherMCMC'
-
-	## create table for B < Bmsy (or whatever)
-	## ---------------------------------------
-	for (k in c("CC","HR")){
-		BRPpList[[k]] = list()
-		for(i in 1:length(cp)) {
-			ii = cp[i]
-			kk = ifelse (grepl("CC",ii), "CC", "HR")
-			Bmat = avgPJ[is.good,as.character(proYears),"Bt",ii]  ## subset years until/if we can project further
-			Btab = data.frame(Bcurr,Bmat)
-			colnames(Btab)= currYear:projYear
-			BRPp.temp = sapply(Tlst,function(x){findTarget(Btab, ratio=x$ratio, target=x$target, retVal="p.hi", op=">", yrG=Ngen*gen1)}, simplify=FALSE)
-			if (i==1)
-				BRPp.collect = BRPp.temp
-			else {
-				for (j in 1:length(BRPp.temp)){
-					jj = names(BRPp.temp)[j]
-					BRPp.collect[[jj]] = rbind(BRPp.collect[[jj]], BRPp.temp[[jj]])
-				}
+		B.mcmc = data.frame (
+			B0         = avgRP[,"B0"],
+			Bcurr      = avgRP[,"Bcurr"],
+			B.currB0   = avgRP[,"Bcurr"] / avgRP[,"B0"],
+			Ucurr      = avgRP[,"ucurr"],
+			Umax       = apply(avgTS[,,"ut"],1,max), ## for each mcmc sample across the time series
+			MSY        = avgRP[,"MSY"],
+			Bmsy       = avgRP[,"Bmsy"],
+			LRP        = avgRP[,"LRP"],
+			USR        = avgRP[,"USR"],
+			Bcurr.Bmsy = avgRP[,"Bcurr"] / avgRP[,"Bmsy"],
+			Bmsy.B0    = avgRP[,"Bmsy"] / avgRP[,"B0"],
+			Umsy       = avgRP[,"umsy"],
+			Ucurr.Umsy = avgRP[,"ucurr"] / avgRP[,"umsy"]
+		)
+		Nmcmc = nrow(B.mcmc)
+		## Sometimes Umsy=0 for some reason
+		is.good = apply(B.mcmc,1,function(x){all(is.finite(x))})
+		if (sum(is.good)!=nrow(B.mcmc))
+			.flush.cat(paste0(nrow(B.mcmc)-sum(is.good)," unsuitable records dropped."), "\n")
+		B.mcmc  = B.mcmc[is.good,]
+		Nmcmc.good = nrow(B.mcmc)
+	
+		## Determine subset vector for low recruitment events
+		R.mcmc = avgTS[is.good,,"Rt"]
+		if (useRlow) {
+			if (spp.code=="BOR")
+				Rlow   = R.mcmc[,"2017"] < quantile(R.mcmc[,"2017"], qRlow)
+			else { 
+				R.mean = apply(R.mcmc,1,mean)  ## mean recruitment 1935-2019
+				Rlow   = R.mean < quantile(R.mean, qRlow)
 			}
+		} else {
+			Rlow = rep(TRUE,nrow(R.mcmc))
 		}
-		BRPp.collect = lapply(BRPp.collect, function(x,rnam){ rownames(x) = rnam; return(x) }, rnam=CP)
-		BRPpList[[kk]] = BRPp.collect
-	}
+		## Subset vector of chosen runs to use in the base composite
+		Ruse  = grepl(paste0(paste0("^",use.run.rwt),collapse="|"),rownames(B.mcmc))
+		## Combined subset vector
+		Rsub  = Rlow & Ruse
+	
+		Ubase = sum(use.num)  ## may be different than Ubase in 'gather.compo.case.r' if Rlow subsets low-recruitment samples from posterior
 
-	## create table for u < umsy (or ucurr)
-	## ------------------------------------
-	for (k in c("CC","HR")){
-		URPpList[[k]] = list()
-		for(i in 1:length(cp)) {
-			ii = cp[i]
-			kk = ifelse (grepl("CC",ii), "CC", "HR")
-			Umat = avgPJ[is.good,as.character(proYears),"ut",ii]  ## subset years until/if we can project further
-			Utab = data.frame(Ucurr,Umat)
-			colnames(Utab)= currYear:projYear
-			URPp.temp = sapply(Ulst,function(x){findTarget(Utab, ratio=x$ratio, target=x$target, retVal="p.hi", op="<", yrG=Ngen*gen1)}, simplify=FALSE)
-			if (i==1) {
-				URPp.collect = URPp.temp
-			} else {
-				for (j in 1:length(URPp.temp)){
-					jj = names(URPp.temp)[j]
-					URPp.collect[[jj]] = rbind(URPp.collect[[jj]], URPp.temp[[jj]])
-				}
-			}
-		}
-		URPp.collect = lapply(URPp.collect, function(x,rnam){ rownames(x) = rnam; return(x) }, rnam=CP)
-		URPpList[[kk]] = URPp.collect
-	}
+		## -----------------------------------------------
+		## 'refProbs3GenList' contains probabilities for the main
+		##   decision tables (usually only use MSY-based RefPts).
+		## Will include Bmsy and B0 RefPts already calculated above,
+		##   e.g., refProbs3GenList$'0.4Bmsy' - refProbs$LRP = matrix of 0's
+		## -----------------------------------------------
+		so("findTarget.r","synth")
+
+		Bmsy  = B.mcmc$Bmsy
+		Bcurr = B.mcmc$Bcurr
+		B0    = B.mcmc$B0
+		Umsy  = B.mcmc$Umsy
+		Ucurr = B.mcmc$Ucurr
+	
+		## List of targets:
+		Tlst = list(
+		  list(ratio=0.4,target=Bmsy),
+		  list(ratio=0.8,target=Bmsy),
+		  list(ratio=1.0,target=Bmsy),
+		  list(ratio=1.0,target=Bcurr),
+		  list(ratio=0.2,target=B0),
+		  list(ratio=0.4,target=B0),
+		  ##---COSEWIC---
+		  list(ratio=0.5,target=B0),
+		  list(ratio=0.7,target=B0),
+		  list(ratio=0.3,target=avgTS[,,"Bt"]),
+		  list(ratio=0.5,target=avgTS[,,"Bt"])
+		)
+		names(Tlst)=c("0.4Bmsy","0.8Bmsy","Bmsy","Bcurr","0.2B0","0.4B0","0.5B0","0.7B0","0.3Gen","0.5Gen")
+	
+		## And have to do separately for u_t < u_MSY:
+		Ulst = list(
+		  list(ratio=1, target=Umsy),
+		  #list(ratio=1, target=Ucurr[[1]]*Usplit[1] + Ucurr[[2]]*Usplit[2])
+		  list(ratio=1, target=Ucurr)
+		)
+		names(Ulst) = c("umsy","ucurr")
+		
+		## Testing COSEWIC criterion
+		## findTarget(Vmat=B.pols[["CC"]][["600"]], target=Tlst[["0.5Gen"]]$target, ratio=Tlst[["0.5Gen"]]$ratio, retVal="p.hi", op=">", yrG=Ngen*gen1)
+		## findTarget(Vmat=B.pols[["CC"]][["600"]], target=Tlst[["Bmsy"]]$target, ratio=Tlst[["Bmsy"]]$ratio, retVal="p.hi", op=">", yrG=Ngen*gen1)
+		## findTarget(Vmat=B.pols[["CC"]][["600"]], target=Tlst[["Bcurr"]]$target, ratio=Tlst[["Bcurr"]]$ratio, retVal="p.hi", op=">", yrG=Ngen*gen1)
+		## findTarget(Vmat=B.pols[["HR"]][["0.08"]], target=Bmsy, ratio=0.4, retVal="N", op=">", yrG=Ngen*gen1, plotit=T)
+	
+		BRPpList = URPpList = Ttab.conf = Utab.conf = list()
+	
+		cp = setdiff(dimnames(avgPJ)[[4]], "AC.00")
+		cp = cp[cp.num]  ## subset catch policies for decision tables
+		CP = round(sapply(avgCP[1,1,],mean,na.rm=T)[cp])  ## should already have been rounded in 'gatherMCMC'
+
+		## create table for B > Bmsy (or whatever)
+		## ---------------------------------------
+		for (k in cp.type){
+			BRPpList[[k]] = list()
+			for(i in 1:length(cp)) {
+				ii = cp[i]
+				kk = ifelse (grepl("CC",ii), "CC", "HR")
+				Bmat = avgPJ[is.good,as.character(proYears),"Bt",ii]  ## subset years until/if we can project further
+				Btab = data.frame(Bcurr,Bmat)
+				colnames(Btab)= currYear:projYear
+				BRPp.temp = sapply(Tlst,function(x){findTarget(Btab, ratio=x$ratio, target=x$target, retVal="p.hi", op=">", yrG=Ngen*gen1)}, simplify=FALSE)
 #browser();return()
-	#{
-	#	## Also calculate number of years to reach reference target points with a specified confidence
-	#	Ttab.temp = Utab.temp = list()
-	#	for (j in c(0.50,0.65,0.80,0.95)) {
-	#		jj = formatC(j,digits=2,format="f")
-	#		Ttab.temp[[jj]]  = pmin(sapply(Tlst, function(x){sapply(B.pols[[i]], findTarget, ratio=x$ratio, target=x$target, conf=j,  retVal="N", op=">", yrG=Ngen*gen1)}), Ngen*gen1)
-	#		Utab.temp[[jj]]  = pmin(sapply(Ulst, function(x){sapply(U.pols[[i]], findTarget, ratio=x$ratio, target=x$target, conf=j,  retVal="N", op="<", yrG=Ngen*gen1)}), Ngen*gen1)
-	#	}
-	#	Ttab.conf[[i]] = Ttab.temp
-	#	Utab.conf[[i]] = Utab.temp
-	#}
+				if (i==1)
+					BRPp.collect = BRPp.temp
+				else {
+					for (j in 1:length(BRPp.temp)){
+						jj = names(BRPp.temp)[j]
+						BRPp.collect[[jj]] = rbind(BRPp.collect[[jj]], BRPp.temp[[jj]])
+					}
+				}
+			}
+			BRPp.collect = lapply(BRPp.collect, function(x,rnam){ rownames(x) = rnam; return(x) }, rnam=CP)
+			BRPpList[[kk]] = BRPp.collect
+		}
+#browser();return()
+
+		## create table for u < umsy (or ucurr)
+		## ------------------------------------
+		for (k in cp.type){
+			URPpList[[k]] = list()
+			for(i in 1:length(cp)) {
+				ii = cp[i]
+				kk = ifelse (grepl("CC",ii), "CC", "HR")
+				Umat = avgPJ[is.good,as.character(proYears),"ut",ii]  ## subset years until/if we can project further
+				Utab = data.frame(Ucurr,Umat)
+				colnames(Utab)= currYear:projYear
+				URPp.temp = sapply(Ulst,function(x){findTarget(Utab, ratio=x$ratio, target=x$target, retVal="p.hi", op="<", yrG=Ngen*gen1)}, simplify=FALSE)
+				if (i==1) {
+					URPp.collect = URPp.temp
+				} else {
+					for (j in 1:length(URPp.temp)){
+						jj = names(URPp.temp)[j]
+						URPp.collect[[jj]] = rbind(URPp.collect[[jj]], URPp.temp[[jj]])
+					}
+				}
+			}
+			URPp.collect = lapply(URPp.collect, function(x,rnam){ rownames(x) = rnam; return(x) }, rnam=CP)
+			URPpList[[kk]] = URPp.collect
+		}
+#browser();return()
+
+		### Also calculate number of years to reach reference target points with a specified confidence
+		### (keep code in case we need it in future)
+		#Ttab.temp = Utab.temp = list()
+		#for (j in c(0.50,0.65,0.80,0.95)) {
+		#	jj = formatC(j,digits=2,format="f")
+		#	Ttab.temp[[jj]]  = pmin(sapply(Tlst, function(x){sapply(B.pols[[i]], findTarget, ratio=x$ratio, target=x$target, conf=j,  retVal="N", op=">", yrG=Ngen*gen1)}), Ngen*gen1)
+		#	Utab.temp[[jj]]  = pmin(sapply(Ulst, function(x){sapply(U.pols[[i]], findTarget, ratio=x$ratio, target=x$target, conf=j,  retVal="N", op="<", yrG=Ngen*gen1)}), Ngen*gen1)
+		#}
+		#Ttab.conf[[i]] = Ttab.temp
+		#Utab.conf[[i]] = Utab.temp
+	} ## end not agile
+
 	##=====TABLE: DEFAULT DFO MSY REFERENCE POINTS=====
 	## Just use and adapt code from runSweaveMCCMC.Rnw
 	projYearsNum = length(proYears)
 	for.area = paste0(" (",gsub(")","]",gsub("\\(","[",name)),")")
 	maxCatSentence = ""  ## only ever used for the ROL assessment (see run-masterMCMC.Snw)
-	Nmcmc = sum(Rsub)
+	#Nmcmc = sum(Rsub)
 
 	##=====GMU -- Guidance for Setting TAC=====
 
@@ -3336,109 +3325,217 @@ tabSS.decision <- function(istock="YMR", prefix="ymr.", compo,
 		colnames(tab) = as.character(as.numeric(colnames(tab))-1)
 		return(tab)
 	}
-
+	## Change the label and caption of an agile tab
+	adjAgile <- function(atab, tablab, tabcap) {
+		apos  = grep("caption", atab); aline = atab[apos]
+		aline = sub("label\\{(.+)\\}", paste0("label{", tablab,"}"), aline)
+		aline = gsub("caption\\{(.*)\\\\label", paste0("caption{", tabcap,"} \\\\label"), aline)
+		atab[apos] = aline
+		return(atab)
+	}
+	## Change the rownames (catch policies) for non-agile decision tables to include big.mark delimiters
+	adjRnam <- function(dtab) {
+		dtab.adj = dtab
+		rownames(dtab.adj) = formatC(as.numeric(rownames(dtab)), digits=0, format="f", big.mark=big.mark)
+		return(dtab.adj)
+	}
+	prefix     = ifelse(is.renso, "low.", prefix)
+	prefix.cap = ifelse(is.renso, paste0("Base run", ifelse(Narea>1," subareas","")," (0.5$R$)"), paste0("Base run", ifelse(Narea>1," subareas","")))
+	Nmcmc.cap  = format(Nmcmc.good, big.mark=big.mark)
+	
 	##--- LRP P(Bt>0.4Bmsy) ----------------
-	if (exists("BRPpList") && !is.null(BRPpList$CC$'0.4Bmsy')) {
-		xtabLRP = texArray(BRPpList$CC$'0.4Bmsy'[,refYears], table.label=paste0("tab:",prefix,"gmu.LRP.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for the limit reference point $0.4 \\Bmsy$ featuring current- and ",projYearsNum,"-year projections for a range of \\itbf{constant catch} strategies (in tonnes). Values are P$(B_t > 0.4 \\Bmsy)$, i.e.~the probability of the spawning biomass (mature females) at the start of year $t$ being greater than the limit reference point. The probabilities are the proportion (to two decimal places) of the ", Nmcmc, " MCMC samples for which $B_t > 0.4 \\Bmsy$. ", refCC.sentence, maxCatSentence)) )
+	tablab = paste0("tab:",prefix,"gmu.LRP.CCs")
+	tabcap = eval(paste0(prefix.cap, ": decision table for the limit reference point 0.4$\\Bmsy$ featuring current- and ", projYearsNum, "-year projections for a range of constant catch (CC) strategies (in tonnes). Values are P$(B_t > 0.4\\Bmsy)$, i.e.~the probability of the spawning biomass (mature females) at the start of year $t$ being greater than the limit reference point. The probabilities are the proportion  of the ", Nmcmc.cap, " MCMC samples for which $B_t > 0.4\\Bmsy$. ", refCC.sentence, maxCatSentence))
+	if (use.agile && !is.null('0.4Bmsy')) {
+		if (is.renso) {
+			gmu.LRP.CCs.low = adjAgile(`0.4Bmsy`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.LRP.CCs.low)
+		} else {
+			gmu.LRP.CCs.out = adjAgile(`0.4Bmsy`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.LRP.CCs.out)
+		}
+	} else if (exists("BRPpList") && !is.null(BRPpList$CC$'0.4Bmsy')) {
+		tabLRP  = adjRnam(BRPpList$CC$'0.4Bmsy'[,refYears])
+		xtabLRP = texArray(tabLRP, table.caption=tabcap, table.label=tablab, sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25, alignHRC=c("l","r","r") )
 		gmu.LRP.CCs.out = xtabLRP$tabfile
 		tput(gmu.LRP.CCs.out)
-	}
 #browser();return()
+	}
 	if (exists("BRPpList") && !is.null(BRPpList$HR$'0.4Bmsy')) {
-		xtabLRP2 = texArray(BRPpList$HR$'0.4Bmsy'[,refYears], table.label=paste0("tab:",prefix,"gmu.LRP.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for the limit reference point $0.4 \\Bmsy$ featuring current- and ",projYearsNum,"-year projections for a range of \\itbf{harvest rate} strategies. Values are P$(B_t > 0.4 \\Bmsy)$, i.e.~the probability of the spawning biomass (mature females) at the start of year $t$ being greater than the limit reference point. The probabilities are the proportion (to two decimal places) of the ", Nmcmc, " MCMC samples for which $B_t > 0.4 \\Bmsy$. ", refHR.sentence, maxCatSentence)) )
+		## need to add code if using agile tables for HR policies
+		## also sub 'constant catch (CC)' with 'harvest rate (HR)' in tabcap
+		## also specify aligHRC argument
+		tabLRP2  = adjRnam(BRPpList$HR$'0.4Bmsy'[,refYears])
+		xtabLRP2 = texArray(tabLRP2, table.label=paste0("tab:",prefix,"gmu.LRP.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25,
+			table.caption=eval(paste0(name, ": decision table for the limit reference point $0.4\\Bmsy$ featuring current- and ",projYearsNum,"-year projections for a range of harvest rate (HR) strategies. Values are P$(B_t > 0.4\\Bmsy)$, i.e.~the probability of the spawning biomass (mature females) at the start of year $t$ being greater than the limit reference point. The probabilities are the proportion  of the ", Nmcmc.cap, " MCMC samples for which $B_t > 0.4\\Bmsy$. ", refHR.sentence, maxCatSentence)), alignHRC=c("l","r","r") )
 		gmu.LRP.HRs.out = xtabLRP2$tabfile
 		tput(gmu.LRP.HRs.out)
 	}
+
 	##--- USR P(Bt>0.8Bmsy) ----------------
-	if (exists("BRPpList") && !is.null(BRPpList$CC$'0.8Bmsy')) {
-		xtabUSR = texArray(BRPpList$CC$'0.8Bmsy'[,refYears], table.label=paste0("tab:",prefix,"gmu.USR.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for the upper stock reference point $0.8 \\Bmsy$ featuring current- and ",projYearsNum,"-year projections for a range of \\itbf{constant catch} strategies (in tonnes), such that values are P$(B_t > 0.8 \\Bmsy)$. ", refCC.sentence, maxCatSentence)) )
+	tablab = paste0("tab:",prefix,"gmu.USR.CCs")
+	tabcap = eval(paste0(prefix.cap, ": decision table for the upper stock reference point 0.8$\\Bmsy$ featuring current- and ", projYearsNum, "-year projections for a range of constant catch (CC) strategies (in tonnes), such that values are P$(B_t > 0.8\\Bmsy)$. ", refCC.sentence, maxCatSentence))
+	if (use.agile && !is.null('0.8Bmsy')) {
+		if (is.renso) {
+			gmu.USR.CCs.low = adjAgile(`0.8Bmsy`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.USR.CCs.low)
+		} else {
+			gmu.USR.CCs.out = adjAgile(`0.8Bmsy`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.USR.CCs.out)
+		}
+	} else if (exists("BRPpList") && !is.null(BRPpList$CC$'0.8Bmsy')) {
+		tabUSR  = adjRnam(BRPpList$CC$'0.8Bmsy'[,refYears])
+		xtabUSR = texArray(tabUSR, table.caption=tabcap, table.label=tablab, sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25, alignHRC=c("l","r","r"))
 		gmu.USR.CCs.out = xtabUSR$tabfile
 		tput(gmu.USR.CCs.out)
 	}
-	if (exists("BRPpList") && !is.null(BRPpList$HR$'0.8Bmsy')) {
-		xtabUSR2 = texArray(BRPpList$HR$'0.8Bmsy'[,refYears], table.label=paste0("tab:",prefix,"gmu.USR.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for the upper stock reference point $0.8 \\Bmsy$ featuring current- and ",projYearsNum,"-year projections for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > 0.8 \\Bmsy)$. ", refHR.sentence, maxCatSentence)) )
+	if (exists("BRPpList") && !is.null(BRPpList$HR$'0.8Bmsy')) {  ## need to add code if using agile tables for HR policies
+		tabUSR2  = adjRnam(BRPpList$HR$'0.8Bmsy'[,refYears])
+		xtabUSR2 = texArray(BRPpList$HR$'0.8Bmsy'[,refYears], table.label=paste0("tab:",prefix,"gmu.USR.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25, table.caption=eval(paste0(name, ": decision table for the upper stock reference point $0.8\\Bmsy$ featuring current- and ", projYearsNum, "-year projections for a range of harvest rate (HR) strategies, such that values are P$(B_t > 0.8\\Bmsy)$. ", refHR.sentence, maxCatSentence)) )
 		gmu.USR.HRs.out = xtabUSR2$tabfile
 		tput(gmu.USR.HRs.out)
 	}
+
 	##--- Bmsy P(Bt>Bmsy) ------------------
-	if (exists("BRPpList") && !is.null(BRPpList$CC$'Bmsy')) {
-		xtabBmsy = texArray(BRPpList$CC$'Bmsy'[,refYears], table.label=paste0("tab:",prefix,"gmu.Bmsy.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for the reference point $\\Bmsy$ featuring current- and ",projYearsNum,"-year projections for a range of \\itbf{constant catch} strategies (in tonnes), such that values are P$(B_t > \\Bmsy)$. ", refCC.sentence, maxCatSentence)) )
+	tablab = paste0("tab:",prefix,"gmu.Bmsy.CCs")
+	tabcap = eval(paste0(prefix.cap, ": decision table for the reference point $\\Bmsy$ featuring current- and ", projYearsNum, "-year projections for a range of constant catch (CC) strategies (in tonnes), such that values are P$(B_t > \\Bmsy)$. ", refCC.sentence, maxCatSentence))
+	if (use.agile && !is.null('Bmsy')) {
+		if (is.renso) {
+			gmu.Bmsy.CCs.low = adjAgile(`Bmsy`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.Bmsy.CCs.low)
+		} else {
+			gmu.Bmsy.CCs.out = adjAgile(`Bmsy`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.Bmsy.CCs.out)
+		}
+	} else if (exists("BRPpList") && !is.null(BRPpList$CC$'Bmsy')) {
+		tabBmsy  = adjRnam(BRPpList$CC$'Bmsy'[,refYears])
+		xtabBmsy = texArray(tabBmsy, table.caption=tabcap, table.label=tablab, sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25, alignHRC=c("l","r","r") )
 		gmu.Bmsy.CCs.out = xtabBmsy$tabfile
 		tput(gmu.Bmsy.CCs.out)
 	}
 	if (exists("BRPpList") && !is.null(BRPpList$HR$'Bmsy')) {
 		xtabBmsy2 = texArray(BRPpList$HR$'Bmsy'[,refYears], table.label=paste0("tab:",prefix,"gmu.Bmsy.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for the reference point $\\Bmsy$ featuring current- and ",projYearsNum,"-year projections for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > \\Bmsy)$. ", refHR.sentence, maxCatSentence)) )
+			table.caption=eval(paste0(name, ": decision table for the reference point $\\Bmsy$ featuring current- and ", projYearsNum, "-year projections for a range of harvest rate (HR) strategies, such that values are P$(B_t > \\Bmsy)$. ", refHR.sentence, maxCatSentence)) )
 		gmu.Bmsy.HRs.out = xtabBmsy2$tabfile
 		tput(gmu.Bmsy.HRs.out)
 	}
+
 	##--- Umsy P(ut>umsy) ------------------
-	if (exists("URPpList") && !is.null(URPpList$CC$'umsy')) {
-		xtabUmsy = texArray(adjUyrs(URPpList$CC$'umsy'[,refYears]), table.label=paste0("tab:",prefix,"gmu.umsy.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for the reference point $\\umsy$ featuring current- and ",projYearsNum,"-year projections for a range of \\itbf{constant catch} strategies, such that values are P$(u_t < \\umsy)$. ", refCC.sentence, maxCatSentence)) )
+	tablab = paste0("tab:",prefix,"gmu.umsy.CCs")
+	tabcap = eval(paste0(prefix.cap, ": decision table for the reference point $\\umsy$ featuring current- and ", projYearsNum, "-year projections for a range of constant catch (CC) strategies (in tonnes), such that values are P$(u_t < \\umsy)$. ", refCC.sentence, maxCatSentence))
+	if (use.agile && !is.null('umsy')) {
+		if (is.renso) {
+			gmu.umsy.CCs.low = adjAgile(`umsy`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.umsy.CCs.low)
+		} else {
+			gmu.umsy.CCs.out = adjAgile(`umsy`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.umsy.CCs.out)
+		}
+	} else if (exists("URPpList") && !is.null(URPpList$CC$'umsy')) {
+		tabUmsy  = adjUyrs(adjRnam(URPpList$CC$'umsy'[,refYears]))
+		xtabUmsy = texArray(tabUmsy, table.caption=tabcap, table.label=tablab, sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25, alignHRC=c("l","r","r") )
 		gmu.umsy.CCs.out = xtabUmsy$tabfile
 		tput(gmu.umsy.CCs.out)
 	}
 	if (exists("URPpList") && !is.null(URPpList$HR$'umsy')) {
 		xtabUmsy2 = texArray(adjUyrs(URPpList$HR$'umsy'[,refYears]), table.label=paste0("tab:",prefix,"gmu.umsy.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for the reference point $\\umsy$ featuring current- and ",projYearsNum,"-year projections for a range of \\itbf{harvest rate} strategies, such that values are P$(u_t < \\umsy)$. ", refHR.sentence, maxCatSentence)) )
+			table.caption=eval(paste0(name, ": decision table for the reference point $\\umsy$ featuring current- and ",projYearsNum,"-year projections for a range of harvest rate (HR) strategies, such that values are P$(u_t < \\umsy)$. ", refHR.sentence, maxCatSentence)) )
 		gmu.umsy.HRs.out = xtabUmsy2$tabfile
 		tput(gmu.umsy.HRs.out)
 	}
+
 	##--- Bcurr P(Bt>Bcurr) ----------------
-	if (exists("BRPpList") && !is.null(BRPpList$CC$'Bcurr')) {
-		xtabBcurr = texArray(BRPpList$CC$'Bcurr'[,refYears], table.label=paste0("tab:",prefix,"gmu.Bcurr.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for the reference point $B_{\\currYear}$ featuring current- and ",projYearsNum,"-year projections for a range of \\itbf{constant catch} strategies, such that values are P$(B_t > B_{\\currYear})$. ", refCC.sentence, maxCatSentence)) )
+	tablab = paste0("tab:",prefix,"gmu.Bcurr.CCs")
+	tabcap = eval(paste0(prefix.cap, ": decision table for the reference point $B_{\\currYear}$ featuring current- and ", projYearsNum, "-year projections for a range of constant catch (CC) strategies (in tonnes), such that values are P$(B_t > B_{\\currYear})$. ", refCC.sentence, maxCatSentence))
+	if (use.agile && !is.null('Bcurr')) {
+		if (is.renso) {
+			gmu.Bcurr.CCs.low = adjAgile(`Bcurr`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.Bcurr.CCs.low)
+		} else {
+			gmu.Bcurr.CCs.out = adjAgile(`Bcurr`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.Bcurr.CCs.out)
+		}
+	} else if (exists("BRPpList") && !is.null(BRPpList$CC$'Bcurr')) {
+		tabBcurr  = adjRnam(BRPpList$CC$'Bcurr'[,refYears])
+		xtabBcurr = texArray(tabBcurr, table.caption=tabcap, table.label=tablab, sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25, alignHRC=c("l","r","r") )
 		gmu.Bcurr.CCs.out = xtabBcurr$tabfile
 		tput(gmu.Bcurr.CCs.out)
 	}
 	if (exists("BRPpList") && !is.null(BRPpList$HR$'Bcurr')) {
 		xtabBcurr2 = texArray(BRPpList$HR$'Bcurr'[,refYears], table.label=paste0("tab:",prefix,"gmu.Bcurr.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for the reference point $B_{\\currYear}$ featuring current- and ",projYearsNum,"-year projections for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > B_{\\currYear})$. ", refHR.sentence, maxCatSentence)) )
+			table.caption=eval(paste0(name, ": decision table for the reference point $B_{\\currYear}$ featuring current- and ",projYearsNum,"-year projections for a range of harvest rate (HR) strategies, such that values are P$(B_t > B_{\\currYear})$. ", refHR.sentence, maxCatSentence)) )
 		gmu.Bcurr.HRs.out = xtabBcurr2$tabfile
 		tput(gmu.Bcurr.HRs.out)
 	}
+
 	##--- ucurr P(ut>ucurr) ----------------
-	if (exists("URPpList") && !is.null(URPpList$CC$'ucurr')) {
-		xtabUcurr = texArray(adjUyrs(URPpList$CC$'ucurr'[,refYears]), table.label=paste0("tab:",prefix,"gmu.ucurr.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for the reference point $u_{\\prevYear}$ featuring current- and ",projYearsNum,"-year projections for a range of \\itbf{constant catch} strategies, such that values are P$(u_t < u_{\\prevYear})$. ", refCC.sentence, maxCatSentence)) )
+	tablab = paste0("tab:",prefix,"gmu.ucurr.CCs")
+	tabcap = eval(paste0(prefix.cap, ": decision table for the reference point $u_{\\prevYear}$ featuring current- and ", projYearsNum, "-year projections for a range of constant catch (CC) strategies (in tonnes), such that values are P$(u_t < u_{\\prevYear})$. ", refCC.sentence, maxCatSentence))
+	if (use.agile && !is.null('ucurr')) {
+		if (is.renso) {
+			gmu.ucurr.CCs.low = adjAgile(`ucurr`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.ucurr.CCs.low)
+		} else {
+			gmu.ucurr.CCs.out = adjAgile(`ucurr`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.ucurr.CCs.out)
+		}
+	} else if (exists("URPpList") && !is.null(URPpList$CC$'ucurr')) {
+		tabUcurr  = adjUyrs(adjRnam(URPpList$CC$'ucurr'[,refYears]))
+		xtabUcurr = texArray(tabUcurr, table.caption=tabcap, table.label=tablab, sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25, alignHRC=c("l","r","r") )
 		gmu.ucurr.CCs.out = xtabUcurr$tabfile
 		tput(gmu.ucurr.CCs.out)
 	}
 	if (exists("URPpList") && !is.null(URPpList$HR$'ucurr')) {
 		xtabUcurr2 = texArray(adjUyrs(URPpList$HR$'ucurr'[,refYears]), table.label=paste0("tab:",prefix,"gmu.ucurr.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for the reference point $u_{\\prevYear}$ featuring current- and ",projYearsNum,"-year projections for a range of \\itbf{harvest rate} strategies, such that values are P$(u_t < u_{\\prevYear})$. ", refHR.sentence, maxCatSentence)) )
+			table.caption=eval(paste0(name, ": decision table for the reference point $u_{\\prevYear}$ featuring current- and ",projYearsNum,"-year projections for a range of harvest rate (HR) strategies, such that values are P$(u_t < u_{\\prevYear})$. ", refHR.sentence, maxCatSentence)) )
 		gmu.ucurr.HRs.out = xtabUcurr2$tabfile
 		tput(gmu.ucurr.HRs.out)
 	}
+
 	##--- Alt.LRP P(Bt>0.2B0) --------------
-	if(exists("BRPpList") && !is.null(BRPpList$CC$'0.2B0')) {
-		xtab20B0 = texArray(BRPpList$CC$'0.2B0'[,refYears], table.label=paste0("tab:",prefix,"gmu.20B0.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for an alternative reference point $0.2 B_0$ featuring current- and ",projYearsNum," year projections for a range of \\itbf{constant catch} strategies, such that values are P$(B_t > 0.2 B_0)$. ", refCC.sentence, maxCatSentence)) )
+	tablab = paste0("tab:",prefix,"gmu.20B0.CCs")
+	tabcap = eval(paste0(prefix.cap, ": decision table for the reference point 0.2$B_0$ featuring current- and ", projYearsNum, "-year projections for a range of constant catch (CC) strategies (in tonnes), such that values are P$(B_t > 0.2B_0)$. ", refCC.sentence, maxCatSentence))
+	if (use.agile && !is.null('0.2B0')) {
+		if (is.renso) {
+			gmu.20B0.CCs.low = adjAgile(`0.2B0`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.20B0.CCs.low)
+		} else {
+			gmu.20B0.CCs.out = adjAgile(`0.2B0`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.20B0.CCs.out)
+		}
+	} else if(exists("BRPpList") && !is.null(BRPpList$CC$'0.2B0')) {
+		tab20B0  = adjRnam(BRPpList$CC$'0.2B0'[,refYears])
+		xtab20B0 = texArray(tab20B0, table.caption=tabcap, table.label=tablab, sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25, alignHRC=c("l","r","r") )
 		gmu.20B0.CCs.out = xtab20B0$tabfile
 		tput(gmu.20B0.CCs.out)
 	}
 	if(exists("BRPpList") && !is.null(BRPpList$HR$'0.2B0')) {
 		xtab20B02 = texArray(BRPpList$HR$'0.2B0'[,refYears], table.label=paste0("tab:",prefix,"gmu.20B0.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for an alternative reference point $0.2 B_0$ featuring current- and ",projYearsNum," year projections for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > 0.2 B_0)$. ", refHR.sentence, maxCatSentence)) )
+			table.caption=eval(paste0(name, ": decision table for an alternative reference point $0.2 B_0$ featuring current- and ", projYearsNum, " year projections for a range of harvest rate (HR) strategies, such that values are P$(B_t > 0.2 B_0)$. ", refHR.sentence, maxCatSentence)) )
 		gmu.20B0.HRs.out = xtab20B02$tabfile
 		tput(gmu.20B0.HRs.out)
 	}
+
 	##--- Alt.USR P(Bt>0.4B0) --------------
-	if(exists("BRPpList") && !is.null(BRPpList$CC$'0.4B0')) {
-		xtab40B0 = texArray(BRPpList$CC$'0.4B0'[,refYears], table.label=paste0("tab:",prefix,"gmu.40B0.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for an alternative reference point $0.4 B_0$ featuring current- and ",projYearsNum," year projections for a range of \\itbf{constant catch} strategies, such that values are P$(B_t > 0.4 B_0)$. ", refCC.sentence, maxCatSentence)) )
+	tablab = paste0("tab:",prefix,"gmu.40B0.CCs")
+	tabcap = eval(paste0(prefix.cap, ": decision table for the reference point 0.4$B_0$ featuring current- and ", projYearsNum, "-year projections for a range of constant catch (CC) strategies (in tonnes), such that values are P$(B_t > 0.4B_0)$. ", refCC.sentence, maxCatSentence))
+	if (use.agile && !is.null('0.4B0')) {
+		if (is.renso) {
+			gmu.40B0.CCs.low = adjAgile(`0.4B0`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.40B0.CCs.low)
+		} else {
+			gmu.40B0.CCs.out = adjAgile(`0.4B0`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(gmu.40B0.CCs.out)
+		}
+	} else if(exists("BRPpList") && !is.null(BRPpList$CC$'0.4B0')) {
+		tab40B0  = adjRnam(BRPpList$CC$'0.4B0'[,refYears])
+		xtab40B0 = texArray(tab40B0, table.caption=tabcap, table.label=tablab, sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25, alignHRC=c("l","r","r") )
 		gmu.40B0.CCs.out = xtab40B0$tabfile
 		tput(gmu.40B0.CCs.out)
 	}
 	if(exists("BRPpList") && !is.null(BRPpList$HR$'0.4B0')) {
 		xtab40B02 = texArray(BRPpList$HR$'0.4B0'[,refYears], table.label=paste0("tab:",prefix,"gmu.40B0.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25,
-			table.caption=eval(paste0(name, ": decision table for an alternative reference point $0.4 B_0$ featuring current- and ",projYearsNum," year projections for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > 0.4 B_0)$. ", refHR.sentence, maxCatSentence)) )
+			table.caption=eval(paste0(name, ": decision table for an alternative reference point $0.4 B_0$ featuring current- and ",projYearsNum," year projections for a range of harvest rate (HR) strategies, such that values are P$(B_t > 0.4 B_0)$. ", refHR.sentence, maxCatSentence)) )
 		gmu.40B0.HRs.out = xtab40B02$tabfile
 		tput(gmu.40B0.HRs.out)
 	}
@@ -3451,350 +3548,405 @@ tabSS.decision <- function(istock="YMR", prefix="ymr.", compo,
 	shortYrs     = intersect(shortYrs,allYrs)
 
 	##--- A2 criterion 0.5B0 COSEWIC short --------
-	if (exists("BRPpList") && !is.null(BRPpList$CC$'0.5B0')) {
-		mess = paste0(name, ": decision table for COSEWIC reference criterion A2 `Endangered' featuring current- and ", Npyrs, "-year projections and for a range of \\itbf{constant catch} strategies, such that values are P$(B_t > 0.5 B_0)$.", refCC.sentence)
-		cosewic.50B0.CCs.out = texArray(BRPpList$CC$'0.5B0'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50B0.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+	tablab = paste0("tab:",prefix,"cosewic.50B0.CCs")
+	tabcap = eval(paste0(prefix.cap, ": decision table for COSEWIC reference criterion A2 `Endangered' featuring current- and ", Npyrs,"-year projections for a range of constant catch (CC) strategies (in tonnes), such that values are P$(B_t > 0.5B_0)$. ", refCC.sentence, maxCatSentence))
+	if (use.agile && !is.null('0.5B0')) {
+		if (is.renso) {
+			cosewic.50B0.CCs.low = adjAgile(`0.5B0`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(cosewic.50B0.CCs.low)
+		} else {
+			cosewic.50B0.CCs.out = adjAgile(`0.5B0`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(cosewic.50B0.CCs.out)
+		}
+	} else if (exists("BRPpList") && !is.null(BRPpList$CC$'0.5B0')) {
+		tab50B0  = adjRnam(BRPpList$CC$'0.5B0'[,shortYrs])
+		cosewic.50B0.CCs.out = texArray(tab50B0, table.caption=tabcap, table.label=tablab, sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25, alignHRC=c("l","r","r") )$tabfile
 		tput(cosewic.50B0.CCs.out)
 	}
+
 	##--- A2 criterion 0.7B0 COSEWIC short --------
-	if (exists("BRPpList") && !is.null(BRPpList$CC$'0.7B0')) {
-		mess = paste0(name, ": decision table for COSEWIC reference criterion A2 `Threatened' featuring current- and ", Npyrs, "-year projections and for a range of \\itbf{constant catch} strategies, such that values are P$(B_t > 0.7 B_0)$.", refCC.sentence)
-		cosewic.70B0.CCs.out = texArray(BRPpList$CC$'0.7B0'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.70B0.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+	tablab = paste0("tab:",prefix,"cosewic.70B0.CCs")
+	tabcap = eval(paste0(prefix.cap, ": decision table for COSEWIC reference criterion A2 `Threatened' featuring current- and ", Npyrs,"-year projections for a range of constant catch (CC) strategies (in tonnes), such that values are P$(B_t > 0.7B_0)$. ", refCC.sentence, maxCatSentence))
+	if (use.agile && !is.null('0.7B0')) {
+		if (is.renso) {
+			cosewic.70B0.CCs.low = adjAgile(`0.7B0`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(cosewic.70B0.CCs.low)
+		} else {
+			cosewic.70B0.CCs.out = adjAgile(`0.7B0`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(cosewic.70B0.CCs.out)
+		}
+	} else if (exists("BRPpList") && !is.null(BRPpList$CC$'0.7B0')) {
+		tab70B0  = adjRnam(BRPpList$CC$'0.7B0'[,shortYrs])
+		cosewic.70B0.CCs.out = texArray(tab70B0, table.caption=tabcap, table.label=tablab, sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25, alignHRC=c("l","r","r") )$tabfile
 		tput(cosewic.70B0.CCs.out)
 	}
+
 	##--- A2 decline <=30pct COSEWIC short --------
-	if (exists("BRPpList") && !is.null(BRPpList$CC$'0.3Gen')) {
-		mess = paste0(name, ": probability of satisfying the A2 criterion of $\\leq 30 \\%$ decline from ", Ngen, " generations (", Ngen*gen1, " years) earlier featuring current- and ", Npyrs, "-year projections and for a range of \\itbf{constant catch} strategies. ", refCC.sentence, maxCatSentence)
-		cosewic.30Gen.CCs.out = texArray(BRPpList$CC$'0.3Gen'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.30Gen.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+	tablab = paste0("tab:",prefix,"cosewic.30Gen.CCs")
+	tabcap = eval(paste0(prefix.cap, ": probability of satisfying the A2 criterion of $\\\\leq 30\\\\pc$ decline from ", Ngen, " generations (", Ngen*gen1, " years) earlier featuring current- and ", Npyrs, "-year projections and for a range of constant catch (CC) strategies. ", refCC.sentence, maxCatSentence))
+	if (use.agile && !is.null('0.3Gen')) {
+		if (is.renso) {
+			cosewic.30Gen.CCs.low = adjAgile(`0.3Gen`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(cosewic.30Gen.CCs.low)
+		} else {
+			cosewic.30Gen.CCs.out = adjAgile(`0.3Gen`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(cosewic.30Gen.CCs.out)
+		}
+	} else if (exists("BRPpList") && !is.null(BRPpList$CC$'0.3Gen')) {
+		tab30Gen  = adjRnam(BRPpList$CC$'0.3Gen'[,shortYrs])
+		cosewic.30Gen.CCs.out = texArray(tab30Gen, table.caption=tabcap, table.label=tablab, sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25, alignHRC=c("l","r","r") )$tabfile
 		tput(cosewic.30Gen.CCs.out)
 	}
+
 	##--- A2 decline <=50pct COSEWIC short --------
-	if (exists("BRPpList") && !is.null(BRPpList$CC$'0.5Gen')) {
-		mess = paste0(name, ": probability of satisfying the A2 criterion of $\\leq 50 \\%$ decline from ", Ngen, " generations (", Ngen*gen1, " years) earlier featuring current- and ", Npyrs, "-year projections and for a range of \\itbf{constant catch} strategies. ", refCC.sentence, maxCatSentence)
-		cosewic.50Gen.CCs.out = texArray(BRPpList$CC$'0.5Gen'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50Gen.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+	tablab = paste0("tab:",prefix,"cosewic.50Gen.CCs")
+	tabcap = eval(paste0(prefix.cap, ": probability of satisfying the A2 criterion of $\\\\leq 50\\\\pc$ decline from ", Ngen, " generations (", Ngen*gen1, " years) earlier featuring current- and ", Npyrs, "-year projections and for a range of constant catch (CC) strategies. ", refCC.sentence, maxCatSentence))
+	if (use.agile && !is.null('0.5Gen')) {
+		if (is.renso) {
+			cosewic.50Gen.CCs.low = adjAgile(`0.5Gen`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(cosewic.50Gen.CCs.low)
+		} else {
+			cosewic.50Gen.CCs.out = adjAgile(`0.5Gen`$tabfile, tablab=tablab, tabcap=tabcap)
+			tput(cosewic.50Gen.CCs.out)
+		}
+	} else if (exists("BRPpList") && !is.null(BRPpList$CC$'0.5Gen')) {
+		tab50Gen  = adjRnam(BRPpList$CC$'0.5Gen'[,shortYrs])
+		cosewic.50Gen.CCs.out = texArray(tab50Gen, table.caption=tabcap, table.label=tablab, sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25, alignHRC=c("l","r","r") )$tabfile
 		tput(cosewic.50Gen.CCs.out)
 	}
 #browser();return()
-	save(
-	"gmu.LRP.CCs.out", "gmu.USR.CCs.out", "gmu.Bmsy.CCs.out", "gmu.umsy.CCs.out",
-	"gmu.Bcurr.CCs.out", "gmu.ucurr.CCs.out", "gmu.20B0.CCs.out", "gmu.40B0.CCs.out",
-	"cosewic.50B0.CCs.out", "cosewic.70B0.CCs.out", "cosewic.30Gen.CCs.out", "cosewic.50Gen.CCs.out",
-	file=paste0(prefix,"decision.tables", ifelse(useRlow, paste0(".Rlow(q=",pad0(qRlow*100,2),")"),""), ".rda")
-	)
+	if (is.renso) {
+		save(
+		"gmu.LRP.CCs.low", "gmu.USR.CCs.low", "gmu.Bmsy.CCs.low", "gmu.umsy.CCs.low",
+		"gmu.Bcurr.CCs.low", "gmu.ucurr.CCs.low", "gmu.20B0.CCs.low", "gmu.40B0.CCs.low",
+		"cosewic.50B0.CCs.low", "cosewic.70B0.CCs.low", "cosewic.30Gen.CCs.low", "cosewic.50Gen.CCs.low",
+		file=paste0("rlow.decision.tables", ifelse(useRlow, paste0(".Rlow(q=",pad0(qRlow*100,2),")"),""), ".rda")
+		)
+	} else {
+		save(
+		"gmu.LRP.CCs.out", "gmu.USR.CCs.out", "gmu.Bmsy.CCs.out", "gmu.umsy.CCs.out",
+		"gmu.Bcurr.CCs.out", "gmu.ucurr.CCs.out", "gmu.20B0.CCs.out", "gmu.40B0.CCs.out",
+		"cosewic.50B0.CCs.out", "cosewic.70B0.CCs.out", "cosewic.30Gen.CCs.out", "cosewic.50Gen.CCs.out",
+		file=paste0(prefix,"decision.tables", ifelse(useRlow, paste0(".Rlow(q=",pad0(qRlow*100,2),")"),""), ".rda")
+		)
+	}
+	.flush.cat("Finished building decision tables.","\n")
 
-
-#	##=====GMU -- Guidance for Rebuilding=====
-#
-#	## Note: will need to modify labels when more than one stock but leave as is for BOR 2019.
-#
-#	refYears = as.character(currYear:pgenYear)
-#	pgenYearsNum = length(refYears)
-#	if (pgenYearsNum > 11) {
-#		allYrs = as.character(currYear + seq(0, pgenYearsNum-1, 1))
-#		Npyrs  = length(currYear:projYear)-1
-#
-#		shortYrs = as.character(currYear + seq(0,Npyrs,1))
-#		shortYrs  = intersect(shortYrs,allYrs)
-#	
-#		## Assumes 3 generations:
-#		## longYrs  = as.character(currYear + c(seq(0,round(2*gen1),round(gen1/4)),seq(2*gen1,3*gen1,gen1/2)[-1]))
-#		## longYrs  = intersect(longYrs,allYrs)
-#
-#		## Usual shuffling shit:
-#		yrs5  = intersect(seq(2000,3000,5),currYear:pgenYear)
-#		yrs10 = rev(seq(rev(yrs5)[1],currYear,-10))
-#		yrs5  = rev(seq(rev(yrs5)[1],currYear,-5))
-#		longYrs = as.character(c(currYear, yrs5[1:5],setdiff(yrs10,yrs5[1:5])))
-#
-##browser();return()
-#
-#		##--- LRP Rebuild P(Bt>0.4Bmsy) ----------
-#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.4Bmsy')) {
-#			mess = paste0(name, ": decision table for the limit reference point $0.4 \\Bmsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{constant catch} strategies, such that values are P$(B_t > 0.4 \\Bmsy)$.", refCC.sentence)
-#			gmu.LRP.CCl.out = texArray(BRPpList$CC$'0.4Bmsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.LRP.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(gmu.LRP.CCl.out)
-#		}
-#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.4Bmsy')) {
-#			mess = paste0(name, ": decision table for the limit reference point $0.4 \\Bmsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > 0.4 \\Bmsy)$.", refHR.sentence)
-#			gmu.LRP.HRl.out = texArray(BRPpList$HR$'0.4Bmsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.LRP.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(gmu.LRP.HRl.out)
-#		}
-#		##--- USR Rebuild P(Bt>0.8Bmsy) ----------
-#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.8Bmsy')) {
-#			mess = paste0(name, ": decision table for the upper stock reference $0.8 \\Bmsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{constant catch} strategies, such that values are P$(B_t > 0.8 \\Bmsy)$.", refCC.sentence)
-#			gmu.USR.CCl.out = texArray(BRPpList$CC$'0.8Bmsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.USR.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(gmu.USR.CCl.out)
-#		}
-#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.8Bmsy')) {
-#			mess = paste0(name, ": decision table for the upper stock reference $0.8 \\Bmsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > 0.8 \\Bmsy)$.", refHR.sentence)
-#			gmu.USR.HRl.out = texArray(BRPpList$HR$'0.8Bmsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.USR.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(gmu.USR.HRl.out)
-#		}
-#		##--- Bmsy Rebuild P(Bt>Bmsy) ----------
-#		if (exists("BRPpList") && !is.null(BRPpList$CC$'Bmsy')) {
-#			mess = paste0(name, ": decision table for biomass at maximum sustainable yield $\\Bmsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{constant catch} strategies, such that values are P$(B_t > \\Bmsy)$.", refCC.sentence)
-#			gmu.Bmsy.CCl.out = texArray(BRPpList$CC$'Bmsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.Bmsy.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(gmu.Bmsy.CCl.out)
-#		}
-#		if (exists("BRPpList") && !is.null(BRPpList$HR$'Bmsy')) {
-#			mess = paste0(name, ": decision table for biomass at maximum sustainable yield $\\Bmsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > \\Bmsy)$.", refHR.sentence)
-#			gmu.Bmsy.HRl.out = texArray(BRPpList$HR$'Bmsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.Bmsy.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(gmu.Bmsy.HRl.out)
-#		}
-#		##--- umsy Rebuild P(ut>umsy) ----------
-#		if (exists("URPpList") && !is.null(URPpList$CC$'umsy')) {
-#			mess = paste0(name, ": decision table for harvest rate at maximum sustainable yield $\\umsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{constant catch} strategies, such that values are P$(u_t < \\umsy)$.", refCC.sentence)
-#			gmu.umsy.CCl.out = texArray(URPpList$CC$'umsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.umsy.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(gmu.umsy.CCl.out)
-#		}
-#		if (exists("URPpList") && !is.null(URPpList$HR$'umsy')) {
-#			mess = paste0(name, ": decision table for harvest rate at maximum sustainable yield $\\umsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{harvest rate} strategies, such that values are P$(u_t < \\umsy)$.", refHR.sentence)
-#			gmu.umsy.HRl.out = texArray(URPpList$HR$'umsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.umsy.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(gmu.umsy.HRl.out)
-#		}
-#		##--- Bcurr Rebuild P(Bt>Bcurr) ----------
-#		if (exists("BRPpList") && !is.null(BRPpList$CC$'Bcurr')) {
-#			mess = paste0(name, ": decision table for comparing projected biomass to current biomass $B_{", currYear, "}$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{constant catch} strategies, such that values are P$(B_t > B_{", currYear, "})$.", refCC.sentence)
-#			gmu.Bcurr.CCl.out = texArray(BRPpList$CC$'Bcurr'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.Bcurr.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(gmu.Bcurr.CCl.out)
-#		}
-#		if (exists("BRPpList") && !is.null(BRPpList$HR$'Bcurr')) {
-#			mess = paste0(name, ": decision table for comparing projected biomass to current biomass $B_{", currYear, "}$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > B_{", currYear, "})$.", refHR.sentence)
-#			gmu.Bcurr.HRl.out = texArray(BRPpList$HR$'Bcurr'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.Bcurr.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(gmu.Bcurr.HRl.out)
-#		}
-#		##--- ucurr Rebuild P(ut>ucurr) ----------
-#		if (exists("URPpList") && !is.null(URPpList$CC$'ucurr')) {
-#			mess = paste0(name, ": decision table for comparing projected harvest rate to current harvest rate $u_{", currYear-1, "}$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{constant catch} strategies, such that values are P$(u_t < u_{", currYear-1, "})$.", refCC.sentence)
-#			gmu.ucurr.CCl.out = texArray(URPpList$CC$'ucurr'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.ucurr.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(gmu.ucurr.CCl.out)
-#		}
-#		if (exists("URPpList") && !is.null(URPpList$HR$'ucurr')) {
-#			mess = paste0(name, ": decision table for comparing projected harvest rate to current harvest rate $u_{", currYear-1, "}$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{harvest rate} strategies, such that values are P$(u_t < u_{", currYear-1, "})$.", refHR.sentence)
-#			gmu.ucurr.HRl.out = texArray(URPpList$HR$'ucurr'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.ucurr.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(gmu.ucurr.HRl.out)
-#		}
-#		##--- 0.2B0 Rebuild P(Bt>0.2B0) ----------
-#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.2B0')) {
-#			mess = paste0(name, ": decision table for alternative limit reference point $0.2B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{constant catch} strategies, such that values are P$(B_t > 0.2B_0)$.", refCC.sentence)
-#			gmu.20B0.CCl.out = texArray(BRPpList$CC$'0.2B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.20B0.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(gmu.20B0.CCl.out)
-#		}
-#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.2B0')) {
-#			mess = paste0(name, ": decision table for alternative limit reference point $0.2B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > 0.2B_0)$.", refHR.sentence)
-#			gmu.20B0.HRl.out = texArray(BRPpList$HR$'0.2B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.20B0.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(gmu.20B0.HRl.out)
-#		}
-#		##--- 0.4B0 Rebuild P(Bt>0.4B0) ----------
-#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.4B0')) {
-#			mess = paste0(name, ": decision table for alternative upper stock reference $0.4B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{constant catch} strategies, such that values are P$(B_t > 0.4B_0)$.", refCC.sentence)
-#			gmu.40B0.CCl.out = texArray(BRPpList$CC$'0.4B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.40B0.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(gmu.40B0.CCl.out)
-#		}
-#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.4B0')) {
-#			mess = paste0(name, ": decision table for alternative upper stock reference $0.4B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > 0.4B_0)$.", refHR.sentence)
-#			gmu.40B0.HRl.out = texArray(BRPpList$HR$'0.4B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.40B0.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(gmu.40B0.HRl.out)
-#		}
-#	}
-#	##=====COSEWIC -- Reference Criteria=====
-#	if (pgenYearsNum > 11) {
-#		##--- A2 decline <=50pct COSEWIC short --------
-#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.5Gen')) {
-#			mess = paste0(name, ": decision table for probabilities of satisfying the A2  criterion of $\\leq 50 \\%$ decline over ", Ngen, " generations (", Ngen*gen1, " years) for ", Npyrs, "-year projections and for a range of \\itbf{constant catch} strategies. ", refCC.sentence, maxCatSentence)
-#			cosewic.50Gen.CCs.out = texArray(BRPpList$CC$'0.5Gen'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50Gen.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(cosewic.50Gen.CCs.out)
-#		}
-#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.5Gen')) {
-#			mess = paste0(name, ": decision table for probabilities of satisfying the A2 criterion of $\\leq 50 \\%$ decline over ", Ngen, " generations (", Ngen*gen1, " years) for ", Npyrs, "-year projections and for a range of \\itbf{harvest rate} strategies. ", refHR.sentence, maxCatSentence)
-#			cosewic.50Gen.HRs.out = texArray(BRPpList$HR$'0.5Gen'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50Gen.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(cosewic.50Gen.HRs.out)
-#		}
-#		##--- A2 decline <=30pct COSEWIC short --------
-#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.3Gen')) {
-#			mess = paste0(name, ": decision table for probabilities of satisfying the A2 criterion of $\\leq 30 \\%$ decline over ", Ngen, " generations (", Ngen*gen1, " years) for ", Npyrs, "-year projections and for a range of \\itbf{constant catch} strategies. ", refCC.sentence, maxCatSentence)
-#			cosewic.30Gen.CCs.out = texArray(BRPpList$CC$'0.3Gen'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.30Gen.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(cosewic.30Gen.CCs.out)
-#		}
-#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.3Gen')) {
-#			mess = paste0(name, ": decision table for probabilities of satisfying the A2 criterion of $\\leq 30 \\%$ decline over ", Ngen, " generations (", Ngen*gen1, " years) for ", Npyrs, "-year projections and for a range of \\itbf{harvest rate} strategies. ", refHR.sentence, maxCatSentence)
-#			cosewic.30Gen.HRs.out = texArray(BRPpList$HR$'0.3Gen'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.30Gen.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(cosewic.30Gen.HRs.out)
-#		}
-#		##--- A2 criterion 0.5B0 COSEWIC short --------
-#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.5B0')) {
-#			mess = paste0(name, ": decision table for reference criterion $0.5 B_0$ for ", Npyrs, "-year projections and for a range of \\itbf{constant catch} strategies, such that values are P$(B_t > 0.5 B_0)$.", refCC.sentence)
-#			cosewic.50B0.CCs.out = texArray(BRPpList$CC$'0.5B0'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50B0.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(cosewic.50B0.CCs.out)
-#		}
-#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.5B0')) {
-#			mess = paste0(name, ": decision table for reference criterion $0.5 B_0$ for ", Npyrs, "-year projections and for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > 0.5 B_0)$.", refHR.sentence)
-#			cosewic.50B0.HRs.out = texArray(BRPpList$HR$'0.5B0'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50B0.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(cosewic.50B0.HRs.out)
-#		}
-#		##--- A2 criterion 0.7B0 COSEWIC short --------
-#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.7B0')) {
-#			mess = paste0(name, ": decision table for reference criterion $0.7 B_0$ for ", Npyrs, "-year projections and for a range of \\itbf{constant catch} strategies, such that values are P$(B_t > 0.7 B_0)$.", refCC.sentence)
-#			cosewic.70B0.CCs.out = texArray(BRPpList$CC$'0.7B0'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.70B0.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(cosewic.70B0.CCs.out)
-#		}
-#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.7B0')) {
-#			mess = paste0(name, ": decision table for reference criterion $0.7 B_0$ for ", Npyrs, "-year projections and for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > 0.7 B_0)$.", refHR.sentence)
-#			cosewic.70B0.HRs.out = texArray(BRPpList$HR$'0.7B0'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.70B0.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(cosewic.70B0.HRs.out)
-#		}
-#		##--- A2 decline <=50pct COSEWIC long ---------
-#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.5Gen')) {
-#			mess = paste0(name, ": decision table for probabilities of satisfying the A2  criterion of $\\leq 50 \\%$ decline over ", Ngen, " generations (", Ngen*gen1, " years) for selected projection years and for a range of \\itbf{constant catch} strategies. ", refCC.sentence, maxCatSentence)
-#			cosewic.50Gen.CCl.out = texArray(BRPpList$CC$'0.5Gen'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50Gen.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(cosewic.50Gen.CCl.out)
-#		}
-#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.5Gen')) {
-#			mess = paste0(name, ": decision table for probabilities of satisfying the A2 criterion of $\\leq 50 \\%$ decline over", Ngen, " generations (", Ngen*gen1, " years) for selected projection years and for a range of \\itbf{harvest rate} strategies. ", refHR.sentence, maxCatSentence)
-#			cosewic.50Gen.HRl.out = texArray(BRPpList$HR$'0.5Gen'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50Gen.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(cosewic.50Gen.HRl.out)
-#		}
-#		##--- A2 decline <=30pct COSEWIC long ---------
-#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.3Gen')) {
-#			mess = paste0(name, ": decision table for probabilities of satisfying the A2 criterion of $\\leq 30 \\%$ decline over ", Ngen, " generations (", Ngen*gen1, " years) for selected projection years and for a range of \\itbf{constant catch} strategies. ", refCC.sentence, maxCatSentence)
-#			cosewic.30Gen.CCl.out = texArray(BRPpList$CC$'0.3Gen'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.30Gen.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(cosewic.30Gen.CCl.out)
-#		}
-#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.3Gen')) {
-#			mess = paste0(name, ": decision table for probabilities of satisfying the A2 criterion of $\\leq 30 \\%$ decline over ", Ngen, " generations (", Ngen*gen1, " years) for selected projection years and for a range of \\itbf{harvest rate} strategies. ", refHR.sentence, maxCatSentence)
-#			cosewic.30Gen.HRl.out = texArray(BRPpList$HR$'0.3Gen'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.30Gen.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(cosewic.30Gen.HRl.out)
-#		}
-#		##--- A2 criterion 0.5B0 COSEWIC long ---------
-#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.5B0')) {
-#			mess = paste0(name, ": decision table for reference criterion $0.5 B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{constant catch} strategies, such that valuTabes are P$(B_t > 0.5 B_0)$.", refCC.sentence)
-#			cosewic.50B0.CCl.out = texArray(BRPpList$CC$'0.5B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50B0.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(cosewic.50B0.CCl.out)
-#		}
-#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.5B0')) {
-#			mess = paste0(name, ": decision table for reference criterion $0.5 B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > 0.5 B_0)$.", refHR.sentence)
-#			cosewic.50B0.HRl.out = texArray(BRPpList$HR$'0.5B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50B0.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(cosewic.50B0.HRl.out)
-#		}
-#		##--- A2 criterion 0.7B0 COSEWIC long ---------
-#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.7B0')) {
-#			mess = paste0(name, ": decision table for reference criterion $0.7 B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{constant catch} strategies, such that values are P$(B_t > 0.7 B_0)$.", refCC.sentence)
-#			cosewic.70B0.CCl.out = texArray(BRPpList$CC$'0.7B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.70B0.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
-#			tput(cosewic.70B0.CCl.out)
-#		}
-#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.7B0')) {
-#			mess = paste0(name, ": decision table for reference criterion $0.7 B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of \\itbf{harvest rate} strategies, such that values are P$(B_t > 0.7 B_0)$.", refHR.sentence)
-#			cosewic.70B0.HRl.out = texArray(BRPpList$HR$'0.7B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.70B0.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
-#			tput(cosewic.70B0.HRl.out)
-#		}
-#	}
-#	##=====Time to Targets=====
-#	if (pgenYearsNum > 11) {
-#		sanicol <- function(x){
-#			sani = 
-#				gsub("Gen", "$B_{t\\\\text{-}\\\\mathrm{G}}$",  ## just call it 'G' and specifiy how many G in table caption
-#				gsub("Bcurr",paste0("$B_{", currYear, "}$"),
-#				gsub("B0","$B_0$",
-#				gsub("Bmsy","$B_\\\\mathrm{MSY}$",
-#				gsub("0.8Bmsy","USR",
-#				gsub("0.4Bmsy","LRP",
-#			x))))))
-#			return(sani)
-#		}
-#		#print(sanicol(colnames(Ttab.conf$'0.50')))
-#	
-#		##--- Time to achieve target with 50% confidence
-#		if (exists("Ttab.conf") && !is.null(Ttab.conf$CC$'0.50')) {
-#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 50\\%, for for a range of \\itbf{constant catch} strategies. An estimated time of 0 means that the condition is satisfied and remains so over the ", Ngen*gen1, "-year projection; an estimated time of ", Ngen*gen1, " means that the condition never becomes satisfied over the ", Ngen, "-generation projection. A further condition is that the probability of satisfying the condition must increase for two consecutive years. Columns respectively correspond to the provisional DFO reference points: LRP~= $0.4\\Bmsy$, USR~= $0.8\\Bmsy$; alternative reference points: $\\Bmsy$, $B_{", currYear, "}$, $0.2B_0$, $0.4B_0$; and COSEWIC reference criteria: 0.5$B_{t\\text{-}\\mathrm{G}}$~= $\\leq 50\\%$ decline over ", Ngen, " generations (G), 0.7$B_{t\\text{-}\\mathrm{G}}$~= $\\leq 30\\%$ decline over ", Ngen, "G, $0.5B_0$, $0.7B_0$.")
-#			Ttime50.CC.out = capture.output(print(xtable(Ttab.conf$CC$'0.50', caption=eval(mess), label=paste0("tab:",prefix,"Ttime50.CC"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
-#			tput(Ttime50.CC.out)
-#		}
-#		if (exists("Ttab.conf") && !is.null(Ttab.conf$HR$'0.50')) {
-#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 50\\%, for for a range of \\itbf{harvest rate} strategies. See caption in Table~\\ref{tab:", prefix, "Ttime50.CC} for further details")
-#			Ttime50.HR.out = capture.output(print(xtable(Ttab.conf$HR$'0.50', caption=eval(mess), label=paste0("tab:",prefix,"Ttime50.HR"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
-#			tput(Ttime50.HR.out)
-#		}
-#		##--- Time to achieve target with 65% confidence
-#		if (exists("Ttab.conf") && !is.null(Ttab.conf$CC$'0.65')) {
-#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 65\\%, for for a range of \\itbf{constant catch} strategies. See caption in Table~\\ref{tab:", prefix, "Ttime50.CC} for further details.")
-#			Ttime65.CC.out = capture.output(print(xtable(Ttab.conf$CC$'0.65', caption=eval(mess), label=paste0("tab:",prefix,"Ttime65.CC"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
-#			tput(Ttime65.CC.out)
-#		}
-#		if (exists("Ttab.conf") && !is.null(Ttab.conf$HR$'0.65')) {
-#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 65\\%, for for a range of \\itbf{harvest rate} strategies. See caption in Table~\\ref{tab:", prefix, "Ttime50.CC} for further details.")
-#			Ttime65.HR.out = capture.output(print(xtable(Ttab.conf$HR$'0.65', caption=eval(mess), label=paste0("tab:",prefix,"Ttime65.HR"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
-#			tput(Ttime65.HR.out)
-#		}
-#		##--- Time to achieve target with 80% confidence
-#		if (exists("Ttab.conf") && !is.null(Ttab.conf$CC$'0.80')) {
-#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 80\\%, for for a range of \\itbf{constant catch} strategies. See caption in Table~\\ref{tab:", prefix, "Ttime50.CC} for further details.")
-#			Ttime80.CC.out = capture.output(print(xtable(Ttab.conf$CC$'0.80', caption=eval(mess), label=paste0("tab:",prefix,"Ttime80.CC"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
-#			tput(Ttime80.CC.out)
-#		}
-#		if (exists("Ttab.conf") && !is.null(Ttab.conf$HR$'0.80')) {
-#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 80\\%, for for a range of \\itbf{harvest rate} strategies. See caption in Table~\\ref{tab:", prefix, "Ttime50.CC} for further details.")
-#			Ttime80.HR.out = capture.output(print(xtable(Ttab.conf$HR$'0.80', caption=eval(mess), label=paste0("tab:",prefix,"Ttime80.HR"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
-#			tput(Ttime80.HR.out)
-#		}
-#		##--- Time to achieve target with 95% confidence
-#		if (exists("Ttab.conf") && !is.null(Ttab.conf$CC$'0.95')) {
-#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 95\\%, for for a range of \\itbf{constant catch} strategies. See caption in Table~\\ref{tab:", prefix, "Ttime50.CC} for further details.")
-#			Ttime95.CC.out = capture.output(print(xtable(Ttab.conf$CC$'0.95', caption=eval(mess), label=paste0("tab:",prefix,"Ttime95.CC"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
-#			tput(Ttime95.CC.out)
-#		}
-#		if (exists("Ttab.conf") && !is.null(Ttab.conf$HR$'0.95')) {
-#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 95\\%, for for a range of \\itbf{harvest rate} strategies. See caption in Table~\\ref{tab:", prefix, "Ttime50.CC} for further details.")
-#			Ttime95.HR.out = capture.output(print(xtable(Ttab.conf$HR$'0.95', caption=eval(mess), label=paste0("tab:",prefix,"Ttime95.HR"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
-#			tput(Ttime95.HR.out)
-#		}
-#	}
-#	save(
-#	"gmu.LRP.CCs.out", "gmu.USR.CCs.out", "gmu.Bmsy.CCs.out", "gmu.umsy.CCs.out",
-#	"gmu.Bcurr.CCs.out", "gmu.ucurr.CCs.out", "gmu.20B0.CCs.out", "gmu.40B0.CCs.out",
-#	"gmu.LRP.CCs.out", "gmu.LRP.HRs.out", "gmu.USR.CCs.out", "gmu.USR.HRs.out",
-#	"gmu.Bmsy.CCs.out", "gmu.Bmsy.HRs.out", "gmu.umsy.CCs.out", "gmu.umsy.HRs.out",
-#	"gmu.Bcurr.CCs.out", "gmu.Bcurr.HRs.out", "gmu.ucurr.CCs.out", "gmu.ucurr.HRs.out",
-#	"gmu.20B0.CCs.out", "gmu.20B0.HRs.out", "gmu.40B0.CCs.out", "gmu.40B0.HRs.out",
-#	"gmu.LRP.CCl.out", "gmu.LRP.HRl.out", "gmu.USR.CCl.out", "gmu.USR.HRl.out",
-#	"gmu.Bmsy.CCl.out", "gmu.Bmsy.HRl.out", "gmu.umsy.CCl.out", "gmu.umsy.HRl.out",
-#	"gmu.Bcurr.CCl.out", "gmu.Bcurr.HRl.out", "gmu.ucurr.CCl.out", "gmu.ucurr.HRl.out",
-#	"gmu.20B0.CCl.out", "gmu.20B0.HRl.out", "gmu.40B0.CCl.out", "gmu.40B0.HRl.out",
-#	"cosewic.50Gen.CCs.out", "cosewic.50Gen.HRs.out", "cosewic.30Gen.CCs.out", "cosewic.30Gen.HRs.out",
-#	"cosewic.50B0.CCs.out", "cosewic.50B0.HRs.out", "cosewic.70B0.CCs.out", "cosewic.70B0.HRs.out",
-#	"cosewic.50Gen.CCl.out", "cosewic.50Gen.HRl.out", "cosewic.30Gen.CCl.out", "cosewic.30Gen.HRl.out",
-#	"cosewic.50B0.CCl.out", "cosewic.50B0.HRl.out", "cosewic.70B0.CCl.out", "cosewic.70B0.HRl.out",
-#	"Ttime50.CC.out", "Ttime50.HR.out", "Ttime65.CC.out", "Ttime65.HR.out",
-#	"Ttime80.CC.out", "Ttime80.HR.out", "Ttime95.CC.out", "Ttime95.HR.out",
-#	file=paste0(prefix,"decision.tables", ifelse(useRlow, paste0(".Rlow(q=",pad0(qRlow*100,2),")"),""), ".rda") )
-
-##	## Rob Tadey asked for exploitation rate and probability of Ut less than Umsy
-##	U.tadey  = t(apply(U.mcmc, 2, quantile, quants3))
-##	colnames(U.tadey) = paste0("Q.", formatC(quants3*100, digits=0, width=2, format="d", flag="0"))
-##	N.tadey  = apply(U.mcmc<Umsy,2,sum)
-##	P.tadey  = N.tadey/nrow(U.mcmc)
-##	U.tadey  = data.frame(U.tadey, P.MSY=P.tadey)
-##	U.tadey2 = splitTab(U.tadey, np=2, row.label="Year")
-##	names.tadey = colnames(U.tadey2)
-##	#names.tadey = gsub("Q\\.", "Q$_{0.", 
-##	#	gsub("P\\.MSY", "P($u_t<u_\\\\mathrm{MSY}$)", names.tadey))
-##	zq = grep("^Q",names.tadey)
-##	zp = grep("^P",names.tadey)
-##	#names.tadey[zq] = paste0(names.tadey[zq],"}$")
-##	names.tadey = gsub("^Q\\.(0)?","",
-##		gsub("P\\.MSY", "Prob", names.tadey))
-##	names.tadey[zq] = paste0(names.tadey[zq],"\\%")
-##	names(U.tadey2) = names.tadey
-##
-##	z = texArray(U.tadey2, zero="0", outnam="tempfile", sigdig=2, use.round=T, struts=T, table.label=paste0("tab:",prefix,"base.u.tadey"), tablewidth=6.5,
-##		table.caption = paste0("Quantiles (0.05, 0.5, 0.95) of annual exploitation rate $u_t$ (harvest rate~= catch divided by vulnerable biomass) from ", startYear, " to current model year ", prevYear, " and projected to ", projYear, " assuming a constant catch of ", catpol, "~t. Prob = P($u_t<u_\\mathrm{MSY}$).") )
-##	xtab.compo.U.tadey = (z$tabfile)
-##	tput(xtab.compo.U.tadey)
-#browser();return()
-
-	#out=texArray(U.tadey2,sigdig=2,use.round=T)
-	#xtab.compo.U.tadey = xtable(U.tadey2, label=paste0("tab:",prefix,"base.u.tadey"), digits=decdig,
-	#	caption=eval(paste0("Annual exploitation rate (expressed as harvest rate: catch over vulnerable biomass) from ", startYear, " to current model year ", prevYear, " and projected to ", projYear, " assuming a constant catch of ", round(recentCatchMean, dig=0), "~t. ")) )
-	#tput(xtab.compo.U.tadey)
+	rebuild=FALSE
+	if (rebuild){
+		###=====GMU -- Guidance for Rebuilding=====
+		#
+		#	## Note: will need to modify labels when more than one stock but leave as is for BOR 2019.
+		#
+		#	refYears = as.character(currYear:pgenYear)
+		#	pgenYearsNum = length(refYears)
+		#	if (pgenYearsNum > 11) {
+		#		allYrs = as.character(currYear + seq(0, pgenYearsNum-1, 1))
+		#		Npyrs  = length(currYear:projYear)-1
+		#
+		#		shortYrs = as.character(currYear + seq(0,Npyrs,1))
+		#		shortYrs  = intersect(shortYrs,allYrs)
+		#	
+		#		## Assumes 3 generations:
+		#		## longYrs  = as.character(currYear + c(seq(0,round(2*gen1),round(gen1/4)),seq(2*gen1,3*gen1,gen1/2)[-1]))
+		#		## longYrs  = intersect(longYrs,allYrs)
+		#
+		#		## Usual shuffling shit:
+		#		yrs5  = intersect(seq(2000,3000,5),currYear:pgenYear)
+		#		yrs10 = rev(seq(rev(yrs5)[1],currYear,-10))
+		#		yrs5  = rev(seq(rev(yrs5)[1],currYear,-5))
+		#		longYrs = as.character(c(currYear, yrs5[1:5],setdiff(yrs10,yrs5[1:5])))
+		#
+		##browser();return()
+		#
+		#		##--- LRP Rebuild P(Bt>0.4Bmsy) ----------
+		#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.4Bmsy')) {
+		#			mess = paste0(name, ": decision table for the limit reference point $0.4 \\Bmsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of constant catch (CC) strategies, such that values are P$(B_t > 0.4 \\Bmsy)$.", refCC.sentence)
+		#			gmu.LRP.CCl.out = texArray(BRPpList$CC$'0.4Bmsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.LRP.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(gmu.LRP.CCl.out)
+		#		}
+		#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.4Bmsy')) {
+		#			mess = paste0(name, ": decision table for the limit reference point $0.4 \\Bmsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of harvest rate (HR) strategies, such that values are P$(B_t > 0.4 \\Bmsy)$.", refHR.sentence)
+		#			gmu.LRP.HRl.out = texArray(BRPpList$HR$'0.4Bmsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.LRP.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(gmu.LRP.HRl.out)
+		#		}
+		#		##--- USR Rebuild P(Bt>0.8Bmsy) ----------
+		#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.8Bmsy')) {
+		#			mess = paste0(name, ": decision table for the upper stock reference $0.8 \\Bmsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of constant catch (CC) strategies, such that values are P$(B_t > 0.8 \\Bmsy)$.", refCC.sentence)
+		#			gmu.USR.CCl.out = texArray(BRPpList$CC$'0.8Bmsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.USR.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(gmu.USR.CCl.out)
+		#		}
+		#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.8Bmsy')) {
+		#			mess = paste0(name, ": decision table for the upper stock reference $0.8 \\Bmsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of harvest rate (HR) strategies, such that values are P$(B_t > 0.8 \\Bmsy)$.", refHR.sentence)
+		#			gmu.USR.HRl.out = texArray(BRPpList$HR$'0.8Bmsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.USR.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(gmu.USR.HRl.out)
+		#		}
+		#		##--- Bmsy Rebuild P(Bt>Bmsy) ----------
+		#		if (exists("BRPpList") && !is.null(BRPpList$CC$'Bmsy')) {
+		#			mess = paste0(name, ": decision table for biomass at maximum sustainable yield $\\Bmsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of constant catch (CC) strategies, such that values are P$(B_t > \\Bmsy)$.", refCC.sentence)
+		#			gmu.Bmsy.CCl.out = texArray(BRPpList$CC$'Bmsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.Bmsy.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(gmu.Bmsy.CCl.out)
+		#		}
+		#		if (exists("BRPpList") && !is.null(BRPpList$HR$'Bmsy')) {
+		#			mess = paste0(name, ": decision table for biomass at maximum sustainable yield $\\Bmsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of harvest rate (HR) strategies, such that values are P$(B_t > \\Bmsy)$.", refHR.sentence)
+		#			gmu.Bmsy.HRl.out = texArray(BRPpList$HR$'Bmsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.Bmsy.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(gmu.Bmsy.HRl.out)
+		#		}
+		#		##--- umsy Rebuild P(ut>umsy) ----------
+		#		if (exists("URPpList") && !is.null(URPpList$CC$'umsy')) {
+		#			mess = paste0(name, ": decision table for harvest rate at maximum sustainable yield $\\umsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of constant catch (CC) strategies, such that values are P$(u_t < \\umsy)$.", refCC.sentence)
+		#			gmu.umsy.CCl.out = texArray(URPpList$CC$'umsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.umsy.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(gmu.umsy.CCl.out)
+		#		}
+		#		if (exists("URPpList") && !is.null(URPpList$HR$'umsy')) {
+		#			mess = paste0(name, ": decision table for harvest rate at maximum sustainable yield $\\umsy$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of harvest rate (HR) strategies, such that values are P$(u_t < \\umsy)$.", refHR.sentence)
+		#			gmu.umsy.HRl.out = texArray(URPpList$HR$'umsy'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.umsy.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(gmu.umsy.HRl.out)
+		#		}
+		#		##--- Bcurr Rebuild P(Bt>Bcurr) ----------
+		#		if (exists("BRPpList") && !is.null(BRPpList$CC$'Bcurr')) {
+		#			mess = paste0(name, ": decision table for comparing projected biomass to current biomass $B_{", currYear, "}$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of constant catch (CC) strategies, such that values are P$(B_t > B_{", currYear, "})$.", refCC.sentence)
+		#			gmu.Bcurr.CCl.out = texArray(BRPpList$CC$'Bcurr'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.Bcurr.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(gmu.Bcurr.CCl.out)
+		#		}
+		#		if (exists("BRPpList") && !is.null(BRPpList$HR$'Bcurr')) {
+		#			mess = paste0(name, ": decision table for comparing projected biomass to current biomass $B_{", currYear, "}$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of harvest rate (HR) strategies, such that values are P$(B_t > B_{", currYear, "})$.", refHR.sentence)
+		#			gmu.Bcurr.HRl.out = texArray(BRPpList$HR$'Bcurr'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.Bcurr.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(gmu.Bcurr.HRl.out)
+		#		}
+		#		##--- ucurr Rebuild P(ut>ucurr) ----------
+		#		if (exists("URPpList") && !is.null(URPpList$CC$'ucurr')) {
+		#			mess = paste0(name, ": decision table for comparing projected harvest rate to current harvest rate $u_{", currYear-1, "}$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of constant catch (CC) strategies, such that values are P$(u_t < u_{", currYear-1, "})$.", refCC.sentence)
+		#			gmu.ucurr.CCl.out = texArray(URPpList$CC$'ucurr'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.ucurr.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(gmu.ucurr.CCl.out)
+		#		}
+		#		if (exists("URPpList") && !is.null(URPpList$HR$'ucurr')) {
+		#			mess = paste0(name, ": decision table for comparing projected harvest rate to current harvest rate $u_{", currYear-1, "}$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of harvest rate (HR) strategies, such that values are P$(u_t < u_{", currYear-1, "})$.", refHR.sentence)
+		#			gmu.ucurr.HRl.out = texArray(URPpList$HR$'ucurr'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.ucurr.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(gmu.ucurr.HRl.out)
+		#		}
+		#		##--- 0.2B0 Rebuild P(Bt>0.2B0) ----------
+		#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.2B0')) {
+		#			mess = paste0(name, ": decision table for alternative limit reference point $0.2B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of constant catch (CC) strategies, such that values are P$(B_t > 0.2B_0)$.", refCC.sentence)
+		#			gmu.20B0.CCl.out = texArray(BRPpList$CC$'0.2B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.20B0.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(gmu.20B0.CCl.out)
+		#		}
+		#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.2B0')) {
+		#			mess = paste0(name, ": decision table for alternative limit reference point $0.2B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of harvest rate (HR) strategies, such that values are P$(B_t > 0.2B_0)$.", refHR.sentence)
+		#			gmu.20B0.HRl.out = texArray(BRPpList$HR$'0.2B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.20B0.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(gmu.20B0.HRl.out)
+		#		}
+		#		##--- 0.4B0 Rebuild P(Bt>0.4B0) ----------
+		#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.4B0')) {
+		#			mess = paste0(name, ": decision table for alternative upper stock reference $0.4B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of constant catch (CC) strategies, such that values are P$(B_t > 0.4B_0)$.", refCC.sentence)
+		#			gmu.40B0.CCl.out = texArray(BRPpList$CC$'0.4B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.40B0.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(gmu.40B0.CCl.out)
+		#		}
+		#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.4B0')) {
+		#			mess = paste0(name, ": decision table for alternative upper stock reference $0.4B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of harvest rate (HR) strategies, such that values are P$(B_t > 0.4B_0)$.", refHR.sentence)
+		#			gmu.40B0.HRl.out = texArray(BRPpList$HR$'0.4B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"gmu.40B0.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(gmu.40B0.HRl.out)
+		#		}
+		#	}
+		#	##=====COSEWIC -- Reference Criteria=====
+		#	if (pgenYearsNum > 11) {
+		#		##--- A2 decline <=50pct COSEWIC short --------
+		#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.5Gen')) {
+		#			mess = paste0(name, ": decision table for probabilities of satisfying the A2  criterion of $\\leq 50 \\%$ decline over ", Ngen, " generations (", Ngen*gen1, " years) for ", Npyrs, "-year projections and for a range of constant catch (CC) strategies. ", refCC.sentence, maxCatSentence)
+		#			cosewic.50Gen.CCs.out = texArray(BRPpList$CC$'0.5Gen'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50Gen.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(cosewic.50Gen.CCs.out)
+		#		}
+		#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.5Gen')) {
+		#			mess = paste0(name, ": decision table for probabilities of satisfying the A2 criterion of $\\leq 50 \\%$ decline over ", Ngen, " generations (", Ngen*gen1, " years) for ", Npyrs, "-year projections and for a range of harvest rate (HR) strategies. ", refHR.sentence, maxCatSentence)
+		#			cosewic.50Gen.HRs.out = texArray(BRPpList$HR$'0.5Gen'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50Gen.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(cosewic.50Gen.HRs.out)
+		#		}
+		#		##--- A2 decline <=30pct COSEWIC short --------
+		#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.3Gen')) {
+		#			mess = paste0(name, ": decision table for probabilities of satisfying the A2 criterion of $\\leq 30 \\%$ decline over ", Ngen, " generations (", Ngen*gen1, " years) for ", Npyrs, "-year projections and for a range of constant catch (CC) strategies. ", refCC.sentence, maxCatSentence)
+		#			cosewic.30Gen.CCs.out = texArray(BRPpList$CC$'0.3Gen'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.30Gen.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(cosewic.30Gen.CCs.out)
+		#		}
+		#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.3Gen')) {
+		#			mess = paste0(name, ": decision table for probabilities of satisfying the A2 criterion of $\\leq 30 \\%$ decline over ", Ngen, " generations (", Ngen*gen1, " years) for ", Npyrs, "-year projections and for a range of harvest rate (HR) strategies. ", refHR.sentence, maxCatSentence)
+		#			cosewic.30Gen.HRs.out = texArray(BRPpList$HR$'0.3Gen'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.30Gen.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(cosewic.30Gen.HRs.out)
+		#		}
+		#		##--- A2 criterion 0.5B0 COSEWIC short --------
+		#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.5B0')) {
+		#			mess = paste0(name, ": decision table for reference criterion $0.5 B_0$ for ", Npyrs, "-year projections and for a range of constant catch (CC) strategies, such that values are P$(B_t > 0.5 B_0)$.", refCC.sentence)
+		#			cosewic.50B0.CCs.out = texArray(BRPpList$CC$'0.5B0'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50B0.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(cosewic.50B0.CCs.out)
+		#		}
+		#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.5B0')) {
+		#			mess = paste0(name, ": decision table for reference criterion $0.5 B_0$ for ", Npyrs, "-year projections and for a range of harvest rate (HR) strategies, such that values are P$(B_t > 0.5 B_0)$.", refHR.sentence)
+		#			cosewic.50B0.HRs.out = texArray(BRPpList$HR$'0.5B0'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50B0.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(cosewic.50B0.HRs.out)
+		#		}
+		#		##--- A2 criterion 0.7B0 COSEWIC short --------
+		#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.7B0')) {
+		#			mess = paste0(name, ": decision table for reference criterion $0.7 B_0$ for ", Npyrs, "-year projections and for a range of constant catch (CC) strategies, such that values are P$(B_t > 0.7 B_0)$.", refCC.sentence)
+		#			cosewic.70B0.CCs.out = texArray(BRPpList$CC$'0.7B0'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.70B0.CCs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(cosewic.70B0.CCs.out)
+		#		}
+		#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.7B0')) {
+		#			mess = paste0(name, ": decision table for reference criterion $0.7 B_0$ for ", Npyrs, "-year projections and for a range of harvest rate (HR) strategies, such that values are P$(B_t > 0.7 B_0)$.", refHR.sentence)
+		#			cosewic.70B0.HRs.out = texArray(BRPpList$HR$'0.7B0'[,shortYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.70B0.HRs"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(cosewic.70B0.HRs.out)
+		#		}
+		#		##--- A2 decline <=50pct COSEWIC long ---------
+		#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.5Gen')) {
+		#			mess = paste0(name, ": decision table for probabilities of satisfying the A2  criterion of $\\leq 50 \\%$ decline over ", Ngen, " generations (", Ngen*gen1, " years) for selected projection years and for a range of constant catch (CC) strategies. ", refCC.sentence, maxCatSentence)
+		#			cosewic.50Gen.CCl.out = texArray(BRPpList$CC$'0.5Gen'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50Gen.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(cosewic.50Gen.CCl.out)
+		#		}
+		#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.5Gen')) {
+		#			mess = paste0(name, ": decision table for probabilities of satisfying the A2 criterion of $\\leq 50 \\%$ decline over", Ngen, " generations (", Ngen*gen1, " years) for selected projection years and for a range of harvest rate (HR) strategies. ", refHR.sentence, maxCatSentence)
+		#			cosewic.50Gen.HRl.out = texArray(BRPpList$HR$'0.5Gen'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50Gen.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(cosewic.50Gen.HRl.out)
+		#		}
+		#		##--- A2 decline <=30pct COSEWIC long ---------
+		#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.3Gen')) {
+		#			mess = paste0(name, ": decision table for probabilities of satisfying the A2 criterion of $\\leq 30 \\%$ decline over ", Ngen, " generations (", Ngen*gen1, " years) for selected projection years and for a range of constant catch (CC) strategies. ", refCC.sentence, maxCatSentence)
+		#			cosewic.30Gen.CCl.out = texArray(BRPpList$CC$'0.3Gen'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.30Gen.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(cosewic.30Gen.CCl.out)
+		#		}
+		#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.3Gen')) {
+		#			mess = paste0(name, ": decision table for probabilities of satisfying the A2 criterion of $\\leq 30 \\%$ decline over ", Ngen, " generations (", Ngen*gen1, " years) for selected projection years and for a range of harvest rate (HR) strategies. ", refHR.sentence, maxCatSentence)
+		#			cosewic.30Gen.HRl.out = texArray(BRPpList$HR$'0.3Gen'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.30Gen.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(cosewic.30Gen.HRl.out)
+		#		}
+		#		##--- A2 criterion 0.5B0 COSEWIC long ---------
+		#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.5B0')) {
+		#			mess = paste0(name, ": decision table for reference criterion $0.5 B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of constant catch (CC) strategies, such that valuTabes are P$(B_t > 0.5 B_0)$.", refCC.sentence)
+		#			cosewic.50B0.CCl.out = texArray(BRPpList$CC$'0.5B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50B0.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(cosewic.50B0.CCl.out)
+		#		}
+		#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.5B0')) {
+		#			mess = paste0(name, ": decision table for reference criterion $0.5 B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of harvest rate (HR) strategies, such that values are P$(B_t > 0.5 B_0)$.", refHR.sentence)
+		#			cosewic.50B0.HRl.out = texArray(BRPpList$HR$'0.5B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.50B0.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(cosewic.50B0.HRl.out)
+		#		}
+		#		##--- A2 criterion 0.7B0 COSEWIC long ---------
+		#		if (exists("BRPpList") && !is.null(BRPpList$CC$'0.7B0')) {
+		#			mess = paste0(name, ": decision table for reference criterion $0.7 B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of constant catch (CC) strategies, such that values are P$(B_t > 0.7 B_0)$.", refCC.sentence)
+		#			cosewic.70B0.CCl.out = texArray(BRPpList$CC$'0.7B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.70B0.CCl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="CC", tablewidth=6.25)$tabfile
+		#			tput(cosewic.70B0.CCl.out)
+		#		}
+		#		if (exists("BRPpList") && !is.null(BRPpList$HR$'0.7B0')) {
+		#			mess = paste0(name, ": decision table for reference criterion $0.7 B_0$ for selected projection years over ", Ngen, " generations (", Ngen*gen1, " years) and for a range of harvest rate (HR) strategies, such that values are P$(B_t > 0.7 B_0)$.", refHR.sentence)
+		#			cosewic.70B0.HRl.out = texArray(BRPpList$HR$'0.7B0'[,longYrs], table.caption=eval(mess), table.label=paste0("tab:",prefix,"cosewic.70B0.HRl"), sigdig=decdig, use.round=T, zero="0", use.row.names=T, name.row.names="HR", tablewidth=6.25)$tabfile
+		#			tput(cosewic.70B0.HRl.out)
+		#		}
+		#	}
+		#	##=====Time to Targets=====
+		#	if (pgenYearsNum > 11) {
+		#		sanicol <- function(x){
+		#			sani = 
+		#				gsub("Gen", "$B_{t\\\\text{-}\\\\mathrm{G}}$",  ## just call it 'G' and specifiy how many G in table caption
+		#				gsub("Bcurr",paste0("$B_{", currYear, "}$"),
+		#				gsub("B0","$B_0$",
+		#				gsub("Bmsy","$B_\\\\mathrm{MSY}$",
+		#				gsub("0.8Bmsy","USR",
+		#				gsub("0.4Bmsy","LRP",
+		#			x))))))
+		#			return(sani)
+		#		}
+		#		#print(sanicol(colnames(Ttab.conf$'0.50')))
+		#	
+		#		##--- Time to achieve target with 50% confidence
+		#		if (exists("Ttab.conf") && !is.null(Ttab.conf$CC$'0.50')) {
+		#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 50\\%, for for a range of constant catch (CC) strategies. An estimated time of 0 means that the condition is satisfied and remains so over the ", Ngen*gen1, "-year projection; an estimated time of ", Ngen*gen1, " means that the condition never becomes satisfied over the ", Ngen, "-generation projection. A further condition is that the probability of satisfying the condition must increase for two consecutive years. Columns respectively correspond to the provisional DFO reference points: LRP~= $0.4\\Bmsy$, USR~= $0.8\\Bmsy$; alternative reference points: $\\Bmsy$, $B_{", currYear, "}$, $0.2B_0$, $0.4B_0$; and COSEWIC reference criteria: 0.5$B_{t\\text{-}\\mathrm{G}}$~= $\\leq 50\\%$ decline over ", Ngen, " generations (G), 0.7$B_{t\\text{-}\\mathrm{G}}$~= $\\leq 30\\%$ decline over ", Ngen, "G, $0.5B_0$, $0.7B_0$.")
+		#			Ttime50.CC.out = capture.output(print(xtable(Ttab.conf$CC$'0.50', caption=eval(mess), label=paste0("tab:",prefix,"Ttime50.CC"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
+		#			tput(Ttime50.CC.out)
+		#		}
+		#		if (exists("Ttab.conf") && !is.null(Ttab.conf$HR$'0.50')) {
+		#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 50\\%, for for a range of harvest rate (HR) strategies. See caption in Table~\\ref{tab:", prefix, "Ttime50.CC} for further details")
+		#			Ttime50.HR.out = capture.output(print(xtable(Ttab.conf$HR$'0.50', caption=eval(mess), label=paste0("tab:",prefix,"Ttime50.HR"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
+		#			tput(Ttime50.HR.out)
+		#		}
+		#		##--- Time to achieve target with 65% confidence
+		#		if (exists("Ttab.conf") && !is.null(Ttab.conf$CC$'0.65')) {
+		#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 65\\%, for for a range of constant catch (CC) strategies. See caption in Table~\\ref{tab:", prefix, "Ttime50.CC} for further details.")
+		#			Ttime65.CC.out = capture.output(print(xtable(Ttab.conf$CC$'0.65', caption=eval(mess), label=paste0("tab:",prefix,"Ttime65.CC"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
+		#			tput(Ttime65.CC.out)
+		#		}
+		#		if (exists("Ttab.conf") && !is.null(Ttab.conf$HR$'0.65')) {
+		#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 65\\%, for for a range of harvest rate (HR) strategies. See caption in Table~\\ref{tab:", prefix, "Ttime50.CC} for further details.")
+		#			Ttime65.HR.out = capture.output(print(xtable(Ttab.conf$HR$'0.65', caption=eval(mess), label=paste0("tab:",prefix,"Ttime65.HR"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
+		#			tput(Ttime65.HR.out)
+		#		}
+		#		##--- Time to achieve target with 80% confidence
+		#		if (exists("Ttab.conf") && !is.null(Ttab.conf$CC$'0.80')) {
+		#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 80\\%, for for a range of constant catch (CC) strategies. See caption in Table~\\ref{tab:", prefix, "Ttime50.CC} for further details.")
+		#			Ttime80.CC.out = capture.output(print(xtable(Ttab.conf$CC$'0.80', caption=eval(mess), label=paste0("tab:",prefix,"Ttime80.CC"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
+		#			tput(Ttime80.CC.out)
+		#		}
+		#		if (exists("Ttab.conf") && !is.null(Ttab.conf$HR$'0.80')) {
+		#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 80\\%, for for a range of harvest rate (HR) strategies. See caption in Table~\\ref{tab:", prefix, "Ttime50.CC} for further details.")
+		#			Ttime80.HR.out = capture.output(print(xtable(Ttab.conf$HR$'0.80', caption=eval(mess), label=paste0("tab:",prefix,"Ttime80.HR"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
+		#			tput(Ttime80.HR.out)
+		#		}
+		#		##--- Time to achieve target with 95% confidence
+		#		if (exists("Ttab.conf") && !is.null(Ttab.conf$CC$'0.95')) {
+		#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 95\\%, for for a range of constant catch (CC) strategies. See caption in Table~\\ref{tab:", prefix, "Ttime50.CC} for further details.")
+		#			Ttime95.CC.out = capture.output(print(xtable(Ttab.conf$CC$'0.95', caption=eval(mess), label=paste0("tab:",prefix,"Ttime95.CC"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
+		#			tput(Ttime95.CC.out)
+		#		}
+		#		if (exists("Ttab.conf") && !is.null(Ttab.conf$HR$'0.95')) {
+		#			mess = paste0(name, ": estimated time (years) for projected biomass $B_t$ to exceed reference points and criteria with a probability of 95\\%, for for a range of harvest rate (HR) strategies. See caption in Table~\\ref{tab:", prefix, "Ttime50.CC} for further details.")
+		#			Ttime95.HR.out = capture.output(print(xtable(Ttab.conf$HR$'0.95', caption=eval(mess), label=paste0("tab:",prefix,"Ttime95.HR"), digits=0), caption.placement="top", table.placement="!ht", sanitize.colnames.function=sanicol) )
+		#			tput(Ttime95.HR.out)
+		#		}
+		#	}
+		#	save(
+		#	"gmu.LRP.CCs.out", "gmu.USR.CCs.out", "gmu.Bmsy.CCs.out", "gmu.umsy.CCs.out",
+		#	"gmu.Bcurr.CCs.out", "gmu.ucurr.CCs.out", "gmu.20B0.CCs.out", "gmu.40B0.CCs.out",
+		#	"gmu.LRP.CCs.out", "gmu.LRP.HRs.out", "gmu.USR.CCs.out", "gmu.USR.HRs.out",
+		#	"gmu.Bmsy.CCs.out", "gmu.Bmsy.HRs.out", "gmu.umsy.CCs.out", "gmu.umsy.HRs.out",
+		#	"gmu.Bcurr.CCs.out", "gmu.Bcurr.HRs.out", "gmu.ucurr.CCs.out", "gmu.ucurr.HRs.out",
+		#	"gmu.20B0.CCs.out", "gmu.20B0.HRs.out", "gmu.40B0.CCs.out", "gmu.40B0.HRs.out",
+		#	"gmu.LRP.CCl.out", "gmu.LRP.HRl.out", "gmu.USR.CCl.out", "gmu.USR.HRl.out",
+		#	"gmu.Bmsy.CCl.out", "gmu.Bmsy.HRl.out", "gmu.umsy.CCl.out", "gmu.umsy.HRl.out",
+		#	"gmu.Bcurr.CCl.out", "gmu.Bcurr.HRl.out", "gmu.ucurr.CCl.out", "gmu.ucurr.HRl.out",
+		#	"gmu.20B0.CCl.out", "gmu.20B0.HRl.out", "gmu.40B0.CCl.out", "gmu.40B0.HRl.out",
+		#	"cosewic.50Gen.CCs.out", "cosewic.50Gen.HRs.out", "cosewic.30Gen.CCs.out", "cosewic.30Gen.HRs.out",
+		#	"cosewic.50B0.CCs.out", "cosewic.50B0.HRs.out", "cosewic.70B0.CCs.out", "cosewic.70B0.HRs.out",
+		#	"cosewic.50Gen.CCl.out", "cosewic.50Gen.HRl.out", "cosewic.30Gen.CCl.out", "cosewic.30Gen.HRl.out",
+		#	"cosewic.50B0.CCl.out", "cosewic.50B0.HRl.out", "cosewic.70B0.CCl.out", "cosewic.70B0.HRl.out",
+		#	"Ttime50.CC.out", "Ttime50.HR.out", "Ttime65.CC.out", "Ttime65.HR.out",
+		#	"Ttime80.CC.out", "Ttime80.HR.out", "Ttime95.CC.out", "Ttime95.HR.out",
+		#	file=paste0(prefix,"decision.tables", ifelse(useRlow, paste0(".Rlow(q=",pad0(qRlow*100,2),")"),""), ".rda") )
+		
+		##	## Rob Tadey asked for exploitation rate and probability of Ut less than Umsy
+		##	U.tadey  = t(apply(U.mcmc, 2, quantile, quants3))
+		##	colnames(U.tadey) = paste0("Q.", formatC(quants3*100, digits=0, width=2, format="d", flag="0"))
+		##	N.tadey  = apply(U.mcmc<Umsy,2,sum)
+		##	P.tadey  = N.tadey/nrow(U.mcmc)
+		##	U.tadey  = data.frame(U.tadey, P.MSY=P.tadey)
+		##	U.tadey2 = splitTab(U.tadey, np=2, row.label="Year")
+		##	names.tadey = colnames(U.tadey2)
+		##	#names.tadey = gsub("Q\\.", "Q$_{0.", 
+		##	#	gsub("P\\.MSY", "P($u_t<u_\\\\mathrm{MSY}$)", names.tadey))
+		##	zq = grep("^Q",names.tadey)
+		##	zp = grep("^P",names.tadey)
+		##	#names.tadey[zq] = paste0(names.tadey[zq],"}$")
+		##	names.tadey = gsub("^Q\\.(0)?","",
+		##		gsub("P\\.MSY", "Prob", names.tadey))
+		##	names.tadey[zq] = paste0(names.tadey[zq],"\\%")
+		##	names(U.tadey2) = names.tadey
+		##
+		##	z = texArray(U.tadey2, zero="0", outnam="tempfile", sigdig=2, use.round=T, struts=T, table.label=paste0("tab:",prefix,"base.u.tadey"), tablewidth=6.5,
+		##		table.caption = paste0("Quantiles (0.05, 0.5, 0.95) of annual exploitation rate $u_t$ (harvest rate~= catch divided by vulnerable biomass) from ", startYear, " to current model year ", prevYear, " and projected to ", projYear, " assuming a constant catch of ", catpol, "~t. Prob = P($u_t<u_\\mathrm{MSY}$).") )
+		##	xtab.compo.U.tadey = (z$tabfile)
+		##	tput(xtab.compo.U.tadey)
+		#browser();return()
+		
+			#out=texArray(U.tadey2,sigdig=2,use.round=T)
+			#xtab.compo.U.tadey = xtable(U.tadey2, label=paste0("tab:",prefix,"base.u.tadey"), digits=decdig,
+			#	caption=eval(paste0("Annual exploitation rate (expressed as harvest rate: catch over vulnerable biomass) from ", startYear, " to current model year ", prevYear, " and projected to ", projYear, " assuming a constant catch of ", round(recentCatchMean, dig=0), "~t. ")) )
+			#tput(xtab.compo.U.tadey)
+	} ## end if rebuild
 return()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tabSS.decision

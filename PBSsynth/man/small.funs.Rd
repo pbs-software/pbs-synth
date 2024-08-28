@@ -35,7 +35,7 @@ stab(xx.MCMC, dig=3, quants3=tcall(quants3), print=TRUE)
   \item{xx}{\code{numeric} -- vector of values}
   \item{xx.MCMC}{\code{numeric} -- vector of values}
   \item{dig}{\code{numeric} -- number of decimal places or significant digits, depending on function}
-  \item{quant3}{\code{numeric} -- vector of three quantiles, usually (0.05, 0.5, 0.95)}
+  \item{quants3}{\code{numeric} -- vector of three quantiles, usually (0.05, 0.5, 0.95)}
   \item{print}{\code{logical} -- if \code{TRUE}, print results to current device}
 }
 %- maybe also 'usage' for other objects documented here.

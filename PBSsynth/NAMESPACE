@@ -3,10 +3,41 @@ exportPattern("^[^\\.]")
 
 # Export dot functions by action (explicit list just to keep track)
 exportPattern("^\\.PBS")
-exportPattern("^\\.flash")
+#exportPattern("^\\.flash")
 
 # Packages declared in the 'Depends' field should not also be in the 'Imports' field (I guess in DESCRIPTION file only) (from R-exts.pdf).
 import(
-  PBSmapping, PBSmodelling, PBStools, PBSdata
+  PBSmapping, PBSmodelling, PBStools, PBSdata, r4ss
 )
+importFrom("grDevices", "adjustcolor", "colorRampPalette", "dev.list",
+           "dev.new", "dev.off", "extendrange", "gray", "png",
+           "postscript", "rgb", "topo.colors")
+importFrom("graphics", "abline", "arrows", "axis", "barplot", "box",
+           "contour", "frame", "hist", "image", "legend", "lines",
+           "matplot", "mtext", "pairs", "par", "persp", "points",
+           "polygon", "rect", "segments", "text", "title")
+importFrom("stats", "acf", "aggregate", "as.ts", "cor", "density",
+           "dnorm", "fft", "lm", "loess", "median", "na.omit", "pnorm",
+           "predict", "qchisq", "qlnorm", "qnorm", "qt", "quantile",
+           "resid", "residuals", "time", "var")
+importFrom("utils", "Sweave", "capture.output", "flush.console",
+           "head", "menu", "read.table", "tail", "write.csv",
+           "write.table")
+
+importFrom("astsa", "acf2", "sarima")
+importFrom("compResidual", "resMulti")
+importFrom("colorspace", "lighten", "sequential_hcl")
+importFrom("dplyr", "mutate_at")
+importFrom("here", "here")
+importFrom("Hmisc", "Lag")
+importFrom("KernSmooth", "bkde2D")
+importFrom("Kmisc", "read")
+importFrom("MASS", "stepAIC")
+importFrom("nlme", "gls")
+importFrom("stringr", "str_split")
+importFrom("tictoc", "tic", "toc")
+importFrom("xtable", "xtable")
+
+
+
 

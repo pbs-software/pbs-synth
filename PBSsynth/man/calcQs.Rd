@@ -41,7 +41,7 @@ calcQs(dat, ivec, ovec)
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{
 In package \pkg{PBSsynth}:\cr
-  \code{\link[PBSsynth]{mergPA}},
+  \code{\link[PBSsynth]{mergePA}},
   \code{\link[PBSsynth]{plotSS.senso}},
   \code{\link[PBSsynth]{tabSS.compo}},
   \code{\link[PBSsynth]{tabSS.senso}}

@@ -31,7 +31,7 @@ calcMSY(replist, strategy, method=1, proj_gears=TRUE)
     (e.g., trawl, other, hook and line, midwater trawl, etc.);
     depends on order of method in the model}
   \item{proj_gears}{\code{logical} -- if \code{TRUE}, use end-year harvest rates by method;
-    if {FALSE}, use user-supplied harvest rate proportions}
+    if \code{FALSE}, use user-supplied harvest rate proportions}
 }
 \details{
   \code{calcEQyield}:\cr

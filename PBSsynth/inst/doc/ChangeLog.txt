@@ -6,6 +6,24 @@ Authors : RH  = Rowan Haigh
           CG  = Chris Grandin
           AE  = Anisa Egeli
 
+1.0.0 (2024-08-28) [Rcheck=T, Rbuild=T]
+  * Check only issues 4 Notes
+    + installed size is 17.6Mb
+    + Checking should be performed on sources prepared by 'R CMD build'
+    + Unexported object imported by a ':::' call: 'r4ss:::bubble3'
+    + `plotSS.senso': multiple local function definitions for 'fn.ylim' with different formal arguments
+
+0.9.0 (2024-08-28) [Rcheck=T, Rbuild=F]
+  * R code
+    + Import one-off functions using `importFrom' (RH 240828)
+
+0.8.0 (2024-08-28) [Rcheck=T, Rbuild=F]
+  * Documentation
+    + Cleaned up argument mismatches between Rd and Code (RH 240828)
+    + Created a new and simple `PBSsynthIntro' vignette (RH 240828)
+  * R code
+    + Decided to retain calls to `require' as this package is not for CRAN
+
 0.7.0 (2024-08-27) [Rcheck=F, Rbuild=F]
   * Documentation
     + Added various Rd documentation files

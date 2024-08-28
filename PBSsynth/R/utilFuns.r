@@ -77,7 +77,7 @@ calcMA <- function(runs=1, rwts=0:1, vers=1, overwrite=FALSE, fleets.lab, fleets
    cwd="C:/Users/haighr/Files/GFish/PSARC24/YTR/Data/SS3/YTR2024", use.cwd.as.is=FALSE)
 {
 	so("plotSS.francis.r","synth")
-	require(r4ss)
+	#require(r4ss)
 	mean.age.ind = list()
 	for (i in runs) {
 		ii = pad0(i,2)

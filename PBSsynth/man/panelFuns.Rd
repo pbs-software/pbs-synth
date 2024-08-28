@@ -28,7 +28,7 @@ panelChains(mcmc, nchains=3, pdisc=0.1, axes=FALSE, same.limits=FALSE,
    las=0, tck=0.4, tick.number=5, lty.trace=1, lwd.trace=1,
    col.trace="grey", lty.median=1, lwd.median=1,
    col.median="black", lty.quant=2, lwd.quant=1,
-   col.quant="black", plot=TRUE, probs=get("quants3"), lang="e", ...)
+   col.quant="black", plot=TRUE, probs=tcall(quants3), lang="e", ...)
 
 panelTraces(mcmc, mpd=mcmc[1,], nchains=1, pdisc=0, axes=FALSE, 
    same.limits=FALSE, between=list(x=axes,y=axes), div=1, log=FALSE,
@@ -65,6 +65,7 @@ panelTraces(mcmc, mpd=mcmc[1,], nchains=1, pdisc=0, axes=FALSE,
   \item{lang}{\code{character} -- a letter that denotes the language for output: currently only \code{"e"} (english) or \code{"f"} (french)}
   \item{\dots}{\code{dots} -- passed to panel's subfunction}
 %% Specific to plotChains
+  \item{span}{\code{numeric} -- parameter which controls the degree of smoothing}
   \item{lty.trace}{\code{numeric|character} -- line type of trace}
   \item{lwd.trace}{\code{numeric} -- line width of trace}
   \item{col.trace}{\code{numeric|character} -- colour of trace}

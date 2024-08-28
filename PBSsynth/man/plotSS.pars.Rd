@@ -60,7 +60,7 @@ plotSS.pars(replist, plotdir=NULL, xlab="Parameter value",
   \item{punits}{\code{character} -- units for \code{'PIN'}; can be \code{'px'}
     (pixels), \code{'in'} (inches), \code{'cm'} or \code{'mm'}; default=\code{'in'}}
   \item{ptsize}{\code{numeric} -- point size for plotted text in plots printed to files
-    (see code{'help('png')'} in R for details); default=12}
+    (see \code{help('png')} in R for details); default=12}
   \item{strings}{\code{character} -- subset parameters included in the plot using
     substring from parameter names (i.e. \code{'SR'} will get \code{'SR_LN(R0)'}
     and \code{'SR_steep'} if they are both estimated quantities in this model)}

@@ -18,9 +18,9 @@ plotSS.comparisons(
   "Log index", "SPR-related quantity", "Density", "Management target",
   "Minimum stock size threshold", "Spawning output", "Harvest rate"),
   col=NULL, shadecol=NULL, pch=NULL, lty=1, lwd=2, spacepoints=10,
-  staggerpoints=1, initpoint=0, tickEndYr=TRUE, shadeForecast=TRUE,
+  staggerpoints=1, initpoint=0, tickEndYr=FALSE, shadeForecast=TRUE,
   xlim=NULL, ylimAdj=1.05, xaxs="i", yaxs="i", type="o", 
-  uncertainty=TRUE, shadealpha=0.1, legend=TRUE, legendlabels=NULL, 
+  uncertainty=FALSE, shadealpha=0.1, legend=TRUE, legendlabels=NULL, 
   legendloc="topright", legendorder=NULL, legendncol=1, sprtarg=NULL, 
   btarg=NULL, minbthresh=NULL, pwidth=8.5, pheight=6, punits="in", 
   res=400, ptsize=12, plotdir=NULL, filenameprefix="", 
@@ -29,7 +29,7 @@ plotSS.comparisons(
   densitysymbols=TRUE, densitytails=TRUE, densitymiddle=FALSE, 
   densitylwd=1, fix0=TRUE, new=TRUE, add=FALSE, 
   par=list(mar=c(5,4,1,1)+0.1), verbose=TRUE, mcmcVec=FALSE, 
-  show_equilibrium=TRUE )
+  show_equilibrium=TRUE, lang="e")
 }
 \arguments{
   \item{summaryoutput}{\code{list} -- created by function \code{'SSsummarize'}}
@@ -176,6 +176,7 @@ plotSS.comparisons(
     from MCMC or to use normal distribution around MLE}
   \item{show_equilibrium}{\code{logical} -- if \code{TRUE}, show the equilibrium values for SSB;
     for some model comparisons, these might not be comparable and thus useful to turn off}
+  \item{lang}{\code{character} -- a letter that denotes the language for output: currently only \code{"e"} (english) or \code{"f"} (french).}
 }
 \references{
   Taylor, I.G., Doering, K.L., Johnson, K.F., Wetzel, C.R., Stewart, I.J., 2021.

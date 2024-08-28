@@ -67,9 +67,6 @@ findTarget(Vmat, yrU=as.numeric(dimnames(Vmat)[[2]]), yrG=90, ratio=0.5,
   Any other \code{retVal} will return a list of the specified object,
   if it exists in the function.
 }
-\references{
-%% ~put references to the literature/web site here ~
-}
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
