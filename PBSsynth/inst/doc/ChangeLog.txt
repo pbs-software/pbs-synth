@@ -6,6 +6,11 @@ Authors : RH  = Rowan Haigh
           CG  = Chris Grandin
           AE  = Anisa Egeli
 
+1.1.0 (2024-10-08) [Rcheck=F, Rbuild=F]
+  * Added input files for YTR 2024: two new MPD sensitivity runs requested by RPR (RH 241008)
+    - S15.R18 : use different priors on M (with higher means)
+    - S16.R19 : use flavidus fecundity parameters from Dick et al. (2017)
+
 1.0.0 (2024-08-28) [Rcheck=T, Rbuild=T]
   * Check only issues 4 Notes
     + installed size is 17.6Mb

@@ -1,6 +1,6 @@
 Package: PBSsynth
-Version: 1.0.0
-Date:    2024-08-28
+Version: 1.1.0
+Date:    2024-10-08
 Title:   Tools for Manipulating Stock Synthesis 3
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
