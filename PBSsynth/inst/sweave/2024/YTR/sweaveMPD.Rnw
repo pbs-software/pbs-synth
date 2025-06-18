@@ -1,0 +1,467 @@
+\documentclass[11pt]{book}   
+% \documentclass[12pt]{article}
+
+\usepackage{Sweave}%% AME added
+\usepackage{resDocSty}%% Res Doc .sty file
+\captionsetup{figurewithin=none,tablewithin=none} %% RH: This works for resetting figure and table numbers for book class though I don't know why. Set fig/table start number to n-1.
+\usepackage{rotating}%% for sideways table
+\usepackage{longtable,array}
+\usepackage{pdfcomment}%% for annotating figures in the PDF
+
+\usepackage{xcolor, soul}%% \so (space out) and \ul (underline)
+\definecolor{markcol}{RGB}{50,205,50}%% limegreen
+\newcommand{\marked}[1]{\normalsize\textcolor{markcol}{#1}\normalsize}
+\definecolor{alertcol}{RGB}{255,0,0}%% red
+\newcommand{\alert}[1]{\normalsize\textcolor{alertcol}{#1}\normalsize}
+\definecolor{greycol}{RGB}{169,169,169}%% darkgrey
+\newcommand{\subdue}[1]{\normalsize\textcolor{greycol}{#1}\normalsize}
+
+\newcommand{\code}[1]{\normalsize\texttt{#1}\normalsize}%
+%%\newcommand{\tab}{\hspace{0.5in}}
+
+%\usepackage{graphicx}   %% called in resDocSty
+%\usepackage{epsfig}     %% called in resDocSty
+% \usepackage{placeins}
+
+\def\startP{1}           %% page start (default=1)
+\def\startF{0}           %% figure start counter (default=0)
+\def\startT{0}           %% table start counter (default=0)
+\def\bfTh{{\bf \Theta}}  %% bold Theta
+
+\newcommand{\ptype}{png} %% eps or png files supported
+\newcommand{\pc}{\%}
+
+\newcommand\onefig[2]{    % filename is #1, text is #2
+  \begin{figure}[h!]
+  \begin{center}
+  \pdftooltip{
+  \includegraphics[width=6.4in,height=8in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1}}
+  \end{center}
+  \caption{#2}
+  \label{fig:#1}
+  \end{figure}
+  \clearpage
+}
+\newcommand\twofig[3]{   % figure #1 under #2, caption text #3
+  \begin{figure}[htp]     %  label will be #1
+  \centering
+  \begin{tabular}{c}
+  \pdftooltip{
+  \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1} top} \\
+  \pdftooltip{
+  \includegraphics[width=6.4in,height=4in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#1} bottom}
+  \end{tabular}
+  \caption{#3}
+  \label{fig:#1}
+  \end{figure}
+  \clearpage
+}
+
+\SweaveOpts{pdf=FALSE}
+
+\begin{document}
+\setcounter{page}{\startP}
+\setcounter{figure}{\startF}
+\setcounter{table}{\startT}
+\setcounter{secnumdepth}{3}    %% to number subsubheadings-ish
+
+\setcounter{chapter}{6}    % for stand-alone chapters (5=E, 6=F)
+\renewcommand{\thechapter}{\Alph{chapter}} % ditto
+\renewcommand{\thesection}{\thechapter.\arabic{section}}   
+\renewcommand{\thesubsection}{\thechapter.\arabic{section}.\arabic{subsection}.}
+\renewcommand{\thetable}{\thechapter.\arabic{table}}    
+\renewcommand{\thefigure}{\thechapter.\arabic{figure}}  
+\renewcommand{\theequation}{\thechapter.\arabic{equation}}
+%\renewcommand{\thepage}{\arabic{page}}
+
+\newcounter{prevchapter}
+\setcounter{prevchapter}{\value{chapter}}
+\addtocounter{prevchapter}{-1}
+\newcommand{\eqnchapter}{\Alph{prevchapter}}
+
+
+%% First set up workspace:
+<<mpd_figs, echo=FALSE, results=hide>>= # hide the results 
+
+if (!grepl(ver,getwd())) {.flush.cat("Appears to be version mismatch: ",ver," not in ",basename(getwd()),"\n",sep=""); browser();return()}
+
+type = "MPD"
+require(r4ss)
+require(xtable)
+options(scipen=10)
+redoFigs = T
+lang = c("f","e")
+
+d.tools = "C:/Users/haighr/Files/Projects/R/Develop/PBStools/Authors/Rcode/develop/"
+r.tools = c("linguaFranca", "clearFiles","extractAges","calcStockArea","texArray","darkenRGB","formatCatch")
+for (i in r.tools) source(paste0(d.tools,i,".r"))
+
+d.synth = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop/"
+## Current repository -- moved functions into various modules (RH 240828)
+R.synth = c("plotFuns","utilFuns","smallFuns","r4ssFuns","zzz.local")
+for (i in R.synth) source(paste0(d.synth,"current/",i,".r"))
+## Development repository
+r.synth = c("plotSS.pars","plotSS.ts","plotSS.index","plotSS.francis", "plt.selectivity", "plotSS.selex", "make.multifig", "plotSS.comps", "plotSS.stdres", "plotSS.rdevs", "calcStdRes", "ptab", "convPN", "weightAF", "plt.cohortResids", "calcMA", "initialise", "mochaLatte", "plot.cres.new")
+for (i in r.synth) source(paste0(d.synth,i,".r"))
+
+#d.awatea = "C:/Users/haighr/Files/Projects/R/Develop/PBSawatea/Authors/Rcode/develop/"
+#r.awatea = c("mochaLatte")  ## copied this function from PBSawatea to PBSsynth (RH 240416)
+#for (i in r.awatea) source(paste0(d.awatea,i,".r"))
+
+d.model = "C:/Users/haighr/Files/Projects/R/Develop/PBSmodelling/Authors/Rcode/develop/"
+r.model = c("drawBars","plotBubbles")
+for (i in r.model) source(paste0(d.model,i,".r"))
+
+run.rwt = paste0(pad0(run,2),".",pad0(rwt,2))
+run.rwt.ver = paste0(run.rwt,".v",ver)
+cwd     = getwd()
+gather.mpd=c("run.rwt","run.rwt.ver","cwd")
+
+startYr = replist$startyr
+endYr   = replist$endyr
+currYr  = endYr + 1
+modYrs  = startYr:currYr
+proYrs  = (currYr+1):(currYr +  replist$N_forecast_yrs - 1)
+#ngear   = 2  ## number of commercial fisheries (now handled by 'initialise.r')
+#nfleet  = 8  ## number of fleets (fisheries + surveys) (now handled by 'initialise.r')
+wblurb  = if(!exists("wtemp")) "Not available"  else  texThatVec(round(wtemp,4),simplify=F) 
+gather.mpd = c(gather.mpd, "startYr","endYr","currYr","modYrs","proYrs")
+
+wd0     = sub(run.rwt, paste0(pad0(run,2),".00"), cwd)  ## will be redundant if processing reweight 0
+wd0     = sub("\\.CW$","",wd0)  ## one-time removal for Chantel Wetzel trial
+if  (dir.exists(wd0)) {
+	replist0= SS_output(dir=wd0)
+} else {
+	replist0 = NULL
+}
+replist = SS_output(dir=cwd)
+
+## Compare to Awatea's selectivity (B, R, selectivity, etc.)
+d.mpd    = NULL
+if (species.code %in% c("REBS","REBSN") && !exists("b46")) {
+	#d.mpd  = "C:/Users/haighr/Files/GFish/PSARC20/REBS/Data/Awatea/BSR_2F/BSRrun46/MPD.46.01"
+	d.mpd  = "C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC20/REBS/Data/Awatea/BSR_2F/BSRrun46/MPD.46.01"
+	maxage.sel = 60
+}
+if (species.code %in% c("440","YMR") && !exists("b29")) {  ## does not exist
+	#d.mpd  = "C:/Users/haighr/Files/GFish/PSARC11/YMR/Awatea/YMRrun29/MPD.29.01"
+	d.mpd  = "C:/Users/haighr/Files/GFish/PSARC/PSARC_2010s/PSARC11/YMR/Awatea/YMRrun29/MPD.29.01"
+	maxage.sel = 30
+}
+if (!is.null(d.mpd)){
+	load(paste0(d.mpd,"/currentRes.rda"))
+	bawa  = currentRes$B    ## biomass MPD from Awatea
+	sawa  = currentRes$Sel  ## selectivity MPD from Awatea
+	slist = split(sawa, sawa$Series)
+	Slist = lapply (slist, function(x){
+		if (species.code %in% c("REBS","REBSN"))
+			Index = switch(x$Series[1], 'Gear 1'="TRAWL_FISHERY", 'Gear 2'="OTHER_FISHERY", 'Survey 1'="WCHG_SYNOPTIC", "MATURITY")
+		if (species.code %in% c("440","YMR"))
+			Index = switch(x$Series[1], 'Gear 1'="TRAWL_FISHERY", 'Survey 1'="GIG_HISTORICAL", 'Survey 2'="QCS_SYNOPTIC", 'Survey 3'="QCS_SHRIMP", 'Survey 4'="WCHG_SYNOPTIC", 'Survey 5'="WCVI_SYNOPTIC", "MATURITY")
+		Index = paste0(Index, ": ", x$Sex)
+		Age   = x$Age
+		Sel   = x$P
+		data.frame(Index=Index, Age=Age, Sel=Sel)
+		})
+	sawatea = do.call("rbind", lapply(Slist, data.frame, stringsAsFactors=FALSE))
+} else {
+	bawa    = NULL
+	sawatea = NULL
+}
+bawa  = sawatea = NULL  ## disable comparisons with Awatea
+gather.mpd = c(gather.mpd, "d.mpd","bawa")
+
+parameters = replist$parameters
+zselect    = grepl("[Pp]eak|ascend",parameters$Label)  ## add in all selectivity parameters (RH 240320)
+zactive    = !is.na(parameters$Active_Cnt) & parameters$Phase>0 & !is.element(parameters$Pr_type,"dev")
+pactive    = parameters[zactive | zselect,]
+#pactive   = parameters[!is.na(parameters$Active_Cnt) & parameters$Phase>0 & !is.element(parameters$Pr_type,"dev"),]
+pactive$Label = convPN(pactive$Label)
+
+P.tab   = pactive[,c("Label","Phase","Min","Max","Pr_type","Prior","Pr_SD","Init","Value")]
+P.mpd   = parameters[zactive,"Value"]  ## for figure (mleParameters)
+names(P.mpd) = convPN(parameters$Label[zactive])
+P.rc    = .findSquare(length(P.mpd))
+gather.mpd = c(gather.mpd, "parameters","pactive","P.tab","P.mpd","P.rc")
+
+## Time series (can have multiple areas)
+ts      = replist$timeseries
+B0      = ts[is.element(ts$Yr, modYrs[1]),"SpawnBio"]
+Bcurr   = ts[is.element(ts$Yr, currYr),"SpawnBio"]
+BcurrB0 = Bcurr / B0
+T0      = ts[is.element(ts$Yr, modYrs[1]),"Bio_all"]
+Tcurr   = ts[is.element(ts$Yr, currYr),"Bio_all"]
+TcurrT0 = Tcurr / T0
+
+## Get vulnerable biomass from catch report
+catch   = replist$catch
+V0      = catch$vuln_bio[match(startYr, catch$Yr)]
+Vcurr   = catch$vuln_bio[match(endYr, catch$Yr)]
+VcurrV0 = Vcurr / V0
+gather.mpd = c(gather.mpd, "ts","B0","Bcurr","BcurrB0","T0","Tcurr","TcurrT0","catch","V0","Vcurr","VcurrV0")
+
+save(list=gather.mpd, file=paste0("MPD.", run.rwt.ver, ".rda"))
+
+if (redoFigs){
+	for (l in lang) {
+		createFdir(lang=l, dir=".")
+		## Stock-recruit curve
+		plotSS.stock.recruit(replist, lang=l, ptypes="png")
+	
+		## Parameter mles and priors
+		plotSS.pars(replist, nrows=P.rc[1], ncols=P.rc[2], plot=F, print=T, fitrange=T, fitnudge=0.5, showpost=F, strings=names(P.mpd), exact=T, lang=l, outnam="mleParameters")
+	
+		## Spawning biomass:
+		out=plotSS.ts(replist, subplot=ifelse(narea==1,7,8), print=T, plotdir=getwd(), forecast=T, uncertainty=F, sobj=bawa, PIN=c(8,6), outnam="Bt", lang=l)
+	
+		## Depletion:
+		out=plotSS.ts(replist, subplot=ifelse(narea==1,9,10), print=T, plotdir=getwd(), forecast=T, uncertainty=F, btarg=0.4, minbthresh=c(0.2,0.1), sobj=bawa, PIN=c(8,6), outnam="BtB0", lang=l)
+	
+		## Recruitment:
+		out=plotSS.ts(replist, subplot=ifelse(narea==1,11,12), print=T, plotdir=getwd(), forecast=T, uncertainty=F, sobj=bawa, PIN=c(8,6), outnam="recruits", lang=l)
+		if (narea>1)
+			out=plotSS.ts(replist, subplot=13, print=T, plotdir=getwd(), forecast=T, uncertainty=F, sobj=bawa, PIN=c(8,6), outnam="frecruits", lang=l)
+
+		## Spawning Biomass + others
+		out=plotSS.ts(replist, subplot=101, print=T, plotdir=getwd(), forecast=T, uncertainty=T, PIN=c(8,6), outnam="spawning", lang=l)
+
+		## Vulnerable Biomass
+		out=plotSS.ts(replist, subplot=102, print=T, plotdir=getwd(), forecast=T, uncertainty=T, PIN=c(8,6), outnam="vulnerable", lang=l)
+
+		## Harvest Rate
+		out=plotSS.ts(replist, subplot=103, print=T, plotdir=getwd(), forecast=T, uncertainty=T, PIN=c(8,6), outnam="harvest", lang=l)
+
+		## Recruitment deviations
+		plotSS.rdevs(replist, subplot=1, plot=F, print=T, plotdir=getwd(), outnam="recDev", lang=l, forecastplot=TRUE)
+
+		## Abundance index:
+		## NOTE!!!! Must include a label for every fleet, regardless of whether it has an index series or not.
+		plotSS.index(replist, subplots=2, onepage=T, print=T, plotdir=getwd(), labels=list("Year",fleets.lab), fleets=fleets.idx, PIN=c(9,9), outnam="survIndSer", lang=l)
+
+		## Survey residuals:
+		plotSS.index(replist, subplots=10, onepage=T, print=T, plot=F, plotdir=getwd(), labels=list("Year",fleets.lab), fleets=fleets.idx, PIN=c(9,9), col1=c("red","green4","blue","red","green4","green4"), col2=c("pink","green","cyan","pink","green","green"), outnam="survRes", lang=l)
+
+		## Mean age (Chris Francis 2011)
+		if (!is.null(replist0))
+			out=plotSS.francis(replist0, "age", fleet=fleets.af, plotit=T, png=T, outnam="meanAge0", lang=l)
+		out=plotSS.francis(replist, "age", fleet=fleets.af, printit=F, plotit=T, png=T, outnam="meanAge", lang=l)
+
+		## Selectivity
+		out=plotSS.selex(replist, subplot=102, debug=F, sobj=sawatea, fleets=fleets.sel, maxage=maxage.sel, plot=F, print=T, lang=l, pwidth=9, pheight=10)
+
+		## Harmonic mean effective sample size vs. arithmetic mean of adjusted sample size
+		##  Note: 'plotSS.comps'/'SSplotComps' can only do one index at a time per page.
+		if (!is.null(replist0)) {
+			fout = switch(l, 'e' = "./english/harmonica0.png", 'f' = "./french/harmonica0.png" )
+			png(fout, units="in", res=400, width=8, height=9)
+			expandGraph(mfrow=.findSquare(length(fleets.af)), mar=c(3,3,0.5,0.5), oma=c(0,0,0,0), mgp=c(2,0.5,0))
+			plotSS.comps(replist0,subplots=7,kind="AGE",fixdims=F,fitbar=T,fleets=fleets.af,showeffN=F,lwd=1.5,plot=T,print=F,lang=l)
+			dev.off()
+		}
+		fout = switch(l, 'e' = "./english/harmonica.png", 'f' = "./french/harmonica.png" )
+			png(fout, units="in", res=400, width=8, height=9)
+			expandGraph(mfrow=.findSquare(length(fleets.af)), mar=c(3,3,0.5,0.5), oma=c(0,0,0,0), mgp=c(2,0.5,0))
+			plotSS.comps(replist,subplots=7,kind="AGE",fixdims=F,fitbar=T,fleets=fleets.af,showeffN=F,lwd=1.5,plot=T,print=F,lang=l)
+			dev.off()
+
+		## Age composition fits
+		npanel = apply(crossTab(replist$agedbase,c("Yr","Fleet"),"effN",countVec),2,countVec)
+		mpanel = 25  ## minimum no. panels
+		if (length(npanel[npanel > mpanel]) > 0)
+			plotSS.comps(replist,subplots=1,kind="AGE",fixdims=F,fitbar=T,fleets=fleets.af[npanel>mpanel],showeffN=F,lwd=1,plot=F,print=T,pwidth=6.5,pheight=7,outnam="agefitFleet",lang=l)
+		if (length(npanel[npanel <= mpanel]) > 0)
+			plotSS.comps(replist,subplots=1,kind="AGE",fixdims=F,fitbar=T,fleets=fleets.af[npanel<=mpanel],showeffN=F,lwd=1.5,plot=F,print=T,pwidth=6.5,pheight=7,outnam="agefitFleet",lang=l)
+
+		## Age compostion residuals (note: boxpars are put into .PBSmodeEnv when PBSsynth.r is sourced) ## sexes="both" or "comb"
+		#plotSS.stdres(replist, fleets=fleets.af, plot=F, print=T, sexes="comb", cex.axis=1.2, cex.lab=1.5, PIN=c(8,9), outnam="ageresFleet", lang=l, las=1)
+		plotSS.stdres(replist, fleets=fleets.af, plot=F, print=T, sexes="both", cex.axis=1.2, cex.lab=1.5, PIN=c(10,8), outnam="ageresFleet", lang=l, las=1, useOSA=T)
+	}
+	resetGraph();expandGraph()
+}; eop()
+@
+
+%%##############################################################################
+\chapter*{Appendix~\thechapter. MPD Model Results}
+
+\newcommand{\LH}{Non-citable MPD results}  %% Set to {} for final ResDoc
+\newcommand{\RH}{CSAP Request ID 225}
+\newcommand{\LF}{\Sexpr{paste(species.code,assyr,"-- MPD:", run.rwt.ver)}}
+\newcommand{\RF}{Appendix~\thechapter ~-- MPD Results}
+
+\lhead{\LH}\rhead{\RH}\lfoot{\LF}\rfoot{\RF}
+
+\section{History of Runs}
+
+Note: AF weights calculated once before applying to 1st reweight:\\ \Sexpr{ wblurb }
+
+\input{\Sexpr{if (file.exists("../../runHistory.tex")) "../../runHistory" else "../../../../runHistory" }}
+
+\clearpage
+\section{MPD Results -- Tables}
+
+%%---Table 1-----------------------------
+\begin{table}[h!]
+\centering
+\caption{Estimated biomass, spawning ($B$) and total ($T$), in \Sexpr{currYr} and relative to virgin biomass ($B_0$, $T_0$) in \Sexpr{modYrs[1]}.}
+\label{tab:biomass}
+\begin{tabular}{lrrr} 
+\hline \\ [-1.5ex]
+{\bf Biomass} & {\bf $B_{t=\Sexpr{currYr}}$} & {\bf $B_0$} & {\bf $B_{\Sexpr{currYr}}$~/~$B_0$} \\ [1ex]
+\hline \\ [-1.5ex]
+<<Bcurr_tabs, echo=FALSE, results=tex>>= # create latex output
+bmark = options()$big.mark
+if (narea > 1){
+	for (a in 1:narea) {
+		cat("Spawning ", area.names[a], " & ", format(round(Bcurr[a]),big.mark=bmark), " & ", format(round(B0[a]),big.mark=bmark), " & ", signif(BcurrB0[a],3), "\\\\", sep="", "\n")
+	}
+}
+cat("Spawning ", ifelse(narea>1,"Combined",""), " & ", format(round(sum(Bcurr)),big.mark=bmark), " & ", format(round(sum(B0)),big.mark=bmark), " & ", signif(sum(Bcurr)/sum(B0),3), "\\\\", sep="", "\n")
+if (narea > 1){
+	cat("\\\\ [-1.5ex] \\hline \\\\ [-1.5ex]", "\n")
+	for (a in 1:narea) {
+		bmark = options()$big.mark
+		cat("Total ", area.names[a], " & ", format(round(Tcurr[a]),big.mark=bmark), " & ", format(round(T0[a]),big.mark=bmark), " & ", signif(TcurrT0[a],3), "\\\\", sep="", "\n")
+	}
+}
+cat("Vulnerable ", ifelse(narea>1,"Combined",""), " & ", format(round(sum(Vcurr)),big.mark=bmark), " & ", format(round(sum(V0)),big.mark=bmark), " & ", signif(sum(Vcurr)/sum(V0),3), "\\\\", sep="", "\n")
+cat("Total ", ifelse(narea>1,"Combined",""), " & ", format(round(sum(Tcurr)),big.mark=bmark), " & ", format(round(sum(T0)),big.mark=bmark), " & ", signif(sum(Tcurr)/sum(T0),3), "\\\\", sep="", "\n")
+@
+%Spawning & \Sexpr{format(round(sum(Bcurr)),big.mark=options()$big.mark)} & \Sexpr{format(round(sum(B0)),big.mark=options()$big.mark)} & \Sexpr{signif(sum(Bcurr)/sum(B0),3)} \\
+%Total    & \Sexpr{format(round(sum(Tcurr)),big.mark=options()$big.mark)} & \Sexpr{format(round(sum(T0)),big.mark=options()$big.mark)} & \Sexpr{signif(sum(Tcurr)/sum(T0),3)} \\
+\\ [-1.5ex]
+\hline
+\end{tabular}
+\end{table}
+
+%\clearpage
+%\qquad % or \hspace{2em}
+
+
+%%---Table 2-----------------------------
+\setlength{\tabcolsep}{2pt}
+\begin{table}[!h]
+\centering
+\caption{Priors and MPD estimates for estimated parameters. Prior information -- distributions: 0~=~uniform, 2~=~beta, 6~=~normal}
+\label{tab:parest}
+\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\small
+\begin{tabular}{lcccccr}
+\hline \\ [-1.5ex]
+%\multicolumn{6}{l}{{\bf Parameter in write-up, Awatea input name, Awatea export name}} \\
+{\bf Parameter} & {\bf Phase} & {\bf Range} & {\bf Type} & {\bf (Mean,SD)} & {\bf Initial} & {\bf MPD} \\ [1ex]
+\hline \\ [-1.5ex]
+\Sexpr{print(paste0(as.vector(apply(P.tab,1,ptab)),collapse="\n"))}
+\hline
+\end{tabular}
+\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\normalsize
+\end{table}
+
+\clearpage
+%\qquad % or \hspace{2em}
+
+%%---Tables 3-5 -------------------------
+%% Likelihoods Used from replist
+%% Get numbers from chunk above
+<<mpd_LL_tabs, echo=FALSE, results=tex>>= # create latex output
+
+xtabL1 = texArray(round(replist$likelihoods_used,5), table.label="tab:like1", sigdig=4, zero="0", use.row.names=T, name.row.names="Likelihood Component", tablewidth=5, table.caption="Likelihood components reported in \\texttt{likelihoods\\_used}." )
+
+ttabL1 = xtabL1$tabfile
+cat(ttabL1, sep="\n")
+
+xtabL2 = texArray(round(replist$likelihoods_laplace,5), table.label="tab:like2", sigdig=4, zero="0", use.row.names=T, name.row.names="Likelihood Component", tablewidth=5, table.caption="Likelihood components reported in \\texttt{likelihoods\\_laplace}." )
+
+ttabL2 = xtabL2$tabfile
+cat(ttabL2, sep="\n")
+
+LLfleet = data.frame(Label=replist$likelihoods_by_fleet[,1], round(replist$likelihoods_by_fleet[,-1],5))
+xtabL3 = texArray(LLfleet, table.label="tab:like3", sigdig=4, zero="0", use.row.names=F, name.row.names="", tablewidth=6, uscore=" ", table.caption="Likelihood components reported in \\texttt{likelihoods\\_by\\_fleet}." )
+
+ttabL3 = xtabL3$tabfile
+cat("\\usefont{\\encodingdefault}{\\familydefault}{\\seriesdefault}{\\shapedefault}\\small","\n")
+cat(ttabL3, sep="\n")
+cat("\\usefont{\\encodingdefault}{\\familydefault}{\\seriesdefault}{\\shapedefault}\\normalsize","\n")
+@
+\clearpage
+
+%%---Table 6 -------------------------
+%% Residuals -- sum of Studentised residuals by fleet 
+<<mpd_SR_tab, echo=FALSE, results=tex>>= # create latex output
+
+tab6  = calcMA(runs=run, rwts=rwt, vers=ver, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af, cwd=cwd)  ## calcMA 'cwd' needs to be set.
+#tab6  = calcMA(runs=run, rwts=rwt, vers=ver, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af, cwd=cwd, use.cwd.as.is=T)  ## implemented for a retrospective only
+#tab6  = calcMA(runs=run, rwts=rwt, overwrite=TRUE, fleets.lab=fleets.lab, fleets.af=fleets.af, cwd="C:/Users/haighr/Files/GFish/PSARC23/PEL/Data/SS/PEL2023") ## Just for PEL (Mackenzie)
+xtab6 = texArray(tab6, table.label="tab:ssr", sigdig=3, use.round=T, zero="0", use.row.names=F,  tablewidth=5, table.caption="Sum of residuals for observed and expected mean ages by fleet." )
+ttab6 = xtab6$tabfile
+cat(ttab6, sep="\n")
+@
+
+\clearpage
+\section{MPD Results -- Figures}
+
+\graphicspath{{\Sexpr{paste0(mcmc.dir,"/english/")}}}  %% Put english figures into english/ subdirectory (RH 241022)
+
+\onefig{mleParameters}{Likelihood profiles (thin blue curves) and prior density functions (thick black curves) for the estimated parameters. Vertical lines represent the maximum likelihood estimates; red triangles indicate initial values used in the minimization process.}
+
+\onefig{survIndSer}{Survey index values (points) with 95\pc{} confidence intervals (bars) and MPD model fits (curves) for the fishery-independent survey series.}
+
+\clearpage
+
+\onefig{survRes}{Survey index residuals calculated as (log(Obs) - log(Exp))/SE, where SE is the total standard error including any estimated additional uncertainty.}
+
+%%\onefig{meanAge0}{Mean ages each year for the \textbf{unweighted} data (solid circles) with 95\pc{} confidence intervals and model estimates (blue lines) for the commercial and survey age data.}
+
+\onefig{meanAge}{Mean ages each year for the \textbf{weighted} data (solid circles) with 95\pc{} confidence intervals and model estimates (blue lines) for the commercial and survey age data.}
+
+\clearpage
+
+%%\onefig{harmonica0}{\textbf{Unweighted AF} -- harmonic mean of effective sample size vs. arithmetic mean of adjusted sample size.}
+
+%%\onefig{harmonica}{\textbf{Weighted AF} -- harmonic mean of effective sample size vs. arithmetic mean of adjusted sample size.}
+
+\clearpage
+
+\onefig{spawning}{Time series of biomass (spawning, female, male, total) in tonnes. Uncertainty envelope generated by SS is provided for spawning female biomass. Bars along the bottom show catch biomass (tonnes) for all fisheries.}
+
+\onefig{vulnerable}{Time series of biomass (vulnerable and total) in tonnes. Each fishery taps into a vulnerable proportion of the total population based on fleet selectivity. \emph{Note}: in SS3, \code{`sel(B)'} appears to equal the catch (\code{`obs\_cat'}) in the \code{ts} object; vulnerable biomass is calculated as catch over harvest rate (\code{V=C/u}).  Bars along the bottom show catch biomass (tonnes) for all fisheries.}
+
+\onefig{harvest}{Time series of harvest (or exploitation) rate by fishery. Bars along the bottom show catch biomass (tonnes) for all fisheries.}
+
+\clearpage
+
+\twofig{Bt}{BtB0}{Spawning biomass $B_t$ (tonnes, mature females) over time (top), and spawning biomass $B_t$ relative to unfished equilbrium spawning biomass $B_0$ (bottom). Blue line designates SS fit for \Sexpr{currYr}.}
+
+\onefig{selectivity}{Selectivities for commercial fleet catch and surveys (all MPD values), with maturity ogive for females indicated by `m'.}
+
+\twofig{recruits}{recDev}{Recruitment (thousands of fish) over time (top) and log of annual recruitment deviations (bottom), $\epsilon_t$, where bias-corrected multiplicative deviation is  $\mbox{e}^{\epsilon_t - \sigma_R^2/2}$ and  $\epsilon_t \sim \mbox{Normal}(0, \sigma_R^2)$. Blue line designates \Sexpr{currYr} SS fit for age-0 fish.}
+
+<<mpd_frecruits, echo=FALSE, results=tex>>= # create latex output
+if (narea==1){
+	cat("\\onefig{stockRecruit}{Deterministic stock-recruit relationship (black curve) and observed values (labelled by year of spawning).}", sep="", "\n")
+} else {
+	cat("\\twofig{frecruits}{stockRecruit}{Proportion recruitment settlement by area (top); deterministic stock-recruit relationship (black curve) and observed values (labelled by year of spawning)(bottom).}", sep="", "\n")
+}
+@
+
+\clearpage
+
+<<mpd_age_fit_figs, echo=FALSE, results=tex>>= # create latex output
+for (i in fleets.af) {
+	cat("\\onefig{agefitFleet", i, "}{", fleets.lab[i], " proportions-at-age (bars=observed, lines=predicted) for females (upright) and males (inverted).}", sep="", "\n")
+
+	## check for one-step-ahead (OSA) residuals (RH 240408 solar eclipse)
+	osa.res = list.files(".", pattern=paste0("osa\\.residuals\\.fleet",i))
+	if (length(osa.res) > 0) {
+		for (s in c("F","M","A")){
+			if(any(grepl(paste0("sex",s), osa.res))) {
+				osaS = grep(paste0("sex",s), osa.res, value=T)
+				cat("\\onefig{", sub("\\.png$|\\.eps$","",osaS) , "}{", fleets.lab[i], " one-step-ahead residuals for ", switch(s, 'F'="females", 'M'="males", 'A'="males and females, combined"), ": (top left) OSA residuals by year and age; (top right) autocorrelation by row (age), column (year), and diagonal; (bottom left) quantile-quantile plot with points colour-coded by age; (bottom right) standard normal residuals, points colour-coded by age}", sep="", "\n")
+			}
+		}
+	}
+	cat("\\onefig{ageresFleet", i, "}{", fleets.lab[i], " residuals of model fits to proportion-at-age data. Vertical axes are standardised residuals. Boxplots in three panels show residuals by age class, by year of data, and by year of birth (following a cohort through time). Cohort boxes are coloured green if recruitment deviations in birth year are positive, red if negative. Boxes give quantile ranges (0.25-0.75) with horizontal lines at medians, vertical whiskers extend to the the 0.05 and 0.95 quantiles, and outliers appear as plus signs.}", sep="", "\n")
+	cat("\\clearpage", "\n")
+}
+@
+
+\end{document}
+%%==============================================================================

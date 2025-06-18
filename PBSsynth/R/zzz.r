@@ -36,42 +36,44 @@ https://github.com/pbs-software
 if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"%>%", ".findSquare",
 	"0.2B0", "0.3Gen", "0.4B0", "0.4Bmsy", "0.5B0", "0.5Gen", "0.7B0", "0.8Bmsy",
-	"B.index", "B.proj", "B0.MCMC", "Bmsy", "Bsens",
+	"B.index", "B.mcmc", "B.proj", "B0.MCMC", "Bmsy", "Bmsy.mcmc", "Bsens",
+	"Cum_exp", "Cum_obs",
 	"EndStrategy",
-	"L1",
-	"M", "MSY.mcmc", "MSYmaxIter", "MSYtol",
-	"N2", "Narea", "Ngen", "Ninit", "Nmat", "NrefM", "Nsens",
-	"P.mcmc", "P.mpd", "P.rc",
+	"Fleet", "Fleet_Name",
+	"L1", "Like", 
+	"M", "Method", "MSY.mcmc", "MSYmaxIter", "MSYtol",
+	"N2", "Narea", "Ngen", "Ninit", "Nmat", "NoName", "NrefM", "Nsamp_DM", "Nsens",
+	"P.mcmc", "P.mpd", "P.rc", "Part",
 	"RecFraction", "Rtdev.mcmc",
-	"SB0", "SSB", "StartStrategy", "StepStrategy", "StrategyType", 
-#	"add_legend", "bubble3", "SSMethod.Cond.TA1.8", "SSMethod.TA1.8", "SS_output", "SS_readctl", "SS_readdat", "SSgetMCMC", "SSgetoutput",  ## r4ss
+	"SB0", "SPRloop", "Sexes", "SSB", "StartStrategy", "StepStrategy", "StrategyType",
+	"Time",
 	"VB", "VB0",
 	"acf2", "agile", "alpha", "ampdPA", "area.name", "area.names", "areaPJ", "areaTS", "assYrs", "avgCP",
 		"avgLL", "avgPA", "avgPJ", "avgRP", "avgTS",
 	"base.dir", "base.lab", "bf", "boxlim", "boxpars", "brm", "bubble3",
 	"cattab", "ccex.strip", "central.mpd.dir", "central.run", "condbase", "control.file", "control_file_name",
 		"corARMA", "currYear", "currYr",
-	"data.compo.figs", "data_file_name", "derposts_file_name", "detectCores",
+	"d.mcmc", "data.compo.figs", "data_file_name", "derposts_file_name", "detectCores",
 	"endyr", "exp.run.num", "exp.run.rwt",
-	"fft", "fleets.lab", "forecast_file_name", "fval",
-	"gear.names", "gen1", "get_model_executable", "ghostagedbase", "ghostlendbase", "gls", "gray", "green", "gseries",
+	"fft", "fleets.all", "fleets.lab", "forecast_file_name", "fval",
+	"gear.names", "gen1", "get_dat_new_name", "get_model_executable", "ghostagedbase", "ghostlendbase", "gls", "gray", "green", "gseries",
 ##	"H",
 	"intervals", "isnull", "istock",
 ##	"J",
 	"kcol",
-	"ladbase", "latex.bold", "lendbase",
-	"m", "maxgrad", "mcmc.ts.sub", "modYrs", "mpd", "mutate_at",
+	"ladbase", "lang", "latex.bold", "lendbase",
+	"m", "maxgrad", "mcmc.ts.sub", "method", "modYrs", "mpd", "mutate_at",
 	"name", "narea", "ngear", "nmcmc", "npars",
 	"osares", "out",
-	"pen.lab", "pen.long", "pen.run.num", "pen.run.rwt", "pen.rwt.num", "pgenYear", "posts_file_name", "prefix",
-		"prevYear", "proYrs", "projYear",
+	"pen.lab", "pen.long", "pen.run.num", "pen.run.rwt", "pen.rwt.num", "pgenYear", "plot.cres.new",
+		"posts_file_name", "prefix", "prevYear", "proYrs", "projYear",
 	"qRlow", "quants3", "quants5",
 	"read_admb_cov", "recentCatch", "red", "refCC.sentence", "refHR.sentence", "replist", "resMulti",
 		"retro", "rich.colors.short", "rootd_models", "run.num",
 	"sample_admb", "sample_inits", "sarima", "scol", "sen.lab", "sen.mcsubs", "senRP", "senTS", 
 		"set_prior", "sizebinlabs", "sizedbase", "sizemethod", "slwd", "smpdPA", "so", "splitGear",
-		"spp.code", "ss_executable", "startYear", "starter_file_name", "startyr", "stock", "strSpp",
-		"strip.columns", "subplot", "survVec", "symbol", "system_",
+		"spp.code", "ss_executable", "startYear", "starter_file_name", "startyr", "startYr", "stock",
+		"strSpp", "strip.columns", "subplot", "survVec", "symbol", "system_",
 	"tic", "time", "toc",
 	"ucurr", "umsy", "use.num",
 	"var", "ver",
@@ -81,13 +83,15 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 ##	"Z"
 	), package="PBSsynth")
 
+
 ## Force this globally (without have to make a documentation file)
 #do.call("assign", args=list(x="control.file", value="rebsn_control.ss", envir=.PBSmodEnv))
 #do.call("assign", args=list(x="species.name", value="Rougheye/Blackspotted Rockfish", envir=.PBSmodEnv))
 #do.call("assign", args=list(x="species.name", value="Yellowmouth Rockfish", envir=.PBSmodEnv))
 #do.call("assign", args=list(x="species.name", value="Canary Rockfish", envir=.PBSmodEnv))
 #do.call("assign", args=list(x="species.name", value="Pacific Ocean Perch", envir=.PBSmodEnv))
-do.call("assign", args=list(x="species.name", value="Yellowtail Rockfish", envir=.PBSmodEnv))
+#do.call("assign", args=list(x="species.name", value="Yellowtail Rockfish", envir=.PBSmodEnv))
+do.call("assign", args=list(x="species.name", value="Silvergray Rockfish", envir=.PBSmodEnv))
 do.call("assign", args=list(x="quants3", value=c(0.05,0.50,0.95), envir=.PBSmodEnv))
 do.call("assign", args=list(x="quants5", value=c(0.05,0.25,0.50,0.75,0.95), envir=.PBSmodEnv))
 do.call("assign", args=list(x="ptypes", value=c("win","png"), envir=.PBSmodEnv))

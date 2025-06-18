@@ -1,4 +1,4 @@
-##================================================2024-08-27
+##================================================2025-04-25
 ## PBS Stock Synthesis plotting functions:
 ## ---------------------------------------
 ## calcRhat..............Plot the split-Rhat statistic and ESS
@@ -8,6 +8,7 @@
 ## panelChains...........Plots cumulative fequency of 'nchains' by partitioning one trace
 ## panelTraces...........Plots sequential  trace of MCMC samples with running median and (0.05, 0.95) quantiles
 ## plotACFs..............Plot ACFs for the estimated parameters
+## plotBh................Plot biomass (B) versus steepness (h)
 ## plotSS.dmcmc..........Plot diagnostics (traces, split chains, ACFs) for MCMCs
 ## plotSS.pairs..........Pairs|density plot comparison among parameters
 ## plotSS.pmcmc..........Plot parameter quantile boxplots for MCMCs
@@ -20,7 +21,7 @@
 ##==========================================================
 
 
-## calcRhat ----------------------------2024-08-20
+## calcRhat ----------------------------2025-06-18
 ## One way to monitor whether a chain has converged to the equilibrium
 ##   distribution is to compare its behavior to other randomly initialized chains.
 ##   This is the motivation for the potential scale reduction statistic, split-Rhat.
@@ -34,14 +35,14 @@
 ##   square of the separate within-chain standard deviations.
 ## Code sent by Adam Langley
 ##   https://cran.r-project.org/web/packages/bayesplot/vignettes/visual-mcmc-diagnostics.html#general-mcmc-diagnostics
-## ------------------------------------------AL|RH
+## ---------------------------------------AL|AV|RH
 calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
    only.bad=FALSE, badhat=1.01, offset=0.0025, recdevs=FALSE, 
-   zero.bar=TRUE, barcols=.colBlind, 
+   zero.bar=TRUE, barcols=.colBlind, xlim=NULL,
    png=FALSE, pngres=400, PIN=c(10,7.5),
    lang="e", outnam)
 {
-	## Subfunctions from rtan--------------------------------
+	## Subfunctions from rstan-------------------------------
 	##  (because I cannot get rstan to install)
 	is_constant <- function(x, tol = .Machine$double.eps) {
 		abs(max(x) - min(x)) < tol
@@ -253,38 +254,48 @@ calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
 	rownames(rhat) = rownames(Rhat) = rownames(Rhat.rstan) = colnames(dat)[parpos]
 #browser();return()
 
-
 	if (!recdevs && !rhat.only) {  ## extra plots
-		## Compare rhat (Adam Langley) vs. Rhat (Aki Vehtari)
-		rhat.comp = cbind(rhat,Rhat)
-		fout.e = paste0("rhat.comp.", tolower(basename(dir)))
-		for (l in lang) {
-			changeLangOpts(L=l)
-			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-			if (png) png(file=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
-			expandGraph(mfrow=c(1,1), mar=c(3.5,3.5,1,1), mgp=c(2,0.5,0))
-			plot(0,0, xlim=range(rhat.comp,na.rm=T), ylim=range(rhat.comp,na.rm=T), type="n", xlab=linguaFranca("simple rhat (Adam Langley)",l), ylab=linguaFranca("Rhat (Aki Vehtari)",l), cex.axis=1.2, cex.lab=1.5)
-			abline(a=0,b=1,col="blue",lwd=2)
-			points(rhat.comp[,"rhat"], rhat.comp[,"Rhat"], pch=21, bg="yellow", cex=1.1)
-			if (png) dev.off()
-		}; eop()  ## end lang loop
-		if (rhat.only) {browser();return()}
+		comp.adam = FALSE
+		if (comp.adam) {
+			## Compare rhat (Adam Langley) vs. Rhat (Aki Vehtari)
+			rhat.comp = cbind(rhat,Rhat)
+			fout.e = paste0("rhat.comp.", tolower(basename(dir)))
+			for (l in lang) {
+				changeLangOpts(L=l)
+				#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+				fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+				if (png) {
+					clearFiles(paste0(fout,".png"))
+					png(file=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
+				}
+				expandGraph(mfrow=c(1,1), mar=c(3.5,3.5,1,1), mgp=c(2,0.5,0))
+				plot(0,0, xlim=range(rhat.comp, na.rm=TRUE), ylim=range(rhat.comp,na.rm=T), type="n", xlab=linguaFranca("simple rhat (Adam Langley)",l), ylab=linguaFranca("Rhat (Aki Vehtari)",l), cex.axis=1.2, cex.lab=1.5)
+				abline(a=0,b=1,col="blue",lwd=2)
+				points(rhat.comp[,"rhat"], rhat.comp[,"Rhat"], pch=21, bg="yellow", cex=1.1)
+				if (png) dev.off()
+			}; eop()  ## end lang loop
+			if (rhat.only) {browser();return()}
+		}
 
 		## Plot histograms of chains for selectct parameters
 		fout.e = paste0("rhat.hist.", tolower(basename(dir)))
 		barcols = rep(barcols,nchains)[1:nchains]
 		for (l in lang) {
 			changeLangOpts(L=l)
-			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-			if (png) png(file=paste0(fout,".png"), width=10, height=9, units="in", res=pngres)
-			expandGraph(mfrow=PBSmodelling:::.findSquare(length(phis)), mar=c(3.5,3.5,1,1), mgp=c(2,0.5,0))  ## for histograms
+			#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+			if (png) {
+				clearFiles(paste0(fout,".png"))
+				png(file=paste0(fout,".png"), width=10, height=9, units="in", res=pngres)
+			}
+			expandGraph(mfrow=.findSquare(length(phis)), mar=c(3.5,3.5,1,1), mgp=c(2,0.5,0))  ## for histograms
 			for (j in  1:length(phis)) {
 				jj    = names(phis)[j]
 				jlist = phis[[jj]]
 				jdat  = unlist(jlist)
 				jlab = ifelse(grepl("R0",jj),"Log Recruitment (R0)", ifelse(grepl("NatM",jj), paste0("Natural Mortality (",ifelse(grepl("Fem",jj),"female","male"),")"), ifelse(grepl("BH",jj), "Beverton-Holt Steepness", jj)))
 				brks = seq(min(jdat), max(jdat), length.out=50)
-				hist(jdat, breaks=brks, col="transparent", border=FALSE, main="", cex.axis=1.2, cex.lab=1.5, cex.main=1.5, las=1, xlab=linguaFranca(jlab,"f"), ylab=linguaFranca("Frequency",l), yaxs="i")
+				hist(jdat, breaks=brks, col="transparent", border=FALSE, main="", cex.axis=1.2, cex.lab=1.5, cex.main=1.5, las=1, xlab=linguaFranca(jlab,l), ylab=linguaFranca("Frequency",l), yaxs="i")
 				ncol = length(jlist)
 				for (k in ncol:1) {
 					kk = 1:k
@@ -298,12 +309,21 @@ calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
 			if (png) dev.off()
 		}; eop()  ## end lang loop
 	} ## end if not recdevs
-#browser();return()
 
 	rhat.langley = rhat; rhat = Rhat.rstan  ## switch over to using rstan's calculations (RH 240529)
-	keep  = if (recdevs) grep("Recr", rownames(rhat))
+	flotsam = c("rhat", "rhat.langley")
+	## get rid of all the DEVadd parameters (for now)
+	if ( any(grepl("DEVadd", rownames(rhat))) ){
+		shunt = grep("DEVadd", rownames(rhat))
+		keep  = grep("DEVadd", rownames(rhat), invert=TRUE)
+		rhat.devadd = rhat[shunt,]
+		rhat = rhat[keep,]
+		flotsam = c(flotsam, "rhat.devadd")
+	}
+	keep  = if (recdevs) grep("RecrDev|ForeRecr", rownames(rhat))  ## need to exclude 'RecrDist'
 		else grep("Iter|Objective_function|chain|^Early|^Main|^Late|^Fore", rownames(rhat), invert=TRUE)
 	ess = if (ncol(rhat)>1) rhat[keep,2,drop=FALSE] else NULL  ## determine if ESS metrics exist
+#browser();return()
 	rhat  = rhat[keep,1,drop=FALSE] 
 	nrhat = nrow(rhat)
 	if (only.bad) {
@@ -318,30 +338,34 @@ calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
 	}
 	bad  = apply(rhat,1,function(x,bad) { x>bad }, bad=badhat)
 	good = !bad
-	rnames = rownames(rhat)
-	rownames(rhat) = convPN(rownames(rhat))
+	## Fix weird names in posteriors.sso
+	onames = rownames(rhat)  ## original names
+	rnames = convPN(onames)
 #browser();return()
-	rownames(rhat) = gsub("\\_GP1|\\_gp\\([0-9]\\)", "", rownames(rhat))
-	rownames(rhat) = gsub("BC\\.[0-9]\\.", "BC", rownames(rhat))
-	rownames(rhat) = gsub("\\.(R0|[0-9])\\.", "\\(\\1\\)", rownames(rhat))
+	#rownames(rhat) = gsub("\\_GP1|\\_gp\\([0-9]\\)", "", rownames(rhat))
+	#rownames(rhat) = gsub("BC\\.[0-9]\\.", "BC", rownames(rhat))
+	#rownames(rhat) = gsub("\\.(R0|[0-9])\\.", "\\(\\1\\)", rownames(rhat))
+	rownames(rhat) = rnames
 	if (!is.null(ess))
 		rownames(ess) = rownames(rhat)
+	flotsam = c(flotsam, "ess")
+	save(list=flotsam, file="rhat.flotsam.rda")
 
 	## Plot results
 	fout.e = if (missing(outnam)) paste0("rhat.", tolower(basename(dir))) else outnam
 	#xlim = c(min(0.98,min(rhat), na.rm=T), max(1.06,max(rhat), na.rm=T))
-	xlim = c(min(rhat, na.rm=T) - offset, max(badhat + offset, max(rhat) + 2*offset, na.rm=T))
+	if (is.null(xlim))
+		xlim = c(min(rhat, na.rm=T) - offset, max(badhat + offset, max(rhat) + 2*offset, na.rm=T))
 	xtck = pretty(xlim, n=10)
 	ylim = c(dim(rhat)[1],1) + c(1,-2) * 0.05 * diff(c(1,dim(rhat)[1]))
-#browser();return()
 	if (recdevs) {
 		fout.e = if (missing(outnam)) paste0("rhat.recdev.", tolower(basename(dir))) else outnam
 		clrs = rep("black", nrow(rhat))
-		clrs[grep("^Late",rnames)] = "blue"
-		clrs[grep("^Fore",rnames)] = "red"
+		clrs[grep("^Late",onames)] = "blue"
+		clrs[grep("^Fore",onames)] = "red"
 		bgs = rep("gainsboro", nrow(rhat))
-		bgs[grep("^Late",rnames)] = "cyan"
-		bgs[grep("^Fore",rnames)] = "pink"
+		bgs[grep("^Late",onames)] = "cyan"
+		bgs[grep("^Fore",onames)] = "pink"
 		yrs  = as.numeric(gsub("[^0-9.-]","",rownames(rhat)))
 		ylim = xlim
 		ytck = xtck
@@ -351,8 +375,12 @@ calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
 	## add in language loop
 	for (l in lang) {
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		if (png) png(file=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+		if (png) {
+			clearFiles(paste0(fout,".png"))
+			png(file=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
+		}
 		if (recdevs) {
 			expandGraph(mfrow=c(1,1), mar=c(3,3.5,1,1), mgp=c(2,0.5,0))
 			plot(0,0, xlim=xlim, ylim=ylim, type="n", xlab=linguaFranca("Year",l), ylab=linguaFranca("split R-hat",l), yaxs="i", yaxt="n", cex.lab=1.2, las=1)
@@ -392,7 +420,6 @@ calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
 				if (!is.null(zmark))
 					segments(x0=stry[zmark], y0=par()$usr[4], x1=stry[zmark], y1=length(essvec)+yoff, lty=5, col="purple")
 				mtext(linguaFranca("Effective Sample Size (bars)",l), side=3, line=1.5, cex=1.2)
-#browser();return()
 			}
 			#abline(v=c(1,badhat), lty=1:3, col=c("gainsboro","red"))
 			segments(x0=c(1,badhat), y0=par()$usr[3], x1=c(1,badhat), y1=1-yoff, lty=c(1,2), col=c("gainsboro","red"))
@@ -421,6 +448,7 @@ calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
 			}
 		}
 		addLabel(0.99,0.98, basename(dir), adj=c(1,0.5), cex=0.9, col="slategrey")
+#browser();return()
 		box()
 		if (png) dev.off()
 	}; eop()  ## end lang loop
@@ -825,96 +853,206 @@ plotACFs <- function(mcmc, lag.max=60, lang="e", ...) #, ptypes=tcall(PBSawatea)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotACFs
 
 
-## plotSS.dmcmc-------------------------2022-02-23
+## plotBh ------------------------------2025-04-25
+##  Plot biomass (B) versus steepness (h)
+## ---------------------------------------------RH
+plotBh <- function(dmcmc, Bmcmc, Bmsy, xfld="BH_h", ytype="rel", 
+   currYr, base, top, png=FALSE, pngres=400, PIN=c(10,7.5))
+{
+	## Gather data
+	df = data.frame(x=dmcmc[,xfld], B0=Bmcmc[,1], Bmsy=Bmsy, Bcurr=Bmcmc[,paste0("SSB_",as.character(currYr))])
+	df$Bcurr_B0   = df$Bcurr/df$B0
+	df$Bcurr_Bmsy = df$Bcurr/df$Bmsy
+	df$xbin = ceiling(df$x / 0.025) * 0.025
+	xbin = table(df$xbin)
+	df$y1 = switch(ytype,'abs'=df$B0, 'rel'=df$Bcurr_B0)
+	df$y2 = switch(ytype,'abs'=df$Bmsy, 'rel'=df$Bcurr_Bmsy)
+	ylim  = range(c(df$y1, df$y2), na.rm=T)
+	
+	## Find minimum h where MSY value is estimable
+	z = !is.na(df$y2) & is.finite(df$y2)
+	hlow = df$x[z][findPV(min(df$x[z]),df$x[z])]
+
+#browser();return()
+
+	if (missing(top))
+		top = quantile(c(df$y1, df$y2), probs=0.99, na.rm=T)
+	if (missing(base))
+		base = -(top * 0.2)
+
+	## Start plotting
+	fout.e = paste0("plotBH-", switch(ytype, 'abs'="Absolute", 'rel'="Relative",""))
+	for (l in lang) { 
+		createFdir(lang=l)
+		changeLangOpts(L=l)
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+		if (png) {
+			clearFiles(paste0(fout,".png"))
+			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		}
+		expandGraph(mfrow=c(1,1), mar=c(3.0,3.5,0.75,1), oma=c(0,0,0,0), mgp=c(1.75,0.5,0))
+		plot(0, 0, type="n", xlim=range(df$x), ylim=c(base,top), xlab="Steepness", ylab=paste(switch(ytype,'abs'="Absolute", 'rel'="Relative",""), "Biomass"), cex.lab=1.5)
+		#abline(v=hlow, lty=2, col="slategray")
+		segments(x0=hlow, y0=0, x1=hlow, y1=par()$usr[4]-(0.2*diff(par()$usr[3:4])), lty=2, col="slategray")
+		text(hlow, 0, labels=show0(hlow,2,round2n=TRUE), col="slategray", pos=1, cex=0.9)
+		points(df$x,df$y1, pch=20, col="lightblue")
+		points(df$x,df$y2, pch=20, col="pink")
+		lines(loess.smooth(df$x,df$y1),col="blue",lwd=3)
+		lines(loess.smooth(df$x,df$y2),col="red",lwd=3)
+		rout = scaleVec(xbin, Tmin=base, Tmax=0)
+		drawBars(as.numeric(names(rout)), base=base, rout, fill=lucent("green",0.25), width=0.025)
+		legtxt = switch(ytype,
+			'abs' = c(expression(italic(B)[0]), expression(italic(B)[MSY])),
+			'rel' = c(bquote(italic(B)[.(currYr)]/italic(B)[0]), bquote(italic(B)[.(currYr)]/italic(B)[MSY]))
+		)
+		htxt = sub("h","italic(h)",sub("_","~~",xfld))
+		legtxt = c(parse(text=htxt), legtxt)
+		legend("topleft", legend=legtxt, pch=c(22,NA,NA), col=c("black","blue","red"), pt.bg=c(lucent("green",0.25),NA,NA), pt.cex=c(3,NA,NA), lty=c(NA,1,1), lwd=c(1,3,3), bty="n", cex=1.5, x.intersp=c(1,1,1), inset=0.025)
+		if (png) dev.off()
+	}; eop()  ## end language loop
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotBh
+
+
+## plotSS.dmcmc-------------------------2025-04-25
 ##  Plot MCMC diagnostics (traces, split chains, ACFs).
 ##  Functions in PBSawatea.
 ## -----------------------------------PBSawatea|RH
-plotSS.dmcmc <- function(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9))
+plotSS.dmcmc <- function(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9),
+	BRP=rep(TRUE,3), rhat=TRUE, steep=TRUE)
 {
-	so("panelTraces.r","awatea"); so("mochaLatte.r","awatea"); so("calcRhat.r","synth")
+	so("panelTraces.r","synth"); so("mochaLatte.r","synth"); so("calcRhat.r","synth")
 	fout.e = "sumtingwong"
 
-	## Plot Rhat ratios
-	for (i in 0:1) {
-		ii = as.logical(i)
-		png = "png" %in% ptypes
-		theme="Hawaii"; barcols = colorspace::sequential_hcl(8,theme, rev=F)
-		calcRhat(dir=getwd(), recdevs=ii, png=png, outnam=ifelse(ii,"rhat.recdev","rhat"), lang=lang, pngres=pngres, PIN=c(10,6))
-	}
-#browser();return()
+#sumting = T
+#if (sumting) {
 
 	## MCMC diagnostics
 	## ----------------
-	fout.e = "traceBiomass"
-	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
-		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		for (p in ptypes) {
-			if (p=="eps") postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], horizontal=FALSE,  paper="special")
-			else if (p=="png") png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+	if (BRP[1]) {
+		fout.e = "traceBiomass"
+		for (l in lang) {
+			changeLangOpts(L=l)
+			#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 			bmcmc = mcmcObj$B[getYrIdx(colnames(mcmcObj$B))]/1000
 			bmpd  = mpdObj$B[getYrIdx(names(mpdObj$B))]/1000
-			panelTraces(mcmc=bmcmc, mpd=bmpd, xlab="Samples", ylab="Parameter value", cex.axis=1.2, cex.lab=1.5, same.limits=F, lang=l)
-			if (p %in% c("eps","png")) dev.off()
-		} ## end p (ptypes) loop
-	}; eop()
+			for (p in ptypes) {
+				if (p=="eps") postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], horizontal=FALSE,  paper="special")
+				else if (p=="png") {
+					clearFiles(paste0(fout,".png"))
+					png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+				}
+				panelTraces(mcmc=bmcmc, mpd=bmpd, xlab="Samples", ylab="Parameter value", cex.axis=1.2, cex.lab=1.5, same.limits=F, lang=l)
+				if (p %in% c("eps","png")) dev.off()
+			} ## end p (ptypes) loop
+		}; eop()
+	}
 #browser();return()
 
-	fout.e = "traceRecruits"
-	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
-		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		for (p in ptypes) {
-			if (p=="eps") postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], horizontal=FALSE,  paper="special")
-			else if (p=="png") png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+	if (BRP[2]) {
+		fout.e = "traceRecruits"
+		for (l in lang) {
+			changeLangOpts(L=l)
+			#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 			rmcmc = mcmcObj$R[getYrIdx(colnames(mcmcObj$R))]/1000
 			rmpd  = mpdObj$R[getYrIdx(names(mpdObj$R))]/1000
-			panelTraces(mcmc=rmcmc, mpd=rmpd, xlab="Samples", ylab="Parameter value", cex.axis=1.2, cex.lab=1.5, same.limits=F, lang=l, mar=c(0,1.5,0,1), oma=c(3.5,2.5,0.5,0), mgp=c(1.75,0.5,0))
-			if (p %in% c("eps","png")) dev.off()
-		} ## end p (ptypes) loop
-	}; eop()
+			for (p in ptypes) {
+				if (p=="eps") postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], horizontal=FALSE,  paper="special")
+				else if (p=="png") {
+					clearFiles(paste0(fout,".png"))
+					png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+				}
+				panelTraces(mcmc=rmcmc, mpd=rmpd, xlab="Samples", ylab="Parameter value", cex.axis=1.2, cex.lab=1.5, same.limits=F, lang=l, mar=c(0,1.5,0,1), oma=c(3.5,2.5,0.5,0), mgp=c(1.75,0.5,0))
+				if (p %in% c("eps","png")) dev.off()
+			} ## end p (ptypes) loop
+		}; eop()
+	}
 
-	fout.e = "traceParams"
-	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
-		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		for (p in ptypes) {
-			if (p=="eps") postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], horizontal=FALSE,  paper="special")
-			else if (p=="png") png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+#} ## end sumting
+
+	if (BRP[3]) {
+		fout.e = "traceParams"
+		for (l in lang) {
+			changeLangOpts(L=l)
+			#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 			pmcmc = mcmcObj$P
+			names(pmcmc) = linguaFranca(names(pmcmc), l)
 			pmpd  = mpdObj$P
-			panelTraces(mcmc=pmcmc, mpd=pmpd, xlab="Samples", ylab="Parameter value", cex.axis=1.2, cex.lab=1.5, same.limits=F, lang=l, mar=c(0,3,0,1), oma=c(3.5,2,0.5,0), mgp=c(1.75,0.5,0))
-			if (p %in% c("eps","png")) dev.off()
-		} ## end p (ptypes) loop
-	}; eop()
+			for (p in ptypes) {
+				if (p=="eps") postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], horizontal=FALSE,  paper="special")
+				else if (p=="png") {
+					clearFiles(paste0(fout,".png"))
+					png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+				}
+				panelTraces(mcmc=pmcmc, mpd=pmpd, xlab="Samples", ylab="Parameter value", cex.axis=1.2, cex.lab=1.5, same.limits=F, lang=l, mar=c(0,3,0,1), oma=c(3.5,2,0.5,0), mgp=c(1.75,0.5,0))
+				if (p %in% c("eps","png")) dev.off()
+			} ## end p (ptypes) loop
+		}; eop()
+	}
 #browser();return()
 
 	fout.e = "splitChain"
 	nchains   = 8
 	#col.trace = rep(rev(c("red", "blue", "black", "green", "orange", "purple", "cyan", "gold")), nchains)[1:nchains]
 	col.trace = rep(rev(c("red", "blue", "black", "green", "orange", "purple", "brown", "pink")), nchains)[1:nchains]
-	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+	for (l in lang) {
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+		mcmcP = mcmcObj$P
+		names(mcmcP) = linguaFranca(names(mcmcP), l)
 		for (p in ptypes) {
 			if (p=="eps") postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], horizontal=FALSE,  paper="special")
-			else if (p=="png") png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
-			panelChains(mcmc=mcmcObj$P, nchains=nchains, axes=TRUE, pdisc=0, between=list(x=0, y=0), col.trace=col.trace, xlab="Parameter Value", ylab="Cumulative Frequency", cex.axis=1.2, cex.lab=1.4, yaxt="n", lang=l, mar=c(1.5,2,0.5,1), oma=c(2,2,0,0), mgp=c(1.75,0.5,0), lwd.trace=1)
+			else if (p=="png") {
+				clearFiles(paste0(fout,".png"))
+				png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+			}
+			panelChains(mcmc=mcmcP, nchains=nchains, axes=TRUE, pdisc=0, between=list(x=0, y=0), col.trace=col.trace, xlab="Parameter Value", ylab="Cumulative Frequency", cex.axis=1.2, cex.lab=1.4, yaxt="n", lang=l, mar=c(1.5,2,0.5,1), oma=c(2,2,0,0), mgp=c(1.75,0.5,0), lwd.trace=1)
+			if (p %in% c("eps","png")) dev.off()
+		} ## end p (ptypes) loop
+	}; eop()
+#browser();return()
+
+	fout.e = "paramACFs"
+	for (l in lang) {
+		changeLangOpts(L=l)
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+		mcmcP = mcmcObj$P
+		names(mcmcP) = linguaFranca(names(mcmcP), l)
+		for (p in ptypes) {
+			if (p=="eps") postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], horizontal=FALSE,  paper="special")
+			else if (p=="png") {
+				clearFiles(paste0(fout,".png"))
+				png(paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
+			}
+			plotACFs(mcmc=mcmcP, lag.max=60, lang=l)
 			if (p %in% c("eps","png")) dev.off()
 		} ## end p (ptypes) loop
 	}; eop()
 
-	fout.e = "paramACFs"
-	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
-		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		for (p in ptypes) {
-			if (p=="eps") postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], horizontal=FALSE,  paper="special")
-			else if (p=="png") png(paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
-			plotACFs(mcmc=mcmcObj$P, lag.max=60, lang=l)
-			if (p %in% c("eps","png")) dev.off()
-		} ## end p (ptypes) loop
-	}; eop()
+	## Plot Rhat ratios
+	if (rhat) {
+		for (i in 0:1) {
+			ii = as.logical(i)
+			png = "png" %in% ptypes
+			theme="Hawaii"; barcols = colorspace::sequential_hcl(8,theme, rev=F)
+			#calcRhat(dir=getwd(), recdevs=ii, png=png, outnam=ifelse(ii,"rhat.recdev","rhat"), lang=lang, pngres=pngres, PIN=c(10,6))
+			calcRhat(dir=getwd(), recdevs=ii, png=png, lang=lang, pngres=pngres, PIN=c(10,6))  ## let 'calcRhat' create output names
+		}
+	}
+
+	## Plot B vs h (steepness)
+	if (steep) {
+		png = "png" %in% ptypes
+		plotBh(d.mcmc, B.mcmc, Bmsy.mcmc, ytype="rel", currYr=currYr, png=png)
+#browser();return()
+		plotBh(d.mcmc, B.mcmc, Bmsy.mcmc, ytype="abs", currYr=currYr, png=png)
+	}
+#browser();return()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.dmcmc
 
@@ -1001,7 +1139,7 @@ plotSS.pairs <- function(P.mpd, P.mcmc, type="image", ptypes,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.pairs
 
 
-## plotSS.pmcmc-------------------------2023-09-15
+## plotSS.pmcmc-------------------------2025-04-25
 ##  Plot boxplots of quantiles for various MCMC parameters.
 ##  Modified from PBSawatea's 'plotBmcmcPOP' function.
 ##  Input comes from the output file 'derived.parameters.sso' (use r4ss::SSgetMCMC)
@@ -1010,46 +1148,56 @@ plotSS.pmcmc <- function(obj, pqs=tcall(quants5), xyType="quantBox",
    lineType=c(3,2,1,2,3), refLines=NULL, xLim=NULL, yLim=NULL,
    userPrompt=FALSE, save=TRUE, tcl.val=-0.2, yrs, y0=TRUE,
    pyrs=NULL, LRP=NULL, USR=NULL, catpol=NULL,
-   yaxis.by, yLab="Recruitment", outnam, lang=c("e","f"), 
-   ptypes="win", pngres=400, PIN=c(8,6), ...)
+   yaxis.by, yLab="Recruitment", outnam, lang=c("e","f"),
+   ptypes="win", pngres=400, PIN=c(8,6), gmu=FALSE, ...)
 {
 	# See plt.quantBio if want other xyTypes, as took out here:
 	plt.qB <- function(qobj, xyType="lines", new=TRUE, xLim, yLim, yrs, pyrs, LRP, USR, pvec, ...)
 	{
 		if ( new ) {
+			col.lrp = .colBlind["redpurple"]
+			col.usr = .colBlind["bluegreen"]
 			plot(xLim, yLim, type="n", xlab=linguaFranca("Year",l), ylab=linguaFranca(yLab,l), ...)
+#browser();return()
 			if (!y0) abline(h=0,col="gainsboro")
-			if (!is.null(LRP)) abline(h=LRP, col="red", lty=5)
-			if (!is.null(USR)) abline(h=USR, col="green4", lty=5)
+			if (!is.null(LRP)) abline(h=LRP, col=col.lrp, lty=4, lwd=1.25)  #"red", lty=5)  ## (RH 240912)
+			if (!is.null(USR)) abline(h=USR, col=col.usr, lty=5, lwd=1.25)  #"green4", lty=5)  ## (RH 240912)
 		}
 		#yrs <- as.numeric(dimnames(qobj)[[2]])
 		#yrs <- as.numeric(gsub("[^[:digit:]]","",dimnames(result1)[[2]]))
-#browser();return()
 
 		# Quantile boxplots - assumes five quantiles.
 		if ( xyType=="quantBox" ) {
-			colvec      <- c(rep("green3",nrow(recdevEarly)), rep("black",nrow(recdevMain)), rep("blue",nrow(recdevLate)), rep("red", nrow(recdevFore)))
-			bgvec       <- c(rep("green",nrow(recdevEarly)), rep("gainsboro",nrow(recdevMain)), rep("cyan",nrow(recdevLate)), rep("pink", nrow(recdevFore)))
+			#colvec      <- c(rep("green3",nrow(recdevEarly)), rep("black",nrow(recdevMain)), rep("blue",nrow(recdevLate)), rep("red", nrow(recdevFore)))
+			#bgvec       <- c(rep("green",nrow(recdevEarly)), rep("gainsboro",nrow(recdevMain)), rep("cyan",nrow(recdevLate)), rep("pink", nrow(recdevFore)))
+			## Above not robust to all situations (RH 250408)
+			colvec      <- c(rep("green3",length(earlyYrs)), rep("black",length(mainYrs)), rep("blue",length(lateYrs)), rep("red", length(foreYrs)) )
+			names(colvec) = c(earlyYrs, mainYrs, lateYrs, foreYrs)
+			bgvec      <- c(rep("green",length(earlyYrs)), rep("gainsboro",length(mainYrs)), rep("cyan",length(lateYrs)), rep("pink", length(foreYrs)) )
+			names(bgvec) = c(earlyYrs, mainYrs, lateYrs, foreYrs)
 
-#browser();return()
 			if ("afR.mcmc" %in% fnam) { ## Rdist only occurs during recdevMain
 				areacol = switch(area,'5ABC'="blue",'3CD'="green4",'5DE'="red","black")
 				areabg  = switch(area,'5ABC'="cyan",'3CD'="green",'5DE'="pink","gainsboro")
 				colvec  = rep(areacol,length(yrs))
 				bgvec   = rep(areabg,length(yrs))
+				names(colvec) = names(bgvec) = yrs  ## (RH 250425)
 				medval  = mean(qobj[3,])
 				abline(h=medval, col=areacol, lty=3)
 				addLabel(0.02,0.02,paste0("mean of medians = ",show0(round(medval,3),3)), col=areacol, adj=c(0,0),cex=1)
 			}
+#browser();return()
 			#if(!is.null(USR)) abline(h=c(USR), col=c("slategray"), lwd=1, lty=5)  ## already covered by common frame above
 			delta <- 0.25 ## width of half-box
 			# Draw the outer whiskers.
 			segments(yrs, qobj[1,], yrs,qobj[5,], lty=1, col="black", lwd=ifelse(narea==1,1,0.5))
 			# Overlay the box.
 			for ( i in 1:length(yrs) ) {
+				ii = yrs[i]; iii = as.character(ii)
 				#rect( yrs[i]-delta,qobj[2,i], yrs[i]+delta, qobj[4,i],... ) ## AME
 				#polygon(x=c(rep(yrs[i]-delta,2),rep(yrs[i]+delta,2)), y=qobj[c(2,4,4,2),i], border="black", col="gainsboro", ...) ## RH (190620)
-				polygon(x=c(rep(yrs[i]-delta,2),rep(yrs[i]+delta,2)), y=qobj[c(2,4,4,2),i], border=colvec[i], col=bgvec[i], lwd=ifelse(narea==1,1,0.5)) ## RH (230816)
+				polygon(x=c(rep(yrs[i]-delta,2),rep(yrs[i]+delta,2)), y=qobj[c(2,4,4,2),iii], border=colvec[iii], col=bgvec[iii], lwd=ifelse(narea==1,1,0.5)) ## RH (230816)
+#browser();return()
 			}
 			# Add the median.
 			segments(yrs-delta, qobj[3,], yrs+delta, qobj[3,], lty=1, col=colvec, lwd=ifelse(narea==1,1,0.5))
@@ -1074,52 +1222,75 @@ plotSS.pmcmc <- function(obj, pqs=tcall(quants5), xyType="quantBox",
 					#recdev <- parameters[substring(parameters$Label, 1, 12) %in% c("Main_RecrDev"), ]
 					#recdevFore <- parameters[substring(parameters$Label, 1, 8) == "ForeRecr", ]
 					#recdevLate <- parameters[substring(parameters$Label, 1, 12) == "Late_RecrDev", ]
-					colvec <- c(rep("blue",nrow(recdevLate)), rep("red", nrow(recdevFore)))
-					points(addyrs, rep(0,length(addyrs)), pch=20, col=colvec, cex=1)
+					#colvec <- c(rep("blue",nrow(recdevLate)), rep("red", nrow(recdevFore)))
+					nullyrs = setdiff(names(colvec),yrs)  ## (RH 250409)
+					if (length(nullyrs)>0) {
+						points(as.numeric(nullyrs), rep(0,length(nullyrs)), pch=20, col=colvec[nullyrs], cex=1)
+					}
 				}
 			}
 		}
-
 		# Uncertainty envelope - assumes five quantiles.
 		if ( xyType=="envelope" ) {
-			if(!is.null(LRP) && !is.null(USR))
-				abline(h=c(LRP,USR), col=c("red","green4"), lwd=1, lty=5)
+			if (gmu) {
+			#if(!is.null(LRP) && !is.null(USR)){
+				#abline(h=c(LRP,USR), col=c("red","green4"), lwd=1, lty=5)  ## this is already done at start of plt.qB()  ## (RH 240912)
+				xrfp = par()$usr[1] + 0.05*diff(par()$usr[1:2])
+				yrfp = c(LRP,USR) + ifelse("png"%in%ptypes,0.02,0.015) * diff(par()$usr[3:4])
+				text(x=xrfp, y=yrfp, labels=linguaFranca(c("LRP","USR"),l), col=c(col.lrp,col.usr), font=2)
+#browser();return()
+			}
 			x  = setdiff(yrs,pyrs)
+			#x  = union(earlyYrs, mainYrs)
 			x.late = NULL
-			if (nrow(recdevLate)>0) {  ## (RH 230821)
-				xx.late = c(sub("Late_RecrDev_","",rownames(recdevLate)), as.character(currYr))
-				x.late  = as.numeric(xx.late)
+			#if (nrow(recdevLate)>0) {  ## (RH 230821)
+			if (length(lateYrs)>0) {  ## (RH 250409)
+				#xx.late = c(sub("Late_RecrDev_","",rownames(recdevLate)), as.character(currYr))
+				#x.late  = as.numeric(xx.late)
+				x.late = c(lateYrs, currYr)
+				x.late = lateYrs
 				## currYr goes into projections, extend main to start of late period
-				x = setdiff(x,.su(c(x.late[-1],currYr)))
+#browser();return()
+				x = setdiff(x,.su(c(x.late,currYr)))
 			}
 			xx = as.character(x)
+			xpol = x; xpol[1]=xpol[1]-0.5; xpol[length(xpol)]=xpol[length(xpol)]+0.5  ## buffering for polygon (RH 250410)
 			col.main = "black"
-			polygon(c(x,rev(x)), c(qobj[1,xx],rev(qobj[5,xx])), col=lucent(col.main,0.05), border=FALSE)
+			polygon(c(xpol,rev(xpol)), c(qobj[1,xx],rev(qobj[5,xx])), col=lucent(col.main,0.05), border=FALSE)
 			lines(x, qobj[3,xx], lty=1, lwd=ifelse(narea==1,3,2), col=col.main)
 			lines(c(x,NA,x), c(qobj[1,xx],NA,qobj[5,xx]), lty=2, lwd=ifelse(narea==1,2,1), col=col.main)
 			lines(c(x,NA,x), c(qobj[2,xx],NA,qobj[4,xx]), lty=3, lwd=ifelse(narea==1,1,1), col=col.main)
-#browser();return()
 			if (!is.null(x.late)) {  ## (RH 230821)
+				xpol = x.late; xpol[1]=xpol[1]-0.5; xpol[length(xpol)]=xpol[length(xpol)]+0.5  ## buffering for polygon (RH 250410)
+				ypol = as.character(x.late)
+				xlin = xx.late = c(x.late[1] - 1, x.late)  ## extend x.late from last main year for discrete data
+				ylin = as.character(xlin)
 				col.late = "blue"
-				polygon(c(x.late,rev(x.late)), c(qobj[1,xx.late],rev(qobj[5,xx.late])), col=lucent(col.late,0.05), border=FALSE)
-				lines(x.late, qobj[3,xx.late], lty=1, lwd=ifelse(narea==1,3,2), col=col.late)
-				lines(c(x.late,NA,x.late), c(qobj[1,xx.late],NA,qobj[5,xx.late]), lty=2, lwd=ifelse(narea==1,2,1), col=col.late)
-				lines(c(x.late,NA,x.late), c(qobj[2,xx.late],NA,qobj[4,xx.late]), lty=3, lwd=ifelse(narea==1,1,1), col=col.late)
+				polygon(c(xpol,rev(xpol)), c(qobj[1,ypol],rev(qobj[5,ypol])), col=lucent(col.late,0.05), border=FALSE)
+				lines(xlin, qobj[3,ylin], lty=1, lwd=ifelse(narea==1,3,2), col=col.late)
+				lines(c(xlin,NA,xlin), c(qobj[1,ylin],NA,qobj[5,ylin]), lty=2, lwd=ifelse(narea==1,2,1), col=col.late)
+				lines(c(xlin,NA,xlin), c(qobj[2,ylin],NA,qobj[4,ylin]), lty=3, lwd=ifelse(narea==1,1,1), col=col.late)
 			}
-			if (!is.null(pyrs)){
+			x.fore = c(currYr, pyrs)
+			if (!is.na(pvec) && all(x.fore %in% yrs)){
 				kcol = if (length(pvec)==1) "red" else c("green3","orange2","red")
+				xpol = x.fore
+				if (length(x.fore)==1) {
+					xpol = c(x.fore, x.fore)
+				}
+				ypol = as.character(xpol)
+				xpol[1]=xpol[1]-0.5; xpol[length(xpol)]=xpol[length(xpol)]+0.5  ## buffering for polygon (RH 250410)
+				xlin = xx.fore = c(x.fore[1] - 1, x.fore)  ## extend x.fore from last main year for discrete data
+				ylin = as.character(xlin)
 				for (k in 1:length(pvec)) {
-					x.proj  = c(pyrs[1]-1,pyrs)
-					xx.proj = as.character(x.proj)
-					yy  = qobj[,xx.proj]
 					pp  = pvec[[k]]
-					yy[rownames(pp),colnames(pp)] = pp
-					polygon(c(x.proj,rev(x.proj)), c(yy[1,xx.proj],rev(yy[5,xx.proj])), col=lucent(kcol[k],0.1), border=FALSE)
-					lines(x.proj, yy[3,xx.proj], lty=1, lwd=ifelse(narea==1,3,2), col=kcol[k])
-					lines(c(x.proj,NA,x.proj), c(yy[1,xx.proj],NA,yy[5,xx.proj]), lty=2, lwd=ifelse(narea==1,2,1), col=kcol[k])
-					lines(c(x.proj,NA,x.proj), c(yy[2,xx.proj],NA,yy[4,xx.proj]), lty=3, lwd=ifelse(narea==1,1,1), col=kcol[k])
-#abline(v=c(2015,2024)) ## just checking start years for late and proj
+					yy  = cbind(qobj[,ylin[1]], pp); colnames(yy)[1] = ylin[1]
+					polygon(c(xpol,rev(xpol)), c(yy[1,ypol],rev(yy[5,ypol])), col=lucent(kcol[k],0.1), border=FALSE)
+					lines(xlin, yy[3,ylin], lty=1, lwd=ifelse(narea==1,3,2), col=kcol[k])
+					lines(c(xlin,NA,xlin), c(yy[1,ylin],NA,yy[5,ylin]), lty=2, lwd=ifelse(narea==1,2,1), col=kcol[k])
+					lines(c(xlin,NA,xlin), c(yy[2,ylin],NA,yy[4,ylin]), lty=3, lwd=ifelse(narea==1,1,1), col=kcol[k])
 #browser();return()
+#abline(v=c(2015,2024)) ## just checking start years for late and proj
 				}
 			}
 		}
@@ -1142,27 +1313,39 @@ plotSS.pmcmc <- function(obj, pqs=tcall(quants5), xyType="quantBox",
 	parameters  <- replist$parameters
 	recdevEarly <- parameters[substring(parameters$Label, 1, 13) %in% c("Early_RecrDev"), ]
 	recdevMain  <- parameters[substring(parameters$Label, 1, 12) %in% c("Main_RecrDev"), ]
-	recdevFore  <- parameters[substring(parameters$Label, 1, 8) == "ForeRecr", ]
 	recdevLate  <- parameters[substring(parameters$Label, 1, 12) == "Late_RecrDev", ]
+	recdevFore  <- parameters[substring(parameters$Label, 1, 8) == "ForeRecr", ]
 
-	narea = 1 
+	## Switch to specific years rather than rely on recdev information only (RH 250409)
+	mainYrs  <- as.numeric(sub("Main_RecrDev_","",rownames(recdevMain)))
+	earlyYrs <- setdiff(startYr:(mainYrs[1]-1), mainYrs) ## this set is most sensitivr to inputs
+	lateYrs  <- as.numeric(sub("Late_RecrDev_","",rownames(recdevLate)))
+	foreYrs  <- as.numeric(sub("ForeRecr_","",rownames(recdevFore)))
+#browser();return()
+
 	if (inherits(obj,"list") &&  is.null(dim(obj)))
 		narea = length(obj)
+	else
+		narea = 1
 	createFdir(lang)
 	if (missing(outnam))
 		outnam = gsub("[[:space:]]+",".",tolower(yLab))
 	fout.e = outnam
-	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+	for (l in lang) { 
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 		for (p in ptypes) {
 			if (p=="eps")      postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], horizontal=FALSE,  paper="special")
-			else if (p=="png") png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+			else if (p=="png") {
+				clearFiles(paste0(fout,".png"))
+				png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+			}
 			rc = if(narea==3) c(3,1) else .findSquare(narea)
 			expandGraph(mfrow=rc, mar=c(3.0,3.5,0.75,0.5), oma=c(0,0,0,0), mgp=c(1.75,0.5,0))
 			for (i in 1:narea) {
 				if (narea==1) {
-					area = if (length(area.names)>1) "BC coast" else area.names  ## get area name from 'initialise.r' (RH 230915)
+					area = if (length(area.names)>1) switch(strSpp,'396'="CST","BC coast") else area.names  ## get area name from 'initialise.r' (RH 230915)
 					aobj = obj
 					acatpol = catpol  ## could be NULL
 				} else {
@@ -1176,6 +1359,7 @@ plotSS.pmcmc <- function(obj, pqs=tcall(quants5), xyType="quantBox",
 		
 				# Calculate the quantiles of the reconstructed biomass.
 				result1 <- apply( aobj, 2, quantile, probs=pqs, na.rm=T )
+				colnames(result1) = gsub("SSB_|u_|F_","",colnames(result1))
 				yrs1 <- as.numeric(gsub("[^[:digit:]]","",dimnames(result1)[[2]]))
 				if (!missing(yrs)) {
 					zyrs = is.element(yrs1,c(yrs,pyrs))
@@ -1183,24 +1367,27 @@ plotSS.pmcmc <- function(obj, pqs=tcall(quants5), xyType="quantBox",
 					yrs1 = yrs1[zyrs]
 					result1 = result1[,zyrs]
 				}
-				if (!is.null(pyrs)) {
-#browser();return()
+				cpyrs = c(currYr, pyrs)  ## pyrs must include at least the current year projection
+				if (!is.null(cpyrs) && any(cpyrs%in%colnames(result1))) {
 					if (!is.null(acatpol) && !all(dimnames(acatpol)$proj=="AC.00")) {
 						cpolnam = dimnames(acatpol)$proj
 						#if (is.null(cpolnam)) cpolnam = "AC.00"
 						if (narea==1)
 							cpolcat = avgCP[1,1,cpolnam]
 						else
-							cpolcat = xavgCP[1,sub("BC|CST","total",area),cpolnam]
+							cpolcat = xavgCP[1,sub("^BC$|^CST$","total",area),cpolnam]
 						projmat = apply(acatpol, 2:3, quantile, probs=pqs, na.rm=T )
 						projvec = lapply(1:dim(projmat)[3], function(k) {projmat[,,k]})
 						names(projvec) = cpolcat
 					} else {
-						projvec = list('AC'=result1[,intersect(colnames(result1),as.character(pyrs))])
+						projvec = list('AC'=result1[,intersect(colnames(result1),as.character(cpyrs))])
 					}
 				} else {
 					projvec = NA
 				}
+				if (!is.na(projvec) && length(cpyrs)==1) ## adjust matrix 
+					projvec = lapply(projvec, function(x,y){xx=t(t(x)); colnames(xx)=y; xx}, y=cpyrs)
+
 				if ( is.null(yLim) || narea>1 )
 					yLim <- c(ifelse(y0, 0, min(unlist(result1),unlist(projvec),na.rm=T)), max(unlist(result1),unlist(projvec),na.rm=T))
 				if ( is.null(xLim) || narea>1 )
@@ -1209,7 +1396,6 @@ plotSS.pmcmc <- function(obj, pqs=tcall(quants5), xyType="quantBox",
 
 				plt.qB(qobj=result1, xLim=xLim, yLim=yLim, xyType=xyType, yrs=yrs1, pyrs=pyrs, LRP=LRP, USR=USR, pvec=projvec, ...)
 				axis(1, at=intersect(seq(1900,3000,5), xLim[1]:xLim[2]), tcl=tcl.val, labels=FALSE)
-#browser();return()
 				if (missing(yaxis.by)) {
 					yint = diff(seq(par()$yaxp[1], par()$yaxp[2], len=par()$yaxp[3]+1))[1]
 					yint.char = as.character(yint) ## becasue comparing numerics is flaky
@@ -1226,11 +1412,12 @@ plotSS.pmcmc <- function(obj, pqs=tcall(quants5), xyType="quantBox",
 				#axis(2, at=seq(0, yLim[2], by=yaxis.by), tcl=tcl.val, labels=FALSE)
 				if (length(projvec)==3)
 					addLegend(0.5,0.975,legend=paste0(names(projvec)," t"), lty=1, lwd=ifelse(narea==1,3,2), seg.len=3, col=c("green3","orange2","red"), bty="n", xjust=0, yjust=1,title=linguaFranca("Projected catch",l), cex=ifelse(narea==1,1,0.8))
-				addLabel(0.975, 0.975, area, adj=c(1,1), font=2, cex=ifelse(narea==1,1.2,1.2), col=switch(area,'5ABC'="blue",'3CD'="green4",'5DE'="red","black") )
+#browser();return()
+				if (narea>1 || strSpp=="396") ## retrofit for POP 2023
+					addLabel(0.975, 0.975, linguaFranca(area,l), adj=c(1,1), font=2, cex=ifelse(narea==1,1.2,1.2), col=switch(area,'5ABC'="blue",'3CD'="green4",'5DE'="red","black") )
 			}  ## end i loop (area)
 			if (p %in% c("eps","png")) dev.off()
 		}
-#browser();return()
 	}; eop()  ## end language loop
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.pmcmc

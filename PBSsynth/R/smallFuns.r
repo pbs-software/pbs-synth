@@ -84,15 +84,16 @@ med5.95 <- function(xx.MCMC, dig=0, quants3=tcall(quants3))
 	print(mess)
 }
 
-## ptab---------------------------------2022-02-18
+## ptab---------------------------------2025-04-08
 ##  Function to use for priors in table (adapted from PBSawatea).
 ## ---------------------------------------------RH
 ptab <- function(xx)
 {
-	xx   = sub("^\\s+", "", xx)  ## remove leading and trailing whitespace
+	xx = sub("^\\s+", "", xx)  ## remove leading and trailing whitespace
 	xlab = gsub("\\_+"," ",xx[1])
-	xnum = xx[-1]
-	xnum[4] = switch(xnum[4], 'Normal'=6, 'No_prior'=0, 'Full_Beta'=2)
+#browser();return()
+	xnum =xx[-1]
+	xnum[4] = switch(xnum[4], 'Normal'=6, 'No_prior'=0, 'Full_Beta'=2, 'Sym_Beta'=1)
 	xnum = lapply(xnum,function(x){
 		if(is.numStr(x))   as.numeric(x)
 		else if (is.na(x)) "--"

@@ -1,0 +1,29 @@
+\setlength{\tabcolsep}{3pt}
+% latex table generated in R 4.5.0 by xtable 1.8-4 package
+% Wed Oct 16 11:07:20 2024
+\begin{table}[ht]
+\centering
+\caption{MPD log likelihood (LL) values reported by base and sensitivity runs for survey indices, age composition (AF), recruitment, and total (not all LL components reported here)} 
+\label{tab:ytr.sens.ll}  \begingroup\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\small
+\begin{tabular}{rrrrrrrrrrr}
+  \\[-0.5ex] \hline
+Sen.Run & Label & WCVI\_SYN & WCHG\_SYN & HS\_SYN & GIG\_HIS & NMFS\_TRI & Index & AF & Recruit & Total \\ 
+  \hline
+B (R02) & base run & 16.72 & 8.291 & 3.104 & 6.241 & 10.04 & 39.82 & 333.0 & 9.162 & 384.7 \\ 
+   \hdashline \\[-1.75ex]S01 (R10) & split-M at age 9 & 16.92 & 8.286 & 3.143 & 5.838 & 10.15 & 39.82 & 306.1 & 8.593 & 357.3 \\ 
+  S02 (R11) & fem dome-shape sel & 16.83 & 8.022 & 3.111 & 5.380 & 10.02 & 38.83 & 322.7 & 9.275 & 373.1 \\ 
+  S03 (R05) & sigmaR=0.6 & 17.08 & 7.863 & 3.045 & 6.420 & 9.919 & 39.79 & 330.9 & 0.005231 & 373.7 \\ 
+  S04 (R06) & sigmaR=1.2 & 16.55 & 8.509 & 3.138 & 6.146 & 10.09 & 39.84 & 333.4 & 16.27 & 392.2 \\ 
+  S05 (R07) & estimate sigmaR & 16.30 & 8.088 & 3.293 & 6.755 & 9.873 & 39.57 & 332.6 & -0.4004 & 375.1 \\ 
+  S06 (R08) & D-M parameterisation & 15.68 & 7.819 & 3.128 & 6.013 & 9.661 & 37.55 & 1,167 & 4.708 & 1,232 \\ 
+  S07 (R12) & AE1 no age error & 16.98 & 8.214 & 3.082 & 6.423 & 9.808 & 39.92 & 304.8 & 4.265 & 352.4 \\ 
+  S08 (R13) & AE5 age reader CV & 16.70 & 8.306 & 3.105 & 6.231 & 10.00 & 39.76 & 328.5 & 9.294 & 380.4 \\ 
+  S09 (R14) & AE6 CASAL CV=0.1 & 16.63 & 8.321 & 3.091 & 5.989 & 9.918 & 39.39 & 355.2 & 7.081 & 404.6 \\ 
+  S10 (R15) & reduce catch 30\% & 17.15 & 7.970 & 3.078 & 6.778 & 10.63 & 41.12 & 329.4 & 10.21 & 384.4 \\ 
+  S11 (R16) & increase catch 50\% & 16.11 & 8.791 & 3.155 & 5.606 & 9.493 & 38.47 & 341.5 & 8.319 & 390.4 \\ 
+  S12 (R09) & geospatial indices & 4.799 & -2.427 & -6.805 & 6.319 & 9.962 & 5.710 & 341.6 & 10.21 & 360.6 \\ 
+  S13 (R04) & HBLL indices & 15.97 & 9.430 & 3.230 & 6.265 & 10.04 & 39.35 & 345.6 & 9.884 & 397.8 \\ 
+  S14 (R17) & BT \& MW fleets & 16.19 & 8.551 & 3.160 & 6.041 & 9.758 & 39.08 & 422.7 & 9.291 & 473.8 \\ 
+   \hline
+\end{tabular}  \endgroup
+\end{table}

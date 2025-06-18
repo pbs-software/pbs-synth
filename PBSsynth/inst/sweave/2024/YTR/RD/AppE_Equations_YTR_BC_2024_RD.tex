@@ -1,0 +1,1647 @@
+\documentclass[11pt]{book}
+\usepackage{Sweave}%% needs to come before resDocSty
+\usepackage{resDocSty}%% Res Doc .sty file
+
+%\usepackage{rotating}%% for sideways table
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{pdfcomment}
+\usepackage{fmtcount}%% for rendering numbers to words
+\usepackage{xcolor, soul}
+
+\usepackage{amssymb}%% https://ctan.org/pkg/amssymb?lang=en
+\usepackage{mathtools}%% https://ctan.org/pkg/mathtools?lang=en
+\usepackage{MnSymbol}%% https://ctan.org/pkg/mathtools?lang=en
+
+\usepackage{listings}%% wtf?
+\lstset{
+%basicstyle=\scriptsize\ttfamily,
+basicstyle=\tiny\ttfamily,
+columns=flexible,
+breaklines=true
+%escapechar=\%
+}
+
+\newcommand{\Lagr}{\mathcal{L}}%% Langrangian L for likelihood
+\newcommand{\Norm}{\mathcal{N}}%% Normal distribution
+\newcommand{\Fobj}{\mathcal{F}}%% Function objective
+\newcommand{\Biom}{\mathcal{B}}%% Mid-season retained dead biomass
+\newcommand{\Temp}{\mathcal{T}}%% Temporary variable for Selectivity calcs
+\newcommand{\Joyn}{\mathcal{J}}%% Joiner variable for Selectivity calcs (\Join already defined)
+\def\bfTh{{\bf \Theta}}%% bold Theta
+\newcommand{\dprime}{\prime\prime}%% double prime (supposedly in stix package but it doesn't load properly)
+\newcommand{\isactive}{\circledast}%{\circledcirc}%
+\newcommand{\inactive}{\vartriangleleft}%
+\newcommand{\adj}[1]{\overrightharpoon{#1}}%% adjusted value
+\newcommand{\mbull}{$\filledtriangleright$\,}
+\newcommand{\nbull}{~~~$\smalltriangleright$\,}
+
+\definecolor{red}{rgb}{1,0,0}
+\definecolor{green}{rgb}{0,1,0}
+\definecolor{blue}{rgb}{0,0,1}
+\definecolor{yellow}{rgb}{1,1,0}
+\definecolor{gainsboro}{rgb}{0.8627451,0.8627451,0.8627451}
+\definecolor{slategrey}{rgb}{0.4392157, 0.5019608, 0.5647059}
+\definecolor{darkslategrey}{rgb}{ 0.1843137 0.3098039 0.3098039}
+\definecolor{aliceblue}{RGB}{240, 248, 255}
+\definecolor{deepskyblue}{rgb}{0, 0.7490196, 1}
+\definecolor{dodgerblue}{RGB}{24, 116, 205}
+\definecolor{midnightblue}{rgb}{0.09803922 0.09803922 0.43921569}
+\definecolor{moccasin}{RGB}{255, 236, 204}
+\definecolor{honeydew}{RGB}{240, 255, 240}
+\definecolor{colquote}{RGB}{85, 26, 139}%% purple4 (colour for quotes from Dr. Peoples)
+\newcommand{\oldstuff}[1]{\normalsize\textcolor{red}{#1}\normalsize}
+\newcommand{\newstuff}[1]{\normalsize\textcolor{blue}{#1}\normalsize}
+\newcommand{\greystuff}[1]{\normalsize\textcolor{slategrey}{#1}\normalsize}
+\sethlcolor{yellow}
+
+\captionsetup{figurewithin=none,tablewithin=none}%% This works for resetting figure and table numbers for book class though I don't know why. Set fig/table start number to n-1.
+
+\newcommand{\Bmsy}{B_\text{MSY}}
+\newcommand{\umsy}{u_\text{MSY}}
+\newcommand{\pc}{\%}
+\newcommand{\ptype}{png}
+\newcommand{\angL}{\guillemotleft\,}
+\newcommand{\angR}{\,\guillemotright}
+
+\newcommand{\stock}[1]{$\langle$\,\textcolor{darkslategrey}{#1}\,$\rangle$}
+\newcommand{\mr}[1]{\text{#1}}
+\newcommand{\super}[1]{$^\mr{#1}$}
+\newcommand{\ms}[1]{{\scriptscriptstyle #1}}  %% math small
+\newcommand{\mm}[1]{{\scriptstyle #1}}        %% math moderately small
+\newcommand{\elof}[1]{\in\left\{#1\right\}}   %% is an element of
+\newcommand{\comment}[1]{}                    %% commenting out blocks of text
+\newcommand{\commint}[1]{\hspace{-0em}}       %% commenting out in-line text
+
+\def\startP{167}         %% page start (default=1)
+\def\startF{0}           %% figure start counter (default=0)
+\def\startT{0}           %% table start counter (default=0)
+
+%%http://tex.stackexchange.com/questions/6058/making-a-shorter-minus
+\def\minus{%
+  \setbox0=\hbox{-}%
+  \vcenter{%
+    \hrule width\wd0 height 0.05pt% \the\fontdimen8\textfont3%
+  }%
+}
+%%https://tex.stackexchange.com/questions/22100/the-bar-and-overline-commands (Danie Els)
+\makeatletter
+\newsavebox\myboxA
+\newsavebox\myboxB
+\newlength\mylenA
+\newcommand*\widebar[2][0.75]{%
+    \sbox{\myboxA}{$\m@th#2$}%
+    \setbox\myboxB\null%% Phantom box
+    \ht\myboxB=\ht\myboxA%
+    \dp\myboxB=\dp\myboxA%
+    \wd\myboxB=#1\wd\myboxA%% Scale phantom
+    \sbox\myboxB{$\m@th\overline{\copy\myboxB}$}%% Overlined phantom
+    \setlength\mylenA{\the\wd\myboxA}%% calc width diff
+    \addtolength\mylenA{-\the\wd\myboxB}%
+    \ifdim\wd\myboxB<\wd\myboxA%
+       \rlap{\hskip 0.5\mylenA\usebox\myboxB}{\usebox\myboxA}%
+    \else
+        \hskip -0.5\mylenA\rlap{\usebox\myboxA}{\hskip 0.5\mylenA\usebox\myboxB}%
+    \fi}
+\makeatother
+
+\makeatletter
+\renewcommand{\@chapapp}{}%% Not necessary...
+\newenvironment{chapquote}[2][2em]
+  {\setlength{\@tempdima}{#1}%
+   \def\chapquote@author{#2}%
+   \parshape 1 \@tempdima \dimexpr\textwidth-2\@tempdima\relax%
+   %\itshape}
+   \small\color{colquote}}
+  {\par\normalfont\hfill--\ \chapquote@author\hspace*{\@tempdima}\par\smallskip}
+\makeatother
+
+\def\ds{\rule{0pt}{1.5ex}}%% push subscript further down (increase vertical spacing)
+
+%% #1=filename, #2=caption text; NOTE: Tags won't work if figure boundaries hit the margins (e.g., keep width < 6.5in)
+\newcommand\onefig[2]{
+  \begin{figure}[tp]
+  \begin{center}
+  \pdftooltip{
+  \includegraphics[width=6.4in,height=7.25in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1}}
+  \end{center}
+  \caption{#2}
+  \label{fig:#1}
+  \end{figure}
+}
+%% #1=fig filename, #2=caption text, #3=fig width, #4=fig height
+\newcommand\onefigWH[4]{
+  \begin{figure}[tp]
+  \begin{center}
+  \pdftooltip{
+  \includegraphics[width=#3in,height=#4in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1}}
+  \end{center}
+  \caption{#2}
+  \label{fig:#1}
+  \end{figure}
+}
+%% #1=fig1 filename, #2=fig2 filename, #3=caption text, #4=fig1 height, #5=fig2 height
+\newcommand\twofig[3]{
+  \begin{figure}[tp]
+  \centering
+  \begin{tabular}{c}
+  \pdftooltip{
+  \includegraphics[width=6in,height=3.5in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1} top} \\
+  \pdftooltip{
+  \includegraphics[width=6in,height=3.5in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#1} bottom}
+  \end{tabular}
+  \caption{#3}
+  \label{fig:#1}
+  \end{figure}
+  \clearpage
+}
+%% #1=fig1 filename, #2=fig2 filename, #3=caption text, #4=fig1 width #5=fig1 height, #6=fig2 width, #7=fig2 height
+\newcommand\twofigWH[7]{
+  \begin{figure}[tp]
+  \centering
+  \begin{tabular}{c}
+  \pdftooltip{
+  \includegraphics[width=#4in,height=#5in,keepaspectratio=TRUE]{{#1}.\ptype}}{Figure~\ref{fig:#1} top} \\
+  \pdftooltip{
+  \includegraphics[width=#6in,height=#7in,keepaspectratio=TRUE]{{#2}.\ptype}}{Figure~\ref{fig:#1} bottom}
+  \end{tabular}
+  \caption{#3}
+  \label{fig:#1}
+  \end{figure}
+  \clearpage
+}
+%% #1=figure1 #2=figure2 #3=label #4=caption #5=width (fig) #6=height (fig)
+\newcommand\figbeside[6]{
+\begin{figure}[!htp]
+  \centering
+  \pdftooltip{
+  \begin{minipage}[t]{0.47\linewidth}
+    \begin{center}
+    \includegraphics[width=#5in,height=#6in,keepaspectratio=TRUE]{{#1}.\ptype}
+    \end{center}
+    %\caption{#3}
+    %\label{fig:#1}
+  \end{minipage}}{Figure~\ref{fig:#3} left}%
+  \quad
+  \pdftooltip{
+  \begin{minipage}[t]{0.47\linewidth}
+    \begin{center}
+    \includegraphics[width=#5in,height=#6in,keepaspectratio=TRUE]{{#2}.\ptype}
+    \end{center}
+    %\caption{#4}
+    %\label{fig:#2}
+  \end{minipage}}{Figure~\ref{fig:#3} right}
+  \caption{#4}
+  \label{fig:#3}
+\end{figure}
+}
+
+        % keep.source=TRUE, 
+
+%% Alter some LaTeX defaults for better treatment of figures:
+%% See p.105 of "TeX Unbound" for suggested values.
+%% See pp. 199-200 of Lamport's "LaTeX" book for details.
+%%   General parameters, for ALL pages:
+\renewcommand{\topfraction}{0.95}%% max fraction of floats at top
+\renewcommand{\bottomfraction}{0.50}%% max fraction of floats at bottom
+%% Parameters for TEXT pages (not float pages):
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}%% 2 may work better
+\renewcommand{\textfraction}{0.05}%% allow minimal text w. figs
+%% Parameters for FLOAT pages (not text pages):
+\renewcommand{\floatpagefraction}{0.75}%% require fuller float pages
+%% N.B.: floatpagefraction MUST be less than topfraction !!
+
+%% Stuff from previous LaTeX equation appendix:
+%% -------------------------------------------
+  \def\AppLet{E}%%                  Appendix letter
+ %\def\schematic{1~}%%              Figure number for schematic fig (in main text)
+  \font\mbf=cmmib10 scaled 1200%%   computer modern math italic bold
+  \font\sbf=cmbsy10 scaled 1200%%   computer modern symbol bold
+  \def\bfmi#1{{\hbox{\mbf #1}}}%%   bold face math italic macro
+  \def\bfms#1{{\hbox{\sbf #1}}}%%   bold face math symbol macro
+  \def\bfTh{{\bf \Theta}}%%         bold Theta
+  \def\bfPh{{\bf \Phi}}%%           bold Phi
+  \def\bfleq{\,\bfms{\char'24}\,}%% bold <= (less than or equal)
+  \def\bfgeq{\,\bfms{\char'25}\,}%% bold >= (greater than or equal)
+  \def\bfeq{\mbox{\bf\,=\,}}%%      bold =
+  \def\bft{\bfmi{t}}%%              bold t
+  \def\bfT{\bfmi{T}}%%              bold T   - need for headings
+  \def\rbT{\mbox{\bf T}}%%          Roman bold T
+  \def\rbU{\mbox{\bf U}}%%          Roman bold U
+  \def\winf{w_\infty}
+
+  \def\veq{\vspace{-4ex}}%%    contraction around equations
+  \def\vec{\vspace{-3ex}}%%    contraction around centering
+  %\def\headc{\vspace{-2ex}}%% contraction after 'fake' subsubheading
+  \def\headc{\vspace{-1ex}}%%  contraction after 'fake' subsubheading
+  %\def\subsub#1{\noindent {\bf #1} \headc}%% fake subheading
+
+% RH commands
+\newcommand{\code}[1]{\normalsize\texttt{#1}\normalsize}%
+\newcommand\Tstrut{\rule{0pt}{2.6ex}}% top strut
+\newcommand\Bstrut{\rule[-1.1ex]{0pt}{0pt}}% bottom strut
+
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}%
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}%
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}%
+
+% AME commands
+\newcommand{\inarea}{coastwide}
+\newcommand{\AppCat}{Appendix~A}
+\newcommand{\AppSurv}{Appendix~B}
+\newcommand{\AppCPUE}{Appendix~C}
+\newcommand{\AppBio}{Appendix~D}
+\newcommand{\AppRes}{Appendix~F}
+
+%% https://tex.stackexchange.com/questions/69662/how-to-globally-change-the-spacing-around-equations
+\makeatletter
+\g@addto@macro\normalsize{%% This is used for equation control but it interferes with \normalsize unless you add % after each line below
+  \setlength\abovedisplayskip{-6pt}%
+  \setlength\belowdisplayskip{-6pt}%
+  \setlength\abovedisplayshortskip{0pt}%
+  \setlength\belowdisplayshortskip{0pt}%
+}
+\makeatother
+
+\def\vsd{\vspace*{1ex}}%% Aha - there's a whole bunch of these plus -ve
+\def\hsd{\hspace*{1ex}}
+\def\tab{\hsd\hsd}
+\def\newp{\vfill \break}
+\def\Var{\mbox{Var}}
+\def\Cov{\mbox{Cov}}
+
+%% Equation reference: #1=internal label saved in AUX file
+\newcommand{\eref}[1]{(\ref{#1})}
+
+% Revise Andy's usual:
+\renewcommand{\eb}{\vsd \vsd \begin{eqnarray}}
+\renewcommand{\ee}{\end{eqnarray} \vsd }
+
+%% Repeat this here to override resDocSty (which has math font size 11 a bit smaller)
+\DeclareMathSizes{10.95}{12}{8}{4} %% For size 11 math fonts
+
+%%==========================================================
+
+%% Line delimiters in this document:
+%% #####  Chapter
+%% =====  Section
+%% -----  Subsection
+%% ~~~~~  Subsubsection
+%% +++++  Tables
+%% ^^^^^  Figures
+
+\begin{document}
+\pagestyle{csapfancy}
+
+\setcounter{page}{\startP}
+\setcounter{figure}{\startF}
+\setcounter{table}{\startT}
+\setcounter{secnumdepth}{3}%% to number subsubheadings-ish
+\setlength{\tabcolsep}{3pt}%% table column separator
+
+
+\setlength\LTleft{0pt plus \textwidth}
+\setlength\LTright{0pt plus \textwidth}
+%% Fix by David Carlisle for longtable xxx to match that in array
+\def\LT@startpbox#1{%
+  \bgroup
+  \color@begingroup% Omit line if package date older than 2014/10/28
+    \let\@footnotetext\LT@p@ftntext
+    \setlength\hsize{#1}%
+    \@arrayparboxrestore
+   \everypar{%
+      \vrule \@height \ht\@arstrutbox \@width \z@
+      \everypar{}}%
+%    \vrule \@height \ht\@arstrutbox \@width \z@
+}
+%% Default spacing above and below equations
+%%\setlength{\abovedisplayskip}{-6pt}
+%%\setlength{\belowdisplayskip}{-6pt}
+
+\setcounter{chapter}{5}    % temporary for standalone chapters 9=(5=F, 6=G)
+\renewcommand{\thechapter}{\Alph{chapter}} % ditto
+\renewcommand{\thesection}{\thechapter.\arabic{section}.}
+\renewcommand{\thesubsection}{\thechapter.\arabic{section}.\arabic{subsection}.}
+\renewcommand{\thesubsubsection}{\thechapter.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.}
+\renewcommand{\thetable}{\thechapter.\arabic{table}}    
+\renewcommand{\thefigure}{\thechapter.\arabic{figure}}  
+\renewcommand{\theequation}{\thechapter.\arabic{equation}}
+%\renewcommand{\thepage}{\arabic{page}}
+
+\newcounter{prevchapter}
+\setcounter{prevchapter}{\value{chapter}}
+\addtocounter{prevchapter}{-1}
+\newcommand{\eqnchapter}{\Alph{prevchapter}}
+
+\def\finalYr{2025}%% final year in model
+\def\ncomm{1}%%      index g for commercial fishery (if more than one, this will need to be revised)
+\def\nsurv{6}%%      index g for total number of surveys
+\def\gsurv{2,...,7}%%      index g for all surveys
+\def\gcomm{1}%%      index g for all commercial fisheries
+\def\ugees{1,2,3,7}%%      index g for surveys/fisheries with age data (composition)
+\def\qgees{2,...,7}%%      index g for surveys/fisheries with index data (abundance)
+
+\newcommand{\spn}{Yellowtail Rockfish}
+\newcommand{\spc}{YTR}
+
+
+%###############################################################################
+\chapter*{APPENDIX~\thechapter. MODEL EQUATIONS}
+
+\newcommand{\LH}{}%{DRAFT (11/5/2024) not citable}%% Set to {} for final ResDoc
+\newcommand{\RH}{}%{CSAP Request ID 1455}%% Set to {} for final ResDoc
+\newcommand{\LF}{}%{\spn{} 2024}
+\newcommand{\RF}{}%{APPENDIX~\thechapter ~-- Model Equations}
+
+\lhead{\LH}\rhead{\RH}\lfoot{\LF}\rfoot{\RF}
+
+%% Single area model:
+\newcommand{\nSims}{\{40,000\,(for base-model)\,| 20,000\,(for sensitivity)\}}%% Total number simulations
+\newcommand{\nChains}{8}%% Number of chains
+\newcommand{\cSims}{\{5,000\,(base)\,| 2,500\,(sens)\}}%% number of simulations per chain
+\newcommand{\cBurn}{\{2,500\,(base)\,| 1,250\,(sens)\}}%% burnin per chain
+\newcommand{\cSamps}{\{2,500\,(base)\,| 1,250\,(sens)\}}%% samples retained per chain
+\newcommand{\nThin}{\{10\,(base)\,| 5\,(sens)\}}%% number used for thinning samples
+\newcommand{\Nmcmc}{\{20,000\,(base)\,| 10,000\,(sens)\}}%% number of samples per run
+\newcommand{\Nbase}{\{20,000\,(base)\,| 10,000\,(sens)\}}%% number of samples per base run/case
+\newcommand{\Npost}{\{2,000\,(base)\,| 2,000\,(sens)\}}%% number of posterior samples per base run/case after thinning
+%% Multi-area model:
+%\newcommand{\nSims}{\{40,000\,(for base-model)\,| 40,000\,(for area-model)\,| 20,000\,(for sensitivity)\}}%% Total number simulations
+%\newcommand{\nChains}{8}%% Number of chains
+%\newcommand{\cSims}{\{5,000\,(base)\,| 5,000\,(area)\,| 2,500\,(sens)\}}%% number of simulations per chain
+%\newcommand{\cBurn}{\{2,500\,(base)\,| 2,500\,(area)\,| 1,250\,(sens)\}}%% burnin per chain
+%\newcommand{\cSamps}{\{2,500\,(base)\,| 2,500\,(area)\,| 1,250\,(sens)\}}%% samples retained per chain
+%\newcommand{\nThin}{\{10\,(base)\,| 10\,(area)\,| 5\,(sens)\}}%% number used for thinning samples
+%\newcommand{\Nmcmc}{\{20,000\,(base)\,| 20,000\,(area)\,| 10,000\,(sens)\}}%% number of samples per run
+%\newcommand{\Nbase}{\{20,000\,(base)\,| 20,000\,(area)\,| 10,000\,(sens)\}}%% number of samples per base run/case
+
+%\newcommand{\harvestMax}{0.401}
+%\newcommand{\harvestInc}{0.001}
+%\newcommand{\policyMax}{\{3,500\,t\,(5ABC)\,| 1,250\,t\,(3CD)\,| 1,500\,t\,(5DE)\}}
+\newcommand{\policyMax}{7,000\,t\,(coastwide)}
+\newcommand{\policyInc}{various}
+\newcommand{\currYear}{2025}%% so can include in captions. 
+\newcommand{\prevYear}{2024}%% so can include in captions. 
+\newcommand{\projYear}{2035}%% so can include in captions. 
+
+%%==========================================================
+\section{INTRODUCTION}%% CSAP wants this as Heading 2
+
+The 2024 stock assessment of \spn{} (\spc) adopted Stock Synthesis 3 (SS3), version 3.30.22.01 (\citealt{Methot-etal:2023}, downloaded 15 Mar 2024), which is a statistical age-structured population modelling framework \citep{Methot-Wetzel:2013} that uses \href{https://www.admb-project.org/}{ADMB}'s power for Bayesian estimation of population trajectories and their uncertainties.
+The \href{https://vlab.ncep.noaa.gov/web/stock-synthesis/home}{Stock Synthesis Development Team} at NOAA (National Oceanic and Atmospheric Administration, U.S. Dept. Commerce) provides executables and documentation on how to run SS3, and the \href{https://github.com/nmfs-stock-synthesis/stock-synthesis}{SS3 source code} is available on GitHub.
+
+Previously, \spc{} was assessed using a simpler age-structured model called `Awatea', which is a version of Coleraine \citep{Hilborn-etal:2003} that was modified and maintained by Allan Hicks (then at Univ. Washington, now at \href{https://www.iphc.int/}{IPHC}).
+Both Awatea and SS3 are platforms for implementing Automatic Differentiation Model Builder software \citep{ADMB:2009}, which provides (a)~maximum posterior density (MPD) estimates using a function minimiser and automatic differentiation, and (b)~an approximation of the posterior distribution of the parameters using the Markov Chain Monte Carlo (MCMC) method, specifically using the Metropolis algorithm \citep{Gelman-etal:2004}.
+
+SS3 has been used previously in age-structured assessments for \stock{BC stocks} since 2021:
+\begin{itemize_csas}{}{}
+  \item 2023 -- Pacific Ocean Perch \stock{POP: 5ABC, 3CD, \& 5DE} \citep{Starr-Haigh:2024_pop}
+  \item 2022 -- Canary Rockfish \stock{CAR: BC} \citep{Starr-Haigh:2023_car}
+  \item 2021 -- Yellowmouth Rockfish \stock{YMR: BC} \citep{Starr-Haigh:2022_ymr}
+\end{itemize_csas}
+
+Awatea has been used in age-structured assessments for \stock{BC stocks} from 2007 to 2024:
+\begin{itemize_csas}{}{}
+  \item 2024 -- Bocaccio \stock{BOR: BC} update of 2019 assessment in 2024 \citep{DFO-SR:2024_bor};
+  \item 2021 -- Bocaccio \stock{BOR: BC} update of 2019 assessment in 2021 \citep{DFO-SR:2022_bor};
+  \item 2020 -- Rougheye/Blackspotted Rockfish \stock{REBS: 5DE \& 3CD5AB} \citep{Starr-Haigh:2022_rebs};
+  \item 2019 -- Bocaccio \stock{BOR: BC} \citep{Starr-Haigh:2022_bor};
+  \item 2019 -- Widow Rockfish \stock{WWR: BC} \citep{Starr-Haigh:2021_wwr};
+  \item 2018 -- Redstripe Rockfish \stock{RSR: 5DE \& 3CD5ABC} \citep{Starr-Haigh:2021_rsr};
+  \item 2017 -- Pacific Ocean Perch \stock{POP: 5ABC} \citep{Haigh-etal:2018_pop5ABC};
+  \item 2014 -- Yellowtail Rockfish \stock{YTR: BC} \citep{DFO-SAR:2015_ytr};
+  \item 2013 -- Silvergray Rockfish \stock{SGR: BC} \citep{Starr-etal:2016_sgr};
+  \item 2013 -- Rock Sole \stock{ROL: 5AB \& 5CD} \citep{Holt-etal:2016_rol};
+  \item 2012 -- Pacific Ocean Perch \stock{POP: 3CD} \citep{Edwards-etal:2014_pop3CD};
+  \item 2012 -- Pacific Ocean Perch \stock{POP: 5DE} \citep{Edwards-etal:2014_pop5DE};
+  \item 2011 -- Yellowmouth Rockfish \stock{YMR: BC} \citep{Edwards-etal:2012_ymr},
+  \item 2010 -- Pacific Ocean Perch \stock{POP: 5ABC} \citep{Edwards-etal:2012_pop5ABC};
+  \item 2009 -- Canary Rockfish \stock{CAR: BC} update of 2007 assessment \citep{DFO-SR:2009_car};
+  \item 2007 -- Canary Rockfish \stock{CAR: BC} \citep{Stanley-etal:2009_car}.
+\end{itemize_csas}
+
+The chief strength of Coleraine|Awatea is the use of a robust likelihood formulation proposed by \citet{Fournier-etal:1998} for the composition data by sex and age (or length).
+The robust normal model was used over the more traditional Multinomial error model because it reduced the influence of observations with standardised residuals >\,3 standard deviations \citep{Fournier-etal:1990}.
+\citet{Fournier-etal:1990} identified two types of deviations:
+%\vspace{-0.75\baselineskip}
+\begin{itemize_csas}{}{}
+	\item type I -- occasional occurrence of an event of very low probability; and
+	\item type II -- probability of observing an event with higher frequency than normal in the population (e.g., school of young fish).
+\end{itemize_csas}
+Their robustified likelihood function reduces both types of deviations.
+
+SS3 offers two error models: the Multinomial and a compound Dirichlet-Multinomial.
+The latter can estimate effective sample sizes that are similar to iterative reweighting methods, but without requiring multiple iterations of running the assessment model \citep{Thorson-etal:2017}.
+%%rm: At the time of the stock assessment, SS3 did not offer Fournier's robustified normal likelihood function.
+
+The data inputs to SS3 comprise four files -- \code{`starter.ss'}, \code{`data.ss'}, \code{`control.ss'}, and \code{`forecast.ss'} -- instead of a single file used by Awatea.
+Parameter control and priors appear in the \code{control.ss} file, and data appear in the \code{data.ss} file; these two files can be named anything the user wishes because the \code{starter.ss} file specifies their names.
+The names for the \code{starter.ss} and \code{forecast.ss} files must remain invariant.
+Unlike Awatea, which requires specifying an input file from the command line (e.g. \code{`awatea -ind fielname.txt'}), calling SS3 is done by typing only \code{`ss'} on the command line (assuming \code{`ss.exe'} occurs on the Windows system's \code{PATH}) because the software assumes the presence of the four files listed above.
+Additionally, this stock assessment used the safe version of SS3 (\code{`ss3\_win\_3.30.22.01.exe'}, compile date: 15 Mar 2024), which performs bound checks, rather than the `optimized' version, which is reportedly `fast and optimized for speedy execution'.
+(The safe version was renamed to \code{`ss.exe'} for convenience.)
+The options in SS3 for fitting the data are more complex than those for Awatea and offer a greater degree of flexibility; however, this flexibility requires a steep learning curve and increases opportunties for inadvertent errors.
+
+This assessment used the \citet{Francis:2011} mean-age reweighting method for composition data.
+The Dirichlet-Multinomial distribution, implemented in SS3 as a model-based method for estimating effective sample size \citep{Thorson-etal:2017}, was not used because it was found previously that model fits were sensitive to the magnitude of sample sizes placed on the AF data (see Pacific Ocean Perch in 2023, \citealt{Starr-Haigh:2024_pop}).
+A third reweighting option involves a harmonic mean ratio method based on \citet{McAllister-Ianelli:1997}, which was used previously when the two methods above did not provide credible fits (see Yellowmouth Rockfish in 2021, \citealt{Starr-Haigh:2022_ymr}).
+
+The running of SS3 was streamlined using custom R code (archived on the GitHub site `\href{https://github.com/pbs-software}{PBS Software}' in the repository `\href{https://github.com/pbs-software/pbs-synth}{\code{PBSsynth}}'), which relied heavily on code provided by the R packages `\href{https://github.com/pbs-software/pbs-awatea}{\code{PBSawatea}}', `\href{https://github.com/r4ss/r4ss}{\code{r4ss}}' \citep{R:2021_r4ss}, and `\href{https://github.com/Cole-Monnahan-NOAA/adnuts}{\code{adnuts}}' \citep{R:2018_adnuts}.
+Figures and tables of output were automatically produced in R, an environment for statistical computing and graphics \citep{R:2024_base}. 
+The R function \code{Sweave} \citep{Leisch:2002} automatically collated, via \LaTeX, the large amount of figures and tables into \code{`pdf'} files for model runs and \AppRes.
+
+\citet{Methot-Wetzel:2013} provide mathematical notation of equations used in the SS3 model in their \href{https://sedarweb.org/docs/wsupp/S39_RD_08_Methot_and_Wetzel_2013_Fish_Res_App_A.pdf}{Appendix~A}.
+Below we present mathematical notation of selected equations used in the SS3 age-structured model (merged with notation used in previous DFO Awatea models), the Bayesian procedure, the reweighting scheme, the prior distributions, and the methods used for calculating reference points and performing projections.
+Note that some equation terms that appear in Appendix~A of \citet{Methot-Wetzel:2013} have been dropped in the subset below, e.g., $\delta_s$ (duration of the season) was assumed to equal unity.
+
+\clearpage
+%%==========================================================
+\section{MODEL ASSUMPTIONS}
+
+The key base run model assumptions are:
+\begin{enumerate_csas}{}{}
+\item The assessed BC population of Yellowtail Rockfish (YTR) comprised  a single stock in PMFC areas 3CD5ABCDE.
+%Independent regional (area-specific) models were also run for comparison.
+\item The \spc{} fishery was dominated by trawl gear ($\sim$99.9\pc{} by catch in the last five years). Annual catches used in the model were taken by `Trawl' fisheries (bottom + midwater gear) coastwide. 
+Negligible catch by other gears (halibut longline, sablefish trap, lingcod \& salmon troll, and rockfish hook \& line) was added to account for total removals. 
+The annual catch was known without error and occurred in the middle of each year.
+\item The Beverton-Holt stock-recruitment relationship was time-invariant, and parameterised as a beta function.
+\item Selectivity was different among fleets (fishery and surveys), and remained invariant over time. Selectivity parameters for surveys were estimated when ageing data were available (only for QCS synoptic, WCVI synoptic and NMFS triennial; the GIG historical was linked to the QCS synoptic while the WCHG synoptic and HS synoptic survey selectivities were fixed).
+\item Mortality (estimated), maturity (fixed), and growth parameters (fixed) were specific to a coastwide population.
+\item Natural mortality $M$ was estimated using a normal prior, and held invariant over time. This parameter differed between the two sexes.
+\item Growth parameters were fixed and invariant over time. These parameters differed between the two sexes.
+\item Maturity-at-age for females was fixed and invariant over time.
+\item Female fecundity-at-age was directly proportional to female weight-at-age.
+\item Recruitment at age~0 was 50\pc{} females and 50\pc{} males.
+\item Recruitment standard deviation ($\sigma_R$) was fixed at 0.9.
+\item Only fish ages determined using the preferred otolith break-and-burn methodology \citep{MacLellan:1997} were used because ages determined by surface ageing methods (chiefly before 1978) were biased \citep{Beamish:1979}. Surface ageing was deemed suitable for very young rockfish (ages 1-3).
+\item An ageing error (AE) vector based on CVs of observed lengths-at-age was used.
+%%\item Commercial samples of catch-at-age in a given 3-month period within a year were representative of the fishery in that quarter if there were $\geq$2 samples in that year.
+\item Commercial samples of catch-at-age were representative of the fishery in a given year if there were $\geq$2 samples and $\geq$75 aged otoliths in that year.
+\item Relative abundance indices were proportional to the vulnerable biomass at the mid point of the year, after half the catch and half the natural mortality had been removed.
+\item The age composition samples came from the middle of the year after half the catch and half the natural mortality had been removed.
+\end{enumerate_csas}
+
+\clearpage
+
+%%==========================================================
+\section{MODEL NOTATION AND EQUATIONS}
+
+Model notation is given in Table~\AppLet.1, the model equations in Tables \AppLet.2 and \AppLet.3, and description of prior distributions for estimated parameters in Table \AppLet.4. 
+The model description is divided into the deterministic components, stochastic components and Bayesian priors. 
+Full details of notation and equations are given after the tables. % (in the order of appearance in the tables, as far as is practical). 
+Links to model inputs appear in Section~\ref{s:inputs}%% don't need period as Sections contain trailing periods
+
+The deterministic components in Table \AppLet.2 iteratively calculate numbers of fish in each age class (and of each sex) through time, while allowing for the commercial catch data, weight-at-age and maturity data, and known fixed values for all parameters.
+
+%%\newpage
+Parameters not assumed to be fixed were estimated in the context of recruitment stochasticity.
+This is accomplished by the stochastic components given in Table \AppLet.3. 
+
+Incorporation of the prior distributions for estimated parameters is necessary for a full Bayesian implementation, the goal of which is to minimise the objective function $\Fobj(\bfTh)$ given by \eref{Fobj}. 
+This function is derived from sum of the negative log likelihoods from the the deterministic, stochastic and prior components of the model.
+
+%%\newpage
+%%\medskip
+
+% ********************** Table 1 ************************************
+\subsection{Model notation}
+
+% \baselineskip 2.5ex \vspace{-2ex}
+\setlength\tabcolsep{0pt}
+
+%% The following is too harsh:
+%\fontdimen14\textfont2=6pt
+%\fontdimen15\textfont2=6pt
+%\fontdimen16\textfont2=5pt
+%\fontdimen17\textfont2=5pt
+
+\begin{longtable}{L{1.00in}L{5.5in}}
+\caption{Notation for the SS3 catch-at-age model (continued overleaf). The assessment model uses only `cohorts' (age-classes by year) even though SS3 recognises finer subdivisions of time called `morphs' (seasons), which can be further characterised by `platoons' (rates of growth). }%
+%% Note: $\mr{YTR}$ denotes `BC'.}%
+\label{tab:notate}
+\\ \hline\\[-2.2ex]
+{\bf Symbol}   & \multicolumn{1}{c}{{\bf Description and units}} \\[0.2ex]\hline\\[-1.5ex] \endfirsthead \hline 
+{\bf Symbol}   & \multicolumn{1}{c}{{\bf Description and units}} \\[0.2ex]\hline\\[-1.5ex] \endhead
+\hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  %
+& \multicolumn{1}{c}{\bf{Indices: subscripts, sometimes variables}} \\[0.5ex]
+$a$            & \mbull age class, where $a = 0, 1, 2, 3,... A$, corresponds to actual ages 0, ..., 45\\
+               & \nbull $a^\prime$ = reference age near youngest age well-represented in data\\
+               & \nbull $a^{\dprime}$ = reference age near oldest age well-represented in data\\
+$t$            & \mbull model year, where $t = 1, 2, 3,... T$, corresponds to actual years:\\
+               & 1935, ..., 2025, and $t=0$ represents unfished equilibrium conditions\\
+$g$            & \mbull index for series (abundance|composition) data:\\
+                  & ~~1 -- BC Trawl Fishery (commercial data)\\ & ~~2 -- QCS Synoptic trawl survey series\\ & ~~3 -- WCVI Synoptic trawl survey series\\ & ~~4 -- WCHG Synoptic trawl survey series\\ & ~~5 -- HS Synoptic trawl survey series\\ & ~~6 -- GIG Historical trawl survey series\\ & ~~7 -- NMFS Triennial trawl survey series\\
+$s$            & \mbull sex, $1{=}$females, $2{=}$males\\
+$l$            & \mbull length bin, where $l = 1, 2, 3,... \Lambda$, and $\Lambda$ is the bin index of the largest length\\
+
+\pagebreak%[-1.5ex]
+
+ & \multicolumn{1}{c}{\bf{Index ranges}} \\
+$A$            & \mbull accumulator age-class, $A\elof{45}$\\
+$G$            & \mbull number of fleets (fisheries and surveys)\\
+$\Lambda$      & \mbull number of length bins\\
+$T$            & \mbull number of model years, $T=91$\\
+${\bf T}_g$    & \mbull sets of model years for survey abundance indices from series $g$, listed here %\\
+   for clarity as actual years (subtract 1934 to give model year $t$):\\
+   & ~~${\bf T}_{2}$ = \{2003:2005, 2007, 2009, 2011, 2013, 2015, 2017, 2019, 2021, 2023\}\\ & ~~${\bf T}_{3}$ = \{2004, 2006, 2008, 2010, 2012, 2014, 2016, 2018, 2021:2022\}\\ & ~~${\bf T}_{4}$ = \{1997, 2006:2008, 2010, 2012, 2016, 2018, 2020, 2022\}\\ & ~~${\bf T}_{5}$ = \{2005, 2007, 2009, 2011, 2013, 2015, 2017, 2019, 2021, 2023\}\\ & ~~${\bf T}_{6}$ = \{1967, 1969, 1971, 1973, 1976:1977, 1984, 1994\}\\ & ~~${\bf T}_{7}$ = \{1980, 1983, 1989, 1992, 1995, 1998, 2001\}\\
+${\bf U}_g$    & \mbull sets of model years with proportion-at-age data for series $g$:\\% (listed here as actual years):\\
+   & ~~${\bf U}_{1}$ = \{1979:1980, 1982:1983, 1985:2018\}\\ & ~~${\bf U}_{2}$ = \{2003:2005, 2009, 2011, 2013, 2015, 2017, 2019, 2021, 2023\}\\ & ~~${\bf U}_{3}$ = \{2006, 2008, 2010, 2012, 2016, 2018, 2022\}\\ & ~~${\bf U}_{7}$ = \{1983, 1989, 1992, 1995, 1998, 2001\}\\
+\\[-1ex]
+
+%\pagebreak
+
+& \multicolumn{1}{c}{{\bf Data and fixed parameters}} \\[0.5ex]
+$\widetilde{a}_{a}$   & \mbull age after bias adjustment for age $a$ (used in ageing error)\\
+$\xi_{a}$             & \mbull standard deviation for age $a$ (used in ageing error)\\
+$p_{\ds atgs}$        & \mbull observed weighted proportion of fish from series $g$ in each year $t \in {\bf U}_g$ that are
+                        age-class $a$ and sex $s$; so $\Sigma_{a=1}^{A} \Sigma_{s=1}^2 p_{atgs} = 1$ for each $t  \in {\bf U}_g$\\%; in SS3:\\%%, $g=\ugees$\\
+%                      & \nbull $p_l$\,= observed proportion in length bin\,$l$;\\
+%                      & \nbull $p_a$\,= observed proportion in age\,$a$\\%; and\\
+%                      & \nbull $p_z$\,= observed proportion by size in length bin\,$l$;\\
+%                      & \nbull the \spc{} stock assessment only used $p_a$\\
+% $\tau_{tg}$         & \mbull inverse of assumed sample size that yields corresponding $p_{atgs}$\\
+$n_{tg}$              & \mbull specified sample size that yields corresponding $p_{atgs}$\\
+$\widetilde{n}_{tg}$  & \nbull effective sample size based on $\widehat{p}_{atgs}$\\
+$m_a$                & \mbull proportion of age-class $a$ for females that are mature, fixed from data\\
+$o_a$                 & \mbull egg production (eggs/kg) of age-class $a$ females\\
+$f_a$                 & \mbull fecundity of age-class $a$ females\\
+$w_{as}$              & \mbull average weight (kg) of individual of age-class $a$ of sex $s$ from fixed parameters\\ 
+($\widebar{w}_{tg}$, $\psi_{tg}$, $\psi_{tg}^\prime$)  & \mbull mean body weight (kg) by year ($t$) and fleet ($g$); SD $\widebar{w}_{tg}$; SD offset to $\psi_{tg}$\\ 
+%$\widebar{w}_{tg}$    & \mbull mean body weight (kg) by year ($t$) and fleet ($g$)\\ 
+%$\psi_{tg}$           & \mbull standard deviation of $\widebar{w}_{tg}$\\
+%$\psi_{tg}^\prime$    & \mbull user-specified standard deviation offset to add to $\psi_{tg}$\\
+($C_{tg}$, $\tau_{tg}$) & \mbull observed catch biomass (tonnes) in year $t$=1 to $T\minus\text{1}$ for fleet $g$; SD $C_{tgs}$\\
+%$\tau_{tg}$           & \mbull standard deviation of $C_{tgs}$\\
+($d_{tg}$, $\delta_{tg}$, $\delta_{tg}^\prime$)  & \mbull discarded catch biomass (tonnes) in year $t$ for fleet $g$; SD $d_{tg}$; SD offset to $\delta_{tg}$\\
+%$\delta_{tg}$         & \mbull standard deviation of $d_{tg}$\\
+%$\delta_{tg}^\prime$  & \mbull user-specified standard deviation offset to add to $\delta_{tg}$\\
+($I_{tg}$, $\kappa_{tg}$, $\kappa_{tg}^\prime$)  & \mbull biomass indices from surveys $g = \gsurv$, for year $t \in {\bf T}_g$; SD $I_{tg}$; SD offset to $\kappa_{tg}$\\
+%$I_{tg}$              & \mbull biomass estimates (tonnes) from surveys $g = \gsurv$, for year $t \in {\bf T}_g$, tonnes\\
+%$\kappa_{tg}$         & \mbull standard deviation of $I_{tg}$\\
+%$\kappa_{tg}^\prime$  & \mbull user-specified standard deviation offset added to $\kappa_{tg}$\\
+% **$f_{1t}, f_{2t}$  & *needed?, what's the assumption? fraction of catch taken prior to research and charter vessel surveys  \\
+$\sigma_R$            & \mbull standard deviation parameter for recruitment process error, $\sigma_R = 0.9$\\
+$\epsilon_t$          & \mbull recruitment deviations arising from process error, where $\epsilon_t \sim \Norm(0, \sigma_R^2)$\\
+$b_t$                 & \mbull recruitment bias adjustment, modulates recruitment variance over time: $b_t\sigma_R^2$\\
+                      & \nbull ranges from 1 (data-rich years) to 0 (data-poor years)\\
+% $v_{gR}$            & variance parameter for right limb of selectivity curve for series $g = 1,...,7$; $v_{gR} = 100$\\
+% $v_{R}$             & variance parameter for right limb of selectivity curves, $v_{R} = e^{100}$\\
+% & ~~fixed at 100 to give no descending limb
+$\widehat{x}$       & \mbull estimated values of observed data $x$ (generalised)\\
+\\[-.5ex]
+
+& \multicolumn{1}{c}{{\bf Estimated parameters}} \\[0.5ex]
+$\bfTh$                & \mbull set of estimated parameters:\\
+$R_0$                  & \mbull virgin recruitment of age-0 fish (numbers of fish, 1000s)\\
+%($\mathring{p}_{\alpha}$, $\nu_{t,\alpha}$, $\zeta_{\alpha}$) & \mbull log proportion recruitment allocated to subarea $\alpha$; SD added to $\mathring{p}_{\alpha}$; SE of $\nu_{t,\alpha}$\\ %% only for multiarea models
+$M_{s}$                & \mbull natural mortality rate for sex $s = 1,2$\\
+$h$                    & \mbull steepness parameter for Beverton-Holt recruitment\\
+$q_g$                  & \mbull catchability for fleets ($g=\qgees$); determined analytically but can be estimated\\ 
+%%$\mu_g$              & \mbull age of full selectivity for females ($g=\ugees$)\\
+%%$v_{\mr{L}g}$        & \mbull log parameter for width of ascending limb of selectivity curve\\
+%%$v_{\mr{R}g}$        & \mbull log parameter for width of descending limb of selectivity curve\\
+$\beta_{itg}$          & \mbull double-normal parameters for females ($s=1$), 
+                      where $i{=}1,...,6$ for the six $\beta$ parameters that determine selectivity $S_{ags}$ for
+                      series $g{=}\ugees$, using
+                      joiner functions $j_{1atgs}$ and $j_{2atgs}$ for ascending- and descending-limb
+                      functions $\pi_{1atgs}$ and $\pi_{2atgs}$, respectively, where $\gamma_{1tgs}$ and $\gamma_{2tgs}$ describe exponential terms\\
+$\Delta_{itg}$      & \mbull shift in vulnerability for males ($s=2$), where $i{=}1,...,5$ for the five $\Delta$ parameters and subscripts $tg$ are the same as those for $\beta$\\
+% $v_{gL}, v_{gR}$  & \mbull variance parameters for left and right limbs of selectivity for series $g = 1,...,7$; $v_{gR}= 100$ fixed to give no descending limb\\
+% $\sigma_I$        & \mbull standard deviation parameter for initial age structure error \\
+% **$\tau_2$        & \mbull standard deviation of age proportion measurement error \\
+% **$\kappa^2$      & \mbull combined variance $\sigma_1^2 + \tau_1^2$ \\
+% **$\rho$          & \mbull variance ratio $\sigma_1^2 / \kappa^2$, fixed in the model analysis \\
+%%$\alpha$, $\beta$ & \mbull alternative formulation of recruitment:\\
+%%                  & \nbull $\alpha = (1 - h) B_0 / (4 h R_0)$ and $\beta = (5 h - 1) / 4 h R_0$;\\ 
+% $\widehat{\cdot}$ & \mbull estimated value of observed data represented by $\cdot$
+\\[-.5ex]
+
+%\pagebreak
+
+& \multicolumn{1}{c}{{\bf Derived states}} \\[0.5ex]
+$L_{ats}$           & \mbull mean size at age $a$ of sex $s$ at the start of year $t$\\
+                    & \nbull $L^\prime$ = reference length for $a^{\prime}$;\\
+                    & \nbull $L^{\dprime}$ = reference length for $a^{\dprime}$;\\
+                    & \nbull $\breve{L}_l, \, \mathring{L}_l$ = minimum and middle length of length bin $l$, respectively\\
+$N_{ats}$           & \mbull number of age-class $a$ fish (1000s) of sex $s$ at the start of year $t$\\
+$B_t$               & \mbull spawning biomass (tonnes mature females) at the start of year $t$\\
+$B_0$               & \mbull virgin spawning biomass (tonnes mature females) at the start of year $0$\\
+$R_t$               & \mbull recruitment of age-0 fish (numbers of fish, 1000s) in year $t$\\
+$\rho_t$            & \nbull recruitment deviations (log thousands age-0 fish) in year $t$\\
+$V_{tg}$            & \mbull vulnerable biomass (tonnes, females + males) in the middle of year $t$\\
+$\Biom_{tg}$        & \mbull mid-season retained dead biomass (tonnes, females + males)\\
+$F_{tg}$            & \mbull instantaneous fishing mortality rate for time period $t$ by fishery $g$\\
+                    & \nbull hybrid method uses Pope's approximation and Baranov's equation\\
+                    & \nbull calculations facilitated by temporary variables $\Temp_{tg}$ and joiners $\Joyn_{tg}$\\
+$Z_{ats}$           & \mbull total mortality rate (natural \& fishing) for time period $t$ and sex $s$\\
+
+\\[-0.5ex]
+& \multicolumn{1}{c}{{\bf Log-likelihood components}} \\[0.5ex]
+$\Lagr_{1g}(\bfTh | \{ \widehat{I}_{tg} \} )$ & \mbull CPUE or abundance index\\
+$\Lagr_{2g}(\bfTh | \{ d_{tg} \} )$           & \mbull discard biomass\\
+$\Lagr_{3g}(\bfTh | \{ \widebar{w}_{tg} \} )$ & \mbull mean body weight\\
+$\Lagr_{4g}(\bfTh | \{ l_{tg} \} )$           & \mbull length composition\\
+$\Lagr_{5g}(\bfTh | \{ a_{tg} \} )$           & \mbull age composition\\
+$\Lagr_{6g}(\bfTh | \{ z_{tg} \} )$           & \mbull generalised size composition\\
+$\Lagr_{7g}(\bfTh | \{ C_{tg} \} )$           & \mbull initial equilibrium catch\\
+$\Lagr_{R}(\bfTh | \{ R_{tg} \} )$            & \mbull recruitment deviations\\
+$\Lagr_{\phi_j}(\bfTh | \{ \phi_j \} )$       & \mbull parameter priors\\
+$\Lagr_{P_t}(\bfTh | \{ P_t \} )$             & \mbull random parameter deviations (if time-varying)\\
+$\Lagr(\bfTh)$                                & \mbull total log-likelihood \\
+\\[-.5ex]
+
+& \multicolumn{1}{c}{{\bf Prior distributions and objective function}} \\[0.5ex]
+$\phi_j(\bfTh)$          & \mbull prior distribution for parameter $j$ \\
+$\phi(\bfTh)$            & \mbull joint prior distribution for all estimated parameters\\
+$\Fobj(\bfTh)$     & \mbull objective function to be minimised\\
+\hline
+%\end{tabular} \newp % \baselineskip \mybaselineskip
+%\end{table}
+\end{longtable}
+\newpage
+
+
+% ********************** Table 2 ************************************
+\subsection{Deterministic components}
+
+\newcommand{\aeq}[1]{\hfill\text{\footnotesize\textcolor{dodgerblue}{SS\,(#1)}\normalsize}}%% add SS equation
+\newcommand{\aaeq}[2]{\hfill\text{\footnotesize\textcolor{dodgerblue}{#2\,(#1)}\normalsize}}%% add SS equation
+\newcommand{\note}[1]{~~~~~\text{\footnotesize\textcolor{slategrey}{$\langle$\,#1\,$\rangle$}\normalsize}}%% notate equation
+
+\def\beq{ \begin{fleqn}  \begin{equation} }
+\def\eeq{ \end{equation} \end{fleqn} }
+\def\bec{\\[-30pt]\begin{center}}%%\hspace{-15ex}}
+\def\eec{\end{center} \\[-12pt]}%% \vspace{-1ex}}
+
+\leftskip=0em%   1.5em   %indents caption (that isn't done as a caption)
+\parindent=0em% -1.5em  % then revert back afterwards
+
+\begin{longtable}{L{6.5in}}
+\caption{Deterministic (non-random) components. Using the catch, weight-at-age and maturity data, with fixed values for all parameters, the initial conditions are calculated from \eref{Na0s}-\eref{LA0s}, and then state dynamics are iteratively calculated through time using the main equations \eref{Nats}, selectivity functions \eref{Satgs}-\eref{gammas}, and the derived states \eref{Lats}-\eref{Rt}. Estimated observations for survey biomass indices and proportions-at-age can then be calculated using \eref{Itg.hat} and \eref{patgs.hat}. In Table~\ref{tab:stocomp}, the estimated observations of these are compared to data.}
+\label{tab:detcomp}
+\\ \hline\\[-2.2ex]
+
+%\multicolumn{1}{c}{\textbf{Deterministic components}} \\[0.2ex]\hline\\[-1.5ex] \endfirsthead \hline 
+%\multicolumn{1}{c}{\textbf{Deterministic components}} \\[0.2ex]\hline\\[-1.5ex] \endhead
+%\hline\\[-2.2ex]   \endfoot \\ \hline \endlastfoot  %
+
+%% (RH 210511) \vspace appears to be incompatible with longtable
+%% (RH 210512) \multicolumn does not work after a call to fleqn 
+%% (RH 210513) longtable does not recognise pagebreaks once equation has been issued but:
+%% (RH 210513) \pagebreak does work in longtable if equations are properly returned using '\\'
+%% (RH 220718) Why are equation labels in caption not updating? Perhaps update to amsmath has changed labelling. See Werner at:
+%% https://tex.stackexchange.com/questions/210390/why-does-label-not-work-in-math-mode-when-using-fleqn-with-amsmath
+
+%%----------------------------------------------------------
+\bec {\bf Initial conditions (${\bf \bft \bfeq 0 \,;\, \bfmi{s} \bfeq 1,2}$\,)} \eec
+%%\multicolumn{1}{c}{\bf Initial conditions (${\bf \bft \bfeq 0 \,;\, \bfmi{s} \bfeq 1,2}$\,)} \\[-0.5ex]
+
+\beq \elabel{Na0s}
+  N_{a0s} = 0.5 R_0 e^{\minus aM_{s}}~;~~~  0 \leq a \leq 3A \minus 1 \aeq{A.1.1}
+  \eeq \\
+
+\beq \elabel{NA0s}
+  N_{A0s} = \sum\nolimits_{a=A}^{3A\minus1} N_{a0s} + (N_{3A \minus 1,0s} \, e^{\minus M_{as}}) \, / \,(1-e^{\minus M_{as}}) \aeq{A.1.2}
+  \eeq \\
+
+\beq \elabel{B0} 
+  B_0 = B_1 = \sum\nolimits_{a=0}^A f_{as} N_{a0s}~;~~~\mr{where}~~~f_{as}=w_{as} m_{as} o_{as}  \note{$s$=1 (female)}  \aeq{A.1.19}
+  %;~~~ s{=}1~\mr{(female)}  \aeq{A.1.19}
+  %B_0 = B_1 = \sum\nolimits_{a=0}^A w_{as} m_{a} N_{a0s}~;~~~ s{=}1~~\mr{(female)}% \text{\footnotesize ~~***** need to check equation}
+  \eeq \\
+
+\begin{fleqn}     % \beq puts -ve vspace, not good for { ...
+\begin{equation}
+\elabel{La0s}
+L_{a0s} = \left\{
+  \begin{array}{ll}
+    \breve{L}_1 + ( \, a / a^\prime \, ) \, ( \, L_{s}^{\prime} - \breve{L}_1 \, )  & ;~~a \leq a^{\prime}\\
+    L_{\infty s} + ( \, L_{s}^{\prime} - L_{\infty s} \, ) \, e^{\minus k_s ( a \minus a^{\prime} ) }  & ;~~a^{\prime} < a \leq A \minus 1
+ \end{array}
+\right.
+\aeq{A.1.3}
+\end{equation}
+\end{fleqn}\\
+
+\beq \elabel{Linf}
+  %\mr{~~~~~~~~~~~~~~where~~} L_{\infty s} = L_{s}^{\prime} + ( L_{s}^{\dprime} - L_{s}^{\prime} ) \, \left[ 1 - e^{\minus k_s ( a^{\dprime} \minus a^{\prime} ) } \right]
+  L_{\infty s} = L_{s}^{\prime} + \left( L_{s}^{\dprime} - L_{s}^{\prime} \right) / \left( 1 - e^{\minus k_s ( a^{\dprime} \minus a^{\prime} ) } \right) \aeq{A.1.5}
+  \eeq \\%% final return '\\' is necessary
+
+\beq \elabel{LA0s}
+  L_{A0s} = \frac { \sum\nolimits_{a=A}^{2A} \left[ e^{\minus 0.2 (a \minus A) } \right] \left[ L_{As} + ( (a - A) / A ) ( L_{\infty s} - L^{\prime}_{0s} ) \right] }{ \sum\nolimits_{a=A}^{2A} e^{\minus 0.2 (a \minus A) } } \aeq{A.1.6}
+  \eeq \\
+
+%%----------------------------------------------------------
+\\[-0.5ex]
+\bec {\bf State dynamics (${\bf 2 \bfleq \bft \bfleq \bfT \,;\, \bfmi{s} \bfeq 1,2}$\,)} \eec
+
+\begin{fleqn}
+\begin{equation}
+\elabel{Nats}
+N_{a,t+1,s} = \left\{
+ \begin{array}{ll}
+ 0.5 R_{a=0,t+1,s}  & ;~~a = 0\\%, c = \text{\footnotesize proportion female}\\
+ N_{a \minus 1,t,s} \, e^{\minus Z_{a,t,s}}  & ;~~1 \leq a \leq A \minus 1\\
+ N_{A \minus 1,t,s} \, e^{\minus Z_{A \minus 1,t,s}} + N_{A,t,s} \, e^{\minus Z_{A,t,s}}  & ;~~a = A
+ \end{array}
+\right.
+\aeq{A.1.20}
+\end{equation}
+\end{fleqn}\\
+
+%% \pagebreak does not work in longtable if equations are not properly returned using '\\' (RH 210513)
+%%\pagebreak
+
+%%----------------------------------------------------------
+\\[-0.5ex]
+\bec {\bf Selectivity pattern 20 ($\bfmi{g} \bf = 1,2,3,7$)} \eec 
+
+\beq \elabel{Satgs}
+  S_{ags} = \pi_{\ds 1ags} ( 1 - j_{\ds 1ags} ) + j_{\ds 1ags} \left[ ( 1 - j_{\ds 2ags} ) + j_{\ds 2ags} \pi_{\ds 2ags} \right]  \aeq{A.1.30}
+  \eeq \\
+
+\beq \elabel{j1ags}
+  j_{\ds 1ags} = 1 \, / \, \left[ 1 + e^{\minus 20 ( a \minus \beta_{1gs} ) / (1 + \left| a \minus \beta_{1gs} \right| ) } \right] \note{first joiner function: ascending} \aeq{A.1.31}
+  %~;~~~ \beta_{1tgs} = \text{\footnotesize first age when~} S_{tgs}{=}1 
+  \eeq \\
+
+\beq \elabel{j2ags} 
+  j_{\ds 2ags} = 1 \, / \, \left[ 1 + e^{\minus 20 ( a \minus a_{gs}^{\star} ) / (1 + \left| a \minus a_{gs}^{\star} \right| ) } \right] \note{second joiner function: descending} \aeq{A.1.31}
+  %~;~~~ a_{tgs}^{\star} = \text{\footnotesize last age when~} S_{tgs}{=}1
+  \eeq \\
+
+\beq \elabel{astar}
+  a_{\ds gs}^{\star} = \beta_{1gs} + ( 0.99 A - \beta_{1gs} ) / ( 1 + \beta_{2gs} )  \note{assuming age bin=1y} \aeq{A.1.34}
+  \eeq \\
+
+\beq \elabel{pi1ags}
+  \pi_{\ds 1ags} = \left( \frac { 1 }{ 1 + e^{\minus \beta_{5gs}} } \right) + \left( 1 - \frac { 1 }{ ( 1 + e^{\minus \beta_{5gs}} ) } \right) \left( \frac{ e^{\minus ( a \minus \beta_{1gs} )^2 /  e^{\beta_{3gs}} } - \gamma_{1gs} }{ 1 - \gamma_{1gs} } \right)  \aeq{A.1.32}
+  \eeq \\
+
+\beq \elabel{pi2ags}
+  \pi_{\ds 2ags} = 1 + \left[ \left( \frac { 1 }{ 1 + e^{\minus \beta_{6gs}} } \right) - 1 \right] \left( \frac{ e^{\minus ( a \minus a_{gs}^{\star} )^2 /  e^{\beta_{4gs}} } - 1 }{ \gamma_{2gs} - 1 } \right)  \aeq{A.1.32}
+  \eeq \\
+
+\beq \elabel{gammas}
+  \gamma_{1gs} = e^{ \minus (a^{\prime} \minus \beta_{1gs})^2 / e^{\beta_{3gs}} }~;~~~ \gamma_{2gs} = e^{ \minus (a^{\dprime} \minus a_{gs}^{\star} )^2 / e^{\beta_{4gs}} }  \aeq{A.1.33}
+  \eeq \\
+
+%%----------------------------------------------------------
+\pagebreak
+\\[-2.5ex]
+\bec {\bf Derived states ($\bf 1 \bfleq \bft \bfleq \bfT - 1$\,)} \eec
+
+\beq \elabel{Lats}
+  L_{ats} = L_{a\minus1,t\minus1,s} + \, ( \, L_{a\minus1 \minus k,t\minus1,s} - L_{\infty s} \, ) \, ( \, e^{\minus k_s} - 1 \, );~~~ a < A \aeq{A.1.10}
+  \eeq \\
+
+\beq \elabel{LAts}
+  L_{Ats} = \frac { N_{A\minus1,ts} \widebar{L}_{Ats} + N_{Ats} \, \left[ \, L_{Ats} - ( \, L_{Ats} + L_{\infty s} \, ) \, ( \, e^{\minus k_s} - 1 \, ) \right] }{ N_{A\minus1,ts} + N_{Ats} }  \aeq{A.1.11}
+  \eeq \\
+
+\beq \elabel{Lats.bar}
+  \widebar{L}_{ats} = {L}_{ats} + ( \, {L}_{ats} - L_{\infty s} \, ) \, ( \, e^{\minus 0.5 k_{s}} - 1 \, )  \aeq{A.1.12}
+  \eeq \\
+
+%% Variation in Size-at-Age: standard deviation of length-at-age
+%\begin{fleqn}
+%\begin{equation}
+%\elabel{cvage}
+%\alpha_{ats} = \left\{
+%%\sigma_{\text{L}ats} = \left\{
+% \begin{array}{ll}
+% \widebar{L}_{ats} \nu_{s}^{\prime} \, | \, a_{ts} \nu_{s}^{\prime}  & ;~~a \leq a^{\prime}\\
+% \widebar{L}_{ats} \left[ \nu_{s}^{\prime} + ( \widebar{L}_{ats} \minus L_{s}^{\prime} ) / ( L_{s}^{\dprime} \minus L_{s}^{\prime} ) ( \nu_{s}^{\dprime} \minus \nu_{s}^{\prime} ) \right] \, | &\\
+%  ~~~a_{ts} \nu_{s}^{\prime} \left[ \nu_{s}^{\prime} + ( a_{ts} \minus a_{s}^{\prime} ) / ( a_{s}^{\dprime} \minus a_{s}^{\prime} ) ( \nu_{s}^{\dprime} \minus \nu_{s}^{\prime} ) \right]  & ;~~a^{\prime} < a < a^{\dprime}\\
+% \widebar{L}_{ats} \nu_{s}^{\dprime} \, | \, a_{ts} \nu_{s}^{\dprime}  & ;~~a^{\dprime} \leq a
+% \end{array}
+%\right.
+%\aeq{A.1.13}
+%\end{equation}
+%\end{fleqn}\\
+%
+%\begin{fleqn}
+%\begin{equation}
+%\elabel{len.age}
+%\varphi_{\ds lats} = \left\{
+% \begin{array}{ll}
+% \Phi \left[ (\breve{L}_{l} - \widebar{L}_{ats} ) / \alpha_{ats} \right]  & ;~~l = 1\\
+% \Phi \left[ (\breve{L}_{l+1} - \widebar{L}_{ats} ) / \alpha_{ats} \right] - \Phi \left[ (\breve{L}_{l} - \widebar{L}_{ats} ) / \alpha_{ats} \right]  & ;~~1 < l < L\\
+% 1 - \Phi \left[ (\breve{L}_{l} - \widebar{L}_{ats} ) / \alpha_{ats} \right]  & ;~~l = L
+% \end{array}
+%\right.
+%\aeq{A.1.14}
+%\end{equation}
+%\end{fleqn}\\
+
+\beq \elabel{wls} 
+  w_{\ds ls} = a_s \, \mathring{L}_{\, l}^{\, b_s}  \note{$\mathring{L}_{\, l}$ = mid-size of length bin $l$}  \aeq{A.1.15}
+  %~;~~~ \mathring{L}_{\, l} = \text{\footnotesize mid-size of length bin}~l  \aeq{A.1.15}
+  \eeq \\
+
+\beq \elabel{fa} 
+  f_a = \sum\nolimits_{l=1}^{\Lambda} \, \varphi_{\ds las} \, m_{\ds l} o_{\ds l} w_{\ds ls}  \note{$s$=1, $m$=maturity, $o$=eggs/kg}  \aeq{A.1.18}
+  %~;~~~ s{=}1, m{=}\text{\footnotesize maturity}, o{=}\text{\footnotesize eggs/kg}  \aeq{A.1.18}
+  \eeq \\
+
+\beq \elabel{Bt}
+  B_{t} = \sum\nolimits_{a=0}^{A} \, N_{ats} f_{a}  \note{$s$=1 (females only), $f$=fecundity} \aeq{A.1.19}
+  %~;~~~s{=}1, f{=} \text{\footnotesize fecundity}
+  \eeq \\
+
+\beq \elabel{Rt}
+%%  R_t = \frac{ 4 h R_0 B_{t\minus 1} }{ (1-h) B_0 + (5 h - 1) B_{t\minus 1} } ~~\left( \equiv  \frac{B_{t\minus 1}}{\alpha + \beta B_{t\minus 1}} \right)
+  R_t = \frac{ 4 h R_0 B_{t} }{ (1-h) B_0 + (5 h - 1) B_{t} } ~~\left( \equiv  \frac{B_{t}}{\alpha + \beta B_{t}} \right) \aeq{A.1.7}
+  \eeq \\
+
+\beq \elabel{Zats}
+  Z_{ats} = M_{as} + \sum\nolimits_{g \in 1} \, ( \, S_{ags} \, F_{tg} \, )  \note{$F_{tg}$ = apical fishing mortality rate} \aeq{A.1.21}
+  %~;~~~ F_{tg} = \text{\footnotesize apical fishing mortality rate} \aeq{A.1.21}
+  \eeq \\
+
+\beq \elabel{Tj1T}
+  \Temp_{1tg} = C_{tg}  / ( \widehat{\Biom}_{tg} + 0.1 C_{tg} )~;~~~ \Joyn_{1tg} = 1 / \left[ 1 + e^{30 ( \Temp_{1tg} \minus 0.95 ) } \right]  \aeq{A.1.22}
+  \eeq \\
+
+\beq \elabel{Tj2T}
+  \Temp_{2tg} = \Joyn_{1tg} \Temp_{1tg} + 0.95 ( 1 - \Joyn_{1tg} )~;~~~ F_{1tg} = -\log \, ( \, 1 - \Temp_{2tg} )  \aeq{A.1.22}
+  \eeq \\
+
+\beq \elabel{Ct.year}
+  C_{ats} = \sum\nolimits_{g\in1} \, \frac{ F_{tg} }{ Z^{\prime}_{ats} } \, (N_{ats} S_{ags}) \lambda^{\prime}_{ats} \aeq{A.1.23}
+  \eeq \\
+
+\beq \elabel{surv}
+   \lambda_{ats} = ( \, 1 - e^{\minus Z_{ats}} ) / ( \, Z_{ats} \, )   \note{survivorship}  \aeq{A.1.24}
+  \eeq \\
+
+\beq \elabel{Ct.hat}
+  \widehat{C}_t = \sum\nolimits_{g\in1} \sum\nolimits_{s=1}^2 \sum\nolimits_{a=0}^{A} \, \frac{ F_{1tg} }{ Z_{ats} } \, w_{as} N_{ats} S_{ags} \lambda_{ats}~;~~~ \lambda_{ats} = ( \, 1 - e^{\minus Z_{ats}} ) / ( \, Z_{ats} \, )  \aeq{A.1.25}
+  \eeq \\
+
+\beq \elabel{Zt.adj}
+  \adj{Z}_{t} = C_{t} / ( \widehat{C}_t + 0.0001 )  \aeq{A.1.25}
+  \eeq \\
+
+\beq \elabel{Zt.tot}
+  Z_{ats}^\prime = M_{as} + \adj{Z}_{t} ( Z_{ats} - M_{as} )~;~~ \lambda_{ats}^\prime = ( 1 - e^{\minus Z_{ats}^\prime} ) / ( Z_{ats}^\prime )  \aeq{A.1.26}
+  \eeq \\
+
+\beq \elabel{T3tg}
+  \Temp_{3tg} = \sum\nolimits_{s=1}^{2} \sum\nolimits_{a=0}^{A} w_{as} N_{ats} S_{ags} \lambda_{ats}^\prime   \aeq{A.1.27}
+  \eeq \\
+
+\beq \elabel{F2tg}
+  F_{2tg} = C_{tg} / ( \Temp_{3tg} + 0.0001 )~;~~~ \Joyn_{2tg} = 1 / \left[ 1 + e^{30(F_{2tg} \minus 0.95 F_{\mr{max}} ) } \right]   \aeq{A.1.27}
+  \eeq \\
+
+\beq \elabel{Ftg}
+%  F_{tg} = \Joyn_{2tg} F_{2tg} + ( 1 - \Joyn_{2tg} ) F_{\mr{max}}~;~~ \text{\footnotesize updated estimate of~} F \text{\footnotesize ~using hybrid method}  \aeq{A.1.28}
+  F_{tg} = \Joyn_{2tg} F_{2tg} + ( 1 - \Joyn_{2tg} ) F_{\mr{max}}  \note{updated estimate of $F$ using hybrid method}  \aeq{A.1.28}
+  \eeq \\
+
+%\beq \elabel{Cats}
+%  C_{ats} = \sum\nolimits_{g\in1}  \, \frac{ F_{tg} }{ Z_{ats}^\prime } \, w_{as} N_{ats} S_{ags} \lambda_{ats}^\prime
+%  \eeq \\
+
+\beq \elabel{Vtg}
+  V_{tg} = \sum_{s=1}^2 \sum_{a=1}^A e^{\minus M_{s}/2}\, w_{as} \, N_{ats} \, S_{ags}~;~~~ g \in \{\gcomm\}, \,\, u_{tg} =  C_{tg}  / V_{tg}, \,\, u_{atgs} = u_{tg} S_{ags} 
+  \eeq \\
+
+\pagebreak
+\\[-2.5ex] 
+\bec {\bf Ageing error} \eec
+%%$\widetilde{a}$     & adjusted ages after ageing error is applied to a modeled distribution of true ages\\
+%% Jon Schnute:
+\beq \elabel{cdn.fun}
+  \Phi(x|\mu,\sigma) = \frac{1}{\sqrt{2\pi}} \int_{\minus\infty}^{(x-\mu)/\sigma} e^{\minus (t^2 / 2)}\,dt  \note{standard normal cumulative density}
+  \eeq \\
+%%\beq \widetilde{\Norm}(\mu,\sigma) = \frac{1}{2} \left[ 1 + \Xi \left( \frac{x - \mu}{\sigma \sqrt{2}} \right) \right];~~~ \text{\footnotesize where~~~} \Xi(x) = \frac{1}{\sqrt{2\pi}} \int_{\minus\infty}^{x} e^{\minus t^2}\,dt
+%%  \label{cdn.fun} \eeq \\
+
+\begin{fleqn}
+\begin{equation}
+\elabel{age.exp}
+\Psi_{a} = \left\{
+ \begin{array}{ll}
+ \Phi \left( \frac{ a - \widetilde{a}_{a} }{ \widetilde{a}_{a} } \right)  & ;~~a = 1\\
+ \Phi \left( \frac{ a + 1 - \widetilde{a}_{a} }{ \widetilde{a}_{a} } \right) - \Phi \left( \frac{ a - \widetilde{a}_{a} }{ \widetilde{a}_{a} } \right)  & ;~~1 < a < A\\
+ 1 - \Phi \left( \frac{ A - \widetilde{a}_{a} }{ \widetilde{a}_{a} } \right)  & ;~~a = A
+ \end{array}
+\right.
+\note{expected age w/out ageing error}
+\aeq{A.2.7}
+\end{equation}
+\end{fleqn}\\
+
+
+\begin{fleqn}
+\begin{equation}
+\elabel{age.err}
+\xi_{a} = \left\{
+ \begin{array}{ll}
+ \sigma_1 + (\sigma_A - \sigma_1) \left( \frac{ 1 - e^{-\alpha (a - 1)} }{ 1 - e^{-\alpha (A - 1)} } \right) & ;~~\alpha \neq 1\\
+ \sigma_1 + (\sigma_A - \sigma_1) \left( \frac{ a - 1 }{ A - 1 } \right) & ;~~\alpha = 0
+ \end{array}
+\right.
+\note{ageing error (Richards et al. 1992)}
+\aaeq{1.6}{RSKB}
+\end{equation}
+\end{fleqn}\\
+
+%%   for (a=0; a<=nages;a++)
+%%    {
+%%     age = age_err(Keynum,1,a); // bias-adjusted age?
+%%     for (b=2;b<=n_abins;b++)     //  so the lower tail is accumulated into the first age' bin
+%%       age_age(Keynum,b,a)= cumd_norm((age_bins(b)-age)/age_err(Keynum,2,a));
+%%
+%%     for (b=1;b<=n_abins-1;b++)
+%%       age_age(Keynum,b,a) = age_age(Keynum,b+1,a)-age_age(Keynum,b,a);
+%%
+%%     age_age(Keynum,n_abins,a) = 1.-age_age(Keynum,n_abins,a) ;     // so remainder is accumulated into the last age' bin
+
+\\[-1ex]
+\bec {\bf Estimated observations} \eec
+%%  ($\bf 1 \bfleq \bft \bfleq \bfT$\,)} \eec
+
+\beq \elabel{Itg.hat}
+%%  \widehat{I}_{tg} = q_g  \sum_{s=1}^2 \sum_{a=1}^A e^{-M_{s}/2} (1 - u_{ats}/2)  w_{as} S_{ags} N_{ats} \,; \ \ \ t \in {\bf T}_g, ~g=\qgees
+  \widehat{I}_{tg} = q_g  \sum_{s=1}^2 \sum_{a=1}^A e^{-Z_{s}/2} w_{as} S_{ags} N_{ats} \,; \ \ \ t \in {\bf T}_g, ~g=\qgees  \note{abundance} \aeq{A.2.2}
+  \eeq \\
+
+\beq \elabel{patgs.hat}
+%%  \widehat{p}_{atgs} = \frac{e^{-M_{s}/2} (1 - u_{ats}/2) S_{ags} N_{ats}}{\sum_{s=1}^2 \sum_{a=1}^A e^{-M_{s}/2} (1 - u_{ats}/2) S_{ags} N_{ats}}; \ \mm{1 \leq a \leq A,~ t \in {\bf U}_g,~g=\ugees,~s=1,2}
+  %\widehat{p}_{atgs} = \Psi_{a} \frac{e^{-Z_{s}/2}  S_{ags} N_{ats}}{\sum_{s=1}^2 \sum_{a=1}^A e^{-Z_{s}/2} S_{ags} N_{ats}}; \ \mm{1 \leq a \leq A,~ t \in {\bf U}_g,~g=\ugees,~s=1,2}  \note{age compositions} 
+  \widehat{p}_{atgs} = \frac{ \Psi_{atgs} \, \xi_{atgs} + c }{\sum_{s=1}^2 \sum_{a=1}^A \Psi_{atgs} \, \xi_{atgs} + c }; \ \mm{1 \leq a \leq A,~ t \in {\bf U}_g,~g=\ugees,~s=1,2}  \note{composition} \aeq{A.2.8}
+  \eeq \\
+
+%\noindent \hrule %\tabline
+%\\ \hline\\[-2.2ex]
+\\[0ex]\hline
+
+\end{longtable}
+\clearpage
+
+% ********************** Table 3 ************************************
+\subsection{Stochastic components}
+
+\begin{longtable}{L{6.5in}}
+\caption{Stochastic (random) components. Calculation of likelihood function $\Lagr(\bfTh)$ for stochastic components of the model in Table~\ref{tab:detcomp}, and resulting objective function $f(\bfTh)$ to be minimised.}
+\label{tab:stocomp}
+\\ \hline\\[-2.2ex]
+
+%\multicolumn{1}{c}{\textbf{Stochastic components}} \\[0.2ex]\hline\\[-1.5ex] \endfirsthead \hline 
+%\multicolumn{1}{c}{\textbf{Stochastic components}} \\[0.2ex]\hline\\[-1.5ex] \endhead
+%\hline\\[-2.2ex]   \endfoot \hline \endlastfoot  %
+
+\bec {\bf Estimated parameters} \eec
+
+%% \beq \bfTh = \left( { \vrule height 2.5ex width 0ex} \{\mu_g\}, \{v_{gL}\}, \{\Delta_g\}, \{q_g\}, \{M_s\}, R_0, h \right)
+%% \beq \bfTh = \left\{ \mu_1, \mu_2, \mu_6, v_{1L}, v_{2L}, v_{6L}, \Delta_1, \Delta_2, \Delta_6, q_1, q_2, q_3, M_1, M_2, R_0, h \right\}
+%% redoing in order that output is in:
+%%\beq \bfTh = \left\{ R_0; M_{1,2}; h; q_{\qgees}; \mu_{\ugees}; \Delta_{\ugees}; v_{\ugees L} \right\} \label{lpar} \eeq 
+
+\beq \elabel{bfTh}
+  \bfTh = \left\{ R_0; M_{1,2}; h; q_{\qgees}; \mu_{\ugees}, \pi_{\mr{T}\ugees}, v_{\mr{L}\ugees L}, v_{\mr{R}\ugees}, \pi_{\mr{F}\ugees}, \theta_{\ugees} \right\}
+  \eeq 
+
+\bec {\bf Recruitment deviations} \eec 
+
+\beq \elabel{rdevs}
+%%  \rho_{t+1} = \log R_{t+1}  - \log B_{t} + \log(\alpha + \beta B_{t}) + 0.5 b_{t} \sigma_R^2 + \epsilon_{t}~;~~~ \epsilon_{t} \sim \Norm (0, \sigma_R^2) \, ,~ 1 \leq t \leq T \minus 1
+  \rho_{t} = \log R_{t} - \log B_{t} + \log(\alpha + \beta B_{t}) + 0.5 b_{t} \sigma_R^2 + \epsilon_{t}  \note{$\epsilon_t \sim \Norm (0, \sigma_R^2) \, ,~ 1 \leq t \leq T \minus 1$}  \aeq{A.1.7}
+  %~;~~~ \epsilon_{t} \sim \Norm (0, \sigma_R^2) \, ,~ 1 \leq t \leq T \minus 1  \aeq{A.1.7}
+  \eeq \\
+
+\\[-3.5ex]
+\begin{fleqn}
+\begin{equation}
+\elabel{rbias}
+\text{~~~where~~} b_{t} = \left\{
+ \begin{array}{ll}
+ 0  & ;~~t \leq t_1^b\\
+ b_{\mr{max}} \left[ 1 - (t - t_1^b) / (t_2^b - t_1^b) \right]  & ;~~t_1^b < t < t_2^b\\
+ b_{\mr{max}}  & ;~~t_2^b \leq t \leq t_3^b\\
+ b_{\mr{max}} \left[ 1 - (t_3^b - t) / (t_4^b - t_3^b) \right]  & ;~~t_3^b < t < t_4^b\\
+ 0  & ;~~t_4^b \leq t
+ \end{array}
+\right.
+\aeq{A.1.8}
+\end{equation}
+\end{fleqn}\\
+
+% \, ; ~~ 1 \leq t \leq T-1~~~~~\text{**** needs proofing}
+% Two equations for if there was error in initial age structure _s
+% \beq \xi_{as} = \log N_{a1s} - \log R_0 + \log 2 + M(a - 1) + \sigma_I^2  \, ;~~1 \leq a \leq A-1, s = 1,2 \label{xias} \eeq \vsd
+
+% \beq \xi_{As} = \log N_{A1s} - \log R_0 + \log 2 + M(A - 1) + \log (1 - e^{- M}) + \sigma_I^2  \, ; s = 1,2  \label{xiAs}  \eeq \vsd
+
+\bec {\bf Log-likelihood components} \eec % ($\isactive$~active, $\inactive$~inactive)} \eec
+
+%% Removing inactive components (RH 240716) based on Nick's comment
+
+\beq \elabel{ll1}
+  \Lagr_{1g}(\bfTh | \{ \widehat{I}_{tg} \} ) = \sum_{t \in {\bf T}_g} \left[ \frac{ ( \log I_{tg} - \log (q_g B_{tg}) )^2 }{2 \kappa_{tg}^2 } + \kappa_{tg}^\prime \log \kappa_{tg} \right] \aeq{A.3.2}
+  \eeq \\
+
+%\beq \elabel{ll2}
+%  \inactive~ \Lagr_{2g}(\bfTh | \{ d_{tg} \} ) = \sum_{t=1}^T  0.5 (\mr{df}_g + 1) \log \left[ \frac{ 1 + ( d_{tg} - \widehat{d}_{tg} )^2 }{ \mr{df}_g \delta_{tg}^2 }  \right] + \delta_{tg}^\prime \log \delta_{tg}  \aeq{A.3.3}
+%  \eeq \\
+
+%\beq \elabel{ll3}
+%  \inactive~ \Lagr_{3g}(\bfTh | \{ \widebar{w}_{tg} \} ) = \sum_{t=1}^T 0.5 (\mr{df}_{\widebar{w}} + 1) \log \left[ \frac{ 1 + ( \widebar{w}_{tg} - \widehat{\widebar{w}}_{tg} )^2 }{ \mr{df}_{\widebar{w}} \psi_{tg}^2 }  \right] + \psi_{tg}^\prime \log \psi_{tg}  \aeq{A.3.4}
+%  \eeq \\
+
+%\beq \elabel{ll4}
+%  \inactive~ \Lagr_{4g}(\bfTh | \{ l_{tg} \} ) = \sum\nolimits_{t \in {\bf U}_g} \sum\nolimits_{s=1}^2 \sum\nolimits_{l=1}^L n_{\ds tgs} \, p_{\ds ltgs} \, \log \, ( p_{\ds ltgs} / \, \widehat{p}_{\ds ltgs} )  \note{composition option 1}  \aeq{A.3.5}
+%  \eeq \\
+
+\beq \elabel{ll5}
+  \Lagr_{5g}(\bfTh | \{ a_{tg} \} ) = \sum\nolimits_{t \in {\bf U}_g} \sum\nolimits_{s=1}^2 \sum\nolimits_{a=1}^A n_{\ds tgs} \, p_{\ds atgs} \, \log \, ( p_{\ds atgs} / \, \widehat{p}_{\ds atgs} )  \note{comp. option 2}  \aeq{A.3.6}
+  \eeq \\
+
+%\beq \elabel{ll6}
+%  \inactive~ \Lagr_{6g}(\bfTh | \{ z_{tg} \} ) = \sum\nolimits_{t \in {\bf U}_g} \sum\nolimits_{s=1}^2 \sum\nolimits_{z=1}^{\Lambda} n_{\ds tgs} \, p_{\ds ztgs} \, \log \, ( p_{\ds ztgs} / \, \widehat{p}_{\ds ztgs} )  \note{composition option 3} \aeq{A.3.7}
+%  \eeq \\
+
+\beq \elabel{ll7}
+  \Lagr_{7g}(\bfTh | \{ C_{tg} \} ) = \sum\nolimits_{t=1}^{T}  \, \left[ \log C_{tg} - \log ( \widehat{C}_{tg} + 1\mr{e}\minus6 ) \right]^2 / ~ 2 \tau_{tg}^2  \aeq{A.3.8}
+  \eeq \\
+
+\beq \elabel{llR}
+  \Lagr_{R}(\bfTh | \{ R_{t} \} ) = 0.5 \, \sum\nolimits_{t=1}^{T} \, ( \widetilde{R}_t^2 / \sigma_R^2 ) + b_t \log \sigma_R^2  \aeq{A.3.10}
+  \eeq \\
+
+\beq \elabel{llphi.norm}
+  \Lagr_{\phi_j}(\bfTh | \{ \phi_j \} ) = 0.5 \, \left[ ( \phi_j - \mu_{\phi_j} ) / \sigma_{\phi_j}  \right]^2  \note{normal prior distribution}   \aeq{A.3.11}
+  \eeq \\
+
+\beq \elabel{llphi.lnorm}
+  \Lagr_{\phi_j}(\bfTh | \{ \phi_j \} ) = 0.5 \, \left[ ( \log \phi_j - \mu_{\phi_j} ) / \sigma_{\phi_j}  \right]^2  \note{lognormal prior distribution}  \aeq{A.3.10}
+  \eeq \\
+
+%\beq \elabel{llP}
+%  \inactive~ \Lagr_{P_j}(\bfTh | \{ P_{jt} \} ) = ( 1 / 2\sigma_P^2 ) \, \sum\nolimits_{t=1}^{T} \, \widetilde{P}_{jt}^2  \note{for time-varing parameters, if any}  \aeq{A.3.13}
+%  \eeq \\
+
+\bec {\bf Objective function} \eec
+
+\beq \elabel{Fobj}
+%  \Fobj(\bfTh) = \sum_{i=1}^{7} \sum_{g=1}^{G} \omega_{ig} \Lagr_{ig} + \omega_{R} \Lagr_{R} + \sum_{\phi} \omega_{\phi} \Lagr_{\phi} + \sum_{P} \omega_{P} \Lagr_{P}~~ ; \omega \text{\footnotesize \,= weighting factors for each~} \Lagr
+  \Fobj(\bfTh) = \sum_{i=\elof{1,5,7}} \sum_{g=1}^{G} \omega_{ig} \Lagr_{ig} + \omega_{R} \Lagr_{R} + \sum_{\phi} \omega_{\phi} \Lagr_{\phi} \note{$\omega$ = weightings (defaults used)}  \aeq{A.3.1}
+  \eeq \\
+
+\\[-0.5ex]\hline
+
+\end{longtable}
+\clearpage
+
+%\comment{
+%\textbf{Temporary Notes:}
+%\begin{itemize_csas}
+%\item \newstuff{Text in blue indicates new or revised material for scrutiny.}
+%\item \greystuff{Text in grey indicates material that has yet to be determined.}
+%\item \oldstuff{Text in red indicates material from a previous assessment that needs revision to reflect current assessment.}
+%\end{itemize_csas}
+%}
+
+% ********************** Table 4 ************************************
+\subsection{Base run prior expectation}
+
+\begin{longtable}{L{1.3in}C{0.8in}C{1.0in}C{1.4in}C{0.9in}C{1.0in}}
+\caption{Details for estimation of parameters, including prior distributions with corresponding means and standard deviations, bounds between which parameters are constrained, and initial values to start the minimisation procedure for the MPD (mode of the posterior density) calculations. In SS3, an analytical solution for $q$ is calculated when the parameter is allowed to `float'.}
+%\comment{
+%% For uniform prior distributions, the bounds completely parameterise the prior.
+%% The resulting non-uniform prior probability density functions are the $\phi_j(\bfTh)$ functions that contribute to the joint prior distribution in \eref{jointprior}.
+%}
+\label{tab:priors}
+\\ \hline\\[-2.2ex]
+\textbf{Parameter} & \textbf{Phase} & \textbf{Prior distribution} & \textbf{Mean, SD} & \textbf{Bounds} & \textbf{Initial value}
+\\[0.2ex]\hline\\[-1.5ex] \endfirsthead \hline 
+\textbf{Parameter} & \textbf{Phase} & \textbf{Prior distribution} & \textbf{Mean, SD} & \textbf{Bounds} & \textbf{Initial value}
+\\[0.2ex]\hline\\[-1.5ex] \endhead
+\hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  %
+
+% copy table from Sweave tex file
+\textbf{Coastwide model}       &    &           &                   &             &\\
+$M_{1}$ (female)               &  4 & normal    & 0.08, 0.024       & [0.02, 0.2] &  0.08\\
+$M_{2}$ (male)                 &  4 & normal    & 0.08, 0.024       & [0.02, 0.2] &  0.08\\
+$h$                            &  5 & beta      & 0.67, 0.17        & [0.2, 1]    &  0.67\\
+$\log R_0$                     &  1 & normal    & 10, 10            & [1, 16]     &  10\\
+$\log q_{\,2,...,7}$             & -1 & analytic  & -3,   6           & [-15, 15]   & -3\\
+$\mu_{1,2,3}$                  &  3 & normal    & 11, 11            & [5, 40]     & 11\\
+$\mu_{4}$                      & -3 & fixed     & --                & [5, 40]     & 15\\
+$\mu_{5}$                      & -3 & fixed     & --                & [5, 40]     & 10\\
+$\mu_{6} \sim \mu_{2}$         & -- & linked    & --                & --          & --\\
+$\mu_{7}$                      &  3 & normal    & 11, 11            & [1, 40]     & 11\\
+$\log v_{L_{1,2,3,7}}$         &  4 & normal    & 2, 2              & [-15, 15]   & 2\\
+$\log v_{L_{4}}$               & -4 & fixed     & --                & [-15, 15]   & 3\\
+$\log v_{L_{5}}$               & -4 & fixed     & --                & [-15, 15]   & 2\\
+$\log v_{L_{6}} \sim \log v_{L_{2}}$& --        & linked            & --   & --   & --\\
+$\Delta_{1,2,3}$               &  4 & normal    & 0, 10             & [-10, 10]   & 0\\
+$\Delta_{4,5}$                 & -4 & fixed     & --                & [-10, 10]   & 0\\
+$\Delta_{6} \sim \Delta_{2}$   & -- & linked    & --                & --          & --\\
+$\Delta_{7}$                   &  4 & normal    & 0, 10             & [-8, 10]    & 0\\
+\hline  
+\end{longtable}
+
+%\medskip
+
+%%==========================================================
+\section{DESCRIPTION OF DETERMINISTIC COMPONENTS}
+
+Notation (Table~\ref{tab:notate}) and deterministic components (Table~\ref{tab:detcomp}) are described below. Acronyms: SS3~= Stock Synthesis~3, AW~= Awatea, AF~= age frequencies|proportions, \spc~= \spn.
+
+%currentRes = importRes("C:/Users/haighr/Files/GFish/PSARC13/SGR/Data/Awatea/CST/SGRrun16/SGR-CST.16.03.res", Dev=TRUE, CPUE=TRUE, Survey=TRUE, CLc=TRUE, CLs=TRUE, CAs=TRUE, CAc=TRUE, extra=TRUE)
+
+\subsection{Age classes}
+
+Index (subscript) $a$ represents age classes, going from 1 to the accumulator age class $A$ of 45. 
+Age class $a=5$, for example, represents fish aged 4-5 years (which is the usual, though not universal, convention, \citealt{Caswell:2001}), and so an age-class~1 fish was born the previous year.
+Unlike Awatea, SS3 uses an age class 0 that presumably represents fish at birth (new recruits).
+The variable $N_{ats}$ is the number of age-class $a$ fish of sex $s$ at the \textit{start} of year $t$, so the model is run to year $T$ which corresponds to the beginning of year \finalYr.
+
+\subsection{Years}
+
+Index $t$ represents model years, going from $1$ to $T=91$, and $t=0$ represents unfished equilibrium conditions. 
+The actual year corresponding to $t=1$ is 1935, and so model year $T=91$ corresponds to \finalYr.
+The interpretation of year depends on the model's derived state or data input:
+\begin{itemize_csas}{}{}
+\item beginning of year: $N_{ats}$, $B_t$, $R_t$
+\item middle of year: $C_{tg}$, $V_{tg}$, $F_{tg}$, $u_{tg}$, $\widehat{I}_{tg}$, $\widehat{p}_{atgs}$
+\end{itemize_csas}
+
+\subsection{Commercial Data}
+
+As described in \AppCat, the commercial catch was reconstructed back to 1918 for five fisheries -- (1)~trawl, (2)~halibut longline, (3)~sablefish trap\,|\,longline, (4)~dogfish\,|\,lingcod\,|\,salmon troll, and (5)~hook \& line rockfish in outside (offshore) waters -- all excluding PMFC area 4B (inside waters between Vancouver Island and the mainland from Queen Charlotte Strait in the north, through the Strait of Georgia and south to Juan de Fuca Strait).
+In this assessment, one commercial fleet was used -- `Trawl\,+\,Other' for BC coastwide, where `Trawl' refers to bottom and midwater trawl fisheries, and `Other' refers to negligible non-trawl fisheries.
+Given the small catches in the early years (1918--1934), the model was started in 1935.
+The time series for catches by fleet are denoted $C_{tg}$ and include retained and discarded catches (either observed or reconstructed). 
+The set ${\bf U}_{\ugees}$ (Table~\ref{tab:notate}) gives the years of available ageing data from the commercial fishing fleet and three of the surveys (see next section).
+Age frequency data are converted to proportions using a stratified weighting scheme, described in \AppBio, that adjusts for unequal sampling effort across temporal and spatial strata.
+
+\subsection{Survey Data} 
+Survey data from six fleets ($g{=}\gsurv$) were used in the model, as described in detail in \AppSurv.
+These surveys are indexed using $g$, with each subscript corresponding to a survey:  $g$=2: Queen Charlotte Sound (QCS) Synoptic;  $g$=3: West Coast Vancouver Island (WCVI) Synoptic;  $g$=4: West Coast Haida Gwaii (WCHG) Synoptic;  $g$=5: Hecate Strait (HS) Synoptic;  $g$=6: Goose Island Gully (GIG) Historical;  $g$=7: NMFS Triennial.
+The years for which data were available for each survey are given in Table~\ref{tab:notate};
+${\bf T}_g$ corresponds to years for the survey biomass estimates $I_{tg}$ (and corresponding standard deviations $\kappa_{tg}$), and ${\bf U}_g$ corresponds to years for proportion-at-age data $p_{atgs}$ (with observed sample sizes $n_{tg}$).
+Note that for surveys, sample size refers to the number of tows sampled, where each sample comprises specimens, typically $\sim$10-50 fish/sample.
+
+\subsection{Sex}
+
+A two-sex model was used, with subscript $s{=}1$ for females and $s{=}2$ for males (note that these subscripts are the reverse of the codes used in the GFBioSQL database). 
+Ageing data were partitioned by sex, as were the weights-at-age inputs. 
+Selectivities and natural mortality were specified by sex.
+
+\subsection{Weights-at-age}
+
+The weights-at-age $w_{as}$ were assumed fixed over time and were based on sex-specific allometric (length-weight) and growth (age-length) model parameters derived from the biological data; see \AppBio{} for details.
+
+%\newpage
+\subsection{Maturity of females}
+
+The proportion of age-class $a$ females that are mature is $m_a$, and was assumed to be invariant over time; see \AppBio{} for details.
+Fecundity-at-age for females $f_a$ was assumed to be proportional to weights-at-age $w_a$.
+The default fecundity function\,: $f_a = w_a (\alpha + \beta w_a)$ (option\,1, with $\alpha$=1 and $\beta$=0) was implemented in the SS3 model for YTR.
+Fecundity option\,2 should be equivalent to option\,1 ($\alpha$=1, $\beta$=0) by setting $\alpha$\,= $e^{\text{-11.347}}$ and $\beta$\,=3.071 in $f_a = \alpha L_a^{\beta}$ (using allometric parameters in Table~D.2, Appendix~D).
+Sensitivity run S16 necessarily used fecundity option\,2 because \citet{Dick-etal:2017} provided length-based fecundity parameters for various \emph{Sebastes} species.
+Those for \emph{S.~flavidus} were\,: $\alpha$\,= $e^{\text{-15.062}}$ and $\beta$=4.590, and the fecundity function was $f_a$\,=\,2.875e-07\,$L_a^{\text{4.590}}$.
+We note that the fecundity parameters from \citet{Dick-etal:2017} for \emph{S.~flavidus} were estimated by a meta-analysis involving 456 fish taken from 8 papers spanning the years 1957 to 2013. 
+All but two sampled fish were from California waters.
+
+\subsection{Initial conditions}
+
+An unfished equilibrium at the beginning of the reconstruction was assumed because there was no evidence of significant removals prior to 1935.
+The initial conditions \eref{Na0s} and \eref{NA0s} were obtained by setting $R_t = R_0$ (virgin recruitment), $N_{ats} = N_{a1s}$ (equilibrium condition) and $u_{ats} = 0$ (no fishing).
+The virgin spawning biomass $B_0$ was obtained from \eref{B0}.
+The initial lengths were set using the growth equations of \citet{Schnute:1981} \eref{La0s}-\eref{LA0s}.
+
+\subsection{State dynamics}
+
+The core of the model is the set of dynamic equations \eref{Nats} for the estimated number $N_{ats}$ of age-class $a$ fish of sex $s$ at the start of year $t$. 
+The proportion of female new recruits $c$ in Equation \eref{Nats} was set to 0.5.
+Equation \eref{Nats} calculates the numbers of fish in each age class (and of each sex) that survive to the following year, where $Z_{ats}$ represents the total mortality rate, which in this case comprises the sum of natural mortality $M$ and fishing mortality $F$. 
+The accumulator age class $A$ retains survivors from this class in following years.
+
+Natural mortality $M_s$ was estimated separately for males and females.
+This parameter enters the equations in the form $e^{-M_s}$ as the proportion of unfished individuals that survive the year.
+
+\subsection{Selectivities} \label{ss:select}
+
+Separate selectivities were estimated for four of the fleets, using AF data and SS3's selectivity pattern~20 for females (Equations~\ref{Satgs}-\ref{gammas}) and selectivity option~3 for males.
+%%rm (although YTR male selectivity was fixed to be the same as that for females in this assessment).
+Note that `log' herein refers to natural logarithms. %%; `AW' denotes Awatea and `SS3's denotes Stock Synthesis 3.
+Pattern 20 describes double normal selectivity for females where the parameters $\beta_i$ ($i=1,...,6$) for fleet $g$ are:
+%%\vspace{-0.5\baselineskip}%  because topsep doesn't work
+
+\begin{enumerate_itemize}{}{}
+  \item $\beta_{1g}$ -- age at which selectivity first reaches maximum selectivity:
+    \begin{enumerate_itemize}{-0.25}{-0.25}
+      \item SS3: beginning age (year) for the plateau;
+      \item AW: age of full selectivity ($\mu_g$) for females;
+    \end{enumerate_itemize}
+  \item $\beta_{2g}$ -- (SS3 only) used to generate a logistic between peak ($\beta_{1g}$) and maximum age ($A$) that determines width of top plateau ($a_g^{\star} - \beta_{1g}$), where $a_g^{\star}$ is the final age of the top plateau;
+%  \begin{enumerate_itemize}{}{}
+%    \item where width $w_\text{T} = \beta{1g} + \pi_{\text{T}g} + (0.99A - \pi_{\text{T}g}) / (1+e^{-\pi_{\text{T}g}})$;
+%  \end{enumerate_itemize}
+  \item $\beta_{3g}$ -- used to determine width of the ascending limb of double normal curve:
+    \begin{enumerate_itemize}{-0.25}{-0.25}
+      \item SS3: determines slope of ascending limb by tweaking its variance;
+      \item AW: log of variance for left limb ($v_{\mr{L}g}$) of selectivity curve;
+    \end{enumerate_itemize}
+  \item $\beta_{4g}$ -- used to determine width of the descending limb of double normal curve:
+    \begin{enumerate_itemize}{-0.25}{-0.25}
+      \item SS3: determines slope of descending limb by tweaking its variance;
+      \item AW: log of variance for right limb ($v_{\mr{R}g}$) of selectivity curve;
+    \end{enumerate_itemize}
+  \item $\beta_{5g}$ -- (SS3 only) determines initial selectivity by generating a logistic between 0 and 1 at first age;
+    \begin{enumerate_itemize}{-0.25}{-0.25}
+      \item where selectivity $S_{a{=}1,g} = 1/(1+e^{-\beta_{5g}})$; however,
+      \item use -999 to ignore initial selectivity algorithm and decay small-fish selectivity using $\beta_{3g}$;
+    \end{enumerate_itemize}
+  \item $\beta_{6g}$ -- (SS3 only) determines final selectivity by generating a logistic between 0 and 1 at final age bin;
+    \begin{enumerate_itemize}{-0.25}{-0.25}
+      \item where selectivity $S_{Ag} = 1/(1+e^{-\beta_{6g}})$.
+    \end{enumerate_itemize}
+\end{enumerate_itemize}
+
+%\newpage
+Option 3 for pattern 20 describes male selectivity as offsets to female selectivity, where parameters $\Delta_i$ ($i=1,...,5$) for fleet $g$ are:
+\begin{enumerate_csas}{}{}
+\item $\Delta_{1g}$ = male peak offset ($\Delta_g$ in AW) added to the first female selectivity parameter, $\beta_{1g}$ ($\mu_g$ in AW);
+\item $\Delta_{2g}$ = male width offset (log width) added to the third selectivity parameter, $\beta_{3g}$ (same as female $v_{\text{L}g}$ in AW);
+\item $\Delta_{3g}$ = male width offset (log width) added to the fourth selectivity parameter, $\beta_{4g}$ (same as female $v_{\text{R}g}$ in AW);
+\item $\Delta_{4g}$ = male plateau offset added to the sixth selectivity parameter, $\beta_{6g}$ (not present in AW);
+\item $\Delta_{5g}$ = apical selectivity for males (usually 1 but could be different than that for females; not present in AW).
+\end{enumerate_csas}
+Generally for males, the same selectivity function is used except that some of the selectivity parameters ($\beta_{ig}$ for $i\in \{1,3,4,6\}$) may be shifted if male AF data are sufficiently different from female AF data.
+
+Dome selectivity only occurs under three conditions:\\
+\begin{itemize_csas}{-0.25}{}
+  \item the width of the top plateau (between $\beta_{1g}$ and $a_g^{\star}$) must be less than $A - \beta_{1g}$;
+  \item the steepnees of the descending limb (controlled by $\beta_{4g}$) must not be too shallow; and 
+  \item the final selectivity (controlled by $\beta_{6g}$) must be less than peak selectivity (usually 1).
+\end{itemize_csas}
+Note that male selectivity can be estimated using the parameters $\beta_{1,...,6g}$, with female selectivity being estimated using the offset parameters $\Delta_{1,...,5g}$.
+This reversal of order was necessary to obtain female-only dome-shaped selectivity in sensitivity run S02.
+
+\subsection{Derived states}
+
+The spawning biomass (biomass of mature females, in tonnes) $B_t$ at the start of year $t$ is calculated in \eref{Bt} by multiplying the numbers of females $N_{at1}$ by fecundity $f_a$ \eref{fa}, which is a function of a length-age matrix $\varphi_{lats}$ (Eq. A.1.14 in Appendix A of \citealt{Methot-Wetzel:2013}), the maturity ogive ($m_l$), egg production ($o_l$), and weights-at-length $w_{l1}$ \eref{wls}.
+
+The fishing mortality rate $F_{tg}$ \eref{Ftg} is derived through an iterative process to fit observed catches closely rather than removing the catches by subtraction.
+A mid-season harvest rate is calculated using Pope's approximation \citep{Pope:1972}, which is then converted to an instantaneous $F$ using the Baranov equation \citep{Baranov:1918}.
+Each fleet's approximate $F$ is repeated iteratively several times (usually three to four) using the Newton-Rhapson procedure until its value yields a close match to the observed catches by the fleet.
+Details can be found in \citet{Methot-Wetzel:2013}.
+
+Although SS3 does not report vulnerable biomass \textit{per~se}, equation \eref{Vtg} provides an equation from Awatea for $V_{tg}$ mid-year.
+Assuming that $C_{tg}$ is taken mid-year, the harvest rate is simply $C_{tg} / V_{tg}$.
+Further, for year $t$, the proportion $u_{tg}$ of age-class $a$ and sex $s$ fish that are caught in fishery $g$ can be calculated by multiplying the commercial selectivities $S_{ags}$ and the ratio $u_t$ \eref{Vtg}.
+
+\subsection{Stock-recruitment function} \label{ss:stock-recruit}
+
+A Beverton-Holt recruitment function is used, parameterised in terms of steepness, $h$, which is the proportion of the long-term unfished recruitment obtained when the stock abundance is reduced to 20\pc{} of the virgin level \citep{Mace-Doonan:1988, Michielsens-McAllister:2004}.
+SS3 uses a prior on $h$ taken from \citet{Forrest-etal:2010}, where shape parameters for a beta distribution are $\alpha = (1 - h) B_0 / (4 h R_0)$ and $\beta = (5 h - 1) / 4 h R_0$ (\citealt{Hilborn-etal:2003, Michielsens-McAllister:2004}). 
+Substituting these into the Beverton-Holt equation, $R_t = B_{t-1} / (\alpha + \beta B_{t-1})$, where $R_0$ is the virgin recruitment, $R_t$ is the recruitment in year $t$, $B_t$ is the spawning biomass at the start of year $t$, and $B_0$ is the virgin spawning biomass.
+SS3 offers several recruitment options including Ricker, Beverton-Holt, and a three-parameter survivorship-based function suitable for low-fecundity species \citep{Taylor-etal:2013}.
+
+%% [DO NOT TRANSLATE] The following description of allocating recruitment only applies to multi-area models.
+%The multi-area model in SS3 estimates one recruitment for the coastwide population, which is then allocated amongst the three areas: 5ABC, 3CD, and 5DE. 
+%Two allocation parameters (number areas - 1) are estimated in natural log space, while the third parameter is fixed at zero. 
+%The equation to calculate the proportion allocations by area $\alpha$ in linear space is:
+%\eb
+%p^{R}_{\alpha} = e^{\mathring{p}_{\alpha}} / ( e^{\mathring{p}_{\alpha=1}} + e^{\mathring{p}_{\alpha=2}} + e^{\mathring{p}_{\alpha=3}} ) \text{,~~where~} \alpha \in{1,2,3}
+%\label{pR.normal}
+%\ee \\[-0.25ex]
+%In order to have varying recruitment by year in each area, a time-varying component was added to $p^{R}_{\alpha}$ by estimating annual deviance parameters $\nu_{t,\alpha}$.
+%The period over which this was applied varied among areas and runs: 1935 to 2014 for 5ABC (Base and Sensitivity S03), 1975 to 2014 for 3CD (Base and S02), and 1935 to 2014 for 5DE (S02 and S03).
+%These years were selected based on the availability of age frequency data and the number of observations obtained for a cohort.
+%Additionally, a standard error ($\zeta_{\alpha}$) for the deviance values can be estimated; however, this stock assessment fixed $\zeta_{\alpha}$ to 1. 
+%Annual time-varying recruitment proportions are then calculated by adjusting the estimated proportions in log space:
+%\eb
+%\mathring{p}_{t,\alpha} = \mathring{p}_{\alpha} + \nu_{t,\alpha} \zeta_{\alpha}
+%\label{pR.tv}
+%\ee \\[-0.25ex]
+%and then applying \eref{pR.normal} to transform these annually adjusted values into linear space, $p^{R}_{t,\alpha}$.
+
+\subsection{Fitting to data}
+
+Model estimates of the survey biomass indices $I_{tg}$ are denoted $\widehat{I}_{tg}$ and are calculated in \eref{Itg.hat}.
+The estimated numbers $N_{ats}$ are multiplied by the total mortality term $e^{-Z_s / 2}$ (that accounts for half of the annual natural mortality and fishing mortality),
+%% [DO NOT TRANSLATE] the term $1 - u_{ats} / 2$ (that accounts for half of the commercial catch),
+weights-at-age $w_{as}$ (to convert to biomass), and selectivity $S_{ags}$. 
+The sum (over ages and sexes) is then multiplied by the catchability parameter $q_g$ to give the model biomass estimate $\widehat{I}_{tg}$. 
+
+The estimated proportions-at-age $\widehat{p}_{atgs}$ are calculated in \eref{patgs.hat}. 
+Expected ages without ageing error $\Psi_a$ are multipled by ageing error ($\xi_a$), and a small constant $c$ is added.
+For each combination of year, fleet, and sex, $\Psi_{atgs}$ gives the expected number of aged fish.
+Division by the sum over sex and age converts these estimated frequencies to proportions for each year and fleet.
+The SS3 platform can use either frequencies or proportions, and offers choices on how AF sex data are binned: 0~= combined male and female, 1~= females only, 2~= males only, and 3~= both sexes (scaled to sum to one over both sexes).
+
+Ageing error (AE) in this stock assessment was applied using SS3's vector-style inputs of bias and precision.
+The bias vector used was 0.5 to 45.5 at increments of 1 year for ages 0 through 45, which in SS3 signifies no age bias.
+The precision vector for ages 0 through 45 was estimated as the standard deviation of ages 1 through 46 calculated from the CVs of lengths-at-age:
+~~~$\sigma_a = a (\sigma_{L_a} / \mu_{L_a})$, where $a=0,...,45$.
+Using these vectors, SS3 applies a cumulative normal distribution for each age to calculate the frequency of expected age given a mean assigned age and standard deviation (see~\ref{age.err}).
+
+\begin{chapquote}{Richard Methot, pers. comm., Sep 21, 2021}
+``SS3 never adjusts input data.  Rather, it adjusts expected values for data to take into account known factors that influenced the creation of the observations. So, ageing error is applied to a modeled distribution of true ages (after selectivity has taken a subset from the population) to create a new distribution of ages that includes the influence of ageing error.''
+\end{chapquote}
+
+%%==========================================================
+\section{DESCRIPTION OF STOCHASTIC COMPONENTS}
+
+\subsection{Parameters}
+
+The set $\bfTh$ gives the parameters that are estimated. 
+The estimation procedure is described in the Bayesian Computations section below.
+
+\subsection{Recruitment deviations}
+
+For recruitment, a log-normal process error is assumed, such that the stochastic version of the deterministic stock-recruitment function (\ref{Rt}) is
+\eb
+R_t = \frac{B_{t-1}}{\alpha + \beta B_{t-1}} e^{\minus 0.5 b_t \sigma_R^2 + \epsilon_t} \label{Rt.sto}
+\ee \\[-0.25ex]
+
+%%e^{\minus 0.5 b_t \sigma_R^2 + \epsilon_t}~;~~~ \epsilon_t \sim \Norm (0, \sigma_R^2)
+
+where $\epsilon_t \sim \Norm(0, \sigma_R^2)$, and the bias-correction term $-b_t \sigma_R^2/2$ term in \eref{Rt.sto} ensures that the mean of the recruitment deviations equals 0. 
+This then gives the recruitment deviation equation (\ref{rdevs}) and log-likelihood function (\ref{llR}). 
+In this assessment, the value of $\sigma_R$ was fixed at 0.9 based on values used in recent BC rockfish stock assessments.
+Other assessments have used $\sigma_R$ = 0.6 following an assessment of Silvergray Rockfish \citep{Starr-etal:2016_sgr} in which the authors stated that the value was typical for marine `redfish' \citep{Mertz-Myers:1996}.
+An Awatea model of Rock Sole used $\sigma_R$~= 0.6 \citep{Holt-etal:2016_rol}, citing that it was a commonly used default for finfish assessments \citep{Beddington-Cooke:1983}.
+In recent BC rockfish assessments, we have adopted $\sigma_R$~= 0.9 based on an empirical model fit consistent with the age composition data for 5ABC POP \citep{Edwards-etal:2012_pop5ABC}.
+A study by \citet{Thorson-etal:2014} examined 154 fish populations and estimated $\sigma_R$~= 0.74 (SD=0.35) across seven taxonomic orders; the marginal value for Scorpaeniformes was $\sigma_R$=0.78 (SD=0.32) but was only based on 7 stocks.
+
+Most BC offshore rockfish models in past (using Awatea 2009--2020 and SS3 2021-2023) have used a recruitment deviation vector (during the main recruitment period) that sums to 0; however, a \href{https://github.com/admb-project/admb/issues/107}{bug in ADMB} became apparent to Ian Taylor when running MCMC simulations. Using the command line option \code{-mcmc}, the value of \code{sum(effort\_devs)} was never close to 0, but using the option \code{-mceval} (i.e., evaluate the contents of \code{[model].psv}), \code{sum(effort\_devs)} was very close to 0.
+One of the consequences was that $\sim$10\pc{} of the posterior samples led to a \href{https://groups.google.com/a/admb-project.org/g/developers/c/8QNAd3a_iGQ}{crashed population}.
+For this reason, the `sum to 0' option was turned off for this stock assessment.
+However, during the current YTR model runs, evaluated MCMC posterior samples still led to 28 out of 2000 samples (1.4\pc{}) with undefined MSY values (specified as \code{`NaN'}, or not a number).
+The population had not crashed but the forecast fishing mortality had been evaluated as \code{`NaN'} for no apparent reason.
+
+\subsection{Log-likelihood functions}
+
+The objective function $\Fobj(\bfTh)$ \eref{Fobj} comprises a weighted sum (models used the default weightings) of individual likelihood components that include:
+\begin{itemize_csas}{}{}
+  \item $\Lagr_{I_g}$ \eref{ll1} -- CPUE or abundance index by fleet
+  %%\item $\Lagr_{d_g}$ \eref{ll2} -- discarded biomass by fleet
+  %%\item $\Lagr_{\widehat{w}_g}$ \eref{ll3} -- mean body weight by fleet
+  %%\item $\Lagr_{l_g}$ \eref{ll4} -- length composition by fleet
+  \item $\Lagr_{a_g}$ \eref{ll5} -- age composition by fleet
+  %%\item $\Lagr_{z_g}$ \eref{ll6} -- mean size-at-age by fleet
+  \item $\Lagr_{C_g}$ \eref{ll7} -- catch by fleet
+  \item $\Lagr_{R}$ \eref{llR}   --  recruitment deviations
+  \item $\Lagr_{\phi_j}$ \eref{llphi.norm} to \eref{llphi.lnorm} -- parameter priors
+  %%\item $\Lagr_{P_j}$ \eref{llP} -- random parameter deviations
+\end{itemize_csas}
+See \citet{Methot-Wetzel:2013} and \citet{Methot-etal:2023} for more likelihood options and details.
+
+%%==========================================================
+\section{BAYESIAN COMPUTATIONS}
+
+Estimation of parameters compares the estimated (model-based) observations of survey biomass indices and proportions-at-age with the data, and minimises the recruitment deviations. 
+This is done by minimising the objective function $f(\bfTh)$, which equation \eref{Fobj} shows is the negative of the sum of the total log-likelihood function comprising the logarithmic components \eref{ll1}-\eref{llphi.lnorm}.
+
+%%\newpage
+The procedure for the Bayesian computations is as follows:
+\begin{enumerate_csas}{}{}
+  \item minimise the objective function $f(\bfTh)$ to give estimates of the mode of the posterior density (MPD) for each parameter: (a)~done in phases, and (b)~perform a reweighting;
+  \item generate samples from the joint posterior distributions of the parameters using Monte Carlo Markov Chain (MCMC) procedure, starting the chains from the MPD estimates.
+\end{enumerate_csas}
+
+\subsection{Phases}
+
+The MPD estimates were obtained by minimising the objective function $f(\bfTh)$, from the stochastic (non-Bayesian version) of the model. 
+The resulting estimates were then used to initiate the chains for the MCMC procedure for the full Bayesian model.
+
+Simultaneously estimating all the estimable parameters for complex nonlinear models is ill advised, and so ADMB allows some of the estimable parameters to be kept fixed during the initial part of the optimisation process \citet{ADMB:2009}. 
+Some parameters are estimated in phase~1, then further ones in phase~2, and so on. 
+The order (if estimated) typically used by the BC Offshore Rockfish assessment team is:
+
+\begin{changemargin}{0.25in}{0.25in}{0.5ex}
+phase 1: virgin recruitment $R_0$ and survey catchabilities $q_{\gsurv}$\\
+  \hsd (although the $q$ fit herein adopts a `float' option, which calculates an analytical solution);\\
+phase 2: recruitment deviations $\epsilon_t$ (held at 0 in phase 1);\\
+phase 3: natural mortality $M_{s}$ and age of full selectivity for females $\beta_{1g}$ for $g{=}\ugees$;\\
+phase 4: additional selectivity parameters $\beta_{ng}$ for $n{=}2,...,6$ and $g{=}\ugees$;\\
+phase 5: steepness $h$.
+\end{changemargin}
+
+\subsection{Reweighting} \label{ss:reweight}
+
+\begin{chapquote}{Allan Hicks, IPHC, pers. comm., Aug 17, 2021}
+``Sample sizes are used to calculate the variance for a data source and are useful to indicate the relative differences in uncertainty across years within each data source.
+However, sample size may not represent the relative difference in the variance between different data sources (usually abundance vs. composition).
+Therefore, the relative weights for each data source in an integrated stock assessment should be adjusted to reflect the information content of each, while retaining the relative differences across years.
+This can be accomplished by applying adjustment factors to abundance and composition data to weight either data source up or down relative to the other.
+''
+\end{chapquote}
+Previous rockfish stock assessments using the Awatea platform adopted the \citet{Francis:2011} reweighting approach (from 2011 on) -- adding series-specific process error to abundance index CVs on the first reweight, and iteratively reweighting age frequency (composition data) sample size by mean age on the first and subsequent reweights.
+
+\subsubsection{Abundance} \label{sss:rwt_abund}
+
+
+For abundance data (survey indices, commercial CPUE indices), \citet{Francis:2011} recommends reweighting observed coefficients of variation, $c_0$, by first adding process error $c_\text{p} \sim$ 0.2 to give a reweighted coefficient of variation
+
+\eb
+c_1 = \sqrt{c_0^2 + c_\text{p}^2}~. \label{reweight}
+\ee
+
+Survey abundance indices for \spc{} exhibited moderate relative error, and so no additional error $c_\text{p}$ was added to these indices.
+
+This stock assessment did not use commercial CPUE because YTR is targeted by the trawl fleet, usually using acoustic signals, leading to concerns that the series will be hyperstable.
+%%DO NOT TRANSLATE: For information on a spline-smoother technique to calculate process error $c_\text{p}$, see \citet{Starr-Haigh:2022_ymr}.
+
+For stock assessments using commercial CPUE, a procedure was developed for estimating process error $c_\text{p}$ to add to CPUE indices based on a spline-smoother analysis \citep{Starr-Haigh:2021_wwr}.
+The idea for this analysis came from \citet{Francis:2011}, citing \citet{Clark-Hare:2006}, who recommended using a smoothing function to determine the appropriate level of process error to add to CPUE data, with the goal of finding a balance between rigorously fitting the indices while not removing the majority of the signal in the data.
+\comment{
+An arbitrary sequence of length 50, comprising degrees of freedom (DF,~$\nu_i$), where $i=2,...,N$ and $N$~= number of CPUE values $U_t$ from $t=1996,...,2024$, was used to fit the CPUE data with a spline smoother.
+At $i=N$, the spline curve fit the data perfectly and the residual sum of squares (RSS, $\rho_N$) was 0.
+Using spline fits across a range of trial DF $\nu_i$, values of RSS $\rho_i$ formed a logistic-type curve with an inflection point at $i=k$ (Figure~\ref{fig:CPUEres-CVpro-CAR}).
+The difference between point estimates of $\rho_i$ (proxy for the slope $\delta_i$) yielded a concave curve with a minimum $\delta_i$, which occurred close to the inflection point $k$.
+At the inflection point $k$, $\nu_k$=~5.4 for BC, corresponding to $\rho_k$=~0.83, which was converted to $c_\text{p}$=~0 using:
+\vspace{-0.25\baselineskip}%% reduce space above
+}
+The equation for process error $c_\text{p}$ used in BC offshore rockfish stock assessments is:
+\eb
+c_\text{p} = \sqrt{\dfrac{\rho_k}{N-2}}~~~{\left[ \dfrac{1}{N} \sum\limits_{t=1996}^{2024} I_t \right]}^{-1}~, \label{cvpro.cpue}
+\ee
+
+where $\rho_k$~= residual sum of squares at inflection point $k$ after fitting a spline smoother with a range of degrees of freedom $v_i$~= 2 to $N$, $N$~= number of CPUE values from $t$=1996 to \prevYear, and $I_t$~= CPUE index at time $t$.
+
+%For each model run, the abundance index CVs were adjusted on the first reweight only using the process error $c_\text{p}$~= 0, 0, 0, 0, 0, and 0 along the BC coast ($g$=2,...,7).
+
+%% #1=figure1 #2=figure2 #3=label #4=caption #5=width (fig) #6=height (fig)
+%%\onefigWH{CPUEres-CVpro-CAR}{Estimating process error to add to commercial CPUE data: top left -- residual sum of squares (RSS) from spline-smoother at various degrees of freedom; top right -- slope of RSS ($\sim$ first derivative), vertical dotted line at DF where slope is at a minimum; bottom left -- CPUE index data with spline-fitted DF=15.1 (dashed blue curve) and optimised DF=5.4 (solid red curve); bottom right -- standardised residual fit.}{4.5}{4.5}
+
+\subsubsection{Composition} \label{sss:rwt_abund}
+
+In a previous stock assessment \citep{Starr-Haigh:2023_car}, composition data were reweighted using the Dirichlet-Multinomial distribution available in SS3 \citep{Thorson-etal:2017}. 
+This approach adds an estimable parameter ($\theta$) which automatically scales the input sample size as part of the likelihood.
+
+\begin{chapquote}{Methot et al. (2023), \textit{Data Weighting}}
+``In consultation with Jim Thorson, Ian Taylor proposed a normal $\Norm$(0,1.813) prior for
+the \texttt{ln(DM\_parm)} parameters to counteract the effect of the logistic 
+transformation between this parameter and the data weighting. The 1.813 value was
+calculated as the standard deviation of the distribution of $\log(\theta)$ values derived from
+starting with a uniform distribution on the weights, weight = $\theta/(1 + \theta) \sim \mathcal{U}(0,1)$,
+and solving for $\log(\theta)$.''
+
+\end{chapquote}
+
+If the calculated weight $\theta/(1 + \theta)$ ratio is close to 1.0, the model is trying to tune the sample size as high as possible.
+In this case, \citet{Methot-etal:2023} suggest fixing the $\log\,\text{DM}\,\theta$ parameter to a high value, like the upper bound of 20, which will result in 100\pc{} weight being applied to the input sample sizes.
+One caveat of using the $\log\,\text{DM}\,\theta$ parameter is that it does not allow weights above 100\pc{} (by design).
+
+\subsubsection{Selection of the Francis procedure for the base run} \label{sss:rwt_select}
+
+The SS3 platform provides three options for weighting compositional data: the \citet{Francis:2011} mean-age procedure, the \citet{McAllister-Ianelli:1997} harmonic-mean procedure, and the self-weighting Dirichlet-Multinomial (D-M) option \citep{Thorson-etal:2017}, which estimates a weighting parameter for each compositional dataset.
+All three of these procedures have been used in recent BC stock assessments:
+\begin{itemize_csas}{}{}
+  \item \makebox[3.6in][l]{2021 Yellowmouth Rockfish \citep{Starr-Haigh:2022_ymr}} $\longrightarrow$  harmonic-mean procedure
+  \item \makebox[3.6in][l]{2022 Canary Rockfish \citep{Starr-Haigh:2023_car}}      $\longrightarrow$ D-M parameterisation
+  \item \makebox[3.6in][l]{2023 Pacific Ocean Perch \citep{Starr-Haigh:2024_pop}}  $\longrightarrow$ Francis mean-age procedure
+\end{itemize_csas}
+%% https://tex.stackexchange.com/questions/14038/tabbing-inside-itemize-or-itemize-inside-tabbing (see cygnusv's answer)
+
+After experimentation with the D-M parameterisation in the 2023 POP stock assessment, we found considerable weighting effects on estimated stock productivity based on the sample sizes used.
+In contrast, the Francis method calculated weightings (by upscaling low samples sizes or downscaling high sample sizes) to yield very similar estimates of stock productivity.
+The stability of the Francis method obviates the need to rely on alternative methods to reweight sample sizes, and this was the method chosen for Yellowtail Rockfish.
+The \citet{Francis:2011} weight $w_{g}$ given to each data set takes into account deviations from the mean age for each year.
+The weight is given by equation (TA1.8) of \citet{Francis:2011}:
+\eb
+  w_{g} = 1 / \Var_t \left( \frac{\overline{O}_{tg} - \overline{E}_{tg}}{\sqrt{ \theta_{tg} / n_{tg} }} \right)~;~~~\Var_t(x_t) = \sum_t (x_t - \widebar{x})^2 / (n-1)
+\ee
+%% need to have an empty line after \ee
+
+where $n_{tg}$ = sample size prior to applying the current weight $w_{g}$, and the observed mean age, the expected mean age, and the variance of the expected age distribution are, respectively:
+\eb
+  \overline{O}_{tg} & = & \sum_{a=1}^{A} \sum_{s=1}^2 a p_{atgs}\\
+  \overline{E}_{tg} & = & \sum_{a=1}^{A} \sum_{s=1}^2 a \widehat{p}_{atgs}\\
+  \theta_{tg} & = & \sum_{a=1}^{A} \sum_{s=1}^2 a^2 \widehat{p}_{atgs} - \overline{E}_{tg}^2
+\ee
+
+A candidate method for reweighting used by NOAA involves a bootstrapping procedure suggested by \citet{Stewart-Hamel:2014} for resampling tows with specimens aged and sexed, and calculating the harmonic mean ratio of \citet{McAllister-Ianelli:1997}.
+The Petrale Sole assessment \citep{Mazur-etal:2024_pel} could not get models to converge using the Francis reweight, and so the method of \citet{Stewart-Hamel:2014} was used.
+The estimated effective sample size of \citet{McAllister-Ianelli:1997} is:
+\eb
+\widetilde{n}_{tg} = \frac{ \sum_{a=1}^A \widehat{p}_{atg} \left( 1 - \widehat{p}_{atg} \right) } { \sum_{a=1}^A \left( p_{atg} - \widehat{p}_{atg} \right)^2 } \label{effN}
+\ee
+
+\subsection{Prior distributions}
+
+Descriptions of the prior distributions for the estimated parameters (without including recruitment deviations) are given in Table~\ref{tab:priors}.
+A wide normal prior $\Norm$(10,10) was used for $\log R_0$; this often provides more stability in the model than using a uniform prior without affecting the estimation process.
+Steepness was estimated using a beta distribution, with priors generated by \citet{Forrest-etal:2010}: $\beta$(0.67,\,0.17).
+Catchability parameters $q_g$ were determined analytically by SS3 (using \code{float=1}).
+
+Natural mortality priors used in the previous YTR stock assessment \citep{Starr-etal:2014_ytr}, $\Norm$(0.08,\,0.024), were used for both sexes in the base run of the current stock assessment.
+A sensitivity run (MLE) presented at the RPR meeting (10 Sep 2024) using priors $\Norm$(0.12,\,0.036) for females and $\Norm$(0.09,\,0.027) showed a 25\pc{} increase in current spawning stock biomass ($B_{\currYear}$), a 14\pc{} increase in non-fished equilibrium biomass ($B_0$), and an increase in stock status ($B_{\currYear}/B_0$) from 0.578 to 0.628 compared to the base run MLE fit.
+The priors had an effect by estimating a more optimistic stock assessment; however, the base run prior (without using the data to inform) provided a more precautionary stock assessment and was accepted by the RPR.
+
+Normal selectivity priors were taken from those used in the 2014 YTR stock assessment, but the means were simplified (to integers) and the standard deviations were set to the mean to provide constrained uniform distributions: $\mu_{\ugees}\sim\Norm$(11,11), $\log v_{\text{L}\ugees}\sim\Norm$(2,2), and $\Delta_{\ugees}\sim\Norm$(0,10).
+Selectivity priors for two of the six surveys were fixed because AF data were either absent or poor: WCHG ($\mu_{4}$=15, $\log v_{\text{L}4}$=3, $\Delta_{4}$=0); HS ($\mu_{5}$=10, $\log v_{\text{L}5}$=2, $\Delta_{5}$=0).
+The values of $\mu_{g=4,5}$ chosen based on the distributions of female YTR length by survey (Figure D.24), which showed that females in the WCHG synoptic survey were notably larger than those from other surveys.
+Initially, the WCHG age at full selectivity $\mu$ (SS3 $\beta1$) was fixed at 29.5\,y, based on a maximum length of 55\,cm and using the estimated von Bertalanffy growth function (Table D.4).
+However, fixing the selectivity parameter to 29.5\,y in the population model proved to be unrealistic because the realised selectivity function lay far to the right of the maturity curve, excluding too much of the available population. 
+As the prior means for $\mu_{\ugees}$ had been set to 11\,y, a choice was made to fix $\mu_{4}$\,=15\,y and to fix $\mu_{5}$\,=10\,y. 
+The higher maximum age at full selectivity used for the WCHG survey recognised that this survey consistently caught larger females than those caught in other surveys (Figure D.24).
+The fixed selectivity used for the HS survey was similar to but slightly smaller than the selectivity estimated for the QCS survey, given the smaller YTR observed in the HS survey length distributions (see Figures D.6 and D.24).
+Selectivity priors for GIG were linked to QCS.  See Table~\ref{tab:priors} for details on priors used in the base run.
+
+\subsection{MCMC properties}
+
+The MCMC procedure used the `no U-turn sampling' (NUTS) algorithm \citep{Monnahan-Kristensen:2018, Monnahan-etal:2019} to produce \nSims{} iterations, parsing the workload into \nChains{} parallel chains (using the R~package \code{snowfall}, \citealt{R:2015_snowfall}).
+For each chain, \cSims{} iterations were performed, discarding the first \cBurn{} samples as a `burn-in', leaving the final \cSamps{} samples for use in the MCMC analysis.
+The parallel chains were then merged for a total of \Nmcmc{} samples to approximate the posterior distribution.
+For the base and sensitivity runs, an excess of samples were thinned every \nThin{} samples.
+Code (bash and R) was supplied by Chris Grandin (DFO, pers. comm. 2023) to perform the MCMC simulations on a remote Linux server.
+
+%%==========================================================
+\section{REFERENCE POINTS, PROJECTIONS, AND ADVICE TO MANAGERS}
+
+Advice to managers is given with respect to a suite of reference points.
+The first set is based on MSY (maximum sustainable yield) and includes the provisional reference points of the DFO Precautionary Approach \citep{DFO-SAR:2006_pa}, namely 0.4$\Bmsy$ and 0.8$\Bmsy$ (and also provided are $\Bmsy$ and $\umsy$, which denote the estimated equilibrium spawning biomass and harvest rate at MSY, respectively). 
+A second set of reference points, based on the current spawning biomass $B_{\currYear}$ and harvest rate $u_{\prevYear}$, is used to show the probability of the stock size increasing from the current female spawning biomass or decreasing from the current harvest rate.
+A third set of reference points, based on $B_0$ (the estimated unfished equilibrium spawning biomass) is provided as an alternative to the $\Bmsy$ reference points.
+See main text for further discussion.
+
+The probability $\text{P}(B_{\finalYr} > 0.4\Bmsy)$ is calculated as the proportion of the \Npost{} MCMC samples (after thinning) for which $B_{\finalYr} > 0.4\Bmsy$ (and similarly for the other biomass-based reference points).
+For harvest rates, the probability $\text{P}(u_{\prevYear} < \umsy)$ is calculated so that both $B$- and $u$-based stock status indicators (and projections when $t=2026,...,\projYear$) state the probability of being in a `good' place.
+
+Projections were made for 11 years starting with the biomass for the start of \currYear.
+All derived values in SS3 are for a start-of-year time period.
+Therefore, if the end year in the data file is specified as \prevYear, derived quantities like spawning biomass $B_t$ are estimated to start of year \currYear.
+By default, SS3 will project forward at least one year so that catch in \prevYear{} can be applied and derived quantities will be generated for \currYear{} (one-year forecast).
+Therefore, in the file \code{forecast.ss}, a user needs to specify the current year plus any additional forecast years (e.g., a 10-yr forecast would need 11 specified catches from \currYear{} to 2035).
+Additionally, if a user needs generational forecasts (e.g, three YTR generations = 60 years), then 61 forecast years need to be specified before any MCMC runs are attempted.
+
+%In this stock assessment, the default catch for projections was the average catch from 2019 to 2023, which equalled 4099\,t for sumting, respectively.
+For decision tables, a range of constant catch strategies were used, from 0 to \policyMax{} at \policyInc{} increments.
+%For each strategy, projections were performed for each of the \Nbase{} MCMC samples after thinning (resulting in posterior distributions of future spawning biomass).
+Recruitments were randomly calculated using \eref{Rt} (i.e.,~based on lognormal recruitment deviations from the estimated stock-recruitment curve), using randomly generated values of $\epsilon_t \sim \mbox{Normal}(0, \sigma_R^2)$. 
+Unfortunately, SS3 calculates projected recruitment deviations at the time of the MCMC runs and so the user should be aware that changing the catch policy after the MCMCs have been performed is only possible for the number of projection years previously used (don't expect to project for 30 years if your MCMC run only used 10 years).
+Each SS3 catch policy requires a separate \code{-mceval} call.
+In Awatea, the \code{-mceval} switch can generate a user-specified time series of $\left\{ \epsilon_t \right\}$ for each MCMC sample, which means that different catch policies (number of constant catches by number of projection years) can be generated after the MCMC analysis.
+
+%\clearpage
+\section{SS3 INPUTS} \label{s:inputs}
+
+Input files for each model run are hosted on Github in the code repository \href{https://github.com/pbs-software/pbs-synth}{PBSsynth}.
+The file names comprise \code{`starter.ss'}, \code{`forecast.ss'}, \code{`data.xx.yy.ss'}, and \code{`control.xx.yy.ss'}, where xx~=\,run number and yy~=\,reweight number. 
+%See the \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2023/POP/00ReadMe.txt}{synopsis} of runs used in the 2023 POP assessment for more detail.
+
+Synopsis of runs:\\
+\tab \href{https://github.com/pbs-software/pbs-synth/blob/master/PBSsynth/inst/input/2024/YTR/00ReadMe.txt}{00ReadMe.txt} -- Information on the runs used in 2024 YTR
+
+Base run:\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Base/B1.R02v2/02.01}{Run02v2} -- BC coastwide model
+
+Sensitivity runs (MCMC):\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S01.R10v2/10.01}{S01.R10v2} -- split M between ages 9 and 10 ($\sim$50\pc{} maturity)\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S02.R11v2/11.01}{S02.R11v2} -- female dome-shaped selectivity\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S03.R05v2/05.01}{S03.R05v2} -- reduce sigmaR to 0.6 (from 0.9)\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S04.R06v2/06.01}{S04.R06v2} -- increase sigmaR to 1.2 (from 0.9)\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S05.R07v3/07.01}{S05.R07v3} -- estimate sigmaR\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S06.R08v2/08.00}{S06.R08v2} -- use Dirichlet-Multinomial parameterisation\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S07.R12v2/12.01}{S07.R12v2} -- apply no ageing error\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S08.R13v2/13.01}{S08.R13v2} -- use smoothed ageing error from age-reader CVs\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S09.R14v2/14.01}{S09.R14v2} -- use constant-CV ageing error\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S10.R15v2/15.01}{S10.R15v2} -- reduce commercial catch (1965-95) by 30\pc{}\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S11.R16v2/16.01}{S11.R16v2} -- increase commercial catch (1965-95) by 50\pc{}\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S12.R09v4/09.01}{S12.R09v4} -- use geostatistical indices for synoptic surveys\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S13.R04v3/04.01}{S13.R04v3} -- add HBLL North and South surveys (longline)\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S14.R17v2/17.01}{S14.R17v2} -- separate trawl fleet into bottom and midwater trawl fleets\\
+
+Sensitivity runs (MPD):\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S15.R18v2/18.01}{S15.R18v2} -- use different priors on $M$ (with higher means)\\
+\tab \href{https://github.com/pbs-software/pbs-synth/tree/master/PBSsynth/inst/input/2024/YTR/BC/Sens/S16.R19v1/19.01}{S16.R19v1} -- use \emph{flavidus} fecundity parameters from \citet{Dick-etal:2017}\\
+
+%\subsection{starter.ss}
+%%%\usefont{enc}{family}{series}{shape}
+%\usefont{T1}{zi4}{m}{n}%\footnotesize  *****cannot find inconsolata
+%%{\scriptsize
+%%\begin{lstlisting} %% need to put this in each of the four SS3 input files
+%\input{starter.ss}
+%\subsection{data.ss}
+%\input{data.17.00.ss}
+%\subsection{control.ss}
+%\input{control.17.00.ss}
+%\subsection{forecast.ss}
+%\input{forecast.ss}
+%
+%%\end{lstlisting}
+%%}
+%\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}%\normal
+
+\bigskip
+\bibliographystyle{resDoc}
+%% Use for appendix bibliographies only: (http://www.latex-community.org/forum/viewtopic.php?f=5&t=4089)
+\renewcommand\bibsection{\section{REFERENCES -- MODEL EQUATIONS}}
+\bibliography{C:/Users/haighr/Files/GFish/CSAP/Refs/CSAPrefs}
+
+\end{document}

@@ -774,15 +774,16 @@ getSS.rdevs <- function (replist, forecast=FALSE, minyr=-Inf, maxyr=Inf)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getSS.rdevs
 
 
-## load_extra_mcmc----------------------2023-09-05
+## load_extra_mcmc----------------------2025-05-14
 ##  Load extra MCMC information from Report files 
 ##  generated for every sample.
 ##  Only use for area-based models at this point.
 ## 'run' is only used as a tag in this function.
+## Modified for SGR 2025
 ## ------------------------------------------CG|RH
 load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso", 
    quants5=c(0.05,0.25,0.5,0.75,0.95),  RC=c(TRUE,FALSE), loadCP=FALSE,
-   startyr=1935, run="17v17a", areas=c("5ABC","3CD","5DE"), Fmethod=3, 
+   startyr=1935, run="18v2b", areas=c("5ABC","5DE","3CD"), Fmethod=3, 
    plot=TRUE, png=FALSE, pngres=400, PIN=c(9,9), lang="e",
    show.combo=TRUE, vertical=FALSE)
 {
@@ -794,7 +795,7 @@ load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso",
 
 	## Subfunctions--------------------------------
 	## Extract a table from the report file
-	makeRepTab <- function(dat, pat1, pat2, off1=2, off2=2, hup=1)
+	makeRepTab = function(dat, pat1, pat2, off1=2, off2=2, hup=1)
 	{
 		begin.idx = grep(pat1, dat) + off1
 		end.idx   = grep(pat2, dat) - off2
@@ -813,7 +814,7 @@ load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso",
 		rownames(data.tab) = dat.idx
 		return(data.tab)
 	}
-	orderRuns <- function(rnames, get0pad.only=FALSE) {
+	orderRuns = function(rnames, get0pad.only=FALSE) {
 		rdir   = dirname(rnames)
 		rnames = basename(rnames)
 		rlens  = regexpr("\\d+", rnames)
@@ -827,7 +828,7 @@ load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso",
 		return(outnam)
 	}
 	## Pad individula run based on names of all runs
-	padRun <- function(onefile, allfiles) {
+	padRun = function(onefile, allfiles) {
 		bname  = basename(onefile)
 		z      = regexpr("\\d+", bname)
 		npad0  = orderRuns(allfiles, get0pad.only=TRUE)
@@ -839,225 +840,203 @@ load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso",
 	## Extract relevant subset of time series values, if they exist, and bypass reconstruction
 	dir.output = ifelse(loadCP, dir.extra, dir.mcmc)  ## if using CPs, change the output target directory
 	setwd (dir.output)
-	if (file.exists(paste0(dir.output, "/mcmc.ts.sub.rda"))) {  ## always load it to be safe
-		#if (!exists("mcmc.ts.sub", envir=.GlobalEnv) || run!=srun) {
-		.flush.cat("Loading mcmc.ts.sub object from saved binary\n")
-		tic(); load("mcmc.ts.sub.rda", envir=.GlobalEnv); toc()
-		#}
-	} else {
-		if (file.exists(paste0(dir.output, "/mcmc.ts.rda"))) {
-			if (exists("mcmc.ts.sub", envir=.GlobalEnv))
-				rm("mcmc.ts.sub", envir=.GlobalEnv)
-			.flush.cat("Loading mcmc.ts object from saved binary\n")
-			tic(); load("mcmc.ts.rda", envir=.GlobalEnv); toc()
-		} else {
-			## Start the reconstruction
-			## r4ss outputs names with non-sequential numbers if #iterations > 9999 (fixes padding of zeroes to 4)
-			## Re-order extra files just in case (e.g., # iterations = 20,000):
-			## Get the number of Report.sso files in the directory
-			dir_list  = dir(dir.extra, full.names = TRUE)
-			repfiles  = grep("/Report_mce_.*$", dir_list, value = TRUE)
-			if (length(repfiles)==0)
-				stop("Need the set of extra report files (on Linux)")
-			repfiles  = orderRuns(grep("/Report_mce_.*$", dir_list, value = TRUE))
-			## Get the number of CompReport.sso files in the directory
-			compfiles  = grep("/CompReport_mce_.*$", dir_list, value = TRUE)
-			if (RC[2]) {
-				if (length(compfiles)==0)
-					stop("Need the set of extra composition report files (on Linux)")
-				else
-					compfiles = orderRuns(grep("/CompReport_mce_.*$", dir_list, value = TRUE))
-			}
-			replist   = complist = list()
-			#dump = gc(verbose=FALSE)
+	init.cols = 1:4; init.len = length(init.cols)  ## Initial columns commonly used by all MCMC samples; assumes they're sequential from 1 to n
 
-			## Only do this once for gawd's sake
-			if (!file.exists("reps.rda") && length(repfiles)>0)  ## check for need to start from scratch
-				RC[1] = TRUE
-			#if (!RC[1] && !file.exists("reps.rda") && !exists("reps", envir=.GlobalEnv) && length(repfiles)>0)  ## check for need to start from scratch
-				#RC[1] = TRUE
-			if (RC[1]) {  ## Reports files
-				.flush.cat(paste0("Reading ", length(repfiles), " 'Reports' (ascii files)"), "\n")
-				for (i in 1:length(repfiles)) {
-				#for (i in c(1,10,100,1000,2000)) {
-					ii = padRun(repfiles[i], repfiles)
-					replist[[ii]] = Kmisc::read(repfiles[i])  ## Kmisc::readlines crashes R
-				}
-				dump = gc(verbose=FALSE)
-				tic(); reps = lapply(replist, function(x) { strsplit(x,split=ifelse(grepl("\\r\\n",x), "\\r\\n", "\\n"))[[1]] }); toc()
-				#tic(); reps = mclapply(replist, function(x) { strsplit(x,split="\\r\\n")[[1]] }); toc()            ## 66.81 secs
-				#tic(); reps = lapply(replist, function(x) { stringr::str_split(x, pattern="\\r\\n")[[1]] }); toc() ## 83.22 secs
-				dump = gc(verbose=FALSE)
-				rrun = run  ## reps run
-				save("reps", "rrun", file="reps.rda")
-			} else {
-				if (!file.exists("mcmc.ts.rda")){
-					if (!exists("reps", envir=.GlobalEnv) || run!=rrun) {
-						.flush.cat("Loading Reports object from saved binary\n")
-						tic(); load("reps.rda", envir=.GlobalEnv); toc()
-					}	
-				}
+	if (!any(RC) && file.exists(paste0(dir.output, "/mcmc.ts.sub.rda"))) {  ## always load it to be safe (unless any RC)
+		.flush.cat("Loading mcmc.ts.sub object from saved binary\n")
+		if (exists("mcmc.ts.sub", envir=.GlobalEnv))
+			rm("mcmc.ts.sub", envir=.GlobalEnv)
+		tic(); load("mcmc.ts.sub.rda", envir=.GlobalEnv); toc()
+	} else if (!any(RC) && file.exists(paste0(dir.output, "/mcmc.ts.rda"))) {  ## load mcmc.ts if mcmc.ts.sub does not exist (unless any RC)
+		.flush.cat("Loading mcmc.ts object from saved binary\n")
+		if (exists("mcmc.ts", envir=.GlobalEnv))
+			rm("mcmc.ts", envir=.GlobalEnv)
+		if (exists("mcmc.ts.sub", envir=.GlobalEnv))
+			rm("mcmc.ts.sub", envir=.GlobalEnv)
+		tic(); load("mcmc.ts.rda", envir=.GlobalEnv); toc()
+	} else {
+		## Start the reconstruction from scratch
+		## r4ss outputs names with non-sequential numbers if #iterations > 9999 (fixes padding of zeroes to 4)
+		## Re-order extra files just in case (e.g., # iterations = 20,000):
+		## Get the number of Report.sso files in the directory
+		dir_list  = dir(dir.extra, full.names = TRUE)
+		repfiles  = grep("/Report_mce_.*$", dir_list, value = TRUE)
+		if (length(repfiles)==0)
+			stop("Need the set of extra report files (on Linux)")
+		repfiles  = orderRuns(grep("/Report_mce_.*$", dir_list, value = TRUE))
+		## Get the number of CompReport.sso files in the directory
+		compfiles  = grep("/CompReport_mce_.*$", dir_list, value = TRUE)
+		if (RC[2]) {
+			if (length(compfiles)==0)
+				stop("Need the set of extra composition report files (on Linux)")
+			else
+				compfiles = orderRuns(grep("/CompReport_mce_.*$", dir_list, value = TRUE))
+		}
+		replist   = complist = list()
+		#dump = gc(verbose=FALSE)
+
+		## Report -- only do this once for gawd's sake
+		if (!file.exists("reps.rda") && length(repfiles)>0)  ## check for need to start from scratch
+			RC[1] = TRUE
+		if (RC[1]) {  ## Reports files
+			.flush.cat(paste0("Reading ", length(repfiles), " 'Reports' (ascii files)"), "\n")
+			for (i in 1:length(repfiles)) {
+				ii = padRun(repfiles[i], repfiles)
+				replist[[ii]] = Kmisc::read(repfiles[i])  ## Kmisc::readlines crashes R
 			}
-			## Only do this once for gawd's sake (but really don't need it for POP)
-			if (RC[2]) {
-				if (!file.exists("comps.rda") && length(compfiles)>0)  ## check for need to start from scratch
-					RC[2] = TRUE
-				if (RC[2]) {  ## CompReports files
-					.flush.cat(paste0("Reading ", length(compfiles), " 'CompReports' (ascii files)"), "\n")
-					for (i in 1:length(compfiles)) {
-						ii = padRun(compfiles[i], compfiles)
-						complist[[ii]] = Kmisc::read(compfiles[i])  ## Kmisc::readlines crashes R
-					}
-					dump = gc(verbose=FALSE)
-					tic(); comps = lapply(complist, function(x) { strsplit(x,split="\\r\\n")[[1]] }); toc() 
-					dump = gc(verbose=FALSE)
-					crun = run  ## comps run
-					save("comps", "crun", file="comps.rda")
-				} else {
-					if (!exists("comps", envir=.GlobalEnv) || run!=crun) {
-						.flush.cat("Loading CompReports object from saved binary\n")
-						tic(); load("comps.rda", envir=.GlobalEnv); toc()
-					}
-				}
+			dump = gc(verbose=FALSE)
+			tic(); reps = lapply(replist, function(x) { strsplit(x,split=ifelse(grepl("\\r\\n",x), "\\r\\n", "\\n"))[[1]] }); toc()
+			#tic(); reps = mclapply(replist, function(x) { strsplit(x,split="\\r\\n")[[1]] }); toc()            ## 66.81 secs
+			#tic(); reps = lapply(replist, function(x) { stringr::str_split(x, pattern="\\r\\n")[[1]] }); toc() ## 83.22 secs
+			dump = gc(verbose=FALSE)
+			rrun = run  ## reps run
+			save("reps", "rrun", file="reps.rda")
+		}
+		## CompReport -- only do this once for gawd's sake (but really don't need it for POP|SGR)
+		if (RC[2]) {  ## CompReports files
+			.flush.cat(paste0("Reading ", length(compfiles), " 'CompReports' (ascii files)"), "\n")
+			for (i in 1:length(compfiles)) {
+				ii = padRun(compfiles[i], compfiles)
+				complist[[ii]] = Kmisc::read(compfiles[i])  ## Kmisc::readlines crashes R
 			}
+			dump = gc(verbose=FALSE)
+			tic(); comps = lapply(complist, function(x) { strsplit(x,split="\\r\\n")[[1]] }); toc() 
+			dump = gc(verbose=FALSE)
+			crun = run  ## comps run
+			save("comps", "crun", file="comps.rda")
+		}
 		## Gather the time series elements
-		## Aside: parallel processing much slower than lapply
-		# require(snow)
-		# cl <- makeCluster(spec=detectCores()-1, type="SOCK")
-		# tic(); out=clusterApply(cl, reps, function(x) {makeRepTab(dat=x, pat1="^TIME_SERIES", pat2="^SPR_SERIES")} ); toc() ## 635.52 sec = 10.6 min
-		# stopCluster(cl)
+		## NOTE: parallel processing much slower than lapply
+		## require(snow)
+		## cl <- makeCluster(spec=detectCores()-1, type="SOCK")
+		## tic(); out=clusterApply(cl, reps, function(x) {makeRepTab(dat=x, pat1="^TIME_SERIES", pat2="^SPR_SERIES")} ); toc() ## 635.52 sec = 10.6 min
+		## stopCluster(cl)
 	
-		## Make time series object
-		#if (!file.exists("mcmc.ts.rda") || RC[1]) {
-			.flush.cat("Extracting 'mcmc.ts' object from 'reps' object\n")
-			tic(); mcmc.ts = lapply(reps, function(x) { makeRepTab(dat=x, pat1="^TIME_SERIES", pat2="^SPR_SERIES") }); toc()  ## ~5 min for 2000 MCMC samples
-			#mcmc.exp = lapply(reps, function(x) { makeRepTab(dat=x, pat1="^EXPLOITATION report:14", pat2="^CATCH report:15", off1=13, hup=5) })
+		## Make time series object (mcmc.ts)
+		## ---------------------------------
+		.flush.cat("Extracting 'mcmc.ts' object from 'reps' object\n")
+		tic(); mcmc.ts = lapply(reps, function(x) { makeRepTab(dat=x, pat1="^TIME_SERIES", pat2="^SPR_SERIES") }); toc()  ## ~5 min for 2000 MCMC samples
+		#mcmc.exp = lapply(reps, function(x) { makeRepTab(dat=x, pat1="^EXPLOITATION report:14", pat2="^CATCH report:15", off1=13, hup=5) })
+		trun = run  ## time series run
+		save("mcmc.ts", "trun", file="mcmc.ts.rda")
+	}  ## end reconstruction of Reports into reps.rda and mcmc.ts.rda
+
+	nmcmc = length(mcmc.ts)
+	npad0 = floor(log10(nmcmc)) + 1   ## for actual number of MCMC samples
+
+	## Extract time series values (mcmc.ts.sub)
+	## ----------------------------------------
+	if ( any(RC) || !file.exists(paste0(dir.output, "/mcmc.ts.sub.rda")) ) {  ## recreate mcmc.ts.sub
+		.flush.cat("Deriving 'mcmc.ts.sub' from 'mcmc.ts'\n")
+		mcmc.ts.sub = list()
+		cpats.ts = c("^SpawnBio$", "Bio_smry", "Recruit", "dead\\(B", "Hrate|^F", "sel\\(B")  ## Appears to be no area-specific recdev
+
+		for (i in 1:length(cpats.ts)) {
+			ival = cpats.ts[i]
+			ipos = grep(ival,colnames(mcmc.ts[[1]]))
+			ii   = colnames(mcmc.ts[[1]])[ipos]  ## get all columns with label pattern
+			iii  = sub(":_[1-9]", "", ii[1])     ## just getting one label for a later merge
+			if (iii=="F" && Fmethod>1) {         ## convert to a harvest rate
+				ilst = lapply(mcmc.ts, function(x) {
+					xtab = apply(x[,ii,drop=FALSE], 2, function(xchr){
+						xval = as.numeric(xchr); u = 1 - exp(-xval); return(u) })  ## F is a character at this point
+					rownames(xtab) = rownames(x)
+					colnames(xtab) = gsub("F_apical","Hrate",colnames(xtab))
+					return(as.data.frame(xtab))
+				})
+				iii = "Hrate_apical"
+			} else {
+				## everything else
+				ilst = lapply(mcmc.ts, function(x) { x[,ii,drop=FALSE] })
+			}
+			if (all(sapply(sapply(ilst,dim),is.null))) {
+				ilst = lapply(ilst,as.numeric)
+			} else {
+				ilst = lapply(ilst, function(x) { #if (i==4) {browser();return()};
+					apply(sapply(x,as.numeric),1,sum) 
+				})
+			}
+			cols.init = mcmc.ts[[1]][,init.cols]
+			cols.init[,c(1,2,4)] = sapply(cols.init[,c(1,2,4)], as.numeric)  ## leave hard-wired for now
+			idat = data.frame(cols.init, do.call("cbind",lapply(ilst, data.frame, stringsAsFactors=FALSE)))
+			colnames(idat)[-(init.cols)] = paste0("s", pad0(1:nmcmc, npad0))
+			zbad = is.na(idat[,-(init.cols)])
+			idat[,-(init.cols)][zbad] = NA
+			mcmc.ts.sub[[iii]] = idat
+		} ## end i loop (cpats.ts)
+
+		## Vulnerable Biomass & Exploitation rate
+		#VB  = data.frame(cols.init, mcmc.ts.sub[['sel(B)']][,-(init.cols)]/mcmc.ts.sub[['Hrate']][,-(init.cols)])
+		VB = data.frame(cols.init, mcmc.ts.sub[['Bio_smry']][,-(init.cols)])
+		u  = data.frame(cols.init, mcmc.ts.sub[['sel(B)']][,-(init.cols)] / mcmc.ts.sub[['Bio_smry']][,-(init.cols)])
+		if (ncol(VB)==(init.len + 1))
+			colnames(VB)[init.len+1] = colnames(u)[init.len+1] = "s1"
+		zbad = is.na(VB[,-(init.cols)])
+		VB[,-(init.cols)][zbad] = NA
+		mcmc.ts.sub[["VB"]] = VB
+		zbad = is.na(u[,-(init.cols)])
+		u[,-(init.cols)][zbad] = NA
+		mcmc.ts.sub[["u"]] = u
+		F = u
+		F[,-(init.cols)] = -log(1-F[,-(init.cols)])
 #browser();return()
 
-			trun = run  ## time series run
-			save("mcmc.ts", "trun", file="mcmc.ts.rda")
-		#} else {
-		#	## Should reload it in case a previous MCMC object sits in memory
-		#	if (!exists("mcmc.ts", envir=.GlobalEnv) || run!=trun) {
-		#		.flush.cat("Loading mcmc.ts object from saved binary\n")
-		#		tic(); load("mcmc.ts.rda", envir=.GlobalEnv); toc()
-		}
-		#}
-		nmcmc = length(mcmc.ts)
-		npad0 = floor(log10(nmcmc))+1   ## for actual number of MCMC samples
-		#npad0 = floor(log10(max(as.numeric(names(reps)))))+1
+		## Gather catch for later
+		selB   = mcmc.ts.sub[['sel(B)']]
+		zcat   = is.element(selB$Era,c("TIME","FORE"))
+		## Find the intended forecast catch (RH 250513)
+		zFORE = is.element(selB$Era,"FORE")
+		cFORE = selB[zFORE,-init.cols]
+		mFORE = apply(cFORE, 1, max, na.rm=TRUE)
+		aFORE = selB[,c("Area",colnames(selB)[init.len + 1])]
+		aFORE[zFORE,2] = mFORE
+		#catlst = split(selB[zcat,min(nmcmc,100)], selB[zcat,"Area"])  ## need to make sure that simulation catch is not reduced WTF?
+		catlst = split(aFORE[zcat,2], aFORE[zcat,"Area"])  ## need to make sure that simulation catch is not reduced by SS3
+		cattab = do.call("cbind", lapply(catlst, data.frame, stringsAsFactors=FALSE))
+		colnames(cattab) = areas
+		rownames(cattab) = .su(selB$Yr[zcat])
+		cattab$total = apply(cattab,1,sum)
 
-#		## Make MSY object (report 54 missing from Report_mcs*.sso files!)
-#		if (!file.exists("mcmc.msy.rda")) {
-#			.flush.cat("Extracting 'mcmc.msy' object from 'reps' object\n")
-#			tic(); mcmc.msy = lapply(reps, function(x) { makeRepTab(dat=x, pat1="^TIME_SERIES", pat2="^SPR_SERIES") }); toc()  ## ~5 min for 2000 MCMC samples
-#			save("mcmc.msy", file="mcmc.msy.rda")
-#		} else {
-#			if (!exists("mcmc.msy", envir=.GlobalEnv)) {
-#				.flush.cat("Loading mcmc.msy object from saved binary\n")
-#				tic(); load("mcmc.msy.rda", envir=.GlobalEnv); toc()
+		## Depletion (B/B0, where B0 = B1935)
+		SB = DB = mcmc.ts.sub[["SpawnBio"]]
+		B0 = SB[is.element(SB$Yr,startyr),]  ## use startyr (1935) not VIRG
+		for (i in unique(SB$Area)) {
+			z  = is.element(SB$Area,i) & is.element(SB$Era,c("VIRG","INIT","TIME","FORE"))
+			z0 = is.element(B0$Area,i) & is.element(B0$Era,"TIME")
+			SBmat = as.matrix(DB[z,-(init.cols)])  ## matrix
+			B0vec = unlist(B0[z0,-(init.cols)])    ## vector
+			DBmat = sweep(SBmat, 2, B0vec, "/")
+			DB[z,-(init.cols)] = DBmat
+		}
+		mcmc.ts.sub[["DB"]] = DB
+	
+		## Fraction recruitment (taken from r4ss::SSplotTimeseries)
+		Recr   = mcmc.ts.sub[["Recruit_0"]]
+		yvals  = Recr[,-(init.cols)]
+		yvals2 = as.data.frame(array(NA, dim=c(length(Recr$Yr),nmcmc), dimnames=list(rownames(Recr),paste0("s",pad0(1:nmcmc,npad0)) ) ) )
+		for (iyr in 1:nrow(yvals)) {
+			y <- Recr$Yr[iyr]
+			yvals2[iyr,] <- apply(yvals[Recr$Yr == y,],2,sum)
+		}
+		Frec <- data.frame(cols.init, yvals/yvals2)
+		mcmc.ts.sub[["Frec"]] = Frec
+		srun = run  ## sub ts run
+		attr(mcmc.ts.sub,"samples") = names(mcmc.ts)
+		save(list=c("mcmc.ts.sub","cattab","srun"), file="mcmc.ts.sub.rda")
+	} ## end creating or re-creating mcmc.ts.sub.rda
+#browser();return()
+
+#{{
+# else {
+#				if (!exists("comps", envir=.GlobalEnv) || run!=crun) {
+#					.flush.cat("Loading CompReports object from saved binary\n")
+#					tic(); load("comps.rda", envir=.GlobalEnv); toc()
+#				}
 #			}
 #		}
-	
-		## Extract time series values
-		if (file.exists("mcmc.ts.sub.rda")) {
-			## Should reload it in case a previous MCMC object sits in memory
-			if (!exists("mcmc.ts.sub", envir=.GlobalEnv) || run!=srun) {
-				.flush.cat("Loading mcmc.ts.sub object from saved binary\n")
-				tic(); load("mcmc.ts.sub.rda", envir=.GlobalEnv); toc()
-			}
-		} else {
-			.flush.cat("Deriving 'mcmc.ts.sub' from 'mcmc.ts'\n")
-			mcmc.ts.sub = list()
-			cpats.ts = c("^SpawnBio$", "Bio_smry", "Recruit", "dead\\(B", "Hrate|^F", "sel\\(B")  ## Appears to be no area-specific recdev
-
-			for (i in 1:length(cpats.ts)) {
-				ival = cpats.ts[i]
-				ipos = grep(ival,colnames(mcmc.ts[[1]]))
-				ii   = colnames(mcmc.ts[[1]])[ipos]  ## get all columns with label pattern
-				iii  = sub(":_[1-9]", "", ii[1])     ## just getting one label for a later merge
-				if (iii=="F" && Fmethod>1) {         ## convert to a harvest rate
-					ilst = lapply(mcmc.ts, function(x) {
-						xtab = apply(x[,ii,drop=FALSE], 2, function(xchr){
-							xval = as.numeric(xchr); u = 1 - exp(-xval); return(u) })  ## F is a character at this point
- 						rownames(xtab) = rownames(x)
-						colnames(xtab) = gsub("F_apical","Hrate",colnames(xtab))
-						return(as.data.frame(xtab))
-					})
-					iii = "Hrate_apical"
-				} else {
-					## everything else
-					ilst = lapply(mcmc.ts, function(x) { x[,ii,drop=FALSE] })
-				}
-				if (all(sapply(sapply(ilst,dim),is.null))) {
-					ilst = lapply(ilst,as.numeric)
-				} else {
-					ilst = lapply(ilst, function(x) { #if (i==4) {browser();return()};
-						apply(sapply(x,as.numeric),1,sum) 
-					})
-				}
-				cols.init = mcmc.ts[[1]][,1:4]
-				cols.init[,c(1,2,4)] = sapply(cols.init[,c(1,2,4)], as.numeric)
-				idat = data.frame(cols.init, do.call("cbind",lapply(ilst, data.frame, stringsAsFactors=FALSE)))
-				colnames(idat)[-(1:4)] = paste0("s", pad0(1:nmcmc, npad0))
-				zbad = is.na(idat[,-(1:4)])
-				idat[,-(1:4)][zbad] = NA
-				mcmc.ts.sub[[iii]] = idat
 #browser();return()
-			}
-			## Vulnerable Biomass & Exploitation rate
-			#VB  = data.frame(cols.init, mcmc.ts.sub[['sel(B)']][,-(1:4)]/mcmc.ts.sub[['Hrate']][,-(1:4)])
-			VB  = data.frame(cols.init, mcmc.ts.sub[['Bio_smry']][,-(1:4)])
-			u  = data.frame(cols.init, mcmc.ts.sub[['sel(B)']][,-(1:4)] / mcmc.ts.sub[['Bio_smry']][,-(1:4)])
-			zbad = is.na(VB[,-(1:4)])
-			VB[,-(1:4)][zbad] = NA
-			mcmc.ts.sub[["VB"]] = VB
-			zbad = is.na(u[,-(1:4)])
-			u[,-(1:4)][zbad] = NA
-			mcmc.ts.sub[["u"]] = u
-			F = u
-			F[,-(1:4)] = -log(1-F[,-(1:4)])
 #browser();return()
 
-			## Gather catch for later
-			selB   = mcmc.ts.sub[['sel(B)']]
-			zcat   = is.element(selB$Era,c("TIME","FORE"))
-			catlst = split(selB[zcat,min(nmcmc,100)], selB[zcat,"Area"])  ## need to make sure that simulation catch is not reduced
-			cattab = do.call("cbind", lapply(catlst, data.frame, stringsAsFactors=FALSE))
-#browser();return()
-			colnames(cattab) = areas
-			rownames(cattab) = .su(selB$Yr[zcat])
-			cattab$total = apply(cattab,1,sum)
-
-			## Depletion (B/B0, where B0=B1935)
-			SB = DB = mcmc.ts.sub[["SpawnBio"]]
-			B0 = SB[is.element(SB$Yr,startyr),]  ## use startyr (1935) not VIRG
-			for (i in unique(SB$Area)) {
-				z  = is.element(SB$Area,i) & is.element(SB$Era,c("VIRG","INIT","TIME","FORE"))
-				z0 = is.element(B0$Area,i) & is.element(B0$Era,"TIME")
-				SBmat = as.matrix(DB[z,-(1:4)])  ## matrix
-				B0vec = unlist(B0[z0,-(1:4)])    ## vector
-				DBmat = sweep(SBmat, 2, B0vec, "/")
-				DB[z,-(1:4)] = DBmat
-			}
-			mcmc.ts.sub[["DB"]] = DB
-		
-			## Fraction recruitment (taken from r4ss::SSplotTimeseries)
-			Recr   = mcmc.ts.sub[["Recruit_0"]]
-			yvals  = Recr[,-(1:4)]
-			yvals2 = as.data.frame(array(NA, dim=c(length(Recr$Yr),nmcmc), dimnames=list(rownames(Recr),paste0("s",pad0(1:nmcmc,npad0)) ) ) )
-			for (iyr in 1:nrow(yvals)) {
-				y <- Recr$Yr[iyr]
-				yvals2[iyr,] <- apply(yvals[Recr$Yr == y,],2,sum)
-			}
-			Frec <- data.frame(cols.init, yvals/yvals2)
-			mcmc.ts.sub[["Frec"]] = Frec
-			srun = run  ## sub ts run
-			attr(mcmc.ts.sub,"samples") = names(mcmc.ts)
-#browser();return()
-			save(list=c("mcmc.ts.sub","cattab","srun"), file="mcmc.ts.sub.rda")
-		}
-	} ## end reconstruction of time series
 
 	## Start the processing for figures etc.
 	mcmc = mcmc.ts.sub ## just to save on typing
@@ -1074,10 +1053,10 @@ load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso",
 		if (i == "SpawnBio") {
 			## Extract SS3's estimation of VIRG biomass (V0, not vulnerable biomass) for allocation of MSY by area (suggested by PJS 230413)
 			## Also calculate ORF's version of B0
-			B0.mcmc  = t(imcmc[is.element(imcmc$Era, c("TIME")) & is.element(imcmc$Yr, startyr),-c(1:4)])
+			B0.mcmc  = t(imcmc[is.element(imcmc$Era, c("TIME")) & is.element(imcmc$Yr, startyr),-c(init.cols)])
 			colnames(B0.mcmc) = areas
 			B0.qmcmc = apply(B0.mcmc, 2, quantile, quants5, na.rm=TRUE)
-			V0.mcmc  = t(imcmc[is.element(imcmc$Era, c("VIRG")),-c(1:4)])
+			V0.mcmc  = t(imcmc[is.element(imcmc$Era, c("VIRG")),-c(init.cols)])
 			colnames(V0.mcmc) = areas
 			pVB.mcmc = t(apply(V0.mcmc, 1, function(x) { x / sum(x) }))    ## proportion Virgin Biomass used for allocating MSY
 			if (length(areas)==1)
@@ -1085,7 +1064,7 @@ load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso",
 			colnames(pVB.mcmc) = areas
 			V0.qmcmc  = apply(V0.mcmc, 2, quantile, quants5, na.rm=TRUE)
 			pVB.med = V0.qmcmc['50%',] / sum(V0.qmcmc['50%',])  ## proportion SS3 VIRG B by area using median
-			V0.mean = apply(V0.mcmc[,-c(1:4)], 1, mean, na.rm=TRUE)
+			V0.mean = apply(V0.mcmc[,-c(init.cols)], 1, mean, na.rm=TRUE)
 			pVB.mn = V0.mean / sum(V0.mean)                   ## proportion SS3 VIRG B by area using mean
 			plist = c(qlist, c("B0.mcmc","V0.mcmc","pVB.mcmc"))
 			qlist = c(qlist, c("B0.qmcmc","V0.qmcmc","pVB.med","pVB.mn"))
@@ -1097,19 +1076,19 @@ load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso",
 		endyr = rev(amcmc[[1]]$Yr[is.element(amcmc[[1]]$Era, c("TIME"))])[1]  ## first forecast year is actually the endyr of the model
 		foryr = rev(amcmc[[1]]$Yr[is.element(amcmc[[1]]$Era, c("FORE"))])[1]
 		pmcmc = lapply(amcmc, function(x){
-			xx = t(x[,-c(1:4)])
+			xx = t(x[,-c(init.cols)])
 			colnames(xx) = iyrs
 			return(xx)
 		})
 		qmcmc = lapply(amcmc, function(x){
-			xx = apply(x[,-c(1:4)], 1, quantile, quants5, na.rm=TRUE)
+			xx = apply(x[,-c(init.cols)], 1, quantile, quants5, na.rm=TRUE)
 			colnames(xx) = iyrs
 			return(xx)
 		})
 		names(pmcmc) = names(qmcmc) = areas
 		assign( paste0(iv, ".mcmc"), pmcmc)
 		assign( paste0(iv, ".qmcmc"), qmcmc)
-		plist = c(plist, paste0(iv, ".mcmc"))
+		plist = c(plist, paste0(iv, ".mcmc"))  ## posteriors added to a list for saving later
 		qlist = c(qlist, paste0(iv, ".qmcmc"))
 	}
 
@@ -1151,8 +1130,9 @@ load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso",
 	msy.mcmc$Vmsy = endcat/msy.mcmc$umsy
 
 	MSY.mcmc = MSY.qmcmc = list()
+	## Allocate based on proportion Virgin Biomass (=VB ***** NOT Vulnerable Biomss)
 	for (a in areas) {
-		paVB = pVB.mcmc[,a]  ## proportion Virgin Biomass by area for allocating MSY
+		paVB = pVB.mcmc[,a]  ## proportion Virgin Biomass by area for allocating MSY (PJS 230413)
 		amsy.mcmc  = sweep(msy.mcmc,1,paVB,"*")
 		## Cannot do this to umsy so have to recalculate from Vmsy
 		endcat = cattab[as.character(endyr), a]   ## end-year catch for each area
@@ -1178,12 +1158,13 @@ load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso",
 	}
 	plist = c(plist, c("MSY.mcmc", paste0(msy.names,".mcmc")))   ## posteriors names
 	qlist = c(qlist, c("MSY.qmcmc", paste0(msy.names,".qmcmc"))) ## quantiles names
+#browser();return()
 
-	save(list=plist, file="mcmc.posts.rda")
-	save(list=qlist, file="mcmc.quants.rda")
+	save(list=plist, file="mcmc.posts.rda")  ## saves posteriors like B.mcmc
+	save(list=qlist, file="mcmc.quants.rda") ## save quantiles of posteriors
 
 	if (plot) {
-		plotArea <- function(qlist, area, hline=NULL, cp=NULL) {
+		plotArea = function(qlist, area, hline=NULL, cp=NULL) {
 			scale = ifelse (i %in% c("SpawnBio","Recruit_0", "VB"), 1000., 1.)
 			ylim  =  range(unlist(qlist[area])/scale, na.rm=TRUE); ylim[1] = 0
 #browser();return()
@@ -1228,7 +1209,7 @@ load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso",
 			addLegend(0.99, 0.98, legend=legtxt, xjust=1, yjust=1, lty=1, col=acols, seg.len=3, bty="n")
 		} ## end function 'plotArea'
 
-		for (i in c("utumsy", "BtBmsy", mcmc.names)) {
+		for (i in c("utumsy", "BtBmsy", mcmc.names) ) {
 			ii = switch(i, 'SpawnBio'="spawning", 'Recruit_0'="recruits", 'u'="exploitation", 'VB'="vulnerable", 'DB'="depletion", 'Frec'="frecruit", 'BtBmsy'="BtBmsy", 'utumsy'="utumsy")
 			iii = switch(i, 'SpawnBio'="Spawning Biomass (kt)", 'Recruit_0'="Recruits (millions age-0 fish)", 'u'="Exploitation Rate (/y)", 'VB'="Vulnerable Biomass (kt)", 'DB'="Depletion (Bt/B0)", 'Frec'="Fraction Recruits", 'BtBmsy'=expression(italic(B)[italic(t)]/italic(B)[MSY]), 'utumsy'=expression(italic(u)[italic(t)]/italic(u)[MSY]))
 			iv  = switch(i, 'SpawnBio'="B", 'Recruit_0'="R", 'u'="u", 'VB'="V", 'DB'="D", 'Frec'="fR", 'BtBmsy'="BtBmsy", 'utumsy'="utumsy")
@@ -1268,8 +1249,11 @@ load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso",
 					plotArea(qlist=qmcmc, area=areas)
 				if (png) dev.off()
 			}; eop()
+#browser();return()
 		} ## end i loop for plots
 	} ## end if plot
+	## check L436
+#browser();return()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~load_extra_mcmc
 

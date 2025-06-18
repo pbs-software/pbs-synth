@@ -1,0 +1,47 @@
+\setlength{\tabcolsep}{6pt}
+\begin{table}[!h]
+\centering
+\caption{YTR 2024: median values of MCMC samples for remaining estimated parameters from 5 sensitivity runs (\Nmcmc{} samples each). R~= Run, S~= Sensitivity, M1~= natural mortality for young fish (ages 1 to 9).}
+\label{tab:ytr.sens.pars2}
+\begin{tabular}{ll}
+\hline \\ [-1.5ex]
+{\bf Parameter} & {\bf median (90\% CI)} \\ [1ex]
+\hline \\ [-1.5ex]
+S01 (R10) split-M at age 9 & \\
+M1~Female & 0.0691 (0.0409, 0.0979) \\
+M1~Male & 0.0875 (0.0572, 0.116) \\
+S02 (R11) fem dome-shape sel & \\
+varR~TRAWL~BC & 2.58 (1.40, 3.81) \\
+beta6~TRAWL~BC & 10.0 (9.98, 10.0) \\
+delta2~TRAWL~BC & 0.159 (-0.359, 0.755) \\
+delta3~TRAWL~BC & 1.74 (0.414, 3.01) \\
+delta4~TRAWL~BC & -15.1 (-23.6, -12.8) \\
+varR~QCS & 2.55 (1.43, 3.82) \\
+beta6~QCS & 10.0 (9.98, 10.0) \\
+delta2~QCS & 0.400 (-3.29, 3.00) \\
+delta3~QCS & 1.77 (-0.305, 4.14) \\
+delta4~QCS & -13.2 (-21.0, -8.45) \\
+varR~WCVI & 2.69 (1.38, 3.89) \\
+beta6~WCVI & 10.0 (9.98, 10.0) \\
+delta2~WCVI & -0.428 (-3.37, 1.71) \\
+delta3~WCVI & 1.91 (-3.20, 6.22) \\
+delta4~WCVI & -10.3 (-17.7, 9.97) \\
+varR~NMFS & 2.60 (1.44, 3.85) \\
+beta6~NMFS & 10.0 (9.98, 10.0) \\
+delta2~NMFS & 0.0787 (-2.31, 2.16) \\
+delta3~NMFS & 2.41 (-0.993, 5.37) \\
+delta4~NMFS & -13.8 (-21.0, 1.55) \\
+S05 (R07) estimate sigmaR & \\
+sigmaR & 1.97 (1.51, 2.33) \\
+S06 (R08) D-M parameterisation & \\
+ln(DM~theta~1) & 6.68 (5.73, 8.02) \\
+ln(DM~theta~2) & 6.15 (5.14, 7.49) \\
+ln(DM~theta~3) & 5.57 (4.53, 7.04) \\
+ln(DM~theta~7) & 5.21 (4.07, 6.67) \\
+S14 (R17) BT \& MW fleets & \\
+mu~MW~BC & 10.1 (9.60, 10.7) \\
+varL~MW~BC & 1.61 (1.27, 1.93) \\
+delta1~MW~BC & 0.216 (-0.0613, 0.497) \\
+\hline
+\end{tabular}
+\end{table}

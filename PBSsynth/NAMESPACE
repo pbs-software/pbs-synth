@@ -17,12 +17,12 @@ importFrom("graphics", "abline", "arrows", "axis", "barplot", "box",
            "matplot", "mtext", "pairs", "par", "persp", "points",
            "polygon", "rect", "segments", "text", "title")
 importFrom("stats", "acf", "aggregate", "as.ts", "cor", "density",
-           "dnorm", "fft", "lm", "loess", "median", "na.omit", "pnorm",
-           "predict", "qchisq", "qlnorm", "qnorm", "qt", "quantile",
-           "resid", "residuals", "time", "var")
+           "dnorm", "fft", "lm", "loess", "loess.smooth", "median", "na.omit",
+           "pnorm", "predict", "qchisq", "qlnorm", "qnorm", "qt", "quantile",
+           "resid", "residuals", "sd", "time", "var")
 importFrom("utils", "Sweave", "capture.output", "flush.console",
-           "head", "menu", "read.table", "tail", "write.csv",
-           "write.table")
+           "head", "menu", "read.table", "tail", "type.convert",
+           "write.csv", "write.table")
 
 importFrom("astsa", "acf2", "sarima")
 importFrom("compResidual", "resMulti")
@@ -37,7 +37,6 @@ importFrom("nlme", "gls")
 importFrom("stringr", "str_split")
 importFrom("tictoc", "tic", "toc")
 importFrom("xtable", "xtable")
-
 
 
 

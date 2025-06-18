@@ -10,7 +10,7 @@
 \usage{
 calcRhat(dir=".", nchains=8, parpos, rhat.only=FALSE, only.bad=FALSE, 
    badhat=1.01, offset=0.0025, recdevs=FALSE, zero.bar=TRUE, 
-   barcols=.colBlind, png=FALSE, pngres=400, PIN=c(10, 7.5), 
+   barcols=.colBlind, xlim=NULL, png=FALSE, pngres=400, PIN=c(10,7.5), 
    lang="e", outnam)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -25,6 +25,7 @@ calcRhat(dir=".", nchains=8, parpos, rhat.only=FALSE, only.bad=FALSE,
   \item{recdevs}{\code{logical} -- if \code{TRUE}, plot the R-hats for the recruitment deviation parameters}
   \item{zero.bar}{\code{logical} -- if \code{TRUE}, plot R-hat lines starting at zero}
   \item{barcols}{\code{character} -- colours for histogram bars stacked by chain}
+  \item{xlim}{\code{numeric} -- limits of the x-axis}
   \item{png}{\code{logical} -- if \code{TRUE}, send plot to a PNG file}
   \item{pngres}{\code{numeric} -- resolution of PNG file (pixels/inch)}
   \item{PIN}{\code{numeric} -- dimensions (width, height) of PNG file (inches)}
@@ -49,8 +50,8 @@ Rank-normalization, folding, and localization: an improved \eqn{\widehat{R}}{R-h
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-15}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2025-06-18}
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{

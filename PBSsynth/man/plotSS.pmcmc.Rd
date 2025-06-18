@@ -14,9 +14,10 @@ plotSS.pmcmc(obj, pqs=tcall(quants5), xyType="quantBox", lineType=c(3,2,1,2,3),
    refLines=NULL, xLim=NULL, yLim=NULL, userPrompt=FALSE, save=TRUE,
    tcl.val=-0.2, yrs, y0=TRUE, pyrs=NULL, LRP=NULL, USR=NULL, catpol=NULL,
    yaxis.by, yLab="Recruitment", outnam, lang=c("e","f"), ptypes="win",
-   pngres=400, PIN=c(8, 6), ...)
+   pngres=400, PIN=c(8,6), gmu=FALSE, ...)
 
-plotSS.dmcmc(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9))
+plotSS.dmcmc(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9),
+   BRP=rep(TRUE,3), rhat=TRUE, steep=TRUE)
 
 plotSS.rmcmc(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9))
 }
@@ -49,6 +50,7 @@ plotSS.rmcmc(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9))
   \item{ptypes}{\code{character} -- vector of plot types (\code{'win'}, \code{'png'}, \code{'eps'})}
   \item{pngres}{\code{numeric} -- resolution for figure files (\code{'png'}, \code{'eps'})}
   \item{PIN}{\code{numeric} -- plot size for output figures in inches (width, height)}
+  \item{gmu}{\code{logical} -- if \code{TRUE}, add the labels 'LRP' and 'USR' to the plot}
   \item{\dots}{\code{dots} -- additional arguments passed to subfunction \code{'plt.qB'}}
 %% Specific to plotSS.dmcmc and plotSS.rmcmc
   \bold{Additional arguments:}
@@ -58,6 +60,10 @@ plotSS.rmcmc(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9))
   \item{mpdObj}{\code{numeric} -- list of vectors of MPD 
     time series estimates (rows=samples, columns=years) for 
     B=spawning biomass, R=recruitment, and P=parameters}
+  \item{BRP}{\code{logical} -- (three-element) if \code{TRUE} 
+    make trace plot figures for Biomass, Recruitment, and Parameters}
+  \item{rhat}{\code{logical} -- if \code{TRUE}, make R-hat figures}
+  \item{steep}{\code{logical} -- if \code{TRUE}, plot SS vs. h (steepness)}
 }
 \details{
   Used primarily for generating time series figures for model run summaries.
@@ -76,8 +82,8 @@ plotSS.rmcmc(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9))
 
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-21}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2025-06-18}
 }
 \note{
   Modified from \pkg{PBSawatea}'s \code{'plotBmcmcPOP'} function by Andrew Edwards (PBS).

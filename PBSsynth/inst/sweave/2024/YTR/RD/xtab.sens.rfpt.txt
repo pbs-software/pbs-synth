@@ -1,0 +1,30 @@
+\setlength{\tabcolsep}{2pt}
+% latex table generated in R 4.5.0 by xtable 1.8-4 package
+% Wed Oct 16 11:07:20 2024
+\begin{table}[ht]
+\centering
+\caption{YTR 2024: medians of MCMC-derived quantities from the base run and 14 sensitivity runs (\Nmcmc{} samples each) from their respective MCMC posteriors. Definitions are: $B_0$ -- unfished equilibrium spawning biomass (mature females), $B_{2025}$ -- spawning biomass at the end of 2025, $u_{2025}$ -- exploitation rate (ratio of total catch to vulnerable biomass) in the middle of 2025, $u_\text{max}$ -- maximum exploitation rate (calculated for each sample as the maximum exploitation rate from 1935 - 2025), MSY -- maximum sustainable yield at equilibrium, $B_\text{MSY}$ -- equilibrium spawning biomass at MSY, $u_\text{MSY}$ -- equilibrium exploitation rate at MSY. All biomass values (and MSY) are in tonnes. Sensitivity runs: S01~= split-M at age 9, S02~= fem dome-shape sel, S03~= sigmaR=0.6, S04~= sigmaR=1.2, S05~= estimate sigmaR, S06~= D-M parameterisation, S07~= AE1 no age error, S08~= AE5 age reader CV, S09~= AE6 CASAL CV=0.1, S10~= reduce catch 30\%, S11~= increase catch 50\%, S12~= geospatial indices, S13~= HBLL indices, S14~= BT \& MW fleets} 
+\label{tab:ytr.sens.rfpt}
+\begingroup\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\footnotesize
+\begin{tabular}{lrrrrrrrrrrrrrrr}
+  \\[-1.0ex] \hline
+ & B(R02) & S01(R10) & S02(R11) & S03(R05) & S04(R06) & S05(R07) & S06(R08) & S07(R12) & S08(R13) & S09(R14) & S10(R15) & S11(R16) & S12(R09) & S13(R04) & S14(R17) \\ 
+  \hline
+$B_{0}$ & 39,535 & 40,415 & 94,794 & 37,198 & 43,256 & 55,592 & 42,690 & 51,117 & 39,383 & 38,232 & 35,939 & 47,942 & 41,599 & 41,455 & 39,313 \\ 
+  $B_{2025}$ & 22,300 & 29,807 & 74,461 & 20,110 & 23,465 & 32,253 & 22,163 & 24,586 & 22,350 & 21,186 & 22,700 & 23,814 & 31,604 & 28,611 & 22,483 \\ 
+  $B_{2025}/B_{0}$ & 0.565 & 0.733 & 0.812 & 0.543 & 0.536 & 0.570 & 0.518 & 0.474 & 0.560 & 0.550 & 0.627 & 0.500 & 0.765 & 0.680 & 0.573 \\ 
+   \hdashline \\[-1.75ex]$u_{2024}$ & 0.0687 & 0.0527 & 0.0286 & 0.0749 & 0.0664 & 0.0499 & 0.0696 & 0.0619 & 0.0685 & 0.0722 & 0.0677 & 0.0643 & 0.0490 & 0.0549 & 0.0679 \\ 
+  $u_\text{max}$ & 0.126 & 0.101 & 0.0573 & 0.125 & 0.127 & 0.112 & 0.123 & 0.114 & 0.125 & 0.133 & 0.105 & 0.166 & 0.124 & 0.121 & 0.131 \\ 
+   \hline
+$\text{MSY}$ & 4,556 & 6,376 & 7,420 & 4,496 & 5,065 & 6,713 & 4,760 & 6,634 & 4,672 & 4,496 & 4,391 & 5,223 & 5,002 & 4,966 & 4,664 \\ 
+  $B_\text{MSY}$ & 9,807 & 11,445 & 24,628 & 8,511 & 10,816 & 15,969 & 10,245 & 11,849 & 9,705 & 9,162 & 8,726 & 12,042 & 9,955 & 10,158 & 9,574 \\ 
+  $0.4B_{\text{MSY}}$ & 3,923 & 4,578 & 9,851 & 3,405 & 4,326 & 6,388 & 4,098 & 4,740 & 3,882 & 3,665 & 3,490 & 4,817 & 3,982 & 4,063 & 3,830 \\ 
+  $0.8B_{\text{MSY}}$ & 7,846 & 9,156 & 19,702 & 6,809 & 8,653 & 12,775 & 8,196 & 9,479 & 7,764 & 7,329 & 6,981 & 9,634 & 7,964 & 8,127 & 7,659 \\ 
+  $B_{2025}/B_\text{MSY}$ & 2.31 & 2.61 & 3.11 & 2.39 & 2.21 & 2.06 & 2.20 & 2.08 & 2.32 & 2.35 & 2.65 & 2.02 & 3.16 & 2.87 & 2.39 \\ 
+  $B_\text{MSY}/B_{0}$ & 0.250 & 0.287 & 0.266 & 0.228 & 0.252 & 0.300 & 0.240 & 0.230 & 0.246 & 0.244 & 0.243 & 0.251 & 0.239 & 0.247 & 0.241 \\ 
+   \hdashline \\[-1.75ex]$u_\text{MSY}$ & 0.152 & 0.196 & 0.133 & 0.169 & 0.152 & 0.138 & 0.155 & 0.176 & 0.155 & 0.158 & 0.160 & 0.146 & 0.163 & 0.157 & 0.159 \\ 
+  $u_{2024}/u_\text{MSY}$ & 0.451 & 0.267 & 0.205 & 0.443 & 0.435 & 0.356 & 0.448 & 0.351 & 0.440 & 0.450 & 0.415 & 0.445 & 0.305 & 0.341 & 0.427 \\ 
+   \hline
+\end{tabular}
+\endgroup
+\end{table}

@@ -10,8 +10,8 @@
 }
 \usage{
 load_extra_mcmc(dir.mcmc=".", dir.extra="./sso", quants5=c(0.05,0.25,0.5,0.75,0.95),
-   RC=c(TRUE,FALSE), loadCP=FALSE, startyr=1935, run="17v17a", 
-   areas=c("5ABC","3CD","5DE"), Fmethod=3, plot=TRUE, png=FALSE, pngres=400,
+   RC=c(TRUE,FALSE), loadCP=FALSE, startyr=1935, run="18v2b", 
+   areas=c("5ABC","5DE","3CD"), Fmethod=3, plot=TRUE, png=FALSE, pngres=400,
    PIN=c(9,9), lang="e", show.combo=TRUE, vertical=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -74,8 +74,8 @@ Ushey K (2013)
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-04-22}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2025-06-18}
 }
 \note{
   Best run on Linux Server to extract the information from thousands of

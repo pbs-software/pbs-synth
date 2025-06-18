@@ -553,20 +553,21 @@ calcStdRes <- function( obj, trunc=3, myLab="Age Residuals", prt=TRUE, type="Mul
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcStdRes
 
 
-## convPN-------------------------------2024-03-20
+## convPN-------------------------------2025-04-29
 ##  Convert SS3 parameter names to Awatea (or simpler) names.
-##  2023 modification for 3-area POP.
 ## ---------------------------------------------RH
-convPN <- function(pnams) {
+convPN <- function(pnams)
+{
 	cnams =
-		sub("\\_gp\\([0-9]\\)","",  ## for YTR
+		sub("\\.$|_$", "",                                                             ## get rid of trailing delimiters
+		sub("(mu|varL|varR)(.+)(_)?\\.(\\d+)\\.","\\1(\\4)\\2",                        ## try to fix scan of posteriors.sso
 		sub("RecrDist_GP_(\\d+)_area_(\\d+)_month_(\\d+)","Rdist_area(\\2)",
 		sub("\\)_Age_P(\\d+)","_\\1)",
 		sub("_steep","_h",
 		sub("NatM_break_(\\d+)?_Fem_GP_(\\d+)","M\\1_Female_GP\\2",
 		sub("NatM_break_(\\d+)?_Mal_GP_(\\d+)","M\\1_Male_GP\\2",
-		sub("NatM_p_1_Fem_GP_(\\d+)|NatM_uniform_Fem_GP_(\\d+)", "M_Female_gp(\\1\\2)",
-		sub("NatM_p_1_Mal_GP_(\\d+)|NatM_uniform_Mal_GP_(\\d+)", "M_Male_gp(\\1\\2)",
+		sub("NatM_p_1_Fem_GP_(\\d+)|NatM_uniform_Fem_GP_(\\d+)", "M_Female_GP\\1\\2",
+		sub("NatM_p_1_Mal_GP_(\\d+)|NatM_uniform_Mal_GP_(\\d+)", "M_Male_GP\\1\\2",    ##  keep GP in case multiple growth patterns used
 		sub("Early_RecrDev|Main_RecrDev|Late_RecrDev|ForeRecr","RecrDev",
 		sub("(_TRAWL|_OTHER)?_FISHERY(_BC|_5ABC|_3CD|_5DE)?","\\1\\2", 
 		sub("SYNOPTIC","",
@@ -578,17 +579,18 @@ convPN <- function(pnams) {
 		sub("^AgeSel_(\\d+)?(Male|Fem)_Final","delta4(\\1)",
 		sub("^AgeSel_(\\d+)?(Male|Fem)_Descend","delta3(\\1)",
 		sub("^AgeSel_(\\d+)?(Male|Fem)_Ascend","delta2(\\1)",
-		sub("^AgeSel_(\\d+)?(Male|Fem)_Peak","delta1(\\1)",
+		sub("^AgeSel_(\\d+)?(Male|Fem)_Peak","delta(\\1)",  ## keep Awatea name (not delta1)
 		sub("^Age_DblN_end_logit","beta6",
 		sub("^Age_DblN_top_logit","beta2",
 		sub("^Age_DblN_descend_se","varR",
 		sub("^Age_DblN_ascend_se","varL",
 		sub("^Age_DblN_peak","mu",
 		sub("^SR_","",
-		pnams))))))))))))))))))))))))))
+		pnams)))))))))))))))))))))))))))
+#print(pnams); cat("\n"); print(cnams)
+#browser();return()
 		onams   = sapply(strsplit(cnams,"_"), function(x){
 		if(length(x)==3 && x[1] %in% c("mu","beta2","varL","varR","beta6")) {
-#browser();return()
 			if (grepl("^BC|^5ABC|^3CD|^5DE", x[3])) {
 				paste0(x[1], sub("^BC|^5ABC|^3CD|^5DE","",x[3]), "_", x[2], "_", sub("\\(\\d+\\)","",x[3]))
 			} else {

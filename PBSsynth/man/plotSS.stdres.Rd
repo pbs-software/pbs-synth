@@ -11,14 +11,13 @@
   Plot Studentised (Pearson) residuals reported in SS3 output.
 }
 \usage{
-plotSS.stdres(replist, kind="AGE", fleets="all", fleetnames="default", 
-   sexes="both", datonly=FALSE, aggregates_by_mkt=FALSE, 
-   labels=c("Length (cm)", "Age (yr)", "Year", "Observed sample size", 
-   "Effective sample size", "Proportion", "cm", "Frequency", "Weight", 
-   "Length", "(mt)", "(numbers x1000)", "Stdev (Age)", 
-   "Conditional AAL plot, ", "Size bin"), plot=TRUE, print=FALSE, 
-   type="Multinomial", useOSA=FALSE, ptypes="png", pngres=400, 
-   PIN=c(7, 9), outnam, lang="e", ...)
+plotSS.stdres(replist, kind="AGE", fleets="all",
+   fleetnames="default", sexes="both", datonly=FALSE, aggregates_by_mkt = FALSE,
+   labels=c("Length (cm)", "Age (yr)", "Year", "Observed sample size",
+   "Effective sample size", "Proportion", "cm", "Frequency", "Weight", "Length",
+   "(mt)", "(numbers x1000)", "Stdev (Age)", "Conditional AAL plot, ", "Size bin"),
+   plot=TRUE, print=FALSE, type="Multinomial", useOSA=TRUE, usePearson=FALSE,
+   ptypes="png", pngres=400, PIN=c(7,9), outnam, lang="e", ...)
 
 plt.ageResids (obj, ages=NULL, main=NULL, lang="e", yrs, resfld="Pearson", ...)
 
@@ -29,14 +28,14 @@ plt.cohortResids (obj, ages=NULL, main=NULL, lang="e", use.rdevs=T, resfld="Pear
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{replist}{\code{list} -- report file create by a call to SS3 and 
-    read into R by \code{r4ss::SS_output()} }
+    read into R by \code{r4ss::SS_output()} (or \code{getSS.output()}, if available) }
   \item{kind}{\code{charater} -- indicator of type of plot:
     \code{'LEN'}, \code{'SIZE'}, \code{'AGE'}, \code{'cond'}, \code{'GSTAGE'}, 
     \code{'GSTLEN'}, \code{'L@A'}, or \code{'W@A'}}
   \item{fleets}{\code{numeric} -- fleet numbers that have AF data}
   \item{fleetnames}{\code{character} -- fleet names}
   \item{sexes}{\code{character} -- label that describes sexes 
-    (e.g., \code{'both'}, \code{'female'}, \code{'male'})}
+    (e.g., \code{'female'}, \code{'male'}, \code{'both'})}
   \item{datonly}{\code{logical} -- if \code{TRUE}, make plots of data without fits}
   \item{aggregates_by_mkt}{\code{logical} -- if \code{TRUE}, make separate plots of aggregates
     across years into different plots for each market category (retained, discarded)}
@@ -48,6 +47,8 @@ plt.cohortResids (obj, ages=NULL, main=NULL, lang="e", use.rdevs=T, resfld="Pear
     calculate Pearson residuals, else use SS3 calculation of Pearson residuals}
   \item{useOSA}{\code{logical} -- if \code{TRUE}, calculate one-step-ahead residuals 
     using function\cr \code{compResidual::resMulti}}
+  \item{usePearson}{\code{logical} -- if \code{TRUE}, display Pearson residuals used
+    by stock assessments before OSA residuals became a thing}
   \item{ptypes}{\code{character} -- plot types (\code{'png'}, \code{'eps'})}
   \item{pngres}{\code{numeric} -- resolution (pixels/inch) for \code{.png} output}
   \item{PIN}{\code{numeric} -- plot device size (inches) for width and height}
@@ -96,10 +97,10 @@ plt.cohortResids (obj, ages=NULL, main=NULL, lang="e", use.rdevs=T, resfld="Pear
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-23}
+  Last modified \code{Rd: 2025-01-02}
 }
 \note{
-  Added functionality to use one-step-ahead residuals by Vanessa Trijoulet and Anders Nielsen.\cr
+  In 2024, functionality was updated to use one-step-ahead (OSA) residuals by Vanessa Trijoulet and Anders Nielsen.\cr
   Trijoulet, V. and Nielsen, A. (2022)
   \href{https://github.com/fishfollower/compResidual}{compResidual: Residual calculation for compositional observations}
   R package version 0.0.1, commit d4c74845089074d8016454f235044c5d13ded3a5
@@ -124,6 +125,6 @@ In package \pkg{compResidual}:\cr
 % \keyword{ ~kwd2 }
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{plotFuns.r}
+\concept{r4ssFuns}
 % \concept{ ~cpt2 }
 % Use only one concept per line.

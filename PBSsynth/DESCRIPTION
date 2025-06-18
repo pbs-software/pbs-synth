@@ -1,21 +1,26 @@
 Package: PBSsynth
-Version: 1.1.0
-Date:    2024-10-08
+Version: 1.2.0
+Date:    2025-06-18
 Title:   Tools for Manipulating Stock Synthesis 3
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
-   person(c("Andrew", "M."), "Edwards", role = "ctb", email = "andrew.edwards@dfo-mpo.gc.ca"),
+   person(c("Ian", "G."), "Taylor", role = c("aut"), email = "ian.taylor@noaa.gov"),
+   person("Ian", "Stewart", role = c("aut"), email = "ian@iphc.int"),
+   person(c("Richard", "D."), "Methot", role = c("aut"), email = "richard.methot@noaa.gov"),
    person(c("Paul", "J."), "Starr", role = "ctb", email = "paul@starrfish.net"),
+   person(c("Andrew", "M."), "Edwards", role = "ctb", email = "andrew.edwards@dfo-mpo.gc.ca"),
    person("Chris", "Grandin", role = "ctb", email = "chris.grandin@dfo-mpo.gc.ca")
    )
-Author:      Rowan Haigh [aut, cre], Paul J. Starr [ctb], Andrew M. Edwards [ctb], Chris Grandin [ctb]
+Author:      Rowan Haigh [aut, cre], Ian G. Taylor [aut], Ian Stewart [aut], Richard D. Methot [aut],
+             Paul J. Starr [ctb], Andrew M. Edwards [ctb], Chris Grandin [ctb]
 Maintainer:  Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
-Copyright:   2020-2024, Fisheries and Oceans Canada
+Copyright:   2020-2025, Fisheries and Oceans Canada
 Depends:     R (>= 3.5.0), PBSmapping, PBSmodelling, PBSdata, PBStools, r4ss
 Imports:     astsa, compResidual, colorspace, dplyr, grDevices, graphics, here, Hmisc, KernSmooth, Kmisc, MASS, nlme, stats, stringr, tictoc, utils, xtable
 Suggests:    adnuts, cli, crayon, devtools, parallel
-Description: A collection of finicky functions to titillate Stock Synthesis users.
-   Helpful or not, this code repository represents an evolution of frustration
-   when dealing with `r4ss' and `adnuts'.
+NeedsCompilation: no
+Description: A collection of effervescent functions to elevate the Stock Synthesis experience.
+   Heavily borrowed from `r4ss' in places (thanks NOAA), the package offers a
+   Canadian interpretation for use by the Offshore Rockfish Program at PBS.
 License: GPL (>= 2)
 URL: https://github.com/pbs-software/pbs-synth

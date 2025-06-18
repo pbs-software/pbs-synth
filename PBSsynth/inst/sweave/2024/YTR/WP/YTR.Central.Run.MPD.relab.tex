@@ -1,0 +1,178 @@
+%% Modified from MPD.21.01.v3.tex
+%%---------------------
+
+%%..............................................................................
+%\newpage
+\subsubsubsection{MPD tables}
+
+%%--Table 1--------------------
+%\begin{table}[h!]
+%\centering
+%\caption{Base run: Estimated biomass, spawning ($B$) and total ($T$), in 2025 and relative to virgin biomass ($B_0$, $T_0$) in 1935.}
+%\label{tab:ytr.biomass}
+%\begin{tabular}{lrrr} 
+%\hline \\ [-1.5ex]
+%{\bf Biomass} & {\bf $B_{t=2025}$} & {\bf $B_0$} & {\bf $B_{2025}$~/~$B_0$} \\ [1ex]
+%\hline \\ [-1.5ex]
+%Spawning  & 10,874 & 18,816 & 0.578\\Vulnerable  & 48,229 & 87,921 & 0.549\\Total  & 73,156 & 117,537 & 0.622\\%Spawning & 10,874 & 18,816 & 0.578 \\
+%%Total    & 73,156 & 117,537 & 0.622 \\
+%\\ [-1.5ex]
+%\hline
+%\end{tabular}
+%\end{table}
+
+%\clearpage
+%\qquad % or \hspace{2em}
+
+
+%%--Table 2--------------------
+\setlength{\tabcolsep}{2pt}
+\begin{table}[!h]
+\centering
+\caption{Base run: Priors and MPD estimates for estimated parameters. Prior information -- distributions: 0~=~uniform, 2~=~beta, 6~=~normal}
+\label{tab:ytr.parest}
+\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\small
+\begin{tabular}{lcccccr}
+\hline \\ [-1.5ex]
+%\multicolumn{6}{l}{{\bf Parameter in write-up, Awatea input name, Awatea export name}} \\
+{\bf Parameter} & {\bf Phase} & {\bf Range} & {\bf Type} & {\bf (Mean,SD)} & {\bf Initial} & {\bf MPD} \\ [1ex]
+\hline \\ [-1.5ex]
+$M_1$ (female) & 4 & (0.02, 0.2) & 6 & (0.08, 0.024) & 0.08 & 0.125 \\
+$M_2$ (male)   & 4 & (0.02, 0.2) & 6 & (0.08, 0.024) & 0.08 & 0.102 \\
+$\log R_0$   & 1 & (1, 16) & 6 & (10, 10) & 10 & 9.713 \\
+BH $h$ & 5 & (0.2, 1) & 2 & (0.67, 0.17) & 0.67 & 0.810 \\
+$\mu_1$ (TRAWL BC) & 3 & (5, 40) & 6 & (11, 11) & 11 & 10.418 \\
+$\log v_{\text{L}1}$ (TRAWL BC) & 4 & (-15, 15) & 6 & (2, 2) & 2 & 1.692 \\
+$\Delta_1$ (TRAWL BC) & 4 & (-10, 10) & 6 & (0, 10) & 0 & 0.136 \\
+$\mu_2$ (QCS) & 3 & (5, 40) & 6 & (11, 11) & 11 & 9.552 \\
+$\log v_{\text{L}2}$ (QCS) & 4 & (-15, 15) & 6 & (2, 2) & 2 & 1.042 \\
+$\Delta_2$ (QCS) & 4 & (-10, 10) & 6 & (0, 10) & 0 & 0.153 \\
+$\mu_3$ (WCVI) & 3 & (5, 40) & 6 & (11, 11) & 11 & 11.944 \\
+$\log v_{\text{L}3}$ (WCVI) & 4 & (-15, 15) & 6 & (2, 2) & 2 & 3.099 \\
+$\Delta_3$ (WCVI) & 4 & (-10, 10) & 6 & (0, 10) & 0 & 0.341 \\
+$\mu_4$ (WCHG) & -3 & (5, 40) & 0 & (--, --) & 15 & 15 \\
+$\log v_{\text{L}4}$ (WCHG) & -4 & (-15, 15) & 0 & (--, --) & 3 & 3 \\
+$\Delta_4$ (WCHG) & -4 & (-10, 10) & 0 & (--, --) & 0 & 0 \\
+$\mu_5$ (HS) & -3 & (5, 40) & 0 & (--, --) & 10 & 10 \\
+$\log v_{\text{L}5}$ (HS) & -4 & (-15, 15) & 0 & (--, --) & 2 & 2 \\
+$\Delta_5$ (HS) & -4 & (-10, 10) & 0 & (--, --) & 0 & 0 \\
+$\mu_7$ (NMFS) & 3 & (1, 40) & 6 & (11, 11) & 11 & 10.712 \\
+$\log v_{\text{L}7}$ (NMFS) & 4 & (-15, 15) & 6 & (2, 2) & 2 & 2.061 \\
+$\Delta_7$ (NMFS) & 4 & (-8, 10) & 6 & (0, 10) & 0 & 0.220 \\
+\hline
+\end{tabular}
+\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\normalsize
+\end{table}
+
+\clearpage
+%\qquad % or \hspace{2em}
+
+%%--Tables 3-5 -----------------
+%% Likelihoods Used from replist
+%% Get numbers from chunk above
+\setlength{\tabcolsep}{0pt}
+\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{2.31in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.35in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.35in}}
+  \caption{Base run: Likelihood components reported in \texttt{likelihoods\_used}.} \label{tab:ytr.like1}\\  \hline\\[-2.2ex]
+  Likelihood Component  & values & lambdas \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  
+  Likelihood Component  & values & lambdas \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot
+  TOTAL & 384.3 & -- \\ 
+  %Catch & 0 & -- \\ 
+  Equilibrium catch & 0 & -- \\ 
+  Survey & 39.81 & -- \\ 
+  Age composition& 332.7 & -- \\ 
+  Recruitment & 9.120 & 1 \\ 
+  Initial equilibrium regime & 0 & 1 \\ 
+  Forecast recruitment & 0.1144 & 1 \\ 
+  Parameter priors & 2.542 & 1 \\ 
+  Parameter softbounds & 0.002270 & -- \\ 
+  Parameter deviations & 0 & 1 \\ 
+  Crash penalty & 0 & 1 \\ 
+   %\hline
+\end{longtable}\setlength{\tabcolsep}{0pt}
+
+%\begin{longtable}[c]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{2.6in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.2in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.2in}}
+%  \caption{Base run: Likelihood components reported in \texttt{likelihoods\_laplace}.} \label{tab:ytr.like2}\\  \hline\\[-2.2ex]  Likelihood Component  & values & lambdas \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  Likelihood Component  & values & lambdas \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  NoBias corr Recruitment(info only) & 2.567 & 1 \\ 
+%  Laplace obj fun(info only) & 377.7 & -- \\ 
+%   %\hline
+%\end{longtable}\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\small \setlength{\tabcolsep}{0pt}
+
+\begin{longtable}[c]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.8in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.61in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.78in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.61in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.64in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.64in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.61in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.68in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{0.68in}}
+  \caption{Base run: Likelihood components reported in \texttt{likelihoods\_by\_fleet}. Notation: $\lambda$~= emphasis factors in the likelihood; $\Lagr$~= negative log likelihood} \label{tab:ytr.like3}\\  \hline\\[-2.2ex]  
+  Label  & ALL & BC\newline TRAWL & QCS\newline SYN & WCVI\newline SYN & WCHG\newline SYN & HS\newline SYN & GIG\newline HIS & NMFS\newline TRI \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  
+  Label  & ALL & BC\newline TRAWL & QCS\newline SYN & WCVI\newline SYN & WCHG\newline SYN & HS\newline SYN & GIG\newline HIS & NMFS\newline TRI \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  
+  Catch $\lambda$      & -- & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\ 
+  Catch $\Lagr$        & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+  Initial EQ $\lambda$ & -- & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\ 
+  Initial EQ $\Lagr$   & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+  Survey $\lambda$     & -- & 0 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\ 
+  Survey $\Lagr$       & 39.81 & 0 & -4.583 & 16.69 & 8.304 & 3.105 & 6.250 & 10.04 \\ 
+  Surv N use           & -- & 0 & 12.00 & 10.00 & 10.00 & 10.00 & 8.000 & 7.000 \\ 
+  Surv N skip          & -- & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+  Age $\lambda$        & -- & 1.000 & 1.000 & 1.000 & 0 & 0 & 0 & 1.000 \\ 
+  Age $\Lagr$          & 332.7 & 219.8 & 41.56 & 46.89 & 0 & 0 & 0 & 24.42 \\ 
+  Age N use            & -- & 38.00 & 11.00 & 7.000 & 0 & 0 & 0 & 6.000 \\ 
+  Age N skip           & -- & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+   %\hline
+\end{longtable}\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\normalsize \clearpage
+
+%%--Table 6 -----------------
+%% Residuals -- sum of Studentised residuals by fleet 
+%\setlength{\tabcolsep}{0pt}
+%\begin{longtable}[c]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.16in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.52in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.16in}>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{1.16in}}
+%  \caption{Base run: Sum of residuals for observed and expected mean ages by fleet.} \label{tab:ytr.ssr}\\  \hline\\[-2.2ex]  Run Rwt Ver  & Fleet & Sum Std Res & Sum PJS Res \\[0.2ex]\hline\\[-1.5ex]  \endfirsthead   \hline  Run Rwt Ver  & Fleet & Sum Std Res & Sum PJS Res \\[0.2ex]\hline\\[-1.5ex]  \endhead  \hline\\[-2.2ex]   \endfoot  \hline \endlastfoot  R.02.01.v1 & BC Trawl Fishery & -7.836 & 39.587 \\ 
+%  R.02.01.v1 & QCS Synoptic & 3.483 & 16.320 \\ 
+%  R.02.01.v1 & WCVI Synoptic & 2.223 & 7.997 \\ 
+%  R.02.01.v1 & NMFS Triennial & -2.014 & 9.379 \\ 
+%  R.02.01.v1 & Total & -4.144 & 73.283 \\ 
+%   %\hline
+%\end{longtable}
+\clearpage
+
+%%..............................................................................
+\subsubsubsection{MPD figures}
+
+\onefig{mleParameters}{Likelihood profiles (thin blue curves) and prior density functions (thick black curves) for the estimated parameters. Vertical lines represent the maximum likelihood estimates; red triangles indicate initial values used in the minimization process.}{Base run: }{ytr.}
+\onefig{survIndSer}{Survey index values (points) with 95\pc{} confidence intervals (bars) and MPD model fits (curves) for the fishery-independent survey series.}{Base run: }{ytr.}
+\onefig{survRes}{Survey index residuals calculated as (log(Obs) - log(Exp))/SE, where SE is the total standard error including any estimated additional uncertainty.}{Base run: }{ytr.}
+\clearpage
+
+\onefig{agefitFleet1}{BC Trawl Fishery proportions-at-age (bars=observed, lines=predicted) for females (upright) and males (inverted).}{Base run: }{ytr.}
+\onefig{osa.residuals.fleet1.sexF}{BC Trawl Fishery one-step-ahead residuals for females: (top left) bubble plot of composition residuals (positive in blue, negative in red, legend at bottom left); (top right) autocorrelation by row (age), column (year), and diagonal; (bottom left) quantile-quantile plot with points colour-coded by age; (bottom right) standard normal residuals, points colour-coded by age}{Base run: }{ytr.}
+\onefig{osa.residuals.fleet1.sexM}{BC Trawl Fishery one-step-ahead residuals for males: (top left) bubble plot of composition residuals (positive in blue, negative in red, legend at bottom left); (top right) autocorrelation by row (age), column (year), and diagonal; (bottom left) quantile-quantile plot with points colour-coded by age; (bottom right) standard normal residuals, points colour-coded by age}{Base run: }{ytr.}
+\onefig{ageresFleet1}{BC Trawl Fishery residuals of model fits to proportion-at-age data. Vertical axes are standardised residuals. Boxplots in three panels show residuals by age class, by year of data, and by year of birth (following a cohort through time). Cohort boxes are coloured green if recruitment deviations in birth year are positive, red if negative. Boxes give quantile ranges (0.25-0.75) with horizontal lines at medians, vertical whiskers extend to the the 0.05 and 0.95 quantiles, and outliers appear as plus signs.}{Base run: }{ytr.}
+\clearpage 
+
+\onefig{agefitFleet2}{QCS Synoptic proportions-at-age (bars=observed, lines=predicted) for females (upright) and males (inverted).}{Base run: }{ytr.}
+\onefig{osa.residuals.fleet2.sexF}{QCS Synoptic one-step-ahead residuals for females: (top left) bubble plot of composition residuals (positive in blue, negative in red, legend at bottom left); (top right) autocorrelation by row (age), column (year), and diagonal; (bottom left) quantile-quantile plot with points colour-coded by age; (bottom right) standard normal residuals, points colour-coded by age}{Base run: }{ytr.}
+\onefig{osa.residuals.fleet2.sexM}{QCS Synoptic one-step-ahead residuals for males: (top left) bubble plot of composition residuals (positive in blue, negative in red, legend at bottom left); (top right) autocorrelation by row (age), column (year), and diagonal; (bottom left) quantile-quantile plot with points colour-coded by age; (bottom right) standard normal residuals, points colour-coded by age}{Base run: }{ytr.}
+\onefig{ageresFleet2}{QCS Synoptic residuals of model fits to proportion-at-age data. Vertical axes are standardised residuals. Boxplots in three panels show residuals by age class, by year of data, and by year of birth (following a cohort through time). Cohort boxes are coloured green if recruitment deviations in birth year are positive, red if negative. Boxes give quantile ranges (0.25-0.75) with horizontal lines at medians, vertical whiskers extend to the the 0.05 and 0.95 quantiles, and outliers appear as plus signs.}{Base run: }{ytr.}
+\clearpage 
+
+\onefig{agefitFleet3}{WCVI Synoptic proportions-at-age (bars=observed, lines=predicted) for females (upright) and males (inverted).}{Base run: }{ytr.}
+\onefig{osa.residuals.fleet3.sexF}{WCVI Synoptic one-step-ahead residuals for females: (top left) bubble plot of composition residuals (positive in blue, negative in red, legend at bottom left); (top right) autocorrelation by row (age), column (year), and diagonal; (bottom left) quantile-quantile plot with points colour-coded by age; (bottom right) standard normal residuals, points colour-coded by age}{Base run: }{ytr.}
+\onefig{osa.residuals.fleet3.sexM}{WCVI Synoptic one-step-ahead residuals for males: (top left) bubble plot of composition residuals (positive in blue, negative in red, legend at bottom left); (top right) autocorrelation by row (age), column (year), and diagonal; (bottom left) quantile-quantile plot with points colour-coded by age; (bottom right) standard normal residuals, points colour-coded by age}{Base run: }{ytr.}
+\onefig{ageresFleet3}{WCVI Synoptic residuals of model fits to proportion-at-age data. Vertical axes are standardised residuals. Boxplots in three panels show residuals by age class, by year of data, and by year of birth (following a cohort through time). Cohort boxes are coloured green if recruitment deviations in birth year are positive, red if negative. Boxes give quantile ranges (0.25-0.75) with horizontal lines at medians, vertical whiskers extend to the the 0.05 and 0.95 quantiles, and outliers appear as plus signs.}{Base run: }{ytr.}
+\clearpage 
+
+\onefig{agefitFleet7}{NMFS Triennial proportions-at-age (bars=observed, lines=predicted) for females (upright) and males (inverted).}{Base run: }{ytr.}
+\onefig{osa.residuals.fleet7.sexF}{NMFS Triennial one-step-ahead residuals for females: (top left) bubble plot of composition residuals (positive in blue, negative in red, legend at bottom left); (top right) autocorrelation by row (age), column (year), and diagonal; (bottom left) quantile-quantile plot with points colour-coded by age; (bottom right) standard normal residuals, points colour-coded by age}{Base run: }{ytr.}
+\onefig{osa.residuals.fleet7.sexM}{NMFS Triennial one-step-ahead residuals for males: (top left) bubble plot of composition residuals (positive in blue, negative in red, legend at bottom left); (top right) autocorrelation by row (age), column (year), and diagonal; (bottom left) quantile-quantile plot with points colour-coded by age; (bottom right) standard normal residuals, points colour-coded by age}{Base run: }{ytr.}
+\onefig{ageresFleet7}{NMFS Triennial residuals of model fits to proportion-at-age data. Vertical axes are standardised residuals. Boxplots in three panels show residuals by age class, by year of data, and by year of birth (following a cohort through time). Cohort boxes are coloured green if recruitment deviations in birth year are positive, red if negative. Boxes give quantile ranges (0.25-0.75) with horizontal lines at medians, vertical whiskers extend to the the 0.05 and 0.95 quantiles, and outliers appear as plus signs.}{Base run: }{ytr.}
+\clearpage 
+
+\onefig{meanAge}{Mean ages each year for the \textbf{weighted} data (solid circles) with 95\pc{} confidence intervals and model estimates (blue lines) for the commercial and survey age data.}{Base run: }{ytr.}
+\onefig{selectivity}{Selectivities for commercial fleet catch and surveys (all MPD values), with maturity ogive for females indicated by `m'.}{Base run: }{ytr.}
+%\onefig{harvest}{Time series of harvest (or exploitation) rate by fishery. Bars along the bottom show catch biomass (tonnes) for all fisheries.}{Base run: }{ytr.}
+\clearpage 
+
+%\onefig{spawning}{Time series of biomass (spawning, female, male, total) in tonnes. Uncertainty envelope generated by SS is provided for spawning female biomass. Bars along the bottom show catch biomass (tonnes) for all fisheries.}{Base run: }{ytr.}
+%\onefig{vulnerable}{Time series of biomass (vulnerable and total) in tonnes. Each fishery taps into a vulnerable proportion of the total population based on fleet selectivity. \emph{Note}: in SS3, \code{`sel(B)'} appears to equal the catch (\code{`obs\_cat'}) in the \code{ts} object; vulnerable biomass is calculated as catch over harvest rate (\code{V=C/u}).  Bars along the bottom show catch biomass (tonnes) for all fisheries.}{Base run: }{ytr.}
+%\clearpage
+
+%\twofig{Bt}{BtB0}{Spawning biomass $B_t$ (tonnes, mature females) over time (top), and spawning biomass $B_t$ relative to unfished equilbrium spawning biomass $B_0$ (bottom). Blue line designates SS fit for 2025.}{Base run: }{ytr.}
+\twofig{BtB0}{harvest}{Spawning biomass $B_t$ relative to unfished equilbrium spawning biomass $B_0$ (top) and harvest (or exploitation) rate (bottom). Circles indicate population reconstruction (\startYear-\currYear), triangles indicate projections out to \projYear{} at \projCatch~t/y. Bars along the bottom show catch biomass (tonnes) for the BC commercial fishery.}{Base run: }{ytr.}
+\twofig{recruits}{recDev}{Recruitment (thousands of fish) over time (top) and log of annual recruitment deviations (bottom), $\epsilon_t$, where bias-corrected multiplicative deviation is  $\mbox{e}^{\epsilon_t - \sigma_R^2/2}$ and  $\epsilon_t \sim \mbox{Normal}(0, \sigma_R^2)$. Blue line designates 2025 SS fit for age-0 fish.}{Base run: }{ytr.}
+\clearpage
+\onefig{stockRecruit}{Deterministic stock-recruit relationship (black curve) and observed values (labelled by year of spawning).}{Base run: }{ytr.}
+
+%%==============================================================================

@@ -1,0 +1,25 @@
+\onefig{traceParams}{MCMC traces for the estimated parameters. Grey lines show the \Nmcmc~samples for each parameter, solid lines show the cumulative median (up to that sample), and dashed lines show the cumulative 0.05 and 0.95 quantiles.  Red circles are the MPD estimates. For parameters other than $M$ (if estimated), subscripts 1-7 correspond to fleets (fisheries and surveys).}
+\onefig{splitChain}{Diagnostic plot obtained by dividing the MCMC chain of \Nmcmc~MCMC samples into eight segments (original number of chains), and overplotting the cumulative distributions of the segments from first to eighth using colours pink, brown, purple, orange, green, black, blue, and red.}
+\onefig{paramACFs}{Autocorrelation plots for the estimated parameters from the MCMC output. Horizontal dashed blue lines delimit the 95\pc{} confidence interval for each parameter's set of lagged correlations.}
+\clearpage
+
+\twofig{rhat}{rhat.recdev}{Scale-reduction split-$\widehat{R}$ statistic measures the ratio of the average variance of draws within each chain to the variance of the pooled draws across chains: parameters (top), recruitment deviations (bottom). Pale green bars show effective sample size (ESS). Vertical dashed red line at $\widehat{R}$=1.01 marks acceptable convergence boundary; vertical dashed purple line marks ESS=400. When $\widehat{R}$>1.01 or ESS<400, parameter estimation has not converged.}
+\onefig{rhat.hist.mcmc}{Stacked histogram of posteriors from eight chains for female $M$ (top left), male $M$ (top right), $\log R_0$ (bottom left), and steepness $h$ (bottom right).}
+\clearpage
+
+%%..............................................................................
+\subsubsubsection{MCMC figures}
+\onefig{pdfParameters}{Posterior distribution (vertical green bars), likelihood profile (thin blue curve), and prior density function (thick black curve) for estimated parameters. Vertical dashed line indicates the MCMC posterior median; vertical blue line represents the MPD; red triangle indicates initial value for each parameter.}
+\onefig{pairsPars}{Kernel density plot of \Nmcmc~MCMC samples for 16 parameters. Numbers in the lower panels are the absolute values of the correlation coefficients.}
+\clearpage
+
+\twofig{sbiomassMCMC}{exploitMCMC}{marginal posterior distribution of female spawning biomass $B_t$ (top) and exploitation rate $u_t$ (bottom) over time. Boxplots show the 0.05, 0.25, 0.5, 0.75, and 0.95 quantiles from the MCMC results.}
+\twofig{recruitsMCMC}{recdevMCMC}{marginal posterior distribution of recruitment in 1,000s of age-0 fish (top) and recruitment deviations (bottom) over time. Boxplots show the 0.05, 0.25, 0.5, 0.75, and 0.95 quantiles from the MCMC results.}
+\clearpage
+
+%% #1=fig1 filename, #2=fig2 filename, #3=caption text, #4=fig1 width #5=fig1 height, #6=fig2 width, #7=fig2 height, #8=caption prefix (optional), #9=label prefix (optional)
+\twofigWH{boverbmsyMCMC}{uoverumsyMCMC}{estimated spawning biomass $B_t$ relative to spawning biomass at maximum sustainable yield $\Bmsy$ (top); estimated exploitation rate $u_t$ relative to exploitation rate at MSY $\umsy$ (bottom). The median trajectories appear as a solid curves surrounded by 90\pc{} credibility envelopes (quantiles: 0.05-0.95) in grey and delimited by dashed lines for years $t$=1935-2015; quantities appear in light blue for the late recruitment deviation period (2016-2024) and light red for the projection years (2025-2035). Also delimited is the 50\pc{} credibility interval (quantiles: 0.25-0.75) delimited by dotted lines. The horizontal dashed lines show the median LRP and USR (top) and RR (bottom). Projections use constant catch of \projCatch~t/y.}{6}{3.6}{6}{3.6}
+\onefig{snail}{Phase plot through time of the medians of the ratios $B_t/B_\text{MSY}$ (the spawning biomass in year $t$ relative to $\Bmsy$) and $u_{t-1} / \umsy$ (the exploitation rate in year $t-1$ relative to $u_\text{MSY}$). The filled green circle is the starting year (1935). Years then proceed from light grey through to dark grey with the final year (2025) as a filled cyan circle, and the blue lines represent the 0.05 and 0.95 quantiles of the posterior distributions for the final year. The filled gold circles indicate the status in 1996, 1997 and 2015, which coincide with previous assessments for this species.  Red and green vertical dashed lines indicate the Precautionary Approach provisional limit and upper stock reference points (0.4, 0.8 $\Bmsy$), and the horizontal grey dotted line indicates $u$ at MSY.}
+\clearpage
+
+%%==============================================================================

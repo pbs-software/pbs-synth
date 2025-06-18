@@ -1,10 +1,39 @@
 PBSsynth Changes
-=================
-Authors : RH  = Rowan Haigh
-          AME = Andrew Edwards
-          PJS = Paul Starr
-          CG  = Chris Grandin
-          AE  = Anisa Egeli
+===================================
+Contributors:
+   RH  = Rowan Haigh
+   IGT = Ian Taylor
+   IJS = Ian Stewart
+   RDM = Richard Methot
+   PJS = Paul Starr
+   AME = Andrew Edwards
+   CG  = Chris Grandin
+   AE  = Anisa Egeli
+   AL  = Adam Langley
+-----------------------------------
+CRAN package version numbers follow a "major.minor.patch" format (e.g., 1.2.3), where: 
+	Major: Indicates a significant change that might break existing code.
+	Minor: Indicates the addition of new features or improvements, while generally maintaining backward compatibility.
+	Patch: Indicates bug fixes and minor improvements that do not introduce new features.
+-----------------------------------
+
+1.2.0 (2025-06-18) [Rcheck=T, Rbuild=T]
+  * R code
+    + Modified function `plotSS.index' to coordinate colours for three regions 5ABC, 5DE, 3CD (RH 250606)
+    + Modified function `load_extra_mcmc' in preparation for multi-area model of Silvergray (RH 250514)
+    + Modified functions to improve their output (RH 250102)
+      - `plotSS.stdres' : made OSA residuals the default and demoted Pearson residuals in plotSS.stdres
+      - `plotSS.ts'     : cleaned up the mess that displayed the biomass comparisons
+    + Added function `getSS.output()' because `SS_output()' was crashing due to revised SS3 output (RH 250102)
+      - ss3.exe v.3.30.23.00, compiled 4 Nov 2024 by RDM (NOAA) using ADMB 13.2
+    + Added function `plotBh()' as a response to the reference points discussion during Lingcod RPR (RH 250425)
+  * Input data
+    + Added sweave inputs for 2024 (YTR) and 2025 (SGR very preliminary) (RH 250618)
+    + Added prelimary SS3 model (R18v2) inputs for SGR (RH 250618)
+  * Documentation
+    + Updated Rd file `plotSS.stdres' (RH 250102)
+    + Added Rd files for `getSS.output' (250102) and `plotBh' (250425)
+    + Updated Rd files for `calcRhat' and `plotSS.pmcmc' (RH 250618)
 
 1.1.1 (2024-10-23) [Rcheck=F, Rbuild=F]
   * Input data

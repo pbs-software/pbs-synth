@@ -1,0 +1,32 @@
+\setlength{\tabcolsep}{2pt}
+% latex table generated in R 4.5.0 by xtable 1.8-4 package
+% Wed Oct 16 11:07:19 2024
+\begin{table}[ht]
+\centering
+\caption{YTR 2024: median values of MCMC samples for the primary estimated parameters, comparing the base run to 14 sensitivity runs (\Nmcmc{} samples each). R~= Run, S~= Sensitivity. Numeric subscripts other than those for $R_0$ and $M$ indicate the following gear types $g$: 1~= QCS Synoptic, NA~= WCVI Synoptic, NA~= WCHG Synoptic, NA~= HS Synoptic, NA~= GIG Historical, and NA~= NMFS Triennial. Sensitivity runs: S01~= split-M at age 9, S02~= fem dome-shape sel, S03~= sigmaR=0.6, S04~= sigmaR=1.2, S05~= estimate sigmaR, S06~= D-M parameterisation, S07~= AE1 no age error, S08~= AE5 age reader CV, S09~= AE6 CASAL CV=0.1, S10~= reduce catch 30\%, S11~= increase catch 50\%, S12~= geospatial indices, S13~= HBLL indices, S14~= BT \& MW fleets} 
+\label{tab:ytr.sens.pars}
+\begingroup\usefont{\encodingdefault}{\familydefault}{\seriesdefault}{\shapedefault}\footnotesize
+\vspace{-12pt}  \begin{tabular}{crrrrrrrrrrrrrrr}
+  \\[-1.0ex] \hline
+ & B(R02) & S01(R10) & S02(R11) & S03(R05) & S04(R06) & S05(R07) & S06(R08) & S07(R12) & S08(R13) & S09(R14) & S10(R15) & S11(R16) & S12(R09) & S13(R04) & S14(R17) \\ 
+  \hline
+$\log R_0$ & 9.884 & 9.827 & 10.31 & 9.841 & 9.992 & 10.21 & 9.899 & 10.28 & 9.912 & 9.850 & 9.905 & 9.997 & 9.967 & 9.981 & 9.889 \\ 
+  $\text{BH}~h$ & 0.7469 & 0.7167 & 0.7005 & 0.7859 & 0.7414 & 0.7318 & 0.7606 & 0.7872 & 0.7494 & 0.7609 & 0.7506 & 0.7400 & 0.7680 & 0.7551 & 0.7609 \\ 
+  $M~(\text{Female})$ & 0.1305 & 0.2001 & 0.1098 & 0.1321 & 0.1304 & 0.1225 & 0.1281 & 0.1378 & 0.1321 & 0.1309 & 0.1372 & 0.1265 & 0.1321 & 0.1328 & 0.1305 \\ 
+  $M~(\text{Male})$ & 0.1071 & 0.1046 & 0.1108 & 0.1085 & 0.1072 & 0.09864 & 0.1053 & 0.1143 & 0.1085 & 0.1072 & 0.1137 & 0.1032 & 0.1082 & 0.1092 & 0.1067 \\ 
+  $\mu~(\text{TRAWL})$ & 10.39 & 10.83 & 9.992 & 10.36 & 10.39 & 10.08 & 10.29 & 10.74 & 10.45 & 10.22 & 10.35 & 10.37 & 10.38 & 10.38 & 10.72 \\ 
+  $\mu~(\text{QCS})$ & 9.279 & 9.809 & 8.836 & 9.272 & 9.351 & 8.523 & 9.538 & 9.751 & 9.366 & 9.166 & 9.384 & 9.259 & 9.008 & 9.365 & 9.313 \\ 
+  $\mu~(\text{WCVI})$ & 11.50 & 12.57 & 8.712 & 11.83 & 11.40 & 6.267 & 11.86 & 12.33 & 11.77 & 11.62 & 11.57 & 11.25 & 12.88 & 11.66 & 11.52 \\ 
+  $\mu~(\text{NMFS})$ & 10.88 & 11.33 & 10.18 & 10.74 & 10.91 & 10.52 & 11.29 & 11.42 & 10.92 & 10.92 & 10.77 & 10.78 & 10.96 & 10.86 & 10.96 \\ 
+  $varL~(\text{TRAWL})$ & 1.680 & 1.822 & 1.450 & 1.661 & 1.691 & 1.564 & 1.636 & 1.957 & 1.714 & 1.490 & 1.658 & 1.673 & 1.681 & 1.681 & 1.779 \\ 
+  $varL~(\text{QCS})$ & 0.8657 & 1.133 & 0.2930 & 0.7690 & 0.9149 & 0.1425 & 1.070 & 1.352 & 0.9369 & 0.5309 & 0.9381 & 0.8276 & 0.5879 & 0.9129 & 0.8766 \\ 
+  $varL~(\text{WCVI})$ & 3.010 & 3.243 & 2.061 & 3.058 & 2.984 & 0.01062 & 3.090 & 3.225 & 3.081 & 3.011 & 3.015 & 2.960 & 3.312 & 3.039 & 3.019 \\ 
+  $varL~(\text{NMFS})$ & 2.161 & 2.254 & 1.869 & 2.099 & 2.180 & 2.050 & 2.427 & 2.440 & 2.164 & 2.147 & 2.103 & 2.127 & 2.175 & 2.156 & 2.190 \\ 
+  $\Delta~(\text{TRAWL})$ & 0.1456 & -0.3139 & 0.3194 & 0.1461 & 0.1392 & 0.1293 & 0.1439 & 0.1364 & 0.1481 & 0.1621 & 0.1492 & 0.1269 & 0.1470 & 0.1490 & 0.05337 \\ 
+  $\Delta~(\text{QCS})$ & 0.1908 & -0.2737 & 0.09850 & 0.1594 & 0.1539 & 0.1188 & 0.1368 & 0.1112 & 0.1719 & 0.1607 & 0.1733 & 0.1505 & 0.1819 & 0.1724 & 0.1653 \\ 
+  $\Delta~(\text{WCVI})$ & 0.3220 & -0.4187 & -0.5434 & 0.3628 & 0.3274 & 0.1757 & 0.3093 & 0.2850 & 0.3510 & 0.3925 & 0.3605 & 0.3136 & 0.3710 & 0.3754 & 0.3807 \\ 
+  $\Delta~(\text{NMFS})$ & 0.2840 & -0.3171 & 0.02733 & 0.2902 & 0.2701 & 0.2614 & 0.2891 & 0.2995 & 0.2995 & 0.3164 & 0.2654 & 0.2676 & 0.2800 & 0.3035 & 0.3056 \\ 
+   \hline
+\end{tabular}
+\endgroup
+\end{table}
