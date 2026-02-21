@@ -8,7 +8,7 @@
   Agglomerate parameters from model sensitivity runs into common and infrequent groups.
 }
 \usage{
-mergePA(PA, good, bad)
+mergePA(PA, good, bad, idx=3)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,6 +18,8 @@ mergePA(PA, good, bad)
     those that are common to all (most) sensitivity runs}
   \item{bad}{\code{character} -- text patterns to identify \emph{bad} parameters:
     those that occur in only one (a few) sensitivity runs}
+  \item{idx}{\code{numeric} -- number of strings separated by "." in 
+    rownames of \code{'PA'} to obtain a unique run identifier}
 }
 \details{
   Separate parameter columns into two groups (common and infrequent) for processing
@@ -39,7 +41,7 @@ mergePA(PA, good, bad)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-20}
+  Last modified \code{Rd: 2026-02-20}
 }
 \note{
   New function introduced for 2024 Yellowtail Rockfish assessment.
@@ -56,6 +58,6 @@ In package \pkg{PBSsynth}:\cr
 % \keyword{ ~kwd2 }
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{utilFuns.r}
+\concept{utilFuns}
 % \concept{ ~cpt2 }
 % Use only one concept per line.

@@ -190,7 +190,7 @@ plotSS.comparisons(
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-21}
+  Last modified \code{Rd: 2026-02-19}
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \section{Disclosure}{
@@ -201,7 +201,7 @@ plotSS.comparisons(
 In package \pkg{PBSsynth}:\cr
   \code{\link[PBSsynth]{doRetros}}\cr
 In package \pkg{r4ss}:\cr
-  \code{\link[r4ss]{retro}},
+  \code{\link[r4ss]{SS_doRetro}},
   \code{\link[r4ss]{SSplotComparisons}}
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
@@ -211,6 +211,6 @@ In package \pkg{r4ss}:\cr
 % \keyword{ ~kwd2 }
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{overFuns.r}
+\concept{overFuns}
 % \concept{ ~cpt2 }
 % Use only one concept per line.

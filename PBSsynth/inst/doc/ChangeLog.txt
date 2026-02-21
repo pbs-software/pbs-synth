@@ -17,6 +17,28 @@ CRAN package version numbers follow a "major.minor.patch" format (e.g., 1.2.3), 
 	Patch: Indicates bug fixes and minor improvements that do not introduce new features.
 -----------------------------------
 
+1.3.0 (2026-02-20) [Rcheck=T, Rbuild=T]
+  * R code
+    + Added new function `plotSS.yield' to show reference points on equilibrium yield curve in SSB space (RH 260218)
+      - modified r4ss function `SSplotYield'
+    + Added new function `fRcalc' to calculate the fractions (proportions) of coastwide R0 allocated to subareas (RH 250731)
+      - replaces inline code that appeared in `sweaveMCMC.Rnw'
+      - only usable for MCMC output
+    + Added new function `plot.cres.new' to plot OSA residuals (adapted from compResidual::plot.cres) (RH 250808)
+      - Changed name of function to 'plot_crun' to avoid methods nonsense in R check (RH 260220)
+    + Updated functions for SGR 2025
+      - Jul 2025 : `convPN', `plt.selectivity', `plotSS.index'
+      - Aug 2025 : `prepMPD', `plotSS.pars', `runSweave', `plotSS.ts'
+      - Sep 2025 : `plotSS.francis', `plotSS.rmcmc', `plotSS.dmcmc', `plot.cres.new', `plotSS.stdres', `tabDQs'
+      - Oct 2025 : `doRetros', `plotSS.comparisons', `prepCP', `predictRec', `mergePA'
+      - Nov 2025 : `load_extra_mcmc', `gatherMCMC', `agileDT', `plotBh'
+      - Dec 2025 : `makeFSARfigs', `plotSS.pmcmc', `plotSS.compo', `calcRhat', `plotSS.senso', `tabSS.compo', `tabSS.senso', `tabSS.decision'
+  * Data
+    + Copied SS3 input files used for SGR 2025
+      - used new function `copySSfiles' (not yet in package)
+  * Documentation
+    + Updated a number of Rd files (RH 260220)
+
 1.2.0 (2025-06-18) [Rcheck=T, Rbuild=T]
   * R code
     + Modified function `plotSS.index' to coordinate colours for three regions 5ABC, 5DE, 3CD (RH 250606)

@@ -1,5 +1,5 @@
-## PBSsynth: Tools for Manipulating Stock Synthesis 3 ##
-&copy; Fisheries and Oceans Canada (2020-2024)
+## PBSsynth: Tools for Manipulating SS3 ##
+&copy; Fisheries and Oceans Canada (2020-2026)
 
 <b>PBSsynth</b> provides R-code support for running NOAA's Stock Synthesis 3 (SS3) software, including its complementary packages (<b>r4ss</b>, <b>adnuts</b>). Currently, the <b>PBSsynth</b> repo is a collection of code (*not an R package*) to facilitate the Offshore Rockfish program's use of SS3 and should be considered a work in flux. The added functionality includes:
 

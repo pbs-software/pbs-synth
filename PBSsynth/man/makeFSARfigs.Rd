@@ -8,20 +8,18 @@
   Make figures for Fishery Science Advisory Report (FSAR) documents.
 }
 \usage{
-makeFSARfigs(xTS, xRP, xPJ, years=1935:2024, TAC, 
-   png=F, pngres=400, PIN=c(10, 7), lang="e", 
-   fig.p4=TRUE, fig.snail=FALSE, fig.catch=FALSE, fig.hbar=FALSE, fig.proj=FALSE)
+makeFSARfigs(envo, years=1935:2025, TAC, RPbase="B0", 
+   png=F, pngres=400, PIN=c(10, 7), lang="e", fig.p4=TRUE, 
+   fig.snail=FALSE, fig.catch=FALSE, fig.hbar=FALSE, fig.proj=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{xTS}{\code{data.frame} -- time series object created by function \code{'gatherMCMC'};
-    object can be \code{'xavgTS'} for multi-area models or \code{'avgTS'} from single-area models}
-  \item{xRP}{\code{data.frame} -- reference parameter object created by function \code{'gatherMCMC'};
-    object can be \code{'xavgRP'} for multi-area models or \code{'avgRP'} from single-area models}
-  \item{xPJ}{\code{data.frame} -- projection object created by function \code{'gatherMCMC'};
-    object can be \code{'xavgPJ'} for multi-area models or \code{'avgPJ'} from single-area models}
+  \item{envo}{\code{environment} -- environment containing model results
+    objects created by function \code{'AppG_Rcode.R'}, which loops through
+    one or more model scenarios (e.g., SGR's \code{'coast'} and \code{'3area'})}
   \item{years}{\code{numeric} -- vector of years to appear in trajectory plots}
   \item{TAC}{\code{numeric} -- data frame of annual Total Allowable Catch (TAC) values by region/fishery}
+  \item{RPbase}{\code{character} -- reference point base, either \code{'B0'} or \code{'BMSY'}}
   \item{png}{\code{logical} -- if \code{TRUE}, send plot(s) to PNG file(s)}
   \item{pngres}{\code{numeric} -- resolution (pixels/inch) for PNG files}
   \item{PIN}{\code{numeric} -- dimensions (width, height) for PNG files (inches)}
@@ -44,7 +42,7 @@ Nothing in particular.
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-16}
+  Last modified \code{Rd: 2026-02-20}
 }
 \note{
   Will be an evolving function.
@@ -62,6 +60,6 @@ In package \pkg{PBSsynth}:\cr
 % \keyword{ ~kwd2 }
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{appFuns.r}
+\concept{appFuns}
 \concept{FSAR}
 % Use only one concept per line.

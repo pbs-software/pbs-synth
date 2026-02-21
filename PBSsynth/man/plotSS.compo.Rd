@@ -9,20 +9,17 @@
   Create figures for a base run (or a composite base case) and for sensitivity runs.
 }
 \usage{
-plotSS.compo(compo, spp.code="YTR", istock="YTR", 
-   subset=NULL, redo.figs=FALSE, redo.panels=FALSE, 
-   ptypes, lang, pngres=400, PIN=c(9,9))
+plotSS.compo(envo, subset=NULL, redo.figs=FALSE, redo.panels=FALSE,
+   ptypes, lang, pngres=400, PIN=c(9,9), gmu=TRUE)
 
-plotSS.senso(senso, spp.code="YTR", istock="YTR",
-   subset=NULL, redo.figs=FALSE, redo.panels=FALSE,
+plotSS.senso(envo, subset=NULL, redo.figs=FALSE, redo.panels=FALSE,
    ptypes, lang, pngres=400, PIN=c(9,9), useRlow=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{compo}{\code{list} -- data object containing results from MCMC base run or composite base case runs
-    (see function \code{'gatherMCMC'})}
-  \item{spp.code}{\code{character} -- three- or four-letter code for species}
-  \item{istock}{\code{character} -- three- or four-letter code for species}
+  \item{envo}{\code{environment} -- environment containing model results
+    objects created by function \code{'AppG_Rcode.R'}, which loops through
+    one or more model scenarios (e.g., SGR's \code{'coast'} and \code{'3area'})}
   \item{subset}{\code{NA} -- not currently used}
   \item{redo.figs}{\code{logical} -- if \code{TRUE}, re-create the figure PNG files}
   \item{redo.panels}{\code{logical} -- if \code{TRUE}, re-create the panel figures}
@@ -30,8 +27,7 @@ plotSS.senso(senso, spp.code="YTR", istock="YTR",
   \item{lang}{\code{character} -- language of text in figures: \code{'e'}=english, \code{'f'}=french}
   \item{pngres}{\code{numeric} -- resolution (pixels/inch) for PNG files}
   \item{PIN}{\code{numeric} -- dimensions (width, height) for PNG files (inches)}
-  \item{senso}{\code{list} -- data object containing results from MCMC sensitivity runs
-    (see function \code{'gatherMCMC'})}
+  \item{gmu}{\code{logical} -- if \code{TRUE}, add reference point acronym labels to figure}
   \item{useRlow}{\code{logical} -- if \code{TRUE}, assume input data has been reduced to
     low-recruitment samples only (somewhat deprecated, needs attention)}
 }
@@ -45,7 +41,7 @@ plotSS.senso(senso, spp.code="YTR", istock="YTR",
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-16}
+  Last modified \code{Rd: 2026-02-20}
 }
 \note{
   Various input files of MCMC results are characterised by their name:\cr
@@ -67,6 +63,6 @@ In package \pkg{PBSsynth}:\cr
 \keyword{hplot}
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{appFuns.r}
+\concept{appFuns}
 % \concept{ ~cpt2 }
 % Use only one concept per line.

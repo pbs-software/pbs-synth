@@ -54,7 +54,7 @@ repeatMPD(Pfix = list(FFF=seq(0.05, 0.06, 0.01),
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-26}
+  Last modified \code{Rd: 2026-02-19}
 }
 \note{
   Order of function exection:\cr
@@ -67,7 +67,7 @@ repeatMPD(Pfix = list(FFF=seq(0.05, 0.06, 0.01),
 In package \pkg{PBSsynth}:\cr
   \code{\link[PBSsynth]{plotSS.profile}}\cr
 In package \pkg{r4ss}:\cr
-  \code{\link[r4ss]{profile}},
+  \code{\link[r4ss]{SS_profile}},
   \code{\link[r4ss]{SSgetoutput}},
   \code{\link[r4ss]{SSsummarize}},
   \code{\link[r4ss]{SSplotProfile}},
@@ -79,6 +79,6 @@ In package \pkg{r4ss}:\cr
 \keyword{model}
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{utilFuns.r}
+\concept{utilFuns}
 % \concept{ ~cpt2 }
 % Use only one concept per line.

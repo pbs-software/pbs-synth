@@ -1,4 +1,4 @@
-##================================================2024-08-27
+##================================================2025-07-31
 ## PBS Stock Synthesis utility functions:
 ## --------------------------------------
 ## calcEQyield...........Calculate MSY by area/region
@@ -10,6 +10,7 @@
 ## doRetros..............Do retrospective analyses (wrapper for the r4ss' function 'retro')
 ## extract.between.......Extract character strings between two delimiters.
 ## findTarget............Derive decision tables for reference points, etc.
+## fRcalc................Calculate fraction allocation of R0 by area (and year)
 ## importCor.............Import SS parameter correlations (mod.PBSawatea)
 ## importEva.............Import SS Hessian eigenvlaues (mod.PBSawatea)
 ## importPar.............Import all SS parameters (mod.PBSawatea).
@@ -553,7 +554,7 @@ calcStdRes <- function( obj, trunc=3, myLab="Age Residuals", prt=TRUE, type="Mul
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcStdRes
 
 
-## convPN-------------------------------2025-04-29
+## convPN-------------------------------2025-07-17
 ##  Convert SS3 parameter names to Awatea (or simpler) names.
 ## ---------------------------------------------RH
 convPN <- function(pnams)
@@ -575,22 +576,24 @@ convPN <- function(pnams)
 		sub("TRIENNIAL","",
 		sub("HBLL_NORTH","HBLLN_",
 		sub("HBLL_SOUTH","HBLLS_",
-		sub("^AgeSel_(\\d+)?(Male|Fem)_Scale","delta5(\\1)",
-		sub("^AgeSel_(\\d+)?(Male|Fem)_Final","delta4(\\1)",
-		sub("^AgeSel_(\\d+)?(Male|Fem)_Descend","delta3(\\1)",
-		sub("^AgeSel_(\\d+)?(Male|Fem)_Ascend","delta2(\\1)",
-		sub("^AgeSel_(\\d+)?(Male|Fem)_Peak","delta(\\1)",  ## keep Awatea name (not delta1)
-		sub("^Age_DblN_end_logit","beta6",
-		sub("^Age_DblN_top_logit","beta2",
-		sub("^Age_DblN_descend_se","varR",
-		sub("^Age_DblN_ascend_se","varL",
-		sub("^Age_DblN_peak","mu",
+		sub("^AgeSel_(\\d+)MaleatDogleg","delta3(\\1)",       ## (RH 250717) SGR 2025 : selectivity offset
+		sub("^AgeSel_(\\d+)MaleatMaxage","delta4(\\1)",       ## (RH 250717) SGR 2025 : selectivity offset
+		sub("^AgeSel_(\\d+)?(Male|Fem)_Scale","Delta5(\\1)",  ## parameter offset Delta 5
+		sub("^AgeSel_(\\d+)?(Male|Fem)_Final","Delta4(\\1)",  ## parameter offset Delta 4
+		sub("^AgeSel_(\\d+)?(Male|Fem)_Descend","Delta3(\\1)",## parameter offset Delta 3
+		sub("^AgeSel_(\\d+)?(Male|Fem)_Ascend","Delta2(\\1)", ## parameter offset Delta 2
+		sub("^AgeSel_(\\d+)?(Male|Fem)_Peak","Delta(\\1)",    ## parameter offset Delta 1
+		sub("^Age_DblN_end_logit","final",                    ## beta 6
+		sub("^Age_DblN_top_logit","plateau",                  ## beta 2
+		sub("^Age_DblN_descend_se","varR",                    ## beta 4
+		sub("^Age_DblN_ascend_se","varL",                     ## beta 3
+		sub("^Age_DblN_peak","mu",                            ## beta 1
 		sub("^SR_","",
-		pnams)))))))))))))))))))))))))))
+		pnams)))))))))))))))))))))))))))))
 #print(pnams); cat("\n"); print(cnams)
 #browser();return()
 		onams   = sapply(strsplit(cnams,"_"), function(x){
-		if(length(x)==3 && x[1] %in% c("mu","beta2","varL","varR","beta6")) {
+		if(length(x)==3 && x[1] %in% c("mu","plateau","varL","varR","final")) {   ## note: no conversion yet for beta 5 (initial)
 			if (grepl("^BC|^5ABC|^3CD|^5DE", x[3])) {
 				paste0(x[1], sub("^BC|^5ABC|^3CD|^5DE","",x[3]), "_", x[2], "_", sub("\\(\\d+\\)","",x[3]))
 			} else {
@@ -607,10 +610,10 @@ convPN <- function(pnams)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convPN
 
 
-## doRetros-----------------------------2024-07-16
+## doRetros-----------------------------2025-10-14
 ##  Basically a wrapper for the r4ss' function 'retro'.
 ## ---------------------------------------------RH
-doRetros <- function(strSpp="418", assyr=2024, stock="BC", newsubdir="retros",
+doRetros <- function(strSpp="405", assyr=2025, stock="BC", newsubdir="retros",
    exe="C:/Users/haighr/Files/Archive/Bat/ss.exe")
 {
 	if (strSpp %in% c("437","CAR") && assyr %in% c(2022)){
@@ -628,7 +631,15 @@ doRetros <- function(strSpp="418", assyr=2024, stock="BC", newsubdir="retros",
 	if (strSpp %in% c("418","YTR") && assyr %in% c(2024)){
 		basedir = "C:/Users/haighr/Files/GFish/PSARC24/YTR/Data/SS3/YTR2024"
 		switch(stock,
-			'BC'   = { years=0:-10;  run=2; rwt=1; ver="1"}  ## YTR 2024
+			#'BC'   = { years=0:-10;  run=2; rwt=1; ver="1"}  ## YTR 2024 RPR (with fecundity error)
+			'BC'   = { years=0:-10;  run=2; rwt=1; ver="2"}  ## YTR 2024 revised post RPR
+		)
+	}
+	if (strSpp %in% c("405","SGR") && assyr %in% c(2025)){
+		basedir = "C:/Users/haighr/Files/GFish/PSARC25/SGR/Data/SS3/SGR2025"
+		switch(stock,
+			'3area'   = { years=0:-10;  run=28; rwt=1; ver="2"},  ## SGR 2025 multi-area model
+			'coast'   = { years=0:-10;  run=29; rwt=1; ver="2"}   ## SGR 2025 single-area model
 		)
 	}
 	## Generic for all species
@@ -780,6 +791,72 @@ findTarget <- function(Vmat, yrU=as.numeric(dimnames(Vmat)[[2]]), yrG=90,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findTarget
 
 
+## fRcalc ------------------------------2025-07-29
+##  Calculate fraction allocation of R0 by area (and year)
+##  Note: need to run convPN() on colnames of d.mcmc
+## ---------------------------------------------RH
+fRcalc = function(d.mcmc, narea)
+{
+	calcParea = function(Rdist, Rdev, RdevSE) {
+		Narea  = length(Rdist)
+		Rdist.adj = Rdist + Rdev * RdevSE
+		for (a in 1:Narea) {
+			parea = exp(Rdist.adj[,a]) / t(t(apply(exp(Rdist.adj),1,sum)))
+			if (a==1) Parea = parea
+			else      Parea = cbind(Parea, parea)
+		}
+		colnames(Parea) = gsub("\\_DEVadd","",gsub("Rdist","Rprop",colnames(Rdev)))
+		return(Parea)
+	}
+	fR.mcmc = NA
+	if (narea>1) {
+		fR = d.mcmc[,grep("Rdist\\_area\\(\\d)$", colnames(d.mcmc),value=T)]
+		missRdist = setdiff (1:narea, gsub("[^0-9.-]", "", colnames(fR)) )
+		fR[,gsub("\\d", missRdist, colnames(fR)[1])] = rep(0,nrow(fR))
+		RdistDev = setdiff(grep("Rdist",colnames(d.mcmc),value=T), colnames(fR))
+		if (any(grepl("dev_se",RdistDev))) {
+			## SE for Rdist has been estimated
+			RdistDevSE = grep("dev_se", RdistDev, value=TRUE)
+			RdistDev   = setdiff(RdistDev, RdistDevSE)
+			fR[,RdistDevSE] = d.mcmc[,RdistDevSE]
+			fR[,gsub("\\d", missRdist, colnames(fR)[4])] = rep(1,nrow(fR))
+		}
+		RdistYrs = .su(as.numeric(revStr(substring(revStr(RdistDev),1,4))))
+		fR.names = colnames(fR)[1:narea]
+		## create a weird data.frame with every year's DEV as a column (wtf?)
+		for (i in RdistYrs) {
+			dev.name = paste0(fR.names,"_DEVadd_",i)
+			fR[,dev.name] = 0
+			for (j in dev.name) {
+				if(!j %in% colnames(d.mcmc)) next
+				fR[,j] = d.mcmc[,j]
+			}
+		}
+		devSE.name = paste0(fR.names,"_dev_se")
+		if (all(devSE.name %in% colnames(fR))) {
+			iRdevSE    = fR[,devSE.name]
+		} else {
+			if (exists("replist")) {
+				fixRdevSE = c(replist$parameters[grep("dev_se", rownames(replist$parameters)),"Value"], 1)
+			} else {
+				fixRdevSE = rep(1, narea)
+			}
+			iRdevSE   = as.data.frame(matrix(rep(fixRdevSE, nrow(fR)), nrow=nrow(fR), ncol=narea, dimnames=list(1:nrow(fR),devSE.name),byrow=T))
+		}
+		for (i in RdistYrs) {
+			dev.name = paste0(fR.names,"_DEVadd_",i)
+			iRdist   = fR[,fR.names]
+			iRdev    = fR[,dev.name]
+			parea    = calcParea(Rdist=iRdist, Rdev=iRdev, RdevSE=iRdevSE)
+			fR       = cbind(fR, parea)
+		}
+		fR.mcmc = fR
+	} ## end calculation when narea > 1
+	return(fR.mcmc)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fRcalc
+
+
 ## importCor----------------------------2020-09-28
 ## Import SS parameter correlations.
 ##  (Adapted from 'importCor' in PBSawatea.)
@@ -902,38 +979,58 @@ importStd <- function(std.file, vnam="name")
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~importStd
 
 
-## mergePA------------------------------2024-07-08
+## mergePA------------------------------2025-10-30
 ## Agglomerate parameters due to fleet offsets
+## Revised for SGR becaue previous algorith a hot mess
 ## ---------------------------------------------RH
 ## need to check if any bad entries (parameter stragglers)
-mergePA <- function(PA, good, bad)
+## idx is the number of strings separated by "." in rownames of PA to 
+## obtain a unique run identifier (e.g., idx=2 for POP [run.rwt], idx=3 for YTR [run.rwt.ver])
+mergePA <- function(PA, good, bad, idx=3)
 {
 	colnames(PA) = gsub("\\_GP[0-9]$", "", gsub("M_(Female|Male)(\\_GP[0-9])$", "M1_\\1\\2", colnames(PA)))
 	pnams = colnames(PA)
 	exIdx = grep(paste0(bad,collapse="|"), pnams)
 	exPA = PA[,exIdx]  ## put occasional parameters into separate table
-	PA   = PA[,-exIdx] ## then remove them from the main PA table
+	inPA = PA[,-exIdx] ## then remove them from the main PA table
+#browser();return()
 	for (i in 1:length(good)) {
-		pnams = colnames(PA)  ## this changes every interation
+		pnams = colnames(inPA)  ## this changes every interation
 		ii = good[i]
 		iii = grep(ii, pnams, value=TRUE)
 		if (length(iii)==0) next
-		pdat = PA[,iii,drop=FALSE]
-		cnam = unique(gsub("\\([0-9]\\)","",iii))
-		if (length(cnam)>1) { .flush.cat("More than one P name; using the first: ", cnam[1], "\n"); cnam=cnam[1] }
-		psum = matrix(rowSums(pdat,na.rm=T), ncol=1, dimnames=list(rownames(pdat), cnam))
-		PA = PA[,setdiff(colnames(PA), iii)]
-		PA = cbind(PA,psum)
+		pdat = inPA[,iii,drop=FALSE]
+		if (i==1) {
+			outPA = pdat
+		} else {
+			outPA = cbind(outPA, pdat)
+		}
+#if (i==3) {browser();return()}
+		#cnam = unique(gsub("\\([0-9]\\)","",iii))  ## wtf?
+		#if (length(cnam)>1) { .flush.cat("More than one P name; using the first: ", cnam[1], "\n"); cnam=cnam[1] }
+		#psum = matrix(rowSums(pdat,na.rm=T), ncol=1, dimnames=list(rownames(pdat), cnam))
+		#PA = PA[,setdiff(colnames(PA), iii)]
+		#PA = cbind(PA,psum)
 	}
+#browser();return()
 	## Clean up the main PA table
-	colnames(PA) = gsub("\\_BC$", "", gsub("^delta1", "delta", colnames(PA)))
+	if (spp.code=="YTR")
+		colnames(PA) = gsub("\\_BC$", "", gsub("^delta1", "delta", colnames(PA)))
+	if (spp.code %in% c("SGR")) {
+		colnames(outPA) = gsub("LnQ\\_base", "LnQ", colnames(outPA))
+		colnames(outPA) = gsub("Rdist\\_area\\(1\\)", "Rdist_5ABC", colnames(outPA))
+		colnames(outPA) = gsub("Rdist\\_area\\(2\\)", "Rdist_5DE", colnames(outPA))
+		colnames(outPA) = gsub("Rdist\\_area\\(3\\)", "Rdist_3CD", colnames(outPA))
+		colnames(outPA) = gsub("\\([0-9]\\)", "", colnames(outPA))
+	}
 
-	## Clean up the excised (low occurrence) PA table
-	exPA = exPA[rowSums(exPA,na.rm=T)>0,]
+	## Clean up the excised (low occurrence) PA table  (still needs to be revised)
+	exPA = exPA[rowSums(exPA,na.rm=T)>0,,drop=F]
 	unam = unique(substring(rownames(exPA),1,9))
+	unam = unique(sapply(strsplit(rownames(exPA),"\\."),function(x){paste0(x[1:idx],collapse=".")}))  ## seems unnecessary
 	if (length(unam)==nrow(exPA)) {  ## MPD agglomeration could likely use the MCMC routing below
-		idx  = apply(exPA,2,function(x){(1:length(x))[!is.na(x)]})
-		exPA = exPA[,order(idx)]
+		idex  = apply(exPA,2,function(x){(1:length(x))[!is.na(x)][1]})
+		exPA = exPA[,order(idex), drop=FALSE]
 	} else {  ## manipulations for MCMCs
 		rlab  = unam
 		clab  = colnames(exPA)
@@ -941,20 +1038,21 @@ mergePA <- function(PA, good, bad)
 		for (i in 1:length(rlab)) {
 			ii = rlab[i]
 			iii = grep(ii,rownames(exPA))
-			ival = apply(exPA[iii,,drop=F],2,median,na.rm=T)
+			ival = apply(exPA[iii,,drop=FALSE],2,median,na.rm=T)
 			sexPA[ii,] = ival
 		}
-#browser();return()
-		idx  = apply(sexPA,2,function(x){(1:length(x))[!is.na(x)]})
-		exPA = exPA[,order(idx)]
+		idex  = apply(sexPA,2,function(x){(1:length(x))[!is.na(x)][1]})
+#browser();return(); 
+		exPA = exPA[,order(idex)]
 	}
-	colnames(exPA) = gsub("\\([0-9]\\)","",colnames(exPA))
-	return(list(PA=PA,exPA=exPA))
+	#colnames(exPA) = gsub("\\([0-9]\\)","",colnames(exPA))
+#browser();return()
+	return(list(PA=outPA,exPA=exPA))
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~mergePA
 
 
-## prepCP-------------------------------2024-07-04
+## prepCP-------------------------------2025-10-22
 ##  Prepare Catch Policies
 ##    'CC'=constant catch, 'HR'=harvest rate (not implemented)
 ##  Note: 'fyrs' (forecast years) includes the current year 
@@ -963,6 +1061,7 @@ mergePA <- function(PA, good, bad)
 ##    Canary Rockfish 2022 (RH 220630)
 ##    Pacific Ocean Perach (RH 230713)
 ##    Yellowtail Rockfish  (RH 240704)
+##    Silvergray Rockfish  (RH 251022)
 ## ---------------------------------------------RH
 prepCP <- function(run.rwt, ver="", cp=list('BC'=4000), d.cp="CC", tag="", #tag=".nuts4K", 
 	fyrs=2025:2035, season=1, fleet=1,
@@ -979,7 +1078,7 @@ prepCP <- function(run.rwt, ver="", cp=list('BC'=4000), d.cp="CC", tag="", #tag=
 	} else {
 		d.target = file.path(d.base, paste0("Run", t.run), paste0("MCMC.",tar.run.rwt.ver,tag))
 	}
-	poop <- function(){ setwd(d.target); gdump = gc(verbose=FALSE) }
+	poop <- function(){ setwd("/srv/haigh/SGR2025/R/"); gdump = gc(verbose=FALSE) }
 	on.exit(poop())
 
 	## Check for same number of catch policies by fleet
@@ -1019,7 +1118,7 @@ prepCP <- function(run.rwt, ver="", cp=list('BC'=4000), d.cp="CC", tag="", #tag=
 		forecast[fline] = sub(substring(forecast[fline],1,(regexpr(" #_ctl_rule_ul| # Control rule inflection",forecast[fline])-1)), 0.002, forecast[fline])
 		fline    = grep("#_ctl_rule_ll|# Control rule cutoff",forecast)
 		forecast[fline] = sub(substring(forecast[fline],1,(regexpr(" #_ctl_rule_ll| # Control rule cutoff",forecast[fline])-1)), 0.001, forecast[fline])
-		fline    = grep("#_fcast_yr1|#FirstYear",forecast)
+		fline    = grep("#_fcast_yr1|#(\\s+)?FirstYear",forecast)
 		forecast[fline] = sub(substring(forecast[fline],1,4), max(fyrs) + 100, forecast[fline])
 
 		## Not really necessary when USWC rebuilder is set to 0, but Adam Langley resets these just in case
@@ -1029,7 +1128,7 @@ prepCP <- function(run.rwt, ver="", cp=list('BC'=4000), d.cp="CC", tag="", #tag=
 		forecast[fline] = sub(substring(forecast[fline],1,4), max(fyrs) + 101, forecast[fline])
 
 		f1     = grep("#_Yr Seas Fleet Catch",forecast)
-		f2     = grep("#_end_catpols|-9999 [01] [01] [01]",forecast)
+		f2     = grep("#_end_catpols|-9999 [01] [01] [01]",forecast); f2 = rev(f2)[1]
 		nyrs   = length(fyrs)
 		#fleet  = names(cp)
 		nfleet = length(fleet)
@@ -1040,7 +1139,7 @@ prepCP <- function(run.rwt, ver="", cp=list('BC'=4000), d.cp="CC", tag="", #tag=
 		.flush.cat(paste0("CP = ", i, " -- run mceval to generate catch policies.\n"))
 		setwd(d.catch.policy)
 		gdump = gc(verbose=FALSE)
-		cmd = ifelse(onlinux,"/bin/ss3/build/ss3 -mceval","ss -mceval")
+		cmd = ifelse(onlinux,paste0(ss_executable, " -mceval"),"ss -mceval")
 #browser();return()
 		syssy = system(cmd, intern=TRUE)
 		syssy = syssy[grep("Error -- base = 0", syssy, invert=T)]  ## get rid of stupid ADMB errors
@@ -1051,11 +1150,11 @@ prepCP <- function(run.rwt, ver="", cp=list('BC'=4000), d.cp="CC", tag="", #tag=
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prepCP
 
 
-## prepMPD------------------------------2024-03-19
+## prepMPD------------------------------2025-08-11
 ##  Prepare MPD runs from previous runs for analysis.
 ## ---------------------------------------------RH
 prepMPD <- function(run.rwt.ver,
-	d.base = "C:/Users/haighr/Files/GFish/PSARC24/YTR/Data/SS3/YTR2024",
+	d.base = "C:/Users/haighr/Files/GFish/PSARC25/SGR/Data/SS3/SGR2025",
 	w=NULL, cvpro=NULL, modify=TRUE)
 {
 	padded = pad0(run.rwt.ver[c(1,2,4,5)],2)
@@ -1067,6 +1166,7 @@ prepMPD <- function(run.rwt.ver,
 	#d.cwd = getwd(); on.exit(setwd(d.cwd))
 	d.run = file.path(d.base,paste0("Run",n.run))
 	d.mpd = file.path(d.run,paste("MPD",new.run.rwt,sep="."))
+#browser();return()
 
 	## Previous run from which to poach ssfiles
 	if (run.rwt.ver[4]==0 && run.rwt.ver[5]==0) {
@@ -1076,6 +1176,7 @@ prepMPD <- function(run.rwt.ver,
 		p.run = file.path(d.base,paste0("Run",l.run))
 		p.mpd = file.path(p.run,paste("MPD",pre.run.rwt,sep="."))
 	}
+#browser();return()
 	if (!all(file.exists(c(p.run,p.mpd))))
 		stop("Previous Run directory and/or MPD directory does not exist")
 	if (!file.exists(d.run)) dir.create(d.run)
@@ -1130,6 +1231,7 @@ prepMPD <- function(run.rwt.ver,
 			.flush.cat("User inputs for cvpro do not match indices in data file\n")#; browser();return()
 		}
 		vdump = sapply(1:length(vbits),function(i){vbits[[i]][5] <<- sqrt(as.numeric(vbits[[i]][5])^2 + cvpro[vbits[[i]][3]]^2) })
+#browser();return()
 		vnew  = sapply(vbits,function(x){ paste0(x,collapse=" ")})
 		data[vline] = vnew
 		#writeLines(data, con=file.path(d.mpd,paste0("data.",new.run.rwt,".ss")))
@@ -1443,16 +1545,17 @@ repeatMPD <- function(
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~repeatMPD
 
 
-## runSweave----------------------------2022-06-06
-##  Run Sweave code to build pdfs for MPD and MCMC runs (not appendix)
+## runSweave----------------------------2025-08-22
+##  Run Sweave code to build pdfs for MPD and 
+##  MCMC runs (not Results appendix)
 ## ---------------------------------------------RH
-runSweave <- function (d.model=getwd(), d.sweave, type="MPD", figs.only=FALSE)
+runSweave <- function (d.model=getwd(), d.sweave, type="MPD", figs.only=FALSE, debug=FALSE)
 {
 	if (!grepl(ver,getwd())) {.flush.cat("Appears to be version msismatch: ",ver," not in ",basename(getwd()),"\n",sep=""); browser();return()}
 
 	if (missing(d.sweave))
 		d.sweave = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/Rcode/develop"
-	f.sweave = paste0(basename(d.model),ifelse(figs.only,".figs",""),".Rnw")
+	f.sweave = paste0(basename(d.model), ifelse(figs.only,".figs",""), ifelse(debug,".debug",""), ".Rnw")
 #browser();return()
 
 	if (!file.copy(from=file.path(d.sweave, paste0("sweave",type,ifelse(figs.only,".figs",""),".Rnw")), to=file.path(d.model,f.sweave), overwrite=TRUE, copy.date=TRUE))
@@ -1468,7 +1571,7 @@ runSweave <- function (d.model=getwd(), d.sweave, type="MPD", figs.only=FALSE)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~runSweave
 
 
-## tabDQs-------------------------------2023-10-17
+## tabDQs-------------------------------2025-09-25
 ##  Tables of Derived Quantities
 ## ---------------------------------------------RH
 tabDQs <- function(xavgRP, xavgTS, csv=TRUE)
@@ -1514,7 +1617,7 @@ tabDQs <- function(xavgRP, xavgTS, csv=TRUE)
 		areaRPL.pjs[[a]] = areaRPtab.pjs
 		areaRPQ[[a]]     = apply(areaRPtab, 2, function(x){quantile(x, probs=quants5, na.rm=T)})
 		areaRPQ.pjs[[a]] = apply(areaRPtab.pjs, 2, function(x){quantile(x, probs=quants5, na.rm=T)})
-		write.csv(areaRPQ[[a]], paste0("subarea", a ,".csv"))
+		write.csv(areaRPQ[[a]], paste0("subarea", a, ifelse(exists("istock"),paste0(".",istock),""), ".csv"))
 	}
 	return(list(areaRPL=areaRPL, areaRPL.pjs=areaRPL.pjs, areaRPQ=areaRPQ, areaRPQ.pjs=areaRPQ.pjs))
 }

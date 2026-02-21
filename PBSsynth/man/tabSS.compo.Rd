@@ -11,19 +11,19 @@
   decision tables, and for sensitivity runs.
 }
 \usage{
-tabSS.compo(istock="YTR", prefix="ytr.", compo, useRlow=FALSE, qRlow=0.25, sigdig=4)
+tabSS.compo(envo, useRlow=FALSE, qRlow=0.25, sigdig=4)
 
-tabSS.decision(istock="YTR", prefix="ytr.", compo, useRlow=FALSE, qRlow=0.25, 
-   decdig=2, cp.type="CC", cp.num=c(1,3,6,9:15), use.agile=FALSE)
+tabSS.senso(envo, sigdig=4)
 
-tabSS.senso(istock="YTR", prefix="ytr.", senso, sigdig=4)
+tabSS.decision(envo, useRlow=FALSE, qRlow=0.25, decdig=2,
+   cp.type="CC", cp.num=c(1,3,6,9:15), use.agile=FALSE)
 }
+
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{istock}{\code{character} -- three- or four-letter code for species}
-  \item{prefix}{\code{character} -- prefix for table labels in LaTeX}
-  \item{compo}{\code{list} -- data object containing results from MCMC base run or composite base case runs
-    (see function \code{'gatherMCMC'})}
+  \item{envo}{\code{environment} -- environment containing model results
+    objects created by function \code{'AppG_Rcode.R'}, which loops through
+    one or more model scenarios (e.g., SGR's \code{'coast'} and \code{'3area'})}
   \item{useRlow}{\code{logical} -- if \code{TRUE}, use only MCMC samples that
      fall below a quantile of recruitment in a specific year;
      \emph{caution: does not appear to be applied consistently}}
@@ -34,8 +34,6 @@ tabSS.senso(istock="YTR", prefix="ytr.", senso, sigdig=4)
     or \code{'HR'} for harvest rate}
   \item{cp.num}{\code{numeric} -- subset of catch policies from an available set}
   \item{use.agile}{\code{logical} -- if \code{TRUE}, use the function \code{'agileDT'} to gather decision tables}
-  \item{senso}{\code{list} -- data object containing results from MCMC sensitivity runs
-    (see function \code{'gatherMCMC'})}
 }
 \details{
   Creates tables in LaTeX for use later by Sweave routine.
@@ -51,12 +49,13 @@ tabSS.senso(istock="YTR", prefix="ytr.", senso, sigdig=4)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-16}
+  Last modified \code{Rd: 2026-02-20}
 }
 \note{
-  LRP = Limit Reference Poin\cr
+  LRP = Limit Reference Point\cr
   USR = Upper Stock Reference\cr
-  RR  = Removal Reference
+  TRP = Target Reference Point\cr
+  RRR = Removal Reference Rate
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{
@@ -71,6 +70,6 @@ In package \pkg{PBSsynth}:\cr
 \keyword{print}
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{appFuns.r}
+\concept{appFuns}
 % \concept{ ~cpt2 }
 % Use only one concept per line.

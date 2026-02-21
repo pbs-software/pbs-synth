@@ -60,7 +60,7 @@ prepCP(run.rwt, ver="", cp=list(BC=4000), d.cp="CC", tag="",
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-26}
+  Last modified \code{Rd: 2026-02-19}
 }
 \note{
   Much quicker to run \code{'-mceval'} on Linux server.
@@ -73,8 +73,6 @@ In package \pkg{PBSsynth}:\cr
   \code{\link[PBSsynth]{gatherMCMC}},
   \code{\link[PBSsynth]{load_extra_mcmc}},
   \code{\link[PBSsynth]{tabSS.decision}}\cr
-In package \pkg{r4ss}:\cr
-  \code{\link[r4ss]{run}}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory (show via RShowDoc("KEYWORDS")):
@@ -82,6 +80,6 @@ In package \pkg{r4ss}:\cr
 \keyword{datagen}
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{utilFuns.r}
+\concept{utilFuns}
 % \concept{ ~cpt2 }
 % Use only one concept per line.

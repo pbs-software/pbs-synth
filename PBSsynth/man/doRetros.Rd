@@ -5,10 +5,10 @@
   Perform a Retrospective Analysis
 }
 \description{
-  Run a retrospective analysis using the function \code{'retro'} from the package \pkg{r4ss}.
+  Run a retrospective analysis using the function \code{'SS_doRetro'} from the package \pkg{r4ss}.
 }
 \usage{
-doRetros(strSpp="418", assyr=2024, stock="BC", newsubdir="retros", 
+doRetros(strSpp="405", assyr=2025, stock="BC", newsubdir="retros", 
    exe="C:/Users/haighr/Files/Archive/Bat/ss.exe")
 }
 %- maybe also 'usage' for other objects documented here.
@@ -35,7 +35,7 @@ Taylor, I.G., Doering, K.L., Johnson, K.F., Wetzel, C.R., Stewart, I.J., 2021.
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-16}
+  Last modified \code{Rd: 2026-02-19}
 }
 \note{
   To plot retrospective results, run \code{'plotSS.comparisons'},
@@ -47,7 +47,7 @@ Taylor, I.G., Doering, K.L., Johnson, K.F., Wetzel, C.R., Stewart, I.J., 2021.
 In package \pkg{PBSsynth}:\cr
   \code{\link[PBSsynth]{plotSS.comparisons}}\cr
 In package \pkg{r4ss}:\cr
-  \code{\link[r4ss]{retro}},
+  \code{\link[r4ss]{SS_doRetro}},
   \code{\link[r4ss]{SSplotComparisons}}
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
@@ -57,6 +57,6 @@ In package \pkg{r4ss}:\cr
 % \keyword{ ~kwd2 }
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{utilFuns.r}
+\concept{utilFuns}
 % \concept{ ~cpt2 }
 % Use only one concept per line.

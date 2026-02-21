@@ -16,6 +16,7 @@
 ## plotSS.stdres.........Plot standardised residuals (mod.PBSawatea)
 ## plotSS.stock.recruit..Plot stock-recruitment function (based on MPDs)
 ## plotSS.ts.............Plot time series from MPD output from SS (mod.r4ss)
+## plotSS.yield..........Plot the equilibrium yield curve for an MPD run
 ##==========================================================
 
 
@@ -2925,7 +2926,7 @@ make.multifig <- function (ptsx, ptsy, yr, linesx=0, linesy=0, ptsSD=0,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~make.multifig
 
 
-## plotSS.comparisons-------------------2023-09-06
+## plotSS.comparisons-------------------2025-10-15
 ##  Borrowed r4ss code 'SSplotComparisons' to plot retrospectives.
 ##  Creates a user-chosen set of plots comparing model output from a summary of multiple models,
 ##  where the collection was created using the SSsummarize function. (r4ss)
@@ -3036,6 +3037,9 @@ plotSS.comparisons <- function (summaryoutput, subplots=1:20, plot=TRUE, print=F
 	} else if (legendloc %in% c("topleft")) {
 		xleg=0.05; yleg=0.80; xjust=0; yjust=1
 		if (strSpp=="418" && subplot==3) { xleg=0.02; yleg=0.88 }
+		if (strSpp=="405" && subplot==1) { xleg=0.05; yleg=0.75 }
+		if (strSpp=="405" && subplot %in% c(3)) { xleg=0.65; yleg=0.95 }
+		if (strSpp=="405" && subplot %in% c(13)) { xleg=0.02; yleg=0.975 }
 	} ## add more if neeed
 #browser();return()
 
@@ -3413,7 +3417,7 @@ plotSS.comparisons <- function (summaryoutput, subplots=1:20, plot=TRUE, print=F
 			ylow =  par()$usr[3] + 0.01 * diff(par()$usr[3:4])
 			show = seq(1,length(endyrvec),2)
 			text(endyrvec[show], rep(ylow,length(show)), endyrvec[show], col=col[show], font=2, srt=90, cex=0.6, adj=c(0,0))
-			addLegend(xleg, yleg, pch=pch, col=col, legend=endyrvec, cex=1, lwd=2, xjust=xjust, yjust=yjust, bty="n")
+			addLegend(xleg, yleg, pch=pch, col=col, legend=endyrvec, cex=0.8, lwd=2, xjust=xjust, yjust=yjust, bty="n")
 			#add_legend(legendlabels, legendloc=legendloc, legendorder=legendorder, legendncol=legendncol, col=col, pch=pch, lwd=lwd, lty=lty)
 		}
 		if (show_uncertainty) {
@@ -3501,7 +3505,7 @@ plotSS.comparisons <- function (summaryoutput, subplots=1:20, plot=TRUE, print=F
 #browser();return()
 			ylast = as.vector(sapply(Bratio[, models],function(x){rev(x[!is.na(x)])[1]}))
 			points(endyrvec, ylast, col=col, pch=pch, cex=1.2, lwd=2)
-			addLegend(xleg, yleg, pch=pch, col=col, legend=endyrvec, cex=1, lwd=2, xjust=xjust, yjust=yjust, bty="n")
+			addLegend(xleg, yleg, pch=pch, col=col, legend=endyrvec, cex=0.8, lwd=2, xjust=xjust, yjust=yjust, bty="n")
 		}
 		if (show_uncertainty) {
 			addpoly(Bratio[["Yr"]], lower=BratioLower, upper=BratioUpper)
@@ -3521,7 +3525,7 @@ plotSS.comparisons <- function (summaryoutput, subplots=1:20, plot=TRUE, print=F
 			}
 		}
 		yticks <- pretty(par()$yaxp[1:2])
-		btarg = c(0.4, 0.2, 0.1)
+		btarg = c(0.4, 0.32, 0.16)
 		if (any(btarg > 0)) {
 			abline(h=btarg, col=c("green3","blue","red"), lty=2)
 			#text(min(Bratio[["Yr"]]) + 4, btarg + 0.03, labels[10], adj=0)
@@ -3736,7 +3740,7 @@ plotSS.comparisons <- function (summaryoutput, subplots=1:20, plot=TRUE, print=F
 		mtext(side=2, text=linguaFranca(FvalueLabel,lang), line=par()$mgp[1], col=par()$col.lab, cex=par()$cex.lab)
 		box()
 		if (legend) {
-			addLegend(0.05, 0.95, col=col, legend=linguaFranca(legendlabels,lang), cex=1, lwd=3, xjust=0, yjust=1, bty="n")
+			addLegend(xleg, yleg, col=col, legend=linguaFranca(legendlabels,lang), cex=0.8, lwd=3, xjust=0, yjust=1, bty="n")
 			#add_legend(legendlabels, legendloc=legendloc, legendorder=legendorder, legendncol=legendncol, col=col, pch=pch, lwd=lwd, lty=lty)
 		}
 		return(ylim[2])
@@ -3796,7 +3800,7 @@ plotSS.comparisons <- function (summaryoutput, subplots=1:20, plot=TRUE, print=F
 			ymax = diag(as.matrix(recruits[zmax,models]))
 			segments(xmax-2, ymax, xmax+2, ymax, col="grey10", lty=3, lwd=1)
 			points(xmax, ymax, col=col, pch=pch, cex=1.2, lwd=2)
-			addLegend(0.05, 0.95, pch=pch, col=col, legend=endyrvec, cex=1, lwd=2, xjust=0, yjust=1, bty="n")
+			addLegend(xleg, yleg, pch=pch, col=col, legend=endyrvec, cex=0.8, lwd=2, xjust=0, yjust=1, bty="n")
 		}
 		if (show_uncertainty) {
 			xEqu <- recruits[["Yr"]][2] - (1:nlines)/nlines
@@ -3910,7 +3914,7 @@ plotSS.comparisons <- function (summaryoutput, subplots=1:20, plot=TRUE, print=F
 			ymax = diag(as.matrix(recdevs[zmax,models]))
 			segments(xmax-2, ymax, xmax+2, ymax, col="grey10", lty=3, lwd=1)
 			points(xmax, ymax, col=col, pch=pch, cex=1.2, lwd=2)
-			addLegend(0.025, 0.9, pch=pch, col=col, legend=endyrvec, cex=1, lwd=2, xjust=0, yjust=1, bty="n")
+			addLegend(xleg, yleg, pch=pch, col=col, legend=endyrvec, cex=0.8, lwd=2, xjust=0, yjust=1, bty="n")
 		}
 		if (show_uncertainty) {
 			for (iline in 1:nlines) {
@@ -4109,7 +4113,7 @@ plotSS.comparisons <- function (summaryoutput, subplots=1:20, plot=TRUE, print=F
 			xpos = 0.95
 			#if (iindex %in% c(1,3,4,8:50)) xpos = 0.2
 			#if (iindex %in% c(2,7,79)) xpos = 0.3
-			addLegend(xpos, 0.95, pch=pch, col=col, legend=linguaFranca(endyrvec,lang), cex=0.8, lwd=2, xjust=1, yjust=1, bty="n", title=linguaFranca(gsub("_"," ",indices2$Fleet_name[1]), lang) )
+			addLegend(xleg, yleg, pch=pch, col=col, legend=linguaFranca(endyrvec,lang), cex=0.8, lwd=2, xjust=0, yjust=1, bty="n", title=linguaFranca(gsub("_", " ", indices2$Fleet_name[1]), lang) )
 		}
 		if (!add) {
 			#xticks <- pretty(xlim)
@@ -4383,7 +4387,7 @@ plotSS.comparisons <- function (summaryoutput, subplots=1:20, plot=TRUE, print=F
 				message("x-axis for ", parname, " in density plot has been divided by ", xunits, " (so may be in units of ", xlab2, ")")
 			}
 			if (legend) {
-				addLegend(0.05, 0.95, pch=pch, col=col, legend=legendlabels, cex=1, lwd=2, xjust=0, yjust=1, bty="n")
+				addLegend(xleg, yleg, pch=pch, col=col, legend=legendlabels, cex=0.8, lwd=2, xjust=0, yjust=1, bty="n")
 				#add_legend(legendlabels, legendloc=ifelse(cumulative, "topleft", legendloc), legendorder=legendorder, legendncol=legendncol, col=col, pch=pch,  lwd=lwd, lty=lty)
 			}
 		}
@@ -6292,84 +6296,11 @@ plotSS.comps <- function (replist, subplots=c(1:21, 24), kind="LEN", sizemethod=
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.comps
 
 
-## plotSS.francis-----------------------2023-07-31
+## plotSS.francis-----------------------2025-09-11
 ##  Plot mean age fits using Francis (2011) methodology
 ##  Modified function 'r4ss::SSMethod.TA1.8' :
 ##  Apply Francis composition weighting method TA1.8
 ## ----------------------------------------r4ss|RH
-##  Uses method TA1.8 (described in Appendix A of Francis 2011) to do
-##  stage-2 weighting of composition data from a Stock Synthesis model.
-##  Outputs a multiplier, \emph{w} (with bootstrap 95\% confidence interval),
-##  so that \emph{N2y} = \emph{w} x \emph{N1y}, where \emph{N1y} and
-##  \emph{N2y} are the stage-1 and stage-2
-##  multinomial sample sizes for the data set in year y.  Optionally
-##  makes a plot of observed (with confidence limits, based on \emph{N1y})
-##  and expected mean lengths (or ages).
-##  \cr\cr
-##  CAUTIONARY/EXPLANATORY NOTE.
-##  The large number of options available in SS makes it very
-##  difficult to be sure that what this function does is
-##  appropriate for all combinations of options.  The following
-##  notes might help anyone wanting to check or correct the code.
-##  \enumerate{
-##    \item The code first takes the appropriate database (lendbase, sizedbase,
-##          agedbase, or condbase) and removes un-needed rows.
-##    \item The remaining rows of the database are grouped into individual
-##          comps (indexed by vector indx) and relevant statistics (e.g.,
-##          observed and expected mean length or age), and ancillary data,
-##          are calculated for each comp (these are stored in pldat - one row
-##          per comp).
-##          If the data are to be plotted, the comps are grouped, with each
-##          group corresponding to a panel in the plot, and groups are indexed
-##          by plindx.
-##    \item A single multiplier is calculated to apply to all the comps.
-##  }
-#'
-##  @param fit Stock Synthesis output as read by r4SS function SS_output
-##  @param type either 'len' (for length composition data), 'size' (for
-##  generalized size composition data), 'age' (for age composition data),
-##  or 'con' (for conditional age at length data)
-##  @param fleet vector of one or more fleet numbers whose data are to
-##  be analysed simultaneously (the output N multiplier applies
-##  to all fleets combined)
-##  @param fleetnames Vector of alternative fleet names to draw from for
-##  plot titles and captions. It should have length equal to the number
-##  of fleets in the model, not the number of fleets considered in this function.
-##  @param part vector of one or more partition values; analysis is restricted
-##  to composition data with one of these partition values.
-##  Default is to include all partition values (0, 1, 2).
-##  @param label.part Include labels indicating which partitions are included?
-##  @param sexes vector of one or more values for Sexes; analysis is
-##  restricted to composition data with one of these
-##  Sexes values.  Ignored if type=='con'.
-##  @param label.sex Include labels indicating which sexes are included?
-##  @param seas string indicating how to treat data from multiple seasons
-##  'comb' - combine seasonal data for each year and plot against Yr
-##  'sep' - treat seasons separately, plotting against Yr.S
-##  If is.null(seas) it is assumed that there is only one season in
-##  the selected data (a warning is output if this is not true) and
-##  option 'comb' is used.
-##  @param method a vector of one or more size-frequency method numbers
-##  (ignored unless type = 'size').
-##  If !is.null(method), analysis is restricted to size-frequency
-##  methods in this vector.  NB comps are separated by method
-##  @param plotit if TRUE, make an illustrative plot like one or more
-##  panels of Fig. 4 in Francis (2011).
-##  @param printit if TRUE, print results to R console.
-##  @param datonly if TRUE, don't show the model expectations
-##  @param plotadj if TRUE, plot the confidence intervals associated with
-##  the adjusted sample sizes (TRUE by default unless datonly = TRUE)
-##  @param maxpanel maximum number of panels within a plot
-##  @param set.pars Set the graphical parameters such as mar and mfrow.
-##  Can be set to FALSE in order to add plots form multiple calls to
-##  this function as separate panels in one larger figure.
-##  @author Chris Francis, Andre Punt, Ian Taylor
-##  @export
-##  @seealso \code{\link{SSMethod.Cond.TA1.8}}
-##  @references Francis, R.I.C.C. (2011). Data weighting in statistical
-##  fisheries stock assessment models. Canadian Journal of
-##  Fisheries and Aquatic Sciences 68: 1124-1138.
-## -------------------------------------------r4ss
 plotSS.francis <- function(
    fit, type, fleet, part=0:2, sexes=0:3, seas=NULL, method=NULL, 
    plotit=TRUE, printit=TRUE, datonly=FALSE, plotadj=!datonly,
@@ -6377,6 +6308,79 @@ plotSS.francis <- function(
    set.pars=TRUE, col.obs=c("green3","green"), col.fit=lucent(c("blue2","cyan"),0.5),
    png=FALSE, pngres=400, PIN=c(8,9), outnam, lang=c("e","f") )
 {
+	##  Uses method TA1.8 (described in Appendix A of Francis 2011) to do
+	##  stage-2 weighting of composition data from a Stock Synthesis model.
+	##  Outputs a multiplier, \emph{w} (with bootstrap 95\% confidence interval),
+	##  so that \emph{N2y} = \emph{w} x \emph{N1y}, where \emph{N1y} and
+	##  \emph{N2y} are the stage-1 and stage-2
+	##  multinomial sample sizes for the data set in year y.  Optionally
+	##  makes a plot of observed (with confidence limits, based on \emph{N1y})
+	##  and expected mean lengths (or ages).
+	##  \cr\cr
+	##  CAUTIONARY/EXPLANATORY NOTE.
+	##  The large number of options available in SS makes it very
+	##  difficult to be sure that what this function does is
+	##  appropriate for all combinations of options.  The following
+	##  notes might help anyone wanting to check or correct the code.
+	##  \enumerate{
+	##    \item The code first takes the appropriate database (lendbase, sizedbase,
+	##          agedbase, or condbase) and removes un-needed rows.
+	##    \item The remaining rows of the database are grouped into individual
+	##          comps (indexed by vector indx) and relevant statistics (e.g.,
+	##          observed and expected mean length or age), and ancillary data,
+	##          are calculated for each comp (these are stored in pldat - one row
+	##          per comp).
+	##          If the data are to be plotted, the comps are grouped, with each
+	##          group corresponding to a panel in the plot, and groups are indexed
+	##          by plindx.
+	##    \item A single multiplier is calculated to apply to all the comps.
+	##  }
+	#'
+	##  @param fit Stock Synthesis output as read by r4SS function SS_output
+	##  @param type either 'len' (for length composition data), 'size' (for
+	##  generalized size composition data), 'age' (for age composition data),
+	##  or 'con' (for conditional age at length data)
+	##  @param fleet vector of one or more fleet numbers whose data are to
+	##  be analysed simultaneously (the output N multiplier applies
+	##  to all fleets combined)
+	##  @param fleetnames Vector of alternative fleet names to draw from for
+	##  plot titles and captions. It should have length equal to the number
+	##  of fleets in the model, not the number of fleets considered in this function.
+	##  @param part vector of one or more partition values; analysis is restricted
+	##  to composition data with one of these partition values.
+	##  Default is to include all partition values (0, 1, 2).
+	##  @param label.part Include labels indicating which partitions are included?
+	##  @param sexes vector of one or more values for Sexes; analysis is
+	##  restricted to composition data with one of these
+	##  Sexes values.  Ignored if type=='con'.
+	##  @param label.sex Include labels indicating which sexes are included?
+	##  @param seas string indicating how to treat data from multiple seasons
+	##  'comb' - combine seasonal data for each year and plot against Yr
+	##  'sep' - treat seasons separately, plotting against Yr.S
+	##  If is.null(seas) it is assumed that there is only one season in
+	##  the selected data (a warning is output if this is not true) and
+	##  option 'comb' is used.
+	##  @param method a vector of one or more size-frequency method numbers
+	##  (ignored unless type = 'size').
+	##  If !is.null(method), analysis is restricted to size-frequency
+	##  methods in this vector.  NB comps are separated by method
+	##  @param plotit if TRUE, make an illustrative plot like one or more
+	##  panels of Fig. 4 in Francis (2011).
+	##  @param printit if TRUE, print results to R console.
+	##  @param datonly if TRUE, don't show the model expectations
+	##  @param plotadj if TRUE, plot the confidence intervals associated with
+	##  the adjusted sample sizes (TRUE by default unless datonly = TRUE)
+	##  @param maxpanel maximum number of panels within a plot
+	##  @param set.pars Set the graphical parameters such as mar and mfrow.
+	##  Can be set to FALSE in order to add plots form multiple calls to
+	##  this function as separate panels in one larger figure.
+	##  @author Chris Francis, Andre Punt, Ian Taylor
+	##  @export
+	##  @seealso \code{\link{SSMethod.Cond.TA1.8}}
+	##  @references Francis, R.I.C.C. (2011). Data weighting in statistical
+	##  fisheries stock assessment models. Canadian Journal of
+	##  Fisheries and Aquatic Sciences 68: 1124-1138.
+
 	oldpar = par(no.readonly=TRUE)
 	fart <- function(opar) { if (any("windows"%in%names(dev.list()))) par(opar) }
 	on.exit(fart(oldpar))
@@ -6515,7 +6519,8 @@ plotSS.francis <- function(
 		fout = fout.e = outnam
 		for (l in lang) {
 			changeLangOpts(L=l)
-			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 
 			col.obs = rep(col.obs,2)[1:2]
 			col.fit = rep(col.fit,2)[1:2]
@@ -6530,10 +6535,10 @@ plotSS.francis <- function(
 				plindx <- paste(plindx,pldat[,'method'])
 			uplindx <- unique(plindx)
 	
-				if (png) {
-					clearFiles(paste0(fout,".png"))
-					png(filename=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
-				}
+			if (png) {
+				clearFiles(paste0(fout,".png"))
+				png(filename=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+			}
 	
 			## Select number of panels
 			Npanel <- length(uplindx)
@@ -6654,10 +6659,10 @@ plotSS.francis <- function(
 #browser();return()
 		Output <- list(agedat=pldat, w=Nmult, lo=confint[1,], hi=confint[2,], w.francis=wj)
 		Outs <- paste0("Francis Weights - ", type, ": ", fleetnames[fleet], ": ", round(Output[["w"]],4), " (", round(Output[["lo"]],4), "-", round(Output[["hi"]],4), ")")
+#browser();return()
 		
 		
 		#tmp <- matrix(sample(pldat[,'Std.res'],1000*nrow(pldat),replace=TRUE),nrow(pldat))
-#browser();return()
 		#confint <- as.vector(quantile(apply(tmp,2,function(x)1/var(x,na.rm=TRUE)), c(0.025,0.975), na.rm=TRUE))
 		#Output <- c(w=Nmult,lo=confint[1],hi=confint[2])
 		#Outs <- paste("Francis Weights - ", type, ": ", fleetnames[fleet],": ", round(Nmult,4), " (",round(confint[1],4),"-",round(confint[2],4),")", sep="")
@@ -6671,7 +6676,7 @@ plotSS.francis <- function(
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.francis
 
 
-## plotSS.index-------------------------2025-06-06
+## plotSS.index-------------------------2025-07-24
 ##  Plot SS model fit to abundance index series
 ##  Code based on r4ss function 'SSplotIndices'.
 ## ----------------------------------------r4ss|RH
@@ -6870,15 +6875,15 @@ plotSS.index <- function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 		if (!add) {
 			plot(x=x[include], y=y[include], type="n", xlim=xlim, ylim=ylim, yaxs="i", xlab=linguaFranca(get.lab(1,ifleet),l), ylab=linguaFranca(ylab,l), main=linguaFranca(main,l), cex.main=cex.main, cex.axis=1.25, cex.lab=1.5, ...)
 		}
-#browser();return()
-		ii = grep(ifleet,fleetvec)
+		ii = match(ifleet,fleetvec)  ##grep(ifleet,fleetvec) ## (RH 250912) grep grabs 1, 10, 11, etc.
 		#points(x=x[include], y=y[include], pch=pch1, cex=cex, bg=adjustcolor(colvec1[s], alpha.f=0.7), col=adjustcolor(colvec1[ii], alpha.f=0.7))
 		nx = length(x[include])
-		abline(h=-10:10, lty=3, col="gainsboro")
-		segments (x0=x[include], y0=rep(0,nx), x1=x[include], y1=y[include], lty=5, col="black", lwd=1)
+		abline(h=-10:10, lty=3, col="slategray")  ## (RH 250724)
+		segments (x0=x[include], y0=rep(0,nx), x1=x[include], y1=y[include], lty=1, col=colvec1[ii], lwd=1)  ## (RH 250724)
 		abline(h=0, lty=1, col="grey60")
 		points(x=x[include], y=y[include], pch=21, cex=1.5, col=colvec1[ii], bg=colvec2[ii])
 		addLabel(0.975, 0.95, linguaFranca(gsub("_+","  ",fleetnames[ifleet]),l), col="grey30", cex=1.25, adj=c(1,0.25))
+#browser();return()
 #if(ifleet==4) {browser();return()}
 		if (legend & length(colvec1) > 1) {
 			legend(x=legendloc, legend=linguaFranca(seasnames,l), pch=pch1, pt.bg=colvec1, col=colvec1, cex=cex)
@@ -7350,7 +7355,7 @@ plotSS.index <- function (replist, subplots=c(1:10, 12), plot=TRUE, print=FALSE,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.index
 
 
-## plotSS.pars--------------------------2022-06-15
+## plotSS.pars--------------------------2025-08-20
 ##  Plot parameter fits and priors.
 ##  Based on 'r4ss::SSplotPars'
 ## ----------------------------------------r4ss|RH
@@ -7419,7 +7424,7 @@ plotSS.pars <- function (replist, plotdir=NULL, xlab="Parameter value",
 	pngfun <- function(file, caption=NA, lang="e") {
 		createFdir(lang, dir=plotdir)
 		changeLangOpts(L=lang)
-		fout = switch(lang, 'e' = file.path(plotdir, file), 'f' = file.path(plotdir,"french", file) )
+		fout = switch(lang, 'e' = file.path(plotdir,"english", file), 'f' = file.path(plotdir,"french", file) )
 		clearFiles(fout)
 		png(filename=fout, width=PIN[1], height=PIN[2], units=punits, res=res, pointsize=ptsize)
 		plotinfo <- rbind(plotinfo, data.frame(file=file, caption=caption))
@@ -7622,8 +7627,18 @@ plotSS.pars <- function (replist, plotdir=NULL, xlab="Parameter value",
 				mlescale <- 1/(sum(mle) * mean(diff(x)))
 				mle <- mle * mlescale
 				ymax <- max(ymax, max(mle), na.rm=TRUE)
-				xmin <- qnorm(p=0.01, mean=finalval, sd=ifelse(parsd<=abs(finalval), parsd, abs(finalval)))
-				xmax <- qnorm(p=0.99, mean=finalval, sd=ifelse(parsd<=abs(finalval), parsd, abs(finalval)))
+				if (parname=="BH_h") {
+					#B0 = diag.mpd$B[1]; R0 = exp(diag.mpd$P[grep("R0",names(diag.mpd$P))]); h=finalval
+					#shape1 = ((1-h)*B0) / (4*h*R0) ## alpha
+					#shape2 = (5*h-1) / (4*h*R0)    ## beta
+					#xmin = qbeta(0.21, shape1=shape2, shape2=shape1)
+					#xmax = qbeta(0.99, shape1=shape2, shape2=shape1)
+					xmin = 0.2; xmax=1
+#if (parname=="BH_h"){browser();return()}
+				} else {
+					xmin <- qnorm(p=0.01, mean=finalval, sd=ifelse(parsd<=abs(finalval), parsd, abs(finalval)))
+					xmax <- qnorm(p=0.99, mean=finalval, sd=ifelse(parsd<=abs(finalval), parsd, abs(finalval)))
+				}
 			}
 			else {
 				xmin <- xmax <- finalval
@@ -7639,8 +7654,8 @@ plotSS.pars <- function (replist, plotdir=NULL, xlab="Parameter value",
 			showpost <- FALSE
 		}
 		goodpost <- FALSE
+		postparname <- parname
 		if (showpost) {
-			postparname <- parname
 			if (substring(parname, 1, 1) == "_") {
 				postparname <- paste0("X", postparname)
 			}
@@ -7655,6 +7670,7 @@ plotSS.pars <- function (replist, plotdir=NULL, xlab="Parameter value",
 				warning("parameter '", postparname, "', not found in posteriors.")
 			}
 		}
+#.flush.cat(postparname, "   ", parname, "\n")
 		if (is.null(xlim)) {
 			if (fitrange & ((!is.na(parsd) && parsd != 0) | showpost)) {
 				if (fitnudge<=0) {
@@ -7664,6 +7680,7 @@ plotSS.pars <- function (replist, plotdir=NULL, xlab="Parameter value",
 					xspan = abs(diff(c(xmin,xmax)))
 					xmin  = xmin - (fitnudge * xspan)
 					xmax  = xmax + (fitnudge * xspan)
+#if (postparname=="BH_h"){browser();return()}
 				}
 			}
 			else {
@@ -8105,7 +8122,7 @@ plotSS.rdevs <- function (replist, subplots=1:3, plot=TRUE, print=FALSE,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.rdevs
 
 
-## plotSS.selex-------------------------2023-03-07
+## plotSS.selex-------------------------2025-07-21
 ##  Plot selectivity curves with maturity ogive.
 ##  Source: R package 'r4ss' v.1.39.1
 ##  Based on 'r4ss::SSplotSelex'
@@ -8188,6 +8205,7 @@ plotSS.selex <- function (replist, infotable=NULL, fleets="all", fleetnames="def
 		meta  = paste0(c("[",metas,"]"),collapse="")
 		fnam  = gsub("[_ ]+", "_", gsub(meta,"",file))
 		.flush.cat("Figure file:", fnam, "\nsaved to:", plotdir, "\n")
+		clearFiles(file.path(plotdir, fnam))
 		png(filename=file.path(plotdir, fnam), width=pwidth, 
 			height=pheight, units=punits, res=res, pointsize=ptsize)
 		plotinfo <- rbind(plotinfo, data.frame(file=fnam, caption=caption))
@@ -9041,7 +9059,7 @@ plotSS.selex <- function (replist, infotable=NULL, fleets="all", fleetnames="def
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.selex
 
 
-## plotSS.stdres------------------------2025-01-02 (apres NYD)
+## plotSS.stdres------------------------2026-02-20
 ## Plot standardised residuals -- three plots on one page.
 ## Modified from PBSawatea code in 'PBSscape.r'.
 ## Resolved sex combinations (for F & M only)
@@ -9342,6 +9360,7 @@ plotSS.stdres <- function(replist, kind="AGE", fleets="all",
 					eval(parse(text=mess))
 					colnames(obs) = sub(sss[1], "A", colnames(obs))
 				}
+#if (s==3) {browser();return()}
 				## multiply by effective sample size and round:
 				obs <- round(obs * yOSA[, "ESS"])
 				#obs <- pmax(obs,1)
@@ -9382,18 +9401,19 @@ plotSS.stdres <- function(replist, kind="AGE", fleets="all",
 							png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 						}
 						lab.main = paste0(fleet.name, " - ", switch(ii, 'A'="Females + Males", 'B'="Both sexes", 'F'="Females", 'M'="Males", "Unknown"))
-						plot.cres.new(res, maxLag=20, oma=c(0,0,1,0), mar=c(3,3,1,1), main=lab.main, bubblescale=0.4, lang=l)
+						plot_cres(res, maxLag=20, oma=c(0,0,1,0), mar=c(3,3,1,1), main=lab.main, bscale=0.4, lang=l)
+#browser();return()
 						#mtext(switch(ii, 'A'="Females + Males", 'B'="Both sexes", 'F'="Females", 'M'="Males", "Unknown"), outer=TRUE, side=3, line=0, cex=1.5)
 						if (print && p %in% c("eps","png")) dev.off()
 					} ## end p (ptypes) loop
 				}; eop()
-#browser();return()
 			} ## end s (sex) loop
 			return(OSAlist)
 		}) ## end fappy
 		OSA = unlist(fappy, recursive=FALSE) ## remove redundant 1st level
 		names(OSA) = sub("^[0-9]+\\.","",names(OSA))
-		save("OSA", file=paste0(sub("MPD","OSA",basename(getwd())),".rda"))
+		if (exists("redoData") && redoData)  ## (RH 250912) added to interact with 'sweaveMPD.Tnw'
+			save("OSA", file=paste0(sub("MPD","OSA",basename(getwd())),".rda"))
 	} ## end if useOSA (calculations)
 #browser(); return()
 
@@ -9571,7 +9591,7 @@ plotSS.stock.recruit <- function (replist, subplot = 1:3, add = FALSE, plot = TR
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.stock.recruit
 
 
-## plotSS.ts----------------------------2025-01-02
+## plotSS.ts----------------------------2025-08-22
 ##  Plot SS time series (Bt, BtB0, Age-0 recruits)
 ##  Modified r4ss function 'SSplotTimeseries'.
 ## ----------------------------------------r4ss|RH
@@ -9630,6 +9650,7 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 	}
 	SS_versionshort <- replist$SS_versionshort
 	timeseries      <- replist$timeseries
+	timeseries2     <- replist$catch          ## (RH 250325) vulnerable biomass is reported here (250821: but it looks sketchy by Area and Fleet)
 	nseasons        <- replist$nseasons
 	spawnseas       <- replist$spawnseas
 	birthseas       <- replist$birthseas
@@ -9650,8 +9671,10 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 		#if (exists("narea")) nareas = narea  ## hokey fix for now
 		areacols <- areabgs <- rich.colors.short(nareas)
 		if (nareas <= 5) {
-			defcols <- c("blue", "green4", "red", "darkgreen", "purple")
-			defbgs  <- c("cyan", "green", "pink", "yellow", "thistle")
+			defcols <- c("blue", "green4", "red", "darkgreen", "purple")  ## 5ABC 3CD 5DE (POP 2023)
+			defbgs  <- c("cyan", "green", "pink", "yellow", "thistle")    ## 5ABC 3CD 5DE (POP 2023)
+			defcols <- c("blue", "red", "green4", "orange", "purple")     ## 5ABC 5DE 3CD (SGR 2025)
+			defbgs  <- c("cyan", "pink", "green", "yellow", "thistle")    ## 5ABC 5DE 3CD (SGR 2025)
 			areacols = defcols[1:nareas]
 			areabgs  = defbgs[1:nareas]
 			gearcols = defcols[1:ngear]
@@ -9688,7 +9711,8 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 	if (nareas > 1 & areanames[1] == "default") {
 		areanames <- paste("area", 1:nareas)
 	}
-	ts <- timeseries
+	ts  <- timeseries
+	ts2 <- timeseries2 ## (RH 250326)
 	if (nseasons > 1) {
 		if (SS_versionshort == "SS-V3.11") {
 			ts$YrSeas <- ts$Yr + (ts$Seas - 1)/nseasons
@@ -9733,13 +9757,13 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 		if (subplot %in% 7:8) {
 			yvals <- bioscale * ts[,"SpawnBio",drop=FALSE] ##ts$SpawnBio
 			ylab <- labels[7]
+#browser();return()
 			#ylab <- labels[subplot]
 		}
 		if (subplot %in% 9:10) {
 			B0 = ts$SpawnBio[grep("TIME",ts$Era)[1]]  ## do not want 'VIRG' or 'INIT'
 			#B0 = ts$SpawnBio[!is.na(ts$SpawnBio)][1]
 			yvals <- ts[,"SpawnBio",drop=FALSE] / B0 # $SpawnBio/ts$SpawnBio[!is.na(ts$SpawnBio)][1]
-#browser();return()
 			ylab <- labels[9]
 		}
 		if (subplot %in% 11:15) {
@@ -9766,27 +9790,41 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 		if (any(grepl("^Hrate:",colnames(ts)))) { Fmeth = 1 } else { Fmeth = 3 }  ## temporary fix
 
 		if (subplot %in% c(102,103)){
-			fleets = unique(grep("^Hrate:|^F:",colnames(ts),value=T))
-			fleetn = gsub("[Fu]:_", "", fleets)
-			nfleets = length(fleets)
-			for (j in 1:nfleets) {
-				jj = fleetn[j]
+			cfleets  = unique(grep("^Hrate:|^F:",colnames(ts),value=T))  ## commercial  fleets
+			ncfleet  = gsub("[Fu]:_", "", cfleets)
+			ncfleets = length(cfleets)
+			if (narea>1)
+				ts$Fleet = as.numeric(rep(ncfleet, each=length(.su(ts$Yr))))
+			for (j in 1:ncfleets) {
+				jj = ncfleet[j]
 				if (Fmeth==1)
 					ts[,paste0("u",jj)]  = ts[,paste0("Hrate:_",jj)]
 				else 
 					ts[,paste0("u",jj)]  = 1 - exp(-ts[,paste0("F:_",jj)])
-				uzero = ts[,paste0("u",jj)] <= 0
-				ts[uzero,paste0("V",jj)]  = 0
-				## Note: 'sel(B)' appears to be the catch (='obs_cat') in 'ts' object; V=C/u
-				ts[!uzero,paste0("V",jj)] = ts[!uzero,paste0("sel(B):_",jj)] / ts[!uzero,paste0("u",jj)]
-				ts[1,paste0("V",jj)] = ts[2,paste0("V",jj)] = 0
+				uzero = ts[,paste0("u",jj)] <= 0 | is.na(ts[,paste0("u",jj)]) ## (RH 250321) added is.na condition
+				## (RH 250821) disable VB from catch (looks sketchy); use narea>100 to disable
+				if (narea>100 && exists("ts2") && !is.null(ts2) && "vuln_bio"%in%colnames(ts2)) {  ## (RH 250326) get vuln_bio from the catch series
+					zf1 = is.element(ts$Fleet,jj)
+					zy1 = is.element(ts$Yr,.su(ts2$Yr))
+					zf2 = is.element(ts2$Fleet,jj)
+					zy2 = is.element(ts2$Yr,.su(ts$Yr))
+					ts[zf1 & zy1, paste0("V",jj)] = ts2[zf2 & zy2, "vuln_bio"]
+					zna = is.na(ts[,paste0("V",jj)])
+					ts[zna,paste0("V",jj)] = 0
+				} else {
+					ts[uzero,paste0("V",jj)]  = 0
+					## Note: 'sel(B)' appears to be the catch (='obs_cat') in 'ts' object; V=C/u
+					ts[!uzero,paste0("V",jj)] = ts[!uzero,paste0("sel(B):_",jj)] / ts[!uzero,paste0("u",jj)]
+					ts[1,paste0("V",jj)] = ts[2,paste0("V",jj)] = 0
+				}
 			}
+#browser();return()
 			if (subplot %in% c(102)){
-				ysub  = ts[,c("Area","Bio_all",paste0("V",fleetn))] * bioscale
-				ylab = "Vulnerable biomass (tonnes)"
+				ysub  = ts[,c("Area","Bio_all",paste0("V",ncfleet))] * bioscale
+				ylab = "Biomass (tonnes)"
 			}
 			if (subplot %in% c(103)){
-				ysub  = ts[,c("Area", paste0("u",fleetn))]
+				ysub  = ts[,c("Area", paste0("u",ncfleet))]
 				ylab = "Harvest Rate"
 			}
 			ylist = split(ysub[,-1,drop=FALSE],ysub[,"Area"])
@@ -9799,7 +9837,7 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 		if (!is.element(subplot, c(1:15,101:103))) {
 			stop("subplot should be a value from 1 to 15 (r4ss) or 101 to 103 (PBSsynth)")
 		}
-		main=ylab
+		main = ylab
 		yrshift <- 0
 		if (!is.null(birthseas) && max(birthseas) < spawnseas) {
 			yrshift <- 1
@@ -10081,8 +10119,9 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 							## This is so problematic:
 							col.pch = switch(jj, 'Bio_all'="black", 'V1'=col.fleet[1], 'V2'=col.fleet[2], 'V3'=col.fleet[3], 'V10'=col.fleet[4], 'V11'=col.fleet[5], 'u1'=col.fleet[1], 'u2'=col.fleet[2], 'u3'=col.fleet[3], 'u10'=col.fleet[4], 'u11'=col.fleet[5], mycol)
 							col.bg = switch(jj, 'Bio_all'="gainsboro", 'V1'=bg.fleet[1], 'V2'=bg.fleet[2], 'V3'=bg.fleet[3], 'V10'=bg.fleet[4], 'V11'=bg.fleet[5], 'u1'=bg.fleet[1], 'u2'=bg.fleet[2], 'u3'=bg.fleet[3], 'u10'=bg.fleet[4], 'u11'=bg.fleet[5], mybg)
+							#col.pch = col.fleet[j]
+							#col.bg  = bg.fleet[j]
 #print(c(col.pch, mycol))
-#browser();retrun()
 							#points(ts$YrSeas[plot1], yvals[plot1,j], pch=22, col=col.pch, bg=colorspace::lighten(col.pch, amount=0.25)) #lucent(mycol,0.2))
 							#lines(ts$YrSeas[plot2], yvals[plot2,j], col="gainsboro", lwd=2)
 							#points(ts$YrSeas[plot2], yvals[plot2,j], pch=21, col=col.pch, bg=colorspace::lighten(col.pch, amount=0.25)) #lucent(mycol,0.2))
@@ -10091,7 +10130,8 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 							lines(ts$YrSeas[plot2], yvals[plot2,j], col=col.pch, lwd=2)
 							points(ts$YrSeas[plot2], yvals[plot2,j], pch=21, col=col.pch, bg=col.bg) ## main reconstruction
 							points(ts$YrSeas[plot3], yvals[plot3,j], pch=24, cex=0.8, col=col.pch, bg=col.bg) ## forecast
-#if(j==2){browser();return()}
+#if(j==4){browser();return()}
+#browser();return()
 						}
 						if (subplot %in% c(7,9,11) || colnames(yvals)[j] %in% c("SpawnBio")) {
 							if (subplot == 7) {
@@ -10135,11 +10175,11 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 					} ## end j loop
 				}
 			} ## end iarea loop
-#browser();return()
 			if (nareas > 1 & subplot %in% c(2, 3, 5, 6, 8, 10, 12, 13)) {
 				if (exists("area.names") && narea==length(areas))  ## need to source 'initialise.r' first
 					areanames = area.names
 				addLegend(0.975, 0.975, legend=linguaFranca(areanames[areas],l), lty=1, seg.len=3, pch=21, col=areacols[areas], pt.bg=areabgs[areas], bty="n", xjust=1, yjust=1)
+#browser();return()
 				#addLegend (0.975, 0.975, legend=linguaFranca(legtxt,l), lty=leglty, col=legcol, lwd=2, seg.len=3, bty="n", xjust=1, yjust=1)
 			}
 			if (subplot %in% c(101:103)) {
@@ -10196,15 +10236,19 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 					#legpch = c(21,151,151,21,22)  ## newer R versions don't support as many symbols
 				}
 				else if (subplot %in% 102) {
+					gear.area.names = paste0(gear.names, " (", area.names, ")")  ## too wordy (confusing)
+					legmain = ifelse(nareas==1, "Single-area model", "Multi-area model")
 					legtxt = c("Total biomass", paste0("Vulnerable biomass - ", gear.names), paste0("Catch - ", gear.names))
-					legcol = c("black", col.fleet[1:nfleets], col.fleet[1:nfleets])
-					legbg  = c("gainsboro", bg.fleet[1:nfleets], bg.fleet[1:nfleets])
+					legcol = c("black", col.fleet[1:ncfleets], col.fleet[1:ncfleets])
+					legbg  = c("gainsboro", bg.fleet[1:ncfleets], bg.fleet[1:ncfleets])
 					legpch = c(21,rep(21,ngear),rep(22,ngear))
 				}
 				else if (subplot %in% 103) {
+					gear.area.names = paste0(gear.names, " (", area.names, ")")  ## too wordy (confusing)
+					legmain = ifelse(nareas==1, "Single-area model", "Multi-area model")
 					legtxt = c(paste0("Harvest rate - ", gear.names), paste0("Catch (t) - ", gear.names))
-					legcol = c(col=col.fleet[1:nfleets], col.fleet[1:nfleets])
-					legbg  = c(bg.fleet[1:nfleets], bg.fleet[1:nfleets])
+					legcol = c(col=col.fleet[1:ncfleets], col.fleet[1:ncfleets])
+					legbg  = c(bg.fleet[1:ncfleets], bg.fleet[1:ncfleets])
 					legpch = c(rep(21,ngear),rep(22,ngear))
 				}
 				if (!is.null(legtxt)){
@@ -10221,29 +10265,26 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 							addLegend(0.97, 0.975, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1.2)
 						}
 					}
-					if (subplot %in% c(102)) {
+					if (subplot %in% c(102, 103)) {
 						if (forecastplot) {
-							zfor = grep("Total|Vulnerable", legtxt); zoff = grep("Total|Vulnerable", legtxt, invert=T)
+							if (subplot %in% c(102)) {
+								zfor = grep("Total|Vulnerable", legtxt); zoff = grep("Total|Vulnerable", legtxt, invert=T)
+							}
+							if (subplot %in% c(103)) {
+								zfor = grep("Harvest", legtxt); zoff = grep("Harvest", legtxt, invert=T)
+							}
 							forpch = legpch; forpch[zfor] = 21; forpch[zoff] = NA
-							fortxt = rep(paste0(rep(" ",1.75*max(sapply(legtxt,nchar))),collapse=""),length(legtxt))
-							addLegend(0.975, 0.975, legend=fortxt, pch=forpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1.2)
-							legpch[zfor] = 24
-							addLegend(0.975, 0.975, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1.2)
-						} else {
-							addLegend(0.975, 0.975, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1.2)
-						}
-					}
+							#fortxt = rep(paste0(rep(" ",1.75*max(sapply(legtxt,nchar))),collapse=""),length(legtxt))
+							#addLegend(0.925, 0.995, legend=fortxt, pch=forpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1, title=legmain, title.font=2, title.adj=0)
+							#legpch[zfor] = 24
+							#addLegend(0.975, 0.995, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1, title="")
+							## Trick is to plot legend twice, using white text the first time
+							addLegend(0.960, 0.995, legend=linguaFranca(legtxt,l), pch=forpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1, title=legmain, title.font=2, title.adj=0, title.col="black", text.col="white")
 #browser();return()
-					if (subplot %in% c(103)) {
-						if (forecastplot) {
-							zfor = grep("Harvest", legtxt); zoff = grep("Harvest", legtxt, invert=T)
-							forpch = legpch; forpch[zfor] = 21; forpch[zoff] = NA
-							fortxt = rep(paste0(rep(" ",1.7*max(sapply(legtxt,nchar))),collapse=""),length(legtxt))
-							addLegend(0.975, 0.975, legend=fortxt, pch=forpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1.2)
 							legpch[zfor] = 24
-							addLegend(0.975, 0.975, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1.2)
+							addLegend(0.975, 0.995, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1, title="")
 						} else {
-							addLegend(0.025, 0.975, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=0, yjust=1, cex=1.2)
+							addLegend(0.975, 0.995, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1, title=legmain, title.font=2, title.adj=0, title.col="black", text.col="black")
 						}
 					}
 				}
@@ -10276,3 +10317,224 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.ts
 
+
+## plotSS.yield ------------------------2026-02-17
+## Plot the equilibrium yield curve for an MPD run
+## r4ss Function: SSplotYield
+## ----------------------------------------r4ss|RH
+plotSS.yield=function (replist, subplots=1:5, 
+   refpoints=c("MSY", "Btgt", "SPR", "Current", "LRP", "USR"), 
+   add=FALSE, plot=TRUE, print=FALSE, labels=c("Fraction unfished",
+   "Equilibrium yield (t)", "Total biomass (t)", "Surplus production (t)",
+   "Yield per recruit (kg)", "Spawning output"), col="black", col2="black",
+   lty=1, lwd=2, cex.main=1, pwidth=6.5, pheight=5, punits="in", 
+   res=400, ptsize=10, plotdir="./english", verbose=TRUE, lang=c("f","e")) 
+{
+	if (print)
+		createFdir(lang)
+	plotinfo <- NULL
+	equil_yield <- replist[["equil_yield"]]
+	equil_yield <- equil_yield[equil_yield[["SPRloop"]] != 3, ]
+	equil_yield <- equil_yield[order(equil_yield[["Depletion"]], decreasing=FALSE), ]
+	if ("Tot_Catch" %in% names(equil_yield)) {
+		equil_yield[["Catch"]] <- equil_yield[["Tot_Catch"]]
+	}
+	nareas <- replist[["nareas"]]
+	nseasons <- replist[["nseasons"]]
+	timeseries <- replist[["timeseries"]]
+	SSB0 <- replist[["derived_quants"]]["SSB_Virgin", "Value"]
+	yieldfunc <- function(refpoints=NULL) {
+		if (!add) {
+			expandGraph(mar=c(3.5,3.5,1,1), mgp=c(2,0.5,0))
+			plot(0, type="n", xlim=c(0, max(equil_yield[["Depletion"]], 1, na.rm=TRUE)), 
+				ylim=c(0, max(equil_yield[["Catch"]], na.rm=TRUE)), xlab=labels[1], ylab=labels[2],
+				cex.axis=1.2, cex.lab=1.5)
+			abline(h=0, col="grey")
+			abline(v=0, col="grey")
+		}
+		lines(equil_yield[["Depletion"]], equil_yield[["Catch"]], lwd=lwd, col=col, lty=lty)
+		#colvec <- c(4, 2, 3, 1)  ## default
+		colvec <- c("red", "blue", "purple", "slategray", .colBlind[c("redpurple", "bluegreen")] )  ## MSY, Btgt, SPR, Current, LRP, USR
+		ltyvec <- c(1, 5, 3, 4, 3, 2)
+		if ("MSY" %in% refpoints) {
+			MSY = replist[["derived_quants"]]["SSB_MSY","Value"]/SSB0
+			lines(x=rep(MSY,2), y=c(0, replist[["derived_quants"]]["Dead_Catch_MSY","Value"]),
+				col=colvec[1], lwd=2, lty=ltyvec[1])
+		}
+		if ("Btgt" %in% refpoints) {
+			TRP  = round(replist[["derived_quants"]]["SSB_Btgt","Value"]/SSB0, 5)
+			YTRP = replist[["derived_quants"]]["Dead_Catch_Btgt","Value"]
+			LRP  = 0.4 * TRP
+			USR  = 0.8 * TRP
+			YLRP = approx(x=equil_yield[["Depletion"]], y=equil_yield[["Catch"]], xout = LRP)$y
+			YUSR = approx(x=equil_yield[["Depletion"]], y=equil_yield[["Catch"]], xout = USR)$y
+			lines(x=rep(TRP, 2), y=c(0, YTRP), col=colvec[2], lwd=2, lty=ltyvec[2])
+			if ("LRP" %in% refpoints)
+				lines(x=rep(LRP, 2), y=c(0, YLRP), col=colvec[5], lwd=2, lty=ltyvec[5])
+			if ("USR" %in% refpoints)
+				lines(x=rep(USR, 2), y=c(0, YUSR), col=colvec[6], lwd=2, lty=ltyvec[6])
+		}
+		if ("SPR" %in% refpoints) {
+		    lines(x=rep(replist[["derived_quants"]]["SSB_SPR", 
+		        "Value"]/SSB0, 2), y=c(0, replist[["derived_quants"]]["Dead_Catch_SPR", 
+		        "Value"]), col=colvec[3], lwd=2, lty=ltyvec[3])
+		}
+		if ("Current" %in% refpoints) {
+			Current = replist[["current_depletion"]]
+			which_val <- which(abs(equil_yield[["Depletion"]] - 
+				replist[["current_depletion"]]) == min(abs(equil_yield[["Depletion"]] - 
+				replist[["current_depletion"]])))[1]
+			lines(x=rep(Current,2), y=c(0, equil_yield[["Catch"]][which_val]), 
+				col=colvec[4], lwd=2, lty=ltyvec[4])
+		}
+		which_lines <- c("MSY" %in% refpoints, "Btgt" %in% refpoints, "SPR" %in% refpoints,
+			"Current" %in% refpoints, "LRP" %in% refpoints, "USR" %in% refpoints)
+		if (any(which_lines)) {
+			z = match(c("MSY","SPR","Current","Btgt","LRP","USR"),refpoints)
+			z = na.omit(z)
+			legtxt = sub("Current", paste0("Current = ",round(Current,2),"B0"),
+				sub("MSY", paste0("MSY = ",round(MSY,2),"B0"),
+				sub("USR", paste0("USR = ",USR,"B0"), 
+				sub("LRP", paste0("LRP = ",LRP,"B0"), 
+				sub("Btgt", paste0("TRP = ",show0(TRP,2),"B0"), refpoints)))))
+			legend("topright", bty="n", lwd=2, lty=ltyvec[which_lines][z], col=colvec[which_lines][z], legend=legtxt[z], seg.len=4, inset=0.01)
+		}
+	}
+	if (1 %in% subplots | 2 %in% subplots) {
+		if (!is.null(equil_yield[[1]][1]) && any(!is.na(equil_yield[[1]]))) {
+			if (any(!is.na(equil_yield[["Depletion"]])) & any(!is.na(equil_yield[["Catch"]])) & 
+				any(!is.infinite(equil_yield[["Depletion"]]))) {
+				if (1 %in% subplots) {
+					if (plot) {
+						yieldfunc()
+					}
+					if (print) {
+						file <- "yield1_yield_curve.png"
+						caption <- "Yield curve"
+						plotinfo <- save_png(plotinfo=plotinfo, file=file, plotdir=plotdir, pwidth=pwidth, 
+							pheight=pheight, punits=punits, res=res, ptsize=ptsize, caption=caption)
+						yieldfunc()
+						dev.off()
+					}
+				}
+				if (2 %in% subplots & !is.null(refpoints)) {
+					if (plot) {
+						yieldfunc(refpoints=refpoints)
+					}
+					if (print) {
+						file <- "yield2_yield_curve_with_refpoints.png"
+						caption <- "Yield curve with reference points"
+						plotinfo <- save_png(plotinfo=plotinfo, file=file, plotdir=plotdir, pwidth=pwidth, 
+							pheight=pheight, punits=punits, res=res, ptsize=ptsize, caption=caption)
+						yieldfunc(refpoints=refpoints)
+						dev.off()
+					}
+				}
+			}
+			else {
+				message("Skipped equilibrium yield plots: equil_yield has all NA values")
+			}
+		}
+		else {
+			message("Skipped equilibrium yield plots: no equil_yield results in this model")
+		}
+	}
+	df <- dplyr::summarise(dplyr::group_by(dplyr::ungroup(dplyr::summarise(dplyr::group_by(dplyr::mutate(dplyr::filter(timeseries, 
+		!Era %in% c("VIRG", "FORE")), catch_tot=rowSums(pick(starts_with("dead(B)")), 
+		na.rm=TRUE)), Yr, Seas), sum_Bio_all=sum(Bio_all), 
+		sum_SpawnBio=sum(SpawnBio), sum_catch_tot=sum(catch_tot))), 
+		Yr), mean_Bio_all=mean(sum_Bio_all), mean_SpawnBio=mean(sum_SpawnBio, 
+		na.rm=TRUE), catch_tot=sum(sum_catch_tot))
+	Nyrs <- nrow(df)
+	df[["sprod"]] <- NA
+	df[["sprod"]][1:(Nyrs - 1)] <- df[["mean_Bio_all"]][2:Nyrs] - 
+		df[["mean_Bio_all"]][1:(Nyrs - 1)] + df[["catch_tot"]][1:(Nyrs - 1)]
+	df <- dplyr::filter(df, !is.na(sprod))
+	sprodfunc <- function(bio_col, xlab) {
+		x <- df[[bio_col]]
+		y <- df[["sprod"]]
+		xlim <- c(0, max(x, na.rm=TRUE))
+		ylim <- c(min(0, y, na.rm=TRUE), max(y, na.rm=TRUE))
+		if (!add) {
+			plot(0, ylim=ylim, xlim=xlim, xlab=xlab, ylab=labels[4], type="n")
+		}
+		lines(x, y, col=col2)
+		old_warn <- options()[["warn"]]
+		options(warn=-1)
+		s <- seq(length(y) - 1)
+		arrows(x[s], y[s], x[s + 1], y[s + 1], length=0.06, angle=20, col=col2, lwd=1.2)
+		options(warn=old_warn)
+		abline(h=0, col="grey")
+		abline(v=0, col="grey")
+		points(x[1], y[1], col=col2, bg="white", pch=21)
+	}
+	YPR_timeseries <- function() {
+		if ("Era" %in% names(sprseries)) {
+			sub <- sprseries[["Era"]] != "FORE"
+		} else {
+			sub <- sprseries[["Yr"]] <= replist[["endyr"]]
+		}
+		plot(x=sprseries[["Yr"]][sub], y=sprseries[["YPR"]][sub], 
+			ylim=c(0, 1.1 * max(sprseries[["YPR"]][sub], na.rm=TRUE)), 
+			xlab="Year", ylab=labels[5], type="l", lwd=2, 
+			col="blue", yaxs="i")
+	}
+	if (3 %in% subplots) {
+		if (plot) {
+			sprodfunc(bio_col="mean_Bio_all", xlab=labels[3])
+		}
+		if (print) {
+			file <- "yield3_surplus_production.png"
+			caption <- paste("Surplus production vs. total biomass plot. For interpretation, see<br>", 
+				"<blockquote>Walters, Hilborn, and  Christensen, 2008,", 
+				"Surplus production dynamics in declining and", 
+				"recovering fish populations. <i>Can. J. Fish. Aquat. Sci.</i>", 
+				"65: 2536-2551. <a href='https://doi.org/10.1139/F08-170'>https://doi.org/10.1139/F08-170</a>.</blockquote>")
+			plotinfo <- save_png(plotinfo=plotinfo, file=file, plotdir=plotdir, pwidth=pwidth, pheight=pheight, 
+				punits=punits, res=res, ptsize=ptsize, caption=caption)
+			sprodfunc(bio_col="mean_Bio_all", xlab=labels[3])
+			dev.off()
+		}
+	}
+	if (4 %in% subplots) {
+		if (plot) {
+			sprodfunc(bio_col="mean_SpawnBio", xlab=labels[6])
+		}
+		if (print) {
+			file <- "yield4_surplus_production.png"
+			caption <- paste("Surplus production vs. spawning biomass plot. For interpretation, see<br>", 
+				"<blockquote>Forrest, Kronlund, Cleary, and Grinnell. 2023. An", 
+				"evidence-based approach for selecting a limit reference point for Pacific", 
+				"herring (<i>Clupea pallasii</i>) stocks in British Columbia, Canada. <i>Can. J. Fish.", 
+				"Aquat. Sci.</i> 80: 1071-1083.", "<a href='https://doi.org/10.1139/cjfas-2022-0168'>https://doi.org/10.1139/cjfas-2022-0168</a>.</blockquote>")
+			plotinfo <- save_png(plotinfo=plotinfo, file=file, plotdir=plotdir, pwidth=pwidth, pheight=pheight, 
+				punits=punits, res=res, ptsize=ptsize, caption=caption)
+			sprodfunc(bio_col="mean_SpawnBio", xlab=labels[6])
+			dev.off()
+		}
+	}
+	if (5 %in% subplots) {
+		sprseries <- replist[["sprseries"]]
+		if (is.null(sprseries)) {
+			if (verbose) {
+				message("Skipping yield per recruit plot because SPR_SERIES not in output")
+			}
+		} else {
+			if (plot) {
+				YPR_timeseries()
+			}
+			if (print) {
+				file <- "yield5_YPR_timeseries.png"
+				caption <- "Time series of yield per recruit (kg)"
+				plotinfo <- save_png(plotinfo=plotinfo, file=file, plotdir=plotdir, pwidth=pwidth, pheight=pheight, 
+					punits=punits, res=res, ptsize=ptsize, caption=caption)
+				YPR_timeseries()
+				dev.off()
+			}
+		}
+	}
+	if (!is.null(plotinfo)) 
+		plotinfo[["category"]] <- "Yield"
+	return(invisible(plotinfo))
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.yield

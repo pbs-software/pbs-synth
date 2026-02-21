@@ -9,10 +9,12 @@
   Only used for area-based models at this point.
 }
 \usage{
-load_extra_mcmc(dir.mcmc=".", dir.extra="./sso", quants5=c(0.05,0.25,0.5,0.75,0.95),
-   RC=c(TRUE,FALSE), loadCP=FALSE, startyr=1935, run="18v2b", 
-   areas=c("5ABC","5DE","3CD"), Fmethod=3, plot=TRUE, png=FALSE, pngres=400,
-   PIN=c(9,9), lang="e", show.combo=TRUE, vertical=FALSE)
+load_extra_mcmc(dir.mcmc=".", dir.extra="./sso", 
+   quants5=c(0.05,0.25,0.5,0.75,0.95), RC=c(TRUE,FALSE), 
+   loadCP=FALSE, virginyr=1933, startyr=1935, run="28v2c",
+   areas=c("5ABC","5DE","3CD"), Fmethod=3, benchmark=1, 
+   plot=TRUE, png=FALSE, pngres=400, PIN=c(9,9), lang="e",
+   show.combo=TRUE, vertical=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -23,10 +25,12 @@ load_extra_mcmc(dir.mcmc=".", dir.extra="./sso", quants5=c(0.05,0.25,0.5,0.75,0.
   \item{quants5}{\code{numeric} -- vector of five quantiles (usually 0.05, 0.25, 0.5, 0.75, and 0.95)}
   \item{RC}{\code{logical} -- (two-element vector) if \code{c(TRUE,TRUE)}, read in \code{'Results*.sso'} files and \code{'CompResults*.sso'} files}
   \item{loadCP}{\code{logical} -- if \code{TRUE}, load catch policies instead of regular MCMC runs}
+  \item{virginyr}{\code{numeric} -- virgin year chosen by user; usually \code{startyr-2}}
   \item{startyr}{\code{numeric} -- start year of the model}
   \item{run}{\code{character} -- MCMC run number (versions amended with lower-case letters}
   \item{areas}{\code{character} -- vector of subareas used in the model}
   \item{Fmethod}{\code{numeric} -- method used to estimate F, where 1=Pope's approximation, 2=Baranov equation, 3=hybrid}
+  \item{benchmark}{\code{numeric} -- benchmark code use in the file \code{'forecast.ss'}}
   \item{plot}{\code{logical} -- if \code{TRUE}, plot the various time series}
   \item{png}{\code{logical} -- if \code{TRUE}, send the figures to \code{'.png'} files}
   \item{pngres}{\code{numeric} -- figure resolution in pixels per inch}
@@ -75,7 +79,7 @@ Ushey K (2013)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2025-06-18}
+  Last modified \code{Rd: 2026-02-20}
 }
 \note{
   Best run on Linux Server to extract the information from thousands of
@@ -102,6 +106,6 @@ In package \pkg{r4ss}:\cr
 \keyword{hplot}
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{appFuns.r}
+\concept{appFuns}
 \concept{Linux}
 % Use only one concept per line.

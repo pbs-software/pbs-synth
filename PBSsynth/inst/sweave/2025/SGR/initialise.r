@@ -24,7 +24,7 @@ if (strSpp %in% c("405","SGR") && assyr==2025)
 	narea       = length(area.names)  ## number of areas
 	col.idx     = rep("purple",6)
 	bg.idx      = rep("thistle",6)
-	maxage.sel  = 30
+	maxage.sel  = 45
 	assYrs      = c(1999, 2001, 2014) ## technically, modelled current year (not assessment year)
 	## Redefine functions that have disappeared into namespaces
 	#.findSquare = PBSmodelling:::.findSquare
@@ -51,24 +51,24 @@ if (strSpp %in% c("405","SGR") && assyr==2025)
 		bg.idx      = rep("thistle",7)
 	}
 	if (run %in% c(8:100)) {
-		fleets.all = c("5ABC Trawl Fishery", "5DE Trawl Fishery", "3CD Trawl Fishery", "QCS Synoptic", "WCHG Synoptic", "WCVI Synoptic", "HS Synoptic", "GIG Historical", "NMFS Triennial")
+		fleets.all = c("5ABC Trawl Fishery", "5DE Trawl Fishery", "3CD Trawl Fishery", "QCS Synoptic", "WCHG Synoptic", "WCVI Synoptic", "HS Synoptic", "GIG Historical", "NMFS Triennial", "HBLL North", "HBLL South")
 		fleets.use  = c(1:9)
 		fleets.lab  = fleets.all[fleets.use]
 		nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
 		fleets.idx  = c(1:9)              ## fleets (idx, sel, af, gear) relative to subset
 		fleets.sel  = c(1:9)
-		fleets.af   = c(1:6)              ## link HS and GIG to QCS; link NMFS to WCVI
+		fleets.af   = c(1:6)              ## link HS to WCHG; link GIG to QCS; link NMFS to WCVI
 		fleets.gear = c(1,2,3)            ## commercial gear types
 		gear.names  = fleets.lab[fleets.gear]
 		ngear       = length(gear.names) ## number of commercial fisheries
 		col.idx     = c("blue","red","green4","blue","red","green4","blue","blue","green4")
 		bg.idx      = c("cyan","pink","green","cyan","pink","green","cyan","cyan","green")
 	}
-	if (run %in% c(8)) { ## added three fishery CPUE series but kept region coastwide (one area)
+	if (run %in% c(8,23,seq(29,99,2))) { ## added three fishery CPUE series but kept region coastwide (one area)
 		col.idx     = rep("purple",9)
 		bg.idx      = rep("thistle",9)
 	}
-	if (run %in% c(9:100)) {
+	if (run %in% c(9:22,seq(24,46,2),48:50, 52:100)) {  ## only multi-area models (exclude coastwide models)
 		area.names  = c("5ABC", "5DE", "3CD")
 		narea       = length(area.names)  ## number of areas
 	}
@@ -77,35 +77,59 @@ if (strSpp %in% c("405","SGR") && assyr==2025)
 		col.idx     = c("blue","red","green4","blue","blue","green4")
 		bg.idx      = c("cyan","pink","green","cyan","cyan","green")
 	}
-	if (run %in% c(15:16,18)) {
+	if (run %in% c(15:16,18:22,seq(28,46,2),48:50, 52:100)) {
 		col.idx     = c("blue","red","green4","blue","red","green4","red","blue","green4")
 		bg.idx      = c("cyan","pink","green","cyan","pink","green","pink","cyan","green")
 	}
-
+	if (run %in% c(22)) {  ## R18v11 was renamed R22v1
+		fleets.af   = c(1,4:6)              ## link 5DE and 3CD to 5ABC; link HS to WCHG; link GIG to QCS; link NMFS to WCVI
+	}
+	if (run %in% c(8) && ver %in% c("7b","7c") || run %in% c(18) && ver %in% c("11b","11c")) {  ## R08v7b MCMC
+		fleets.af   = c(1:3)              ## fix selectivity for the synoptic surveys, estimate it for the three fisheries
+	}
+	if (run %in% c(22) && ver %in% c("7b","7c") ) {
+		fleets.af   = c(1)              ## fix selectivity for the synoptic surveys, estimate it for the 5ABC fishery
+	}
 	## Sensitivity runs ---------------------------
-	## Something
-	if (run==101) {
-		fleets.use  = c(1:7,9:10)
-		fleets.lab  = fleets.all[fleets.use]
-		nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
-		fleets.idx  = c(2:9)   ## fleets (idx, sel, af, gear) relative to subset
-		fleets.sel  = c(1:9)
+	if (run %in% c(24,25,32,33)) { ## remove CPUE series for runs 24 and 25
+		fleets.idx  = c(4:9)
+		fleets.af   = c(1:6)
+		if (run %in% c(24,32)) {
+			col.idx     = c("blue","red","green4","red","blue","green4")
+			bg.idx      = c("cyan","pink","green","pink","cyan","green")
+		} else if (run %in% c(25,33)) {
+			col.idx     = rep("purple",6)
+			bg.idx      = rep("thistle",6)
+		}
 	}
-	## dome-shaped selectivity
-	if (run==102) {
-		maxage.sel = 35
-	}
-	## split trawl fleet into BT and MW trawl fleets
-	if (run==103) {
-		fleets.use  = c(11,12,2:7)
+	if (run %in% c(26,27,30,31)) { ## add two HBLL surveys
+		fleets.use  = c(1:11)
 		fleets.lab  = fleets.all[fleets.use]
-		nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
-		fleets.idx  = c(3:8)     ## fleets (idx, sel, af, gear) relative to subset
-		fleets.sel  = c(1:8)
-		fleets.af   = c(1,2,3,4,8) ## fix HS selectivity
-		fleets.gear = c(1:2)       ## commercial gear types
-		gear.names  = fleets.lab[fleets.gear]
-		ngear       =  length(gear.names)  ## number of commercial fisheries
+		fleets.idx  = fleets.sel  = fleets.use
+		fleets.af   = c(1:6,10:11)
+		if (run %in% c(26,30)) {
+			col.idx     = c("blue","red","green4","blue","red","green4","red","blue","green4","red","blue")
+			bg.idx      = c("cyan","pink","green","cyan","pink","green","pink","cyan","green","pink","cyan")
+			if (ver %in% c(1)) { ## HBLL South assigned to 5ABC
+				col.idx[11] = "green4"; bg.idx[11] = "green"
+			}
+		} else if (run %in% c(27,31)) {
+			col.idx     = rep("purple",11)
+			bg.idx      = rep("thistle",11)
+		}
+	}
+	if (run %in% c(46, 47)) { ## drop two historical surveys (GIG, NMFS)
+		fleets.use  = c(1:7)
+		fleets.lab  = fleets.all[fleets.use]
+		fleets.idx  = fleets.sel  = fleets.use
+		fleets.af   = c(1:6)
+		if (run %in% c(46)) {
+			col.idx     = c("blue","red","green4","blue","red","green4","red")
+			bg.idx      = c("cyan","pink","green","cyan","pink","green","pink")
+		} else if (run %in% c(47)) {
+			col.idx     = rep("purple",7)
+			bg.idx      = rep("thistle",7)
+		}
 	}
 } ## end SGR in 2025
 

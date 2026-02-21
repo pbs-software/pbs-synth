@@ -8,8 +8,8 @@
   Prepare a new MPD run based on a previous run.
 }
 \usage{
-prepMPD(run.rwt.ver,
-   d.base="C:/Users/haighr/Files/GFish/PSARC24/YTR/Data/SS3/YTR2024",
+prepMPD(run.rwt.ver, 
+   d.base="C:/Users/haighr/Files/GFish/PSARC25/SGR/Data/SS3/SGR2025",
    w=NULL, cvpro=NULL, modify=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -35,7 +35,7 @@ prepMPD(run.rwt.ver,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-04-11}
+  Last modified \code{Rd: 2026-02-20}
 }
 \seealso{
 In package \pkg{PBSsynth}:\cr
@@ -48,6 +48,6 @@ In package \pkg{PBSsynth}:\cr
 \keyword{IO}
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{utilFuns.r}
+\concept{utilFuns}
 % \concept{ ~cpt2 }
 % Use only one concept per line.

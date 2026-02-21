@@ -10,11 +10,12 @@
   for various MCMC derived parameters.
 }
 \usage{
-plotSS.pmcmc(obj, pqs=tcall(quants5), xyType="quantBox", lineType=c(3,2,1,2,3),
-   refLines=NULL, xLim=NULL, yLim=NULL, userPrompt=FALSE, save=TRUE,
-   tcl.val=-0.2, yrs, y0=TRUE, pyrs=NULL, LRP=NULL, USR=NULL, catpol=NULL,
-   yaxis.by, yLab="Recruitment", outnam, lang=c("e","f"), ptypes="win",
-   pngres=400, PIN=c(8,6), gmu=FALSE, ...)
+plotSS.pmcmc(obj, pqs=NULL, xyType="quantBox", lineType=c(3,2,1,2,3), 
+   refLines=NULL, xLim=NULL, yLim=NULL, userPrompt=FALSE, save=TRUE, 
+   tcl.val=-0.2, yrs, y0=TRUE, pyrs=NULL, 
+   refpts=list(LRP=NULL,USR=NULL,TRP=NULL,RRR=NULL), catpol=NULL,
+   yaxis.by, yLab="Recruitment", outnam, lang=c("e","f"), 
+   ptypes="win", pngres=400, PIN=c(8, 6), gmu=TRUE, ...)
 
 plotSS.dmcmc(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9),
    BRP=rep(TRUE,3), rhat=TRUE, steep=TRUE)
@@ -37,10 +38,13 @@ plotSS.rmcmc(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9))
   \item{yrs}{\code{numeric} -- reconstruction years to use along x-axis}
   \item{y0}{\code{logical} -- if \code{TRUE}, start the y-axis at zero}
   \item{pyrs}{\code{numeric} -- projection years to use along x-axis}
-  \item{LRP}{\code{numeric} -- value of the limit reference point on x-axis
-    (e.g., \code{0.2} for \eqn{B_t/B_0}{Bt/B0}, \code{0.4} for \eqn{B_t/B_\text{MSY}}{Bt/Bmsy})}
-  \item{USR}{\code{numeric} -- value of the upper stock reference point on x-axis
-    (e.g., \code{0.4} for \eqn{B_t/B_0}{Bt/B0}, \code{0.8} for \eqn{B_t/B_\text{MSY}}{Bt/Bmsy})}
+  \item{refpts}{\code{numeric} -- list of reference points:
+    \itemize{
+      \item \code{'LRP'} = limit reference point
+      \item \code{'USR'} = upper stock reference
+      \item \code{'TRP'} = target reference point
+      \item \code{'RRR'} = removal reference rate
+    }}
   \item{catpol}{\code{numeric} -- catch policy (usually constant catch in tonnes)}
   \item{yaxis.by}{\code{numeric} -- increments along the y-axis to place tick marks}
   \item{yLab}{\code{character} -- label for the y-axis}
@@ -83,7 +87,7 @@ plotSS.rmcmc(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9))
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2025-06-18}
+  Last modified \code{Rd: 2026-02-20}
 }
 \note{
   Modified from \pkg{PBSawatea}'s \code{'plotBmcmcPOP'} function by Andrew Edwards (PBS).
@@ -105,6 +109,6 @@ In package \pkg{r4ss}:\cr
 % \keyword{ ~kwd2 }
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{plotFuns.r}
+\concept{plotFuns}
 % \concept{ ~cpt2 }
 % Use only one concept per line.

@@ -14,12 +14,12 @@ importFrom("grDevices", "adjustcolor", "colorRampPalette", "dev.list",
            "postscript", "rgb", "topo.colors")
 importFrom("graphics", "abline", "arrows", "axis", "barplot", "box",
            "contour", "frame", "hist", "image", "legend", "lines",
-           "matplot", "mtext", "pairs", "par", "persp", "points",
-           "polygon", "rect", "segments", "text", "title")
-importFrom("stats", "acf", "aggregate", "as.ts", "cor", "density",
+           "matplot", "mtext", "pairs", "par", "persp", "plot.default",
+           "points", "polygon", "rect", "segments", "text", "title")
+importFrom("stats", "acf", "aggregate", "as.ts", "approx", "cor", "density",
            "dnorm", "fft", "lm", "loess", "loess.smooth", "median", "na.omit",
-           "pnorm", "predict", "qchisq", "qlnorm", "qnorm", "qt", "quantile",
-           "resid", "residuals", "sd", "time", "var")
+           "pnorm", "predict", "qchisq", "qlnorm", "qnorm", "qqnorm", "qt",
+           "quantile", "resid", "residuals", "sd", "time", "var")
 importFrom("utils", "Sweave", "capture.output", "flush.console",
            "head", "menu", "read.table", "tail", "type.convert",
            "write.csv", "write.table")
@@ -37,6 +37,5 @@ importFrom("nlme", "gls")
 importFrom("stringr", "str_split")
 importFrom("tictoc", "tic", "toc")
 importFrom("xtable", "xtable")
-
 
 

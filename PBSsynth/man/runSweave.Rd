@@ -8,7 +8,7 @@
   Run Sweave code to collect SS3 model run output and create a PDF summary.
 }
 \usage{
-runSweave(d.model=getwd(), d.sweave, type="MPD", figs.only=FALSE)
+runSweave(d.model=getwd(), d.sweave, type="MPD", figs.only=FALSE, debug=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,6 +18,8 @@ runSweave(d.model=getwd(), d.sweave, type="MPD", figs.only=FALSE)
   \item{figs.only}{\code{logical} -- if \code{TRUE}, select Sweave code that
     only collates the figures into a PDF file
     (\emph{has not been supported for some time, may or may not work})}
+  \item{debug}{\code{logical} -- if \code{TRUE}, print various values 
+    to the R console for debugging purposes}
 }
 \details{
   Creates a copy of \code{'sweaveMPD.Rnw'} or \code{'sweaveMCMC.Rnw'},
@@ -35,7 +37,7 @@ runSweave(d.model=getwd(), d.sweave, type="MPD", figs.only=FALSE)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-26}
+  Last modified \code{Rd: 2026-02-20}
 }
 \note{
   Used exclusivley to evaluate model runs.
@@ -58,6 +60,6 @@ In package \pkg{r4ss}:\cr
 % \keyword{ ~kwd2 }
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{utilFuns.r}
+\concept{utilFuns}
 % \concept{ ~cpt2 }
 % Use only one concept per line.

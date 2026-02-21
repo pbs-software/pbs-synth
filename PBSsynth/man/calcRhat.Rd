@@ -8,10 +8,12 @@
   and Effective Sample Size (ESS) for MCMC model parameters.
 }
 \usage{
-calcRhat(dir=".", nchains=8, parpos, rhat.only=FALSE, only.bad=FALSE, 
-   badhat=1.01, offset=0.0025, recdevs=FALSE, zero.bar=TRUE, 
-   barcols=.colBlind, xlim=NULL, png=FALSE, pngres=400, PIN=c(10,7.5), 
-   lang="e", outnam)
+calcRhat(dir=".", nchains=8, parpos, rhat.only=FALSE,
+   only.bad=FALSE, badhat=1.01, offset=0.0025,
+   recdevs=FALSE, zero.bar=TRUE, barcols=.colBlind,
+   xlim=NULL, exlax=NULL, htype=c("histogram","density"),
+   stacked=FALSE, smoother="density", 
+   png=FALSE, pngres=400, PIN=c(10,7.5), lang="e", outnam)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -26,6 +28,11 @@ calcRhat(dir=".", nchains=8, parpos, rhat.only=FALSE, only.bad=FALSE,
   \item{zero.bar}{\code{logical} -- if \code{TRUE}, plot R-hat lines starting at zero}
   \item{barcols}{\code{character} -- colours for histogram bars stacked by chain}
   \item{xlim}{\code{numeric} -- limits of the x-axis}
+  \item{exlax}{\code{character} -- optional prefix for the run label}
+  \item{htype}{\code{character} -- plot type for comparing chains of select parameters;
+    \code{'histogram'} -- stacked histograms; \code{'density'} -- fitted density curves}
+  \item{stacked}{\code{logical} -- if \code{TRUE}, stack histograms if \code{htype='histogram'}}
+  \item{smoother}{\code{character} -- name of density function if \code{htype='density'}}
   \item{png}{\code{logical} -- if \code{TRUE}, send plot to a PNG file}
   \item{pngres}{\code{numeric} -- resolution of PNG file (pixels/inch)}
   \item{PIN}{\code{numeric} -- dimensions (width, height) of PNG file (inches)}
@@ -51,7 +58,7 @@ Rank-normalization, folding, and localization: an improved \eqn{\widehat{R}}{R-h
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2025-06-18}
+  Last modified \code{Rd: 2026-02-20}
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{
@@ -64,6 +71,6 @@ In package \pkg{PBSsynth}:\cr
 % \keyword{ ~kwd2 }
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{plotFuns.r}
+\concept{plotFuns}
 % \concept{ ~cpt2 }
 % Use only one concept per line.
