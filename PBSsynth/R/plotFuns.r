@@ -1,8 +1,10 @@
-##================================================2025-08-08
+##================================================2026-02-23
 ## PBS Stock Synthesis plotting functions:
 ## ---------------------------------------
 ## calcRhat..............Plot the split-Rhat statistic and ESS
+## compAE................Compare AE vectors (replaces Excel foofarall)
 ## compTS................Compare time series medians
+## compWT................Compare weights or lengths among survey series
 ## mochaLatte............An alternative to lattice plots (mockLattice)
 ## panelBoxes............Plot quantile plots using 'nchains' to delimit separate boxes
 ## panelChains...........Plots cumulative fequency of 'nchains' by partitioning one trace
@@ -87,7 +89,7 @@ calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
 	rhat_rfun <- function(sims) {
 		#' @references
 		#' Aki Vehtari, Andrew Gelman, Daniel Simpson, Bob Carpenter, and
-		#' Paul-Christian Bürkner (2019). Rank-normalization, folding, and
+		#' Paul-Christian B\"{u}rkner (2019). Rank-normalization, folding, and
 		#' localization: An improved R-hat for assessing convergence of
 		#' MCMC. \emph{arXiv preprint} \code{arXiv:1903.08008}.
 		if (anyNA(sims)) {
@@ -117,7 +119,7 @@ calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
 	ess_rfun <- function(sims) {
 		#' @references
 		#' Aki Vehtari, Andrew Gelman, Daniel Simpson, Bob Carpenter, and
-		#' Paul-Christian Bürkner (2019). Rank-normalization, folding, and
+		#' Paul-Christian B\"{u}rkner (2019). Rank-normalization, folding, and
 		#' localization: An improved R-hat for assessing convergence of
 		#' MCMC. \emph{arXiv preprint} \code{arXiv:1903.08008}.
 		if (is.vector(sims)) {
@@ -562,6 +564,137 @@ calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcRhat
 
 
+## compAE ------------------------------2026-02-12
+## Compare AE vectors (replaces Excel foofarall)
+## ---------------------------------------------RH
+compAE <- function(fnlen, fnage, fnmod=NULL, CASAL=0.10, maxage=45,
+   strSpp="417", tabs=TRUE, png=FALSE, pngres=400, PIN=c(10,7), lang=c("f","e"))
+{
+	ici = lenv()
+	data ("species", package="PBSdata", envir=ici)
+	spcode = species[strSpp,"code3"]
+	spname = species[strSpp,"name"]
+	f1 = if (is.null(fnlen)) NULL else read.csv(fnlen)
+	f2 = if (is.null(fnage)) NULL else read.csv(fnage)
+	f3 = NULL
+	if (!is.null(fnmod)) {
+		f3 = read.csv(fnmod)
+		t3 = test=t(f3[,-1])
+		dimnames(t3) = list(age=sub("Age\\.","",rownames(t3)), vals=f3[,1])
+		f3 = as.data.frame(t3)
+		if (strSpp == "405") {  ## use old names
+			d3 = read.csv(file.path(dirname(fnmod),"sigAge0.csv"))  ## calcAE: before filtering for records where n>5 (sigAge not used in AEfit anyway)
+		} else {
+			d3 = read.csv(file.path(dirname(fnmod),paste0("calcAE(", strSpp, ")-sigAge0.csv")))
+		}
+	}
+	ages = (0:maxage) + 0.5
+	nage = length(ages)
+	for (i in 1:3) {
+		fi = switch(i, f1, f2, f3)
+		if (is.null(fi)) next
+		if (nrow(fi) < nage) {
+			message("Sumtingwong") ; browser(); return()
+		}
+		fi = fi[1:nage,]
+		assign(switch(i, "f1", "f2", "f3"), fi)
+	}
+#browser();return()
+	atab = data.frame(
+		a   = ages, AE0=rep(0.001, nage) )
+	if (!is.null(f1)) {
+		atab = data.frame (atab, 
+			nL  = f1$N, muL = f1$MU, sdL = f1$SD, cvL = f1$CV,
+			AE1 = f1$SDa, AE2 =f1$SDsm )
+	}
+	if (!is.null(f2)){ 
+		atab = data.frame (atab, 
+			nA  = f2$N, muA = f2$MU, sdA = f2$SD, cvA = f2$CV,
+			AE3 = f2$SDa, AE4 =f2$SDsm )
+	}
+	if (!is.null(CASAL)){ 
+		atab = data.frame (atab, 
+		AE5 = ages * CASAL )
+	}
+	if (!is.null(f3)) {
+		atab = data.frame (atab, AE6 = f3$SD)
+	}
+	useAE=c(T,rep(!is.null(f1),2),rep(!is.null(f2),2),!is.null(CASAL),!is.null(f3))
+	AElab = c("noAE", "CVlen", "smCVlen", "CVage", "smCVage", "CASAL", "Punt")[useAE]
+
+	csvout = paste0("./tables/compAE(", strSpp, ")-", paste0(AElab,collapse="+"), ".csv")
+	if (tabs) {
+		clearFiles(csvout)
+		write.csv(atab, file=csvout, row.names=FALSE)
+	}
+#browser();return()
+
+	## Plot the results
+	## --------------------------------------------
+	xlim = c(0,maxage)
+	ylim = range(atab[,grep("AE",colnames(atab))],na.rm=TRUE)
+	if (useAE[7])
+		ylim= range(ylim, d3[,"sigAtAge"], na.rm=TRUE)
+	ylim[1] = 0
+	fout.e = paste0("compAE(", strSpp, ")-", paste0(AElab,collapse="+"))
+	for (l in lang) {
+		changeLangOpts(L=l)
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+		if (png){ 
+			createFdir(l)
+			clearFiles(paste0(fout,".png"))
+			png(file=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		}
+		expandGraph(mfrow=c(1,1), mar=c(3.5,3.5,1,1), oma=c(0,0,0,0), mgp=c(2,0.5,0))
+		plot(NA, xlim=xlim, ylim=ylim, xlab=linguaFranca("Expected age",l), ylab=linguaFranca("Standard deviation",l), cex.axis=1.25, cex.lab=1.5)
+		abline(h=if (max(atab[,-1])<=10) seq(1,ylim[2],1) else seq(5,ylim[2],5), col="gainsboro")
+		if (useAE[4]) {
+			## Add polgons with missing age data
+			xnot = rep(NA, length(ages))
+			z0   = atab$sdA==0
+			xnot[z0] = ages[z0]
+			xgrp = split(na.omit(xnot),cumsum(is.na(xnot))[!is.na(xnot)])  ## https://stackoverflow.com/questions/74674411/split-vector-by-each-na-in-r
+			xpol = lapply(xgrp, function(x) { c(min(x)-0.5, max(x)+0.5) })
+			ypol = lapply(xpol, function(x) { par()$usr[3:4] })
+			rubbish = sapply(1:length(xpol), function(i)  {
+				x = xpol[[i]]; y = ypol[[i]]
+				polygon(x[c(1,1,2,2)], y[c(1,2,2,1)], col=lucent("grey",0.5), border=FALSE)
+			})
+		}
+#browser();return()
+		## Add AE1 and AE3
+		if (useAE[1]) lines(ages, atab$AE0, col="blue", lty=3, lwd=2)
+		if (useAE[2]) lines(ages, atab$AE1, col="blue", lty=3)
+		if (useAE[4]) lines(ages, atab$AE3, col="red", lty=3)
+		if (useAE[2]) points(ages, atab$AE1, col="blue", pch=20)
+		if (useAE[4]) points(ages, atab$AE3, col="red", pch=18)
+		## Add AE2 and AE4
+		if (useAE[3]) lines(ages, atab$AE2, col="blue", lty=1, lwd=2)
+		if (useAE[5]) lines(ages, atab$AE4, col="red", lty=1, lwd=2)
+		## Add AE5 and AE6
+		if (useAE[6]) lines(ages, atab$AE5, col="purple", lty=2, lwd=3)
+		if (useAE[7]) { ## AgeingError using Punt model
+			xoff = 0
+			points(d3[,"Primary_Age"] + xoff, d3[,"sigAtAge"], col="blue", pch=16)
+			lines(ages, atab$AE6, col="forestgreen", lty=4, lwd=3)
+		}
+		if (all(useAE)) {
+			legtxt = linguaFranca(c("AE1 : length-at-age CV", "AE2 : loess-smooth AE1", "AE3 : precision-reader CV", "AE4 : loess-smooth AE3", "AE5 : CASAL constant CV=0.1", "AE6 : AgeingError (Punt model)"), l)
+			addLegend(0.20, 0.97, col=c("blue","blue","red","red","purple","forestgreen"), pch=c(20,NA,18,NA,NA,NA), lty=c(3,1,3,1,2,4), lwd=c(1,2,1,2,2,2), seg.len=4, legend=legtxt, bty="n", xjust=0, title="SD derivation", title.font=2, title.adj=0, title.cex=1.2)
+		}
+		if (sum(useAE)==2 && useAE[1] && useAE[7]) {
+			legtxt = linguaFranca(c("no ageing error", "AgeingError (Punt) model input", "AgeingError (Punt) model fit"), l)
+			addLegend(0.10, 0.9, col=c("blue","blue","forestgreen"), pch=c(NA,16,NA), lty=c(3,NA,4), lwd=c(2,1,2), seg.len=4, legend=legtxt, bty="n", xjust=0, title=linguaFranca(spname,l), title.font=2, title.adj=0, title.cex=1.2)
+		}
+#browser();return()
+		box()
+		if (png) dev.off()
+	}; eop()
+#browser();return()
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compAE
+
+
 ## compTS-------------------------------2022-07-04
 ## Compare time series medians
 ## ---------------------------------------------RH
@@ -581,6 +714,79 @@ compTS <- function(x, runs=c(24,39), val="Rtdev", type="bars")
 	addLegend(0.05, 0.95, fill=c("black","green"), legend=colnames(tsdf), title=val, bty="n")
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compTS
+
+
+## compWT-------------------------------2026-02-11
+##  Compare weights or lengths among survey series
+## ---------------------------------------------RH
+compWT <- function(dat, ssid, sex=2, wfld="len", ylim=c(0,60),
+   Nmin=10, good=c(1,3,4,16,21,79), bad=c(22,36), outnam, strSpp="417",
+   lang="e", png=FALSE, pngres=400, PIN=c(9,8))
+{
+	fnam = as.character(substitute(dat))
+	spp  = sub("bio","",fnam)
+	spp  = strSpp
+	data("species", package="PBSdata", envir=.PBStoolEnv)
+	spp3 = ttcall(species)[spp,"code3"]
+	#ssid.all = c('1'="QCS synoptic", '2'="HS assemblage", '3'="HS synoptic", '4'="WCVI synoptic", '14'="IPHC longline", '16'="WCHG synoptic",
+	#	'21'="GIG historical", '22'="HBLL north", '34'="SoG Hake", '36'="HBLL south", '39'="IRFLL north", '40'="IRFLL south",
+	#	'48'="Dogfish", '68'="Hake acoustic", '79'="NMFS triennial", '670'="Shrimp trawl", '820'="Jig surveys")
+	ssid.all = gfb.codes$ssid
+
+	dat = dat[dat[,wfld] > 0 & !is.na(dat[,wfld]),]
+	dat = dat[is.element(dat$sex, sex),]  ## qualify by sex
+	if (missing(ssid)) {                  ## ssid = survey series ID
+		ssid = .su(dat$SSID)
+	}
+	nfish = table(dat$SSID)
+	zfish = nfish >= Nmin
+	ussid = names(nfish)[zfish] ## use SSIDs with at least Nmin fish specimens
+#browser();return()
+	dat = dat[is.element(dat$SSID, ussid ),]
+	wts = split(dat[,wfld], dat$SSID)
+	z1  = is.element(names(wts), as.character(good))
+	z2  = is.element(names(wts), as.character(bad))
+	boxfill = rep("gainsboro", length(wts))
+	boxfill[z1] = "green"
+	boxfill[z2] = "coral"
+	medcol = rep("slategray", length(wts))
+	medcol[z1] = "blue"
+	medcol[z2] = "black"
+	names(wts) = ssid.all[names(wts)]
+	pars = list(outpch="+", outcol="gray80", outcex=1.2, boxfill=boxfill, medcol=medcol)
+
+	## PJS suggest adding # records
+	nfish = sapply(wts,countVec)
+
+
+	createFdir(lang)
+	if(missing(outnam))
+		outnam = paste0("compWT(", spp, ")-", switch(sex,'1'="Male-", '2'="Female-", ""), switch(wfld, 'len'="Length", 'wt'="Weight", 'age'="Age"), "-by-SSID")
+#browser();return()
+	fout.e = outnam
+	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		changeLangOpts(L=l)
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+		if (png) {
+			clearFiles(paste0(fout,".png"))
+			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		}
+		expandGraph(mfrow=c(1,1), mar=c(ifelse(l=="e",8,8),3,1,1))
+		out = quantBox (wts, pars=pars, xaxt="n", las=1, ylim=ylim, boxwex=0.6)
+		text(1:length(out$n), out$stats[3,], round(out$stats[3,],0), pos=3, offset=0.2, col=medcol, font=2, cex=0.8)
+#browser();return()
+		xlab = linguaFranca(names(wts),l)
+		xlab = sub(" du merlu","\ndu merlu",sub("merlu du ","merlu du\n",sub("morue ","morue\n",xlab)))
+		axis(side=1, at=1:length(wts), labels=xlab, las=2, tcl=-0.3)
+		mtext(linguaFranca(switch(wfld, 'len'="Length (cm)", 'wt'="Weight (kg)", 'age'="Age (y)"),l), side=2, line=1.75, cex=1.5, las=3)
+		text(1:length(wts), 0, labels=format(nfish, big.mark=ifelse(is.null(options()$big.mark), ",", options()$big.mark)), col=sub("black","red",medcol), font=2 )
+		addLabel(0.975, 0.975, txt=switch(sex, '1'="Males", '2'="Females"), col=switch(sex, '1'="green4", '2'="darkorchid4"), cex=1.4, font=2, adj=c(1,1))
+		addLabel(0.015, 0.029, txt="N=", col="black", cex=1.2, adj=c(0,0))
+		if (png) dev.off()
+	}; eop()
+#browser();return()
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compWT
 
 
 ## mochaLatte---------------------------2024-07-05
@@ -908,7 +1114,7 @@ panelTraces <- function (mcmc, mpd=mcmc[1,], nchains=1, pdisc=0,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~panelTraces
 
 
-## plot_cres ---------------------------2026-02-20
+## plot_cres ---------------------------2026-02-23
 ##  Produce 5-panel overview of residuals (pkg=compResidual) by default,
 ##  or one specific plot if the 'pick_one' argument is provided.
 ## Changed name from 'plot.cres.new' to 'plot_cres' to avoid methods crap (RH 260220)
@@ -1011,9 +1217,11 @@ plot_cres <- function (x, pick_one=NULL, maxLag=NULL, main="",
 		if (ncol(x)>1 && (pick_one == 2 || missing(pick_one))) {
 			if (missing(pick_one))
 				par(fig=c(0,0.5,0,0.4), new=TRUE)
-			acfr <- compResidual:::acf_res(x, "row")
-			acfc <- compResidual:::acf_res(x, "column")
-			acfd <- compResidual:::acf_res(x, "diagonal")
+			mess = c(
+				"acfr <- compResidual:::acf_res(x, \"row\")",
+				"acfc <- compResidual:::acf_res(x, \"column\")",
+				"acfd <- compResidual:::acf_res(x, \"diagonal\")"  )
+			eval(parse(text=paste0(mess, collapse="; ")))
 			ci <- 1.96/sqrt(length(x))
 			## Get rid of lag 0
 			acfr$acf = acfr$acf[-1,,,drop=F]; acfr$lag = acfr$lag[-1,,,drop=F]

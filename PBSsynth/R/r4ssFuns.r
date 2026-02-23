@@ -10318,13 +10318,13 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.ts
 
 
-## plotSS.yield ------------------------2026-02-17
+## plotSS.yield ------------------------2026-02-23
 ## Plot the equilibrium yield curve for an MPD run
 ## r4ss Function: SSplotYield
 ## ----------------------------------------r4ss|RH
 plotSS.yield=function (replist, subplots=1:5, 
    refpoints=c("MSY", "Btgt", "SPR", "Current", "LRP", "USR"), 
-   add=FALSE, plot=TRUE, print=FALSE, labels=c("Fraction unfished",
+   add=FALSE, plot=TRUE, print=FALSE, tabs=TRUE, labels=c("Fraction unfished",
    "Equilibrium yield (t)", "Total biomass (t)", "Surplus production (t)",
    "Yield per recruit (kg)", "Spawning output"), col="black", col2="black",
    lty=1, lwd=2, cex.main=1, pwidth=6.5, pheight=5, punits="in", 
@@ -10335,6 +10335,7 @@ plotSS.yield=function (replist, subplots=1:5,
 	plotinfo <- NULL
 	equil_yield <- replist[["equil_yield"]]
 	equil_yield <- equil_yield[equil_yield[["SPRloop"]] != 3, ]
+	colnames(equil_yield) = sub("SSB/Bzero","Depletion", colnames(equil_yield))  ## Later versions of r4ss must have changed this
 	equil_yield <- equil_yield[order(equil_yield[["Depletion"]], decreasing=FALSE), ]
 	if ("Tot_Catch" %in% names(equil_yield)) {
 		equil_yield[["Catch"]] <- equil_yield[["Tot_Catch"]]
@@ -10343,6 +10344,12 @@ plotSS.yield=function (replist, subplots=1:5,
 	nseasons <- replist[["nseasons"]]
 	timeseries <- replist[["timeseries"]]
 	SSB0 <- replist[["derived_quants"]]["SSB_Virgin", "Value"]
+	if (tabs){
+		createTdir()
+		write.csv(equil_yield, file="./tables/equil_yield.csv", row.names=FALSE)
+#browser();return()
+	}
+
 	yieldfunc <- function(refpoints=NULL) {
 		if (!add) {
 			expandGraph(mar=c(3.5,3.5,1,1), mgp=c(2,0.5,0))
@@ -10352,13 +10359,16 @@ plotSS.yield=function (replist, subplots=1:5,
 			abline(h=0, col="grey")
 			abline(v=0, col="grey")
 		}
+		collectRP = list()
 		lines(equil_yield[["Depletion"]], equil_yield[["Catch"]], lwd=lwd, col=col, lty=lty)
 		#colvec <- c(4, 2, 3, 1)  ## default
 		colvec <- c("red", "blue", "purple", "slategray", .colBlind[c("redpurple", "bluegreen")] )  ## MSY, Btgt, SPR, Current, LRP, USR
 		ltyvec <- c(1, 5, 3, 4, 3, 2)
 		if ("MSY" %in% refpoints) {
-			MSY = replist[["derived_quants"]]["SSB_MSY","Value"]/SSB0
-			lines(x=rep(MSY,2), y=c(0, replist[["derived_quants"]]["Dead_Catch_MSY","Value"]),
+			MSY  = replist[["derived_quants"]]["SSB_MSY","Value"]/SSB0
+			YMSY = replist[["derived_quants"]]["Dead_Catch_MSY","Value"]
+			collectRP[["MSY"]] = c('x'=MSY, 'y'=YMSY)
+			lines(x=rep(MSY,2), y=c(0, YMSY),
 				col=colvec[1], lwd=2, lty=ltyvec[1])
 		}
 		if ("Btgt" %in% refpoints) {
@@ -10368,6 +10378,11 @@ plotSS.yield=function (replist, subplots=1:5,
 			USR  = 0.8 * TRP
 			YLRP = approx(x=equil_yield[["Depletion"]], y=equil_yield[["Catch"]], xout = LRP)$y
 			YUSR = approx(x=equil_yield[["Depletion"]], y=equil_yield[["Catch"]], xout = USR)$y
+			collectRP[["LRP"]] = c('x'=LRP, 'y'=YLRP)
+			collectRP[["USR"]] = c('x'=USR, 'y'=YUSR)
+			collectRP[["TRP"]] = c('x'=TRP, 'y'=YTRP)
+			tab.opt2 = do.call("rbind", lapply(collectRP, function(x){ data.frame(matrix(x, ncol=2))}))
+			colnames(tab.opt2) = c("B/B0","Y*")
 			lines(x=rep(TRP, 2), y=c(0, YTRP), col=colvec[2], lwd=2, lty=ltyvec[2])
 			if ("LRP" %in% refpoints)
 				lines(x=rep(LRP, 2), y=c(0, YLRP), col=colvec[5], lwd=2, lty=ltyvec[5])
@@ -10375,17 +10390,17 @@ plotSS.yield=function (replist, subplots=1:5,
 				lines(x=rep(USR, 2), y=c(0, YUSR), col=colvec[6], lwd=2, lty=ltyvec[6])
 		}
 		if ("SPR" %in% refpoints) {
-		    lines(x=rep(replist[["derived_quants"]]["SSB_SPR", 
-		        "Value"]/SSB0, 2), y=c(0, replist[["derived_quants"]]["Dead_Catch_SPR", 
-		        "Value"]), col=colvec[3], lwd=2, lty=ltyvec[3])
+			lines(x=rep(replist[["derived_quants"]]["SSB_SPR","Value"]/SSB0, 2), 
+				y=c(0, replist[["derived_quants"]]["Dead_Catch_SPR","Value"]), col=colvec[3], lwd=2, lty=ltyvec[3])
 		}
 		if ("Current" %in% refpoints) {
 			Current = replist[["current_depletion"]]
 			which_val <- which(abs(equil_yield[["Depletion"]] - 
 				replist[["current_depletion"]]) == min(abs(equil_yield[["Depletion"]] - 
 				replist[["current_depletion"]])))[1]
-			lines(x=rep(Current,2), y=c(0, equil_yield[["Catch"]][which_val]), 
-				col=colvec[4], lwd=2, lty=ltyvec[4])
+			Ycurrent   = equil_yield[["Catch"]][which_val]
+			collectRP[["Bcurr"]] = c('x'=Current, 'y'=Ycurrent)
+			lines(x=rep(Current,2), y=c(0, Ycurrent), col=colvec[4], lwd=2, lty=ltyvec[4])
 		}
 		which_lines <- c("MSY" %in% refpoints, "Btgt" %in% refpoints, "SPR" %in% refpoints,
 			"Current" %in% refpoints, "LRP" %in% refpoints, "USR" %in% refpoints)
@@ -10399,6 +10414,12 @@ plotSS.yield=function (replist, subplots=1:5,
 				sub("Btgt", paste0("TRP = ",show0(TRP,2),"B0"), refpoints)))))
 			legend("topright", bty="n", lwd=2, lty=ltyvec[which_lines][z], col=colvec[which_lines][z], legend=legtxt[z], seg.len=4, inset=0.01)
 		}
+		if (tabs && 2 %in% subplots) {
+			tab.opt2 = do.call("rbind", lapply(collectRP, function(x){ data.frame(matrix(x, ncol=2))}))
+			colnames(tab.opt2) = c("B/B0","Y*")
+			write.csv(tab.opt2, file="./tables/yield2_ref_points.csv", row.names=TRUE)
+		}
+#browser();return()
 	}
 	if (1 %in% subplots | 2 %in% subplots) {
 		if (!is.null(equil_yield[[1]][1]) && any(!is.na(equil_yield[[1]]))) {
@@ -10416,7 +10437,7 @@ plotSS.yield=function (replist, subplots=1:5,
 						yieldfunc()
 						dev.off()
 					}
-				}
+				} ## end subplots 1
 				if (2 %in% subplots & !is.null(refpoints)) {
 					if (plot) {
 						yieldfunc(refpoints=refpoints)
@@ -10428,9 +10449,9 @@ plotSS.yield=function (replist, subplots=1:5,
 							pheight=pheight, punits=punits, res=res, ptsize=ptsize, caption=caption)
 						yieldfunc(refpoints=refpoints)
 						dev.off()
-					}
-				}
-			}
+					} ## end print
+				} ## end subplots 2
+			} ## end check depletion
 			else {
 				message("Skipped equilibrium yield plots: equil_yield has all NA values")
 			}
@@ -10438,7 +10459,7 @@ plotSS.yield=function (replist, subplots=1:5,
 		else {
 			message("Skipped equilibrium yield plots: no equil_yield results in this model")
 		}
-	}
+	} ## end subplots 1 or 2
 	df <- dplyr::summarise(dplyr::group_by(dplyr::ungroup(dplyr::summarise(dplyr::group_by(dplyr::mutate(dplyr::filter(timeseries, 
 		!Era %in% c("VIRG", "FORE")), catch_tot=rowSums(pick(starts_with("dead(B)")), 
 		na.rm=TRUE)), Yr, Seas), sum_Bio_all=sum(Bio_all), 
@@ -10450,6 +10471,7 @@ plotSS.yield=function (replist, subplots=1:5,
 	df[["sprod"]][1:(Nyrs - 1)] <- df[["mean_Bio_all"]][2:Nyrs] - 
 		df[["mean_Bio_all"]][1:(Nyrs - 1)] + df[["catch_tot"]][1:(Nyrs - 1)]
 	df <- dplyr::filter(df, !is.na(sprod))
+
 	sprodfunc <- function(bio_col, xlab) {
 		x <- df[[bio_col]]
 		y <- df[["sprod"]]

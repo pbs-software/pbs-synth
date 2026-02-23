@@ -17,6 +17,13 @@ CRAN package version numbers follow a "major.minor.patch" format (e.g., 1.2.3), 
 	Patch: Indicates bug fixes and minor improvements that do not introduce new features.
 -----------------------------------
 
+1.4.0 (2026-02-23) [Rcheck=T, Rbuild=T]
+  * R code
+    + Added new function `compWT()' to compare morphometric across surveys (RH 260211)
+    + Added new function `compAE()' to compare ageing error vectors used in SS3 model (RH 260212)
+    + Added new function `copySSfiles()' to copy SS3 input files to folders for archiving on GitHub (@60218)
+    + Added new logical argument `tabs' to function `plotSS.yield' (RH 260223)
+
 1.3.0 (2026-02-20) [Rcheck=T, Rbuild=T]
   * R code
     + Added new function `plotSS.yield' to show reference points on equilibrium yield curve in SSB space (RH 260218)

@@ -1,6 +1,6 @@
 Package: PBSsynth
-Version: 1.3.0
-Date:    2026-02-20
+Version: 1.4.0
+Date:    2026-02-23
 Title:   Tools for Manipulating SS3
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),

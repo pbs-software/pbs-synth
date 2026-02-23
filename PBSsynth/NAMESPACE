@@ -20,8 +20,8 @@ importFrom("stats", "acf", "aggregate", "as.ts", "approx", "cor", "density",
            "dnorm", "fft", "lm", "loess", "loess.smooth", "median", "na.omit",
            "pnorm", "predict", "qchisq", "qlnorm", "qnorm", "qqnorm", "qt",
            "quantile", "resid", "residuals", "sd", "time", "var")
-importFrom("utils", "Sweave", "capture.output", "flush.console",
-           "head", "menu", "read.table", "tail", "type.convert",
+importFrom("utils", "Sweave", "capture.output", "data", "flush.console",
+           "head", "menu", "read.csv", "read.table", "tail", "type.convert",
            "write.csv", "write.table")
 
 importFrom("astsa", "acf2", "sarima")

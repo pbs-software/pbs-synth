@@ -14,7 +14,8 @@ plotSS.selex(replist, infotable=NULL, fleets="all", fleetnames="default",
    years="endyr", minyr=-Inf, maxyr=Inf, maxage=50, season=1, 
    sexes="all", selexlines=1:6, subplot=101, skipAgeSelex10=TRUE,
    xlim, plot=TRUE, print=FALSE, add=FALSE, 
-   labels=c("Length (cm)","Age (yr)","Year","Selectivity","Retention","Discard mortality"),
+   labels=c("Length (cm)", "Age (yr)", "Year", "Selectivity",
+   "Retention", "Discard mortality"),
    col1="red", col2="blue", lwd=2, spacepoints=5, staggerpoints=1,
    legendloc="bottomright", pwidth=7, pheight=7, punits="in", res=400,
    ptsize=12, cex.main=1, showmain=TRUE, plotdir="default", verbose=TRUE,
@@ -116,8 +117,8 @@ plt.selectivity(obj, sobj=NULL, mainTitle="Rockfish", maxage,
 
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-21}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-02-23}
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \section{Disclosure}{

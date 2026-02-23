@@ -11,7 +11,7 @@
 \usage{
 plotSS.yield(replist, subplots=1:5, 
    refpoints=c("MSY", "Btgt", "SPR", "Current", "LRP", "USR"), 
-   add=FALSE, plot=TRUE, print=FALSE, labels=c("Fraction unfished",
+   add=FALSE, plot=TRUE, print=FALSE, tabs=TRUE, labels=c("Fraction unfished",
    "Equilibrium yield (t)", "Total biomass (t)", "Surplus production (t)",
    "Yield per recruit (kg)", "Spawning output"), col="black", col2="black",
    lty=1, lwd=2, cex.main=1, pwidth=6.5, pheight=5, punits="in", 
@@ -35,6 +35,8 @@ plotSS.yield(replist, subplots=1:5,
   \item{add}{\code{logical} -- if \code{TRUE}, add something to current plot (\emph{pending})}
   \item{plot}{\code{logical} -- if \code{TRUE}, plot to active device}
   \item{print}{\code{logical} -- if \code{TRUE}, print to PNG files}
+  \item{tabs}{\code{logical} -- if \code{TRUE}, print various tables -- equilibrium yield data,
+    reference points on the equilibrium catch curve}
   \item{labels}{\code{character} -- vector of labels for plots (titles and axis labels)}
   \item{col}{\code{numeric|character} -- line colour for equilibrium plot\cr
     \emph{note} -- internal object \code{'colvec'} is used to control vertical line colours in equilibrium plot}
@@ -83,7 +85,7 @@ An evidence-based approach for selecting a limit reference point for Pacific her
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2026-02-18}
+  Last modified \code{Rd: 2026-02-23}
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \section{Disclosure}{

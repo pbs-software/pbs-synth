@@ -79,7 +79,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 		"replist", "resMulti", "retro", "rich.colors.short", "rootd_models", "run.num",
 	"sample_admb", "sample_inits", "sarima", "scol", "sen.lab", "sen.mcsubs",
 		"senRP", "senTS", "set_prior", "sizebinlabs", "sizedbase", "sizemethod",
-		"slwd", "smpdPA", "so", "splitGear", "spp.code", "sprod", "ss_executable",
+		"slwd", "smpdPA", "so", "species", "splitGear", "spp.code", "sprod", "ss_executable",
 		"starts_with", "startYear", "starter_file_name", "startyr", "startYr",
 		"stock", "strSpp", "stolab", "stospp", "strip.columns", "subplot", 
 		"sum_Bio_all", "sum_SpawnBio", "sum_catch_tot","survVec", "symbol", "system_",
