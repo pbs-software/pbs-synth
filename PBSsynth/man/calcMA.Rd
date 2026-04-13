@@ -47,15 +47,16 @@ calcMA(runs=1, rwts=0:1, vers=1, overwrite=FALSE, fleets.lab, fleets.af,
     \code{Yr}       \tab model year (usually calendar)\cr
   }
 }
+%% Cannot place \doi{} inside \href{} so don't waste your time tring to get \doi to work
 \references{
-  Francis, R.I.C.C. 2011. 
+  Francis, R.I.C.C. 2011.
   \href{https://doi.org/10.1139/f2011-025}{Data weighting in statistical fisheries stock assessment models}.
   \emph{Can. J. Fish. Aquat. Sci.} \bold{68(6)}. 1124--1138.}
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-19}
+  Last modified \code{Rd: 2026-04-13}
 }
 \note{
   Years ago, \code{'r4ss::SSMethod.TA1.8'} appeared to have a bug when processing multiple fleets.

@@ -13,7 +13,7 @@ The semi-automation offers substantial time-saving when trying numerous model ru
 <b>PBSsynth</b> requires the R packages <b>PBSmodelling</b>, <b>PBSmapping</b>, <b>PBStools</b>, and <b>PBSdata</b>. 
 It also needs the packages <b>r4ss</b>, <b>adnuts</b>, and <b>xtable</b>, although the dependencies have not yet been formalised.
 
-<b>PBSsynth</b> borrows heavily the functionality from the <b>r4ss</b> package by adopting the code from a few functions and creating variants. We try to acknowledge the original source wherever possible.
+<b>PBSsynth</b> borrows heavily the functionality from the <b>r4ss</b> package by adopting the code from a few functions and creating variants. We acknowledge the original source wherever possible.
 <font color="red"><h3>Installation</h3></font>
 
 Although **PBSsynth** is not available on <a href="https://cran.r-project.org/">CRAN</a> (Comprehensive R Archive Network), the source code appears on <a href="https://github.com/pbs-software/pbs-synth">GitHub</a> and can be built in R using:

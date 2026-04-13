@@ -17,7 +17,7 @@ importFrom("graphics", "abline", "arrows", "axis", "barplot", "box",
            "matplot", "mtext", "pairs", "par", "persp", "plot.default",
            "points", "polygon", "rect", "segments", "text", "title")
 importFrom("stats", "acf", "aggregate", "as.ts", "approx", "cor", "density",
-           "dnorm", "fft", "lm", "loess", "loess.smooth", "median", "na.omit",
+           "dnorm", "fft", "ks.test", "lm", "loess", "loess.smooth", "median", "na.omit",
            "pnorm", "predict", "qchisq", "qlnorm", "qnorm", "qqnorm", "qt",
            "quantile", "resid", "residuals", "sd", "time", "var")
 importFrom("utils", "Sweave", "capture.output", "data", "flush.console",

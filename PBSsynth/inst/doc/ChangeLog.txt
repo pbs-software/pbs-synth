@@ -17,6 +17,24 @@ CRAN package version numbers follow a "major.minor.patch" format (e.g., 1.2.3), 
 	Patch: Indicates bug fixes and minor improvements that do not introduce new features.
 -----------------------------------
 
+1.5.0 (2026-04-10) [Rcheck=T, Rbuild=T]
+  * R code
+    + Added new arguments to `plot_cres' and `plotSS.stdres' to add Pearson or raw residuals alongside OSA residuals (RH 260227)
+    + Modified function `plt.selectivity' to grab maturity manually from control file (RH 260306)
+    + Modified function `plotSS.ts' to change depletion label (RH 260312)
+    + Modified function `agileDT' to set LRP=0.2B0 and to collect 10 projection years (RH 260312)
+      - previously, projection years included the current year in the DT tables
+    + Modified function `makeFSARfigs' to use LRP=0.2B0 (RH 260312)
+    + Modified `plotSS.pmcmc' to use color-blind colors (RH 260312)
+    + Modified function `tabSS.compo' to use LRP=0.2B0 (RH 260313)
+    + Modified function `tabSS.senso' to use LRP=0.2B0 (RH 260323)
+    + Modified function `tabSS.decision' to use LRP=0.2B0 (RH 260323)
+    + Modified function `plotSS.compo' to use LRP=0.2B0 and change a few plot labels (RH 260330)
+    + Modified function `plotSS.senso' to tweak a number of figures (RH 260330)
+    + Revised function `plotSS.stdres' with new arguments and a new attitude (RH 260331)
+    + Revised function `plot_cres' with revised arguments and additional assessment metrics (RH 260401)
+    + Revised function `predictRec' to use a subset of recruitment years (RH 260409)
+
 1.4.0 (2026-02-23) [Rcheck=T, Rbuild=T]
   * R code
     + Added new function `compWT()' to compare morphometric across surveys (RH 260211)

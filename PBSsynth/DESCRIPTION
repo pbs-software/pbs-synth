@@ -1,6 +1,6 @@
 Package: PBSsynth
-Version: 1.4.0
-Date:    2026-02-23
+Version: 1.5.0
+Date:    2026-04-13
 Title:   Tools for Manipulating SS3
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
@@ -19,7 +19,7 @@ Depends:     R (>= 3.5.0), PBSmapping, PBSmodelling, PBSdata, PBStools, r4ss
 Imports:     astsa, compResidual, colorspace, dplyr, grDevices, graphics, here, Hmisc, KernSmooth, Kmisc, MASS, nlme, stats, stringr, tictoc, utils, xtable
 Suggests:    adnuts, cli, crayon, devtools, parallel
 NeedsCompilation: no
-Description: A collection of effervescent functions to elevate the
+Description: A collection of effervescent functions to facilitate the
    Stock Synthesis experience. Heavily borrowed from `r4ss' in places
    (thanks NOAA), the package offers a 'DFO' interpretation for
    use by the Offshore Rockfish Program at the Pacfic Biological Station.

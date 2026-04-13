@@ -8,15 +8,20 @@
   Create a 5-panel plot of the one-step-ahead (OSA) residuals from an MLE | MPD.
 }
 \usage{
-plot_cres(x, pick_one=NULL, maxLag=NULL, main="", 
-   png=FALSE, pngres=400, PIN=c(10,9), lang=c("f","e"), 
-   outnam=NULL, ...)
+plot_cres(x, pick_one=NULL, maxLag=NULL,
+   pearson=NULL, rawres=NULL,
+   main="", png=FALSE, pngres=400, PIN=c(10,9), 
+   lang=c("f","e"), outnam=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{\code{numeric} -- residual object as returned from one of the residual functions}
   \item{pick_one}{\code{numeric} -- number of the plot to provide if one of the 4 plot types printed by default needs to be extracted}
   \item{maxLag}{\code{numeric} -- maximum lag to use for ACF plot}
+  \item{pearson}{\code{logical} -- if \code{TRUE}, add Pearson residuals alongside OSA residuals in primary panel;
+    can only be \code{'pearson'} or \code{'rawres'}}
+  \item{rawres}{\code{logical} -- if \code{TRUE}, add raw residuals alongside OSA residuals in primary panel;
+    can only be \code{'pearson'} or \code{'rawres'}}
   \item{main}{\code{character} -- main title for the 5-panel figure}
   \item{png}{\code{logical} -- if \code{TRUE}, send the figure to a \code{PNG} device}
   \item{pngres}{\code{numeric} -- resolution (pixels/inch) of the \code{PNG} file}
@@ -60,10 +65,13 @@ R package version 0.0.1, commit d4c74845089074d8016454f235044c5d13ded3a5,\cr
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2026-02-20}
+  Last modified \code{Rd: 2026-03-02}
 }
 \note{
-Thank you Vanessa and Anders.
+  Thank you Vanessa and Anders.
+  The original function \code{'plot.cres'} was designed as an extension 
+  to the \code{'plot'} funtion (S3 methods), which is finicky to document.
+  The current function \code{'plot_cres'} avoids this problem.
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{

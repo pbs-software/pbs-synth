@@ -16,7 +16,7 @@ tabSS.compo(envo, useRlow=FALSE, qRlow=0.25, sigdig=4)
 tabSS.senso(envo, sigdig=4)
 
 tabSS.decision(envo, useRlow=FALSE, qRlow=0.25, decdig=2,
-   cp.type="CC", cp.num=c(1,3,6,9:15), use.agile=FALSE)
+   cp.type="CC", cp.num=c(1,3,6,9:15), use.agile=TRUE)
 }
 
 %- maybe also 'usage' for other objects documented here.
@@ -48,8 +48,8 @@ tabSS.decision(envo, useRlow=FALSE, qRlow=0.25, decdig=2,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2026-02-20}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-04-13}
 }
 \note{
   LRP = Limit Reference Point\cr

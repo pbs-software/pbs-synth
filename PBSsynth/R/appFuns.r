@@ -14,7 +14,7 @@
 ## tabSS.senso...........Make sensitivity tables
 ## ===============================================
 
-## agileDT------------------------------2025-11-06
+## agileDT------------------------------2026-03-12
 ##  Produce agile decision tables for projections 
 ##  compared to reference points (using function 'findTarget')
 ##  Attempt to exapnd this to single-area models (RH 251024)
@@ -93,7 +93,8 @@ agileDT <- function(compo, currYear=2026, projYear=2036, Ngen=3, gen1=25,
 			utrp       = avgRP[,"utgt"],
 			#LRP        = 0.16 * avgRP[,"B0"],
 			#USR        = 0.32 * avgRP[,"B0"],
-			LRP        = 0.4 * avgRP[,"Btgt"],
+			#LRP        = 0.4 * avgRP[,"Btgt"],
+			LRP        = 0.2 * avgRP[,"B0"],  ## SGR 2025 : RPR wants LRP to follow Barrett et al. (2025)
 			USR        = 0.8 * avgRP[,"Btgt"],
 			Bcurr.Btrp = avgRP[,"Bcurr"] / avgRP[,"Btgt"],
 			ucurr.utrp = avgRP[,"ucurr"] / avgRP[,"utgt"]
@@ -144,7 +145,8 @@ agileDT <- function(compo, currYear=2026, projYear=2036, Ngen=3, gen1=25,
 					utrp       = xavgRP[,"utgt",a],
 					#LRP        = 0.16 * xavgRP[,"B0",a],
 					#USR        = 0.32 * xavgRP[,"B0",a],
-					LRP        = 0.4 * xavgRP[,"Btgt",a],
+					#LRP        = 0.4 * xavgRP[,"Btgt",a],
+					LRP        = 0.2 * xavgRP[,"B0",a],  ## SGR 2025 : RPR wants LRP to follow Barrett et al. (2025)
 					USR        = 0.8 * xavgRP[,"Btgt",a],
 					Bcurr.Btrp = xavgTS[,as.character(currYear),"B",a] / xavgRP[,"Btgt",a],
 					ucurr.utrp = xavgTS[,as.character(currYear),"u",a] / xavgRP[,"utgt",a]
@@ -156,6 +158,7 @@ agileDT <- function(compo, currYear=2026, projYear=2036, Ngen=3, gen1=25,
 	} ## end extra area collection
 
 	areas = names(A.collect)
+#browser();return()
 
 	B.collect = list()  ## colect various area-specific values
 	## Now start geting decision tables from collected data frames
@@ -195,8 +198,6 @@ agileDT <- function(compo, currYear=2026, projYear=2036, Ngen=3, gen1=25,
 		B.collect[["Nmcmc.dtab"]][[ii]] = Nmcmc.dtab = nrow(B.mcmc)
 		unpackList(B.mcmc)  ## to get the various RPs
 		tput(Nmcmc.dtab)   ## to use (maybe) in 'tabSS.decision.r'
-		
-#browser();return()
 
 		if (RPbase=="BSMY") {
 			targets = c("Bmsy","B0","Bcurr","umsy","ucurr")
@@ -224,7 +225,8 @@ agileDT <- function(compo, currYear=2026, projYear=2036, Ngen=3, gen1=25,
 		if (RPbase=="B0") {
 			targets = c("Btrp","B0","Bcurr","utrp","ucurr")
 			Blst = list(
-				list(ratio=0.16,target=B0),
+				#list(ratio=0.16,target=B0),
+				list(ratio=0.20,target=B0),  ## SGR 2025 : RPR wants LRP to follow Barrett et al. (2025)
 				list(ratio=0.32,target=B0),
 				list(ratio=0.40,target=B0),
 				list(ratio=1.0, target=Bcurr),
@@ -239,16 +241,18 @@ agileDT <- function(compo, currYear=2026, projYear=2036, Ngen=3, gen1=25,
 				list(ratio=1, target=utrp),
 				list(ratio=1, target=ucurr)
 			)
-			names(Blst)=c("0.16B0","0.32B0","Btrp","Bcurr","0.5B0","0.7B0","0.3Gen","0.5Gen")
+			#names(Blst)=c("0.16B0","0.32B0","Btrp","Bcurr","0.5B0","0.7B0","0.3Gen","0.5Gen")
+			names(Blst)=c("0.2B0","0.32B0","Btrp","Bcurr","0.5B0","0.7B0","0.3Gen","0.5Gen")
 			names(Ulst) = c("utrp","ucurr")
 		}
 		if (ii %in% area) {
-			Btab  = subarray(xavgPJ[,as.character(currYear:projYear),,ii,cp,drop=FALSE], ipos=3, inam="B", kpos=c(1,2,5))
-			Utab  = subarray(xavgPJ[,as.character(currYear:projYear),,ii,cp,drop=FALSE], ipos=3, inam="u", kpos=c(1,2,5))
+			## Use (currYear+1) to get projections because currYear (e.g., 2026) values used endYr catch (e.g., 2025)
+			Btab  = subarray(xavgPJ[,as.character((currYear+1):projYear),,ii,cp,drop=FALSE], ipos=3, inam="B", kpos=c(1,2,5))
+			Utab  = subarray(xavgPJ[,as.character((currYear+1):projYear),,ii,cp,drop=FALSE], ipos=3, inam="u", kpos=c(1,2,5))
 			cvec  = apply(xavgCP[,ii,],"proj",mean)
 		} else {
-			Btab  = subarray(avgPJ[,as.character(currYear:projYear),,cp,drop=FALSE], ipos=3, inam="Bt", kpos=c(1,2,4))
-			Utab  = subarray(avgPJ[,as.character(currYear:projYear),,cp,drop=FALSE], ipos=3, inam="ut", kpos=c(1,2,4))
+			Btab  = subarray(avgPJ[,as.character((currYear+1):projYear),,cp,drop=FALSE], ipos=3, inam="Bt", kpos=c(1,2,4))
+			Utab  = subarray(avgPJ[,as.character((currYear+1):projYear),,cp,drop=FALSE], ipos=3, inam="ut", kpos=c(1,2,4))
 			cvec  = apply(apply(avgCP,c("yr","proj"),sum),"proj",mean)
 		}
 		if (length(cp)==1 && all(cp=="AC.00"))
@@ -274,7 +278,6 @@ agileDT <- function(compo, currYear=2026, projYear=2036, Ngen=3, gen1=25,
 				targ = x$target
 				findTarget(Utab[,,pp], ratio=x$ratio, target=targ, retVal="p.hi", op="<", yrG=Ngen*gen1)
 				}, aa=ii, pp=jj)
-#browser();return()
 			if (i==1 && j==1) {
 				BRP = array(NA, dim=c(length(cp), length(names(ijBRP[[1]])), length(A.collect), length(ijBRP)), dimnames=list(cp=cp, year=names(ijBRP[[1]]), area=areas, refpt=names(ijBRP) ) )
 				URP = array(NA, dim=c(length(cp), length(names(ijURP[[1]])), length(A.collect), length(ijURP)), dimnames=list(cp=cp, year=names(ijURP[[1]]), area=areas, refpt=names(ijURP) ) )
@@ -1566,7 +1569,7 @@ load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~load_extra_mcmc
 
 
-## makeFSARfigs-------------------------2025-12-01
+## makeFSARfigs-------------------------2026-03-12
 ##  Make figures for the new FSAR
 ## ---------------------------------------------RH
 #makeFSARfigs <- function (xTS, xRP, xPJ, years=1935:2024, TAC,
@@ -1599,6 +1602,7 @@ makeFSARfigs <- function (envo, years=1935:2025, TAC, RPbase="B0",
 		lty.refs = c(4,5,2)
 	
 		## Get catch time series from the base run
+#browser();return()
 		replist = SS_output(dir=central.mpd.dir, verbose=F, printstats=F)
 		repcats = split(replist$catch, replist$catch$Fleet)
 		fleetcat = lapply(repcats, function(x){x[,c("Obs")]})
@@ -1638,7 +1642,8 @@ makeFSARfigs <- function (envo, years=1935:2025, TAC, RPbase="B0",
 					changeLangOpts(L=l)
 					#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 					fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
-					if (png) { 
+					if (png) {
+						createFdir(l)
 						clearFiles(paste0(fout,".png"))
 						png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 					}
@@ -1655,27 +1660,7 @@ makeFSARfigs <- function (envo, years=1935:2025, TAC, RPbase="B0",
 					addLabel(0.05, 0.95, "(A)", cex=1.5, col="black", adj=c(0,1))
 					addLabel(0.05, 0.85, linguaFranca(aa,l), cex=1.5, col=col.area[a], adj=c(0,1))
 #browser();return()
-	
-	#				## Plot 2 : biomass (top right)
-	#				yy = as.character(years)
-	#				Bscale = 1000.
-	#				B.qts   = apply(xTS[,yy,"B",aa],2, quantile, probs=ttcall(quants3), na.rm=T) / Bscale
-	#				BRP.qts = apply(xRP[,c("LRP","USR"),aa], 2, quantile, probs=ttcall(quants3), na.rm=T) / Bscale
-	#				plot(0,0, xlim=range(years), ylim=c(0,max(B.qts,na.rm=T)), xlab="Year", ylab="", cex.axis=1.0, cex.lab=1.2, las=1)
-	#				axis(1, at=seq(1935,2025,5), labels=F, tcl=-.3)
-	#				mtext(paste0("Female Spawning Biomass (", ifelse(Bscale==1000,"k",""), "t)"), side=2, line=2.2, cex=1.1)
-	#				polygon(c(years[c(1,nyrs)], years[c(nyrs,1)]), c(BRP.qts[c(1,1),"LRP"],BRP.qts[c(3,3),"LRP"]), col=lucent(col.refs[1],0.35), border=FALSE)
-	#				lines(years, rep(BRP.qts[2,"LRP"],length(years)), col="black", lwd=1, lty=4)
-	#				polygon(c(years[c(1,nyrs)], years[c(nyrs,1)]), c(BRP.qts[c(1,1),"USR"],BRP.qts[c(3,3),"USR"]), col=lucent(col.refs[2],0.35), border=FALSE)
-	#				lines(years, rep(BRP.qts[2,"USR"],length(years)), col="black", lwd=1, lty=5)
-	#				lines(years, B.qts[1,], col="gainsboro", lwd=1, lty=1) ## just to add a bit more emphasis
-	#				lines(years, B.qts[1,], col=col.area[a], lwd=1, lty=3)
-	#				lines(years, B.qts[3,], col="gainsboro", lwd=1, lty=1) ## just to add a bit more emphasis
-	#				lines(years, B.qts[3,], col=col.area[a], lwd=1, lty=3)
-	#				lines(years, B.qts[2,], col=col.area[a], lwd=2)
-	#				addLegend(0.95, 0.975, col=c(rep(col.area[a],2),rep("black",2)), lty=c(1,3,lty.refs[2:1]), legend=c("Median biomass","90% credibility envelope", "Median USR","Median LRP"), bty="n", xjust=1)
-	#				addLabel(0.05, 0.95, "(B)", cex=1.5, col="black", adj=c(0,1))
-	
+
 					## Plot 2 : biomass relative to Bmsy (top right)
 					yy = as.character(years)
 					B.qts   = apply(xTS[,yy,switch(RPbase,'BMSY'="BtBmsy",'B0'="BtB0",'BTRP'="BtBtrp"),aa],2, quantile, probs=ttcall(quants3), na.rm=T) 
@@ -1683,12 +1668,14 @@ makeFSARfigs <- function (envo, years=1935:2025, TAC, RPbase="B0",
 					axis(1, at=seq(1935,2025,5), labels=F, tcl=-.3)
 					ylab = linguaFranca(paste0("Spawning Biomass relative to ", RPbase), l)
 					ylab = sub("B(MSY|RMD|0|TRP|PRC)","italic(B)[\\1]", gsub("\\s+","~",ylab))
-	#browser();return()
 					mtext(eval(parse(text=paste0("expression(", ylab, ")"))), side=2, line=2.3, cex=1.1)
 					#mtext(linguaFranca(expression(Spawning~Biomass~relative~to~italic(B)[MSY]),l), side=2, line=2.3, cex=1.1)
 					BURP = c(0.4, 0.8)
-					if (RPbase %in% c("B0"))
+					if (RPbase %in% c("B0")) {
 						BURP = 0.4 * BURP
+						BURP[1] = 0.2 ## Robyn Forrest: make sure LRP follows Barret et al. 2025 
+					}
+#browser();return()
 					lines(years, rep(BURP[1],length(years)), col=col.refs[1], lwd=1.5, lty=4)
 					lines(years, rep(BURP[2],length(years)), col=col.refs[2], lwd=1.5, lty=5)
 					lines(years, B.qts[1,], col="gainsboro", lwd=1, lty=1) ## just to add a bit more emphasis
@@ -1755,7 +1742,7 @@ makeFSARfigs <- function (envo, years=1935:2025, TAC, RPbase="B0",
 	#browser();return()
 			} ## end a (catch)
 		} ## end include 4 panel
-browser();return()
+#browser();return()
 	
 		## Stock status 4-panel plot for GMU
 		## ---------------------------------
@@ -1996,7 +1983,7 @@ browser();return()
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeFSARfigs
 
 
-## plotSS.compo-------------------------2025-12-03
+## plotSS.compo-------------------------2026-03-30
 ## Make Composite Figures
 ## ---------------------------------------------RH
 #plotSS.compo <- function(compo, spp.code="SGR", istock="3area", 
@@ -2045,19 +2032,21 @@ plotSS.compo <- function(envo,
 		use.run.rwt = is.element(P.runs, P.run.ord) ## default use all runs but a subset might be used for management advice
 	
 		catpol3 = NULL #c("AC.00")  ## SGR 202%: 1500t; use this when CC policies have not yet been run.
-		#catpol3 = c("CC.01","CC.03","CC.09")  ## SGR 2025: 0, 1500, 3000t
+		catpol3 = c("CC.01","CC.03","CC.09")  ## SGR 2025: 0, 1500, 3000t
 		#catpol3 = NULL ## comment this out when you have catch policies
 		#proYrs = .su(c(currYear, proYrs))
+
 sumting=T
 if (sumting) {
+
 		## Envelope plots
 		## (RH 251001) add utumsy as an envelope plot rather than a quantile boxplot
-		for (epar in c("Bt","BtB0","ututrp")[2]) {#[1:3]) {
+		for (epar in c("Bt","BtB0","ututrp")[1:3]) {#[1:3]) {
 			.flush.cat(epar, " envelope","\n", sep="")
 			elab = switch(epar, 
 				'Bt'     = expression(paste("Spawning biomass   ", group("(",italic(B)[italic(t)],")"))),
 				'BtBmsy' = expression(paste("Stock status   ", group("(",italic(B)[italic(t)] / italic(B)[MSY],")"))),
-				'BtB0'   = expression(paste("Depletion   ", group("(",italic(B)[italic(t)] / italic(B)[0],")"))),
+				'BtB0'   = expression(paste("Relative SSB   ", group("(",italic(B)[italic(t)] / italic(B)[0],")"))),
 				'ut'     = expression(paste("Harvest rate   ", group("(",italic(u)[italic(t)],")"))),
 				'utumsy' = expression(paste("Exploitation status   ", group("(",italic(u)[italic(t)] / italic(u)[MSY],")"))),
 				'ututrp' = expression(paste("Exploitation status   ", group("(",italic(u)[italic(t)] / italic(u)[TRP],")")))
@@ -2065,7 +2054,8 @@ if (sumting) {
 			refpts = switch(epar,
 				'Bt'     = list(LRP=NULL,USR=NULL,TRP=NULL,RRR=NULL),
 				'BtBmsy' = list(LRP=0.4, USR=0.8),
-				'BtB0'   = list(LRP=0.16, USR=0.32, TRP=0.40),
+				#'BtB0'   = list(LRP=0.16, USR=0.32, TRP=0.40),
+				'BtB0'   = list(LRP=0.20, USR=0.32, TRP=0.40),
 				'ut'     = list(LRP=NULL,USR=NULL,TRP=NULL,RRR=NULL),
 				'utumsy' = list(RRR=1),
 				'ututrp' = list(RRR=1)
@@ -2089,8 +2079,7 @@ if (sumting) {
 				plotSS.pmcmc(obj=areaTS.swap[[paste0(epar,".mcmc")]], pqs=tcall(quants5), yrs=modYrs, pyrs=proYrs, lang=lang, cex.axis=ifelse(length(areaTS)==1,1.2,1), cex.lab=ifelse(length(areaTS)==1,1.5,1.2), yLab=elab, outnam=outnam, xyType="envelope", ptypes=ptypes, catpol=catpol, refpts=refpts, gmu==(epar!="Bt"))
 			}
 		} ## end epar (envelope plots)
-browser();return()
-
+#browser();return()
 		## Quantile box plots
 		for (epar in c("ut","Rt")) { #,"utumsy"
 			.flush.cat(epar, " quantile plot","\n", sep="")
@@ -2109,10 +2098,10 @@ browser();return()
 				areas = sub("CST","BC",names(areaTS))
 				areaPJ.swap = swapList(areaPJ)
 				areaTS.swap = swapList(areaTS)
-#browser();return()
 				plotSS.pmcmc(areaTS.swap[[paste0(epar,".mcmc")]], yrs=modYrs, pyrs=proYrs, lang=lang, cex.axis=ifelse(length(areaTS)==1,1.2,1), cex.lab=ifelse(length(areaTS)==1,1.5,1.2), yLab=elab, outnam=paste0(prefix,"compo.",epar), xyType="quantBox", ptypes=ptypes, refpts=refpts)
 			}
 		}
+#browser();return()
 	
 		## Recruitment deviations (quantile boxes)
 		.flush.cat("Rtdev boxes","\n")
@@ -2122,6 +2111,10 @@ browser();return()
 #browser();return()
 		plotSS.pmcmc(Rtdev.mcmc, yrs=modYrs, pyrs=proYrs, lang=lang, cex.axis=1.2, cex.lab=1.5, yLab=expression(paste("Recruitment deviations ", group("(",delta~italic(R)[italic(t)],")"))), outnam=paste0(prefix,"compo.Rtdev"), ptypes=ptypes, refpts=list(USR=0), gmu=FALSE, yLim=c(-2.75,3.5))
 
+} ## end sumting
+
+		if (strSpp=="405" && istock=="3area")
+			base.lab = sub("B([0-9])", "A\\1", base.lab)  ## change 3area label from base (B) to alternative (A)
 		## Plot MCMC diagnostics select parameters for each component run
 		## --------------------------------------------------------------
 		for (i in c(1)){
@@ -2199,7 +2192,6 @@ browser();return()
 #browser();return()
 		}
 
-
 		## BtBmsy UtUmsy snail trail plot
 		## ------------------------------
 		.flush.cat("Stock status snail trail","\n")
@@ -2212,7 +2204,8 @@ browser();return()
 			UoverUrp = avgTS[z,,"ututrp"]
 		}
 		outnam    = paste0(prefix,"compo.snail")
-		plotSnail(BoverBrp, UoverUrp, yrs=modYrs, p=tcall(quants3)[c(1,3)], xLim=NULL, yLim=NULL, ngear=length(gseries), assYrs=assYrs, outs=F, Cnames=gseries, ptypes=ptypes, outnam=outnam, lang=lang, labYrs=c(1950,seq(1960,1975,5), assYrs), refpts=RPbase)
+		plotSnail(BoverBrp, UoverUrp, yrs=modYrs, p=tcall(quants3)[c(1,3)], xLim=NULL, yLim=NULL, ngear=length(gseries), assYrs=assYrs, outs=F, Cnames=gseries, ptypes=ptypes, outnam=outnam, lang=lang, labYrs=c(1950,seq(1960,2015,5), assYrs), refpts=RPbase)
+#browser();return()
 	
 		## Prepare base composite and components for function 'compBmsy'
 		## ------------------------------------------------------------
@@ -2282,6 +2275,8 @@ browser();return()
 			Mnams = paste0(L1nam, " Base Run")
 		else
 			Mnams = c(paste0(L1nam, " Composite"), runlab)
+		if (strSpp=="405" && istock=="3area")
+			Mnams = sub("Base", "Alt", Mnams)  ##  SGR 2025
 		## Add in projections -- CAUTION: for now, the code is hard-wired to have both CC and HR at year 2
 		if (spp.code=="BOR") {
 			pY = 2
@@ -2295,9 +2290,10 @@ browser();return()
 			bord=c(1:N); medcol=c(ifelse(istock==names(stock)[1],"blue","red"),rep("grey30",N-Ubase), rep("gold",2)); 
 			boxfill=c(ifelse(istock==names(stock)[1],"aliceblue","mistyrose"), rep("grey95",N-Ubase), rep("lightyellow",2))
 		} else {
-			bord=c(1:N); medcol=c(ifelse(istock==names(stock)[1],"blue","red"),rep("grey30",ifelse(N==1,0,Ubase))); 
-			boxfill=c(ifelse(istock==names(stock)[1],"aliceblue","mistyrose"), rep("grey95",ifelse(N==1,0,Ubase)))
+			bord=c(1:N); medcol=c(ifelse(istock==names(stock)[1],"blue","purple"),rep("grey30",ifelse(N==1,0,Ubase))); 
+			boxfill=c(ifelse(istock==names(stock)[1],"aliceblue","thistle1"), rep("grey95",ifelse(N==1,0,Ubase)))
 		}
+
 		if (mam) {  ## multi-area model
 			#Mnams = c(Mnams, paste0("Subarea ",areas))  ## areas now appears to include the whole coast
 			Mnams = c(Mnams, paste0("Subarea ",area.names))
@@ -2315,12 +2311,11 @@ browser();return()
 		par(mfrow=c(1,1), oma=c(0,0,0,0), mgp=c(2,0.5,0))
 		mess =  paste0("list(",paste0(paste0(ptypes,"=TRUE"),collapse=","),")")
 
-		out = compBmsy(Bspp=Bbase, spp=L1, boxwidth=0.5, medcol=medcol, boxfill=boxfill, boxlim=boxlim, whisklwd=2, staplelwd=3, Mnams=Mnams[bord], width=9, height=6, figgy=eval(parse(text=mess)), pngres=pngres, spplabs=F, t.yr=currYear, left.space=8, top.space=0.5, fout=paste0(prefix,"compo", ifelse(Ubase>=1,".stock.","."), "status"), calcRat=F, lang=lang, ratios=switch(RPbase, 'BMSY'=c(0.4,0.8), 'B0'=c(0.16,0.32)), refpt=switch(RPbase, 'BMSY'="MSY", 'B0'=0)  )
+		out = compBmsy(Bspp=Bbase, spp=L1, boxwidth=0.5, medcol=medcol, boxfill=boxfill, boxlim=boxlim, whisklwd=2, staplelwd=3, Mnams=Mnams[bord], width=9, height=6, figgy=eval(parse(text=mess)), pngres=pngres, spplabs=F, t.yr=currYear, left.space=8, top.space=0.5, fout=paste0(prefix,"compo", ifelse(Ubase>=1,".stock.","."), "status"), calcRat=F, lang=lang, ratios=switch(RPbase, 'BMSY'=c(0.4,0.8), 'B0'=c(0.2,0.32)), refpt=switch(RPbase, 'BMSY'="MSY", 'B0'=0)  )
+#browser();return()
 
 		save("Bbase","L1","medcol","boxfill","boxlim","Mnams","bord","mess","RPbase", file=paste0("Bbase.for.FSAR.", istock, ".rda"))
 
-#browser();return()
-} ## end sumting
 
 		## Make quantile plots of component-run parameters and quantities
 		## --------------------------------------------------------------
@@ -2409,7 +2404,10 @@ browser();return()
 					if (length(xfac) != nchains) {
 						message("sumtingwong : length of xfac != number chains"); browser(); return()
 					}
-					panelBoxes(P.pars[,pflds], nchains=nchains, xlab=linguaFranca("Base Run",l), ylab=linguaFranca("Parameter estimates",l), cex.strip=1.2, cex.axis=1.1, cex.lab=1.5, outline=FALSE, xlim=xlim, boxfill=boxfill, xfac=xfac, mar=c(0,3.5,0,0), oma=c(4,2,0.5,1))  ## RH 200508 (for subsets of B)
+					xlab = "Base Run"
+					if (strSpp=="405" && istock=="3area")
+						xlab = sub("Base", "Alternative", xlab)
+					panelBoxes(P.pars[,pflds], nchains=nchains, xlab=linguaFranca(xlab,l), ylab=linguaFranca("Parameter estimates",l), cex.strip=1.2, cex.axis=1.1, cex.lab=1.5, outline=FALSE, xlim=xlim, boxfill=boxfill, xfac=xfac, mar=c(0,3.5,0,0), oma=c(4,2,0.5,1))  ## RH 200508 (for subsets of B)
 					if (p %in% c("png","eps")) dev.off()
 				}
 			}; eop()
@@ -2425,7 +2423,7 @@ browser();return()
 						clearFiles(paste0(fout,".png"))
 						png(paste0(fout,".png"), units="in", res=pngres, width=8, height=8)
 					}
-					panelBoxes(Q.pars, nchains=nchains, xlab=linguaFranca("Base Run",l), ylab=linguaFranca("Derived Quantities",l), cex.strip=1.2, cex.axis=1.1, cex.lab=1.5, outline=FALSE, xlim=xlim, boxfill=boxfill, xfac=xfac, mar=c(0,3.8,0,0), oma=c(4,2,0.5,1))  ## RH 200508 (for subsets of B)
+					panelBoxes(Q.pars, nchains=nchains, xlab=linguaFranca(xlab,l), ylab=linguaFranca("Derived Quantities",l), cex.strip=1.2, cex.axis=1.1, cex.lab=1.5, outline=FALSE, xlim=xlim, boxfill=boxfill, xfac=xfac, mar=c(0,3.8,0,0), oma=c(4,2,0.5,1))  ## RH 200508 (for subsets of B)
 					if (p %in% c("png","eps")) dev.off()
 				}
 			}; eop()
@@ -2437,6 +2435,8 @@ browser();return()
 	} ## end envo loop
 #browser();return()
 
+#browser();return()
+
 	## ==============================================================
 	## Prepare multiple stock base composites for function 'compBmsy'
 	## If comparing two stocks or models (e.g., RSR,POP or SGR1 and SGR2)
@@ -2446,12 +2446,12 @@ browser();return()
 			load(paste0("Bbase.for.FSAR.", istock, ".rda"))
 			if (i==1) {
 				Bcompo = Bbase
-				Mnamso = sub(" Run", paste0(": ",istock), Mnams)
+				Mnamso = sub(" Run", paste0(" : ",istock), Mnams)
 				mdcolo = medcol
 				bxfilo = boxfill
 			} else {
 				Bcompo[[1]][[names(Bbase[[1]])]] = Bbase[[1]][[names(Bbase[[1]])]]
-				Mnamso = c(Mnamso, sub(" Run", paste0(": ",istock), Mnams))
+				Mnamso = c(Mnamso, sub(" Run", paste0(" : ",istock), Mnams))
 				mdcolo = c(mdcolo, medcol)
 				bxfilo = c(bxfilo, boxfill)
 			}
@@ -2460,21 +2460,23 @@ browser();return()
 		z = c(grep("COAST",names(Bcompo[[1]])), grep("COAST",names(Bcompo[[1]]),invert=TRUE))  ## Put coast first
 		Bcompo[[1]] = Bcompo[[1]][z]
 		Mnamso = Mnamso[z]
+		Mnamso = gsub("Subarea","A1 : subarea",gsub("Alt","A1",gsub("Base","B1",Mnamso)))  ## again, very much geared to SGR 2025
 		mdcolo = mdcolo[z]; mdcolo[1] = "purple"
 		bxfilo = bxfilo[z]; bxfilo[1] = "thistle1"
+
+#browser();return()
 
 		#outnam = paste0("status.",paste0(paste0("(",paste(tolower(stospp),stolab,sep="."),")"),collapse=".vs."))
 		outnam = paste0(stospp[1],".status.",paste0(paste0("(",stolab,")"),collapse=".vs."))
 
-#browser();return()
 		spp.code = unique(stospp)[1]  ## needs to be one species
-		out    = compBmsy(Bspp=Bcompo, spp=spp.code, boxwidth=0.5, medcol=mdcolo, boxfill=bxfilo, whisklwd=2, staplelwd=2, Mnams=Mnamso, width=9, height=4, figgy=eval(parse(text=mess)), pngres=pngres, spplabs=F, t.yr=e1$currYear, left.space=c(9,9), top.space=1, fout=outnam, calcRat=F, lang=lang, ratios=switch(RPbase, 'BMSY'=c(0.4,0.8), 'B0'=c(0.16,0.32)), refpt=switch(RPbase, 'BMSY'="MSY", 'B0'=0))
+		out    = compBmsy(Bspp=Bcompo, spp=spp.code, boxwidth=0.5, medcol=mdcolo, boxfill=bxfilo, whisklwd=2, staplelwd=2, Mnams=Mnamso, width=9, height=4, figgy=eval(parse(text=mess)), pngres=pngres, spplabs=F, t.yr=e1$currYear, left.space=c(9,9), top.space=1, fout=outnam, calcRat=F, lang=lang, ratios=switch(RPbase, 'BMSY'=c(0.4,0.8), 'B0'=c(0.2,0.32)), refpt=switch(RPbase, 'BMSY'="MSY", 'B0'=0))
 	} ## end more than 1 stock
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.compo
 
 
-## plotSS.senso-------------------------2025-12-04
+## plotSS.senso-------------------------2026-03-30
 ## Make Sensitivity Figures
 ## ---------------------------------------------RH
 plotSS.senso <- function(envo, #senso, spp.code="SGR", istock="SGR",
@@ -2578,6 +2580,9 @@ plotSS.senso <- function(envo, #senso, spp.code="SGR", istock="SGR",
 		S.prefix[1] = paste0("B",iCR, " (R", strsplit(exp.run.rwt,"\\.")[[1]][1], ") ")
 		S.labels    = paste0(S.prefix, gsub("\\_"," ", c("Base Run",sen.lab[S.num])))  ## Central Run if using a composite
 		S.labels    = sub("\\\\pc", "%", S.labels)  ## just in case  wtf?  maybe reverse the subsitution (leave for now)
+		if (strSpp=="405" && istock=="3area")
+			S.labels = sub("Base","Alternative",sub("B([0-9])", "A\\1", S.labels))  ## SGR 2025 change 3area label from base (B) to alternative (A)
+
 	#browser();return()
 	
 		## Function 'calcQs' now available in 'util.Funs.r'
@@ -2591,7 +2596,7 @@ plotSS.senso <- function(envo, #senso, spp.code="SGR", istock="SGR",
 	
 		L1 = if (spp.code %in% c("REBS")) istock else spp.code  ## RH 200416
 
-sumting=F
+sumting=T
 if (sumting) {
 
 		## Diagnostics for select parameters
@@ -2665,9 +2670,8 @@ if (sumting) {
 			}
 		}
 #browser();return()
-} ## sumting
 
-sumtingmore=T
+sumtingmore=F
 if (sumtingmore) {
 	
 		## Create Rhat figures for the worst sensitivities
@@ -2714,8 +2718,6 @@ if (sumtingmore) {
 		}
 #browser();return()
 } ## sumtingmore
-
-#} ## sumting
 
 		## Make quantile plots of component-run parameters and quantities
 		## --------------------------------------------------------------
@@ -2811,7 +2813,7 @@ if (sumtingmore) {
 			} else {
 				P.pars  = P.cent.sens
 			}
-#browser();return()
+
 	
 			## Sometimes want to exclude sensitivities  ## RH 200416
 			verboten = NULL
@@ -2839,7 +2841,7 @@ if (sumtingmore) {
 				## Sometimes the 95pc limits are outrageously high so use this function:
 				##   hardwire index i for now
 				##   hardwire yzero because passing yzero to yzero is problematic (promise already under evaluation)
-				fn.ylim <- function(x, i=rep(1:(length(S.num)+1),each=2000), yzero=T){
+				fn.ylim <- function(x, i=rep(1:(length(S.num)+1),each=2000), yzero=F){
 					xr = range(x, na.rm=TRUE)
 					xx = split(x,i);
 #browser();return()
@@ -2865,14 +2867,16 @@ if (sumtingmore) {
 						clearFiles(paste0(fout,".png"))
 						png(filename=paste0(fout,".png"), units="in", res=pngres, width=8, height=8)
 					}
-					#boxfill = c("gainsboro","green4","blue","red","purple","orange","skyblue","gold3","salmon3","red2","hotpink","darkred","dodgerblue") ## colours used in the trajectory plots (REBS)
 					boxfill = c("gainsboro",col.senso[S.num]) ## colours used in the trajectory plots (YMR)
-					#panelBoxes(P.pars, xlim=c(0.25,nchains+0.75), xlab=linguaFranca("Sensitivity Runs",l), ylab=linguaFranca("Parameter estimates",l), nchains=nchains, xfac=c(ifelse(NrefM>1,"CR","B1"), paste0("S",pad0(1:(nchains-1),2))), boxfill=boxfill, cex.strip=1.2, cex.axis=1.2, cex.lab=1.5, outline=FALSE)
-					panelBoxes(LP.pars, xlim=c(0.25,nchains+0.75), xlab="", ylab=linguaFranca("Parameter Estimates",l), nchains=nchains, xfac=c(ifelse(NrefM>1,"CR","B1"), paste0(ifelse(is.penso,"A","S"), pad0(S.num,ifelse(is.penso,1,2))) ), boxfill=boxfill, cex.strip=1.2, cex.axis=1.2, cex.lab=1.5, outline=FALSE, rc=.findSquare(ncol(LP.pars)), fn.ylim=fn.ylim)
+					xfac = c(ifelse(NrefM>1,"CR","B1"), paste0(ifelse(is.penso,"A","S"), pad0(S.num,ifelse(is.penso,1,2))) )
+					if (strSpp=="405" && istock=="3area")
+						xfac = sub("B([0-9])", "A\\1", xfac)  ## change 3area label from base (B) to alternative (A)
+					panelBoxes(LP.pars, xlim=c(0.25,nchains+0.75), xlab="", ylab=linguaFranca("Parameter Estimates",l), nchains=nchains, xfac=xfac, boxfill=boxfill, cex.strip=1.2, cex.axis=1.2, cex.lab=1.5, outline=FALSE, rc=.findSquare(ncol(LP.pars)), fn.ylim=fn.ylim)
 					mtext(linguaFranca(ifelse(is.penso,"Multi-area (B) vs. Single-area (A) Runs","Sensitivity Runs"),l), side=1, outer=T, line=2.5, cex=1.2, adj=0.55)
 					if (p %in% c("png","eps")) dev.off()
 				}
 			}; eop()
+#browser();return()
 
 			Q.pars = Q.cent.sens
 			if (!is.null(verboten))
@@ -2891,7 +2895,7 @@ if (sumtingmore) {
 					}
 					#boxfill = c("gainsboro","green4","blue","red","purple","orange","skyblue","gold3","salmon3","red2","hotpink","darkred","dodgerblue") ## colours used in the trajectory plots (REBS)
 					boxfill = c("gainsboro", col.senso[S.num]) ## colours used in the trajectory plots (YMR)
-					panelBoxes(LQ.pars, xlim=c(0.25,nchains+0.75), xlab="", ylab=linguaFranca("Derived Quantities",l), nchains=nchains, xfac=c(ifelse(NrefM>1,"CR","B1"), paste0(ifelse(is.penso,"A","S"), pad0(S.num,ifelse(is.penso,1,2))) ), boxfill=boxfill, cex.strip=1.2, cex.axis=1.1, cex.lab=1.5, outline=FALSE, fn.ylim=fn.ylim)
+					panelBoxes(LQ.pars, xlim=c(0.25,nchains+0.75), xlab="", ylab=linguaFranca("Derived Quantities",l), nchains=nchains, xfac=xfac, boxfill=boxfill, cex.strip=1.2, cex.axis=1.1, cex.lab=1.5, outline=FALSE, fn.ylim=fn.ylim)
 					mtext(linguaFranca(ifelse(is.penso,"Multi-area (B) vs. Single-area (A) Runs","Sensitivity Runs"),l), side=1, outer=T, line=2.5, cex=1.2, adj=0.55)
 					if (p %in% c("png","eps")) dev.off()
 				}
@@ -2960,7 +2964,7 @@ if (sumtingmore) {
 						par(mfrow=c(1,1), mar=c(3,3.5,1,0), oma=c(0,0,0,1), mgp=c(2,0.5,0))
 						plot(0,0,xlim=xlim,ylim=ylim,type="n",xlab="",ylab="",log=ifelse(kk=="R"&&logR,"y",""))
 						if (kk %in% c("BtB0"))
-							abline(h=c(0.16,0.32,0.4), lty=5, col="grey20") #col=c("salmon","darkorchid","navy"))
+							abline(h=c(0.2,0.32,0.4), lty=5, col="grey20") #col=c("salmon","darkorchid","navy"))
 						if (kk %in% c("RD"))
 							abline(h=c(0), lty=5, col="grey20") #col=c("salmon","darkorchid","navy"))
 						for (j in Nruns:1) {
@@ -3004,6 +3008,7 @@ if (sumtingmore) {
 #browser();return()
 			}  ## end k loop (Ntraj)
 		}  ## end if redo.figs
+} ## sumting
 
 		## Prepare sensitivity runs for function 'compBmsy' (stock status)
 		## ---------------------------------------------------------------
@@ -3052,8 +3057,10 @@ if (sumtingmore) {
 				Mnams = c(Mnams, "low recruitment")
 			}
 			N = length(Mnams)
-			bord=c(1:N); medcol=c(ifelse(istock==names(stock)[1],"blue","red"),rep("grey30",N-1)); 
-			boxfill = c(ifelse(istock==names(stock)[1],"aliceblue","mistyrose"), rep("grey95",N-1))
+			#bord=c(1:N); medcol=c(ifelse(istock==names(stock)[1],"blue","red"),rep("grey30",N-1)); 
+			#boxfill = c(ifelse(istock==names(stock)[1],"aliceblue","mistyrose"), rep("grey95",N-1))
+			bord=c(1:N); medcol=c(ifelse(istock==names(stock)[1],"gold","purple"),rep("grey30",N-1)); 
+			boxfill = c(ifelse(istock==names(stock)[1],"lightyellow","thistle1"), rep("grey95",N-1))
 			if (is.penso) {
 				medcol = c("slategray", col.senso)
 				boxfill = c("grey95", "aliceblue","honeydew","mistyrose")
@@ -3075,10 +3082,10 @@ if (sumtingmore) {
 				if (istock %in% c("BCN")) c(7.5,10)
 				else if (istock %in% c("YMR","CAR","POP")) c(12,16)
 				else if (istock %in% c("YTR")) c(13,16)
-				else if (spp.code %in% c("SGR")) c(11,14)
+				else if (spp.code %in% c("SGR")) c(11,13)
 				else c(10,12)
 			rcol =c(.colBlind[c("redpurple","bluegreen")], "blue")  ## for LRP, USR, median
-			out = compBmsy(Bspp=Bsens, spp=L1, boxwidth=0.5, medcol=medcol, boxfill=boxfill, boxlim=boxlim, whisklwd=2, staplelwd=2, Mnams=Mnams[bord], width=9, height=6, figgy=eval(parse(text=mess)), pngres=pngres, spplabs=F, t.yr=currYear, left.space=left.space, top.space=1.25, fout=paste0(prefix, sub("\\.$","",sen.fig), ifelse(Ubase>1,".stock.","."), "status",ifelse(useRlow,"+","")), calcRat=F, lang=lang, rlty=c(4,5,3), rlwd=c(2,2,1), cex.axis=1, cex.lab=1.4, rcol=rcol, ratios=switch(RPbase, 'BMSY'=c(0.4,0.8,medCR), 'B0'=c(0.16,0.32,medCR)), refpt=switch(RPbase, 'BMSY'="MSY", 'B0'=0) )
+			out = compBmsy(Bspp=Bsens, spp=L1, boxwidth=0.5, medcol=medcol, boxfill=boxfill, boxlim=boxlim, whisklwd=2, staplelwd=2, Mnams=Mnams[bord], width=9, height=6, figgy=eval(parse(text=mess)), pngres=pngres, spplabs=F, t.yr=currYear, left.space=left.space, top.space=1.25, fout=paste0(prefix, sub("\\.$","",sen.fig), ifelse(Ubase>1,".stock.","."), "status",ifelse(useRlow,"+","")), calcRat=F, lang=lang, rlty=c(4,5,3), rlwd=c(2,2,1), cex.axis=1, cex.lab=1.4, rcol=rcol, ratios=switch(RPbase, 'BMSY'=c(0.4,0.8,medCR), 'B0'=c(0.2,0.32,medCR)), refpt=switch(RPbase, 'BMSY'="MSY", 'B0'=0) )
 #browser();return()
 			save("Bsens","L1","medcol","boxfill","boxlim","Mnams","bord","mess", file=paste0("Bsens.for.", istock, ".rda"))
 		}
@@ -3089,7 +3096,7 @@ if (sumtingmore) {
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.senso
 
 
-## predictRec --------------------------2025-10-23
+## predictRec --------------------------2026-04-09
 ##  Fit rockfish recruitment to an environmental index.
 ## ---------------------------------------------RH
 predictRec <- function(rec, indices, mos=1:12,
@@ -3171,7 +3178,6 @@ predictRec <- function(rec, indices, mos=1:12,
 	} else {
 		rec.yr = rec[1:nmcmc,]
 	}
-	#rc = PBSmodelling:::.findSquare(length(indices))
 	rc=c(1,1)  ## language loop makes multi-panel plots difficult
 
 	for (i in 1:length(indices)) {
@@ -3226,6 +3232,7 @@ predictRec <- function(rec, indices, mos=1:12,
 		} else {
 			ifit = list()
 			for (j in 1:nrow(rec.yr)) {
+#.flush.cat(j, "\n")
 				idx   = idx.yr
 				jj    = rownames(rec.yr)[j]
 				kk    = as.ts(yrs)
@@ -3246,15 +3253,22 @@ predictRec <- function(rec, indices, mos=1:12,
 				data = data.frame(time=yrs-min(yrs)+1, y=jrec, x=idx)
 				#jfit <- gls(y ~ poly(x,polyno), correlation=corAR1(form = ~ time), data=data)
 				jmod <- substitute(gls(y ~ poly(x,polyno), correlation=corAR1(form = ~ time), data=data))
-				jfit = eval(jmod)
+				jfit = try(eval(jmod), silent=TRUE)
+				if(inherits(jfit, "try-error")) next
 				xnew  = seq(min(idx), max(idx), length=length(idx))
 				newdata = data[,setdiff(colnames(data), "y")]
 				newdata$x = xnew
-#browser();return()
-				jcoef = coef(jfit); jcoef=c(jcoef,Phi=intervals(jfit)$corStruct["Phi","est."])
+				jcoef = coef(jfit)
+				fifi  = try(intervals(jfit)$corStruct, silent=TRUE)
+				if(inherits(fifi, "try-error")) next
+#if (j==104) {browser();return()}
+				Phi   = fifi[grep("Phi",rownames(fifi)),"est."]
+#.flush.cat(Phi, "\n")
+				jcoef = c(jcoef, Phi)
 				#ynew.lm  = jcoef[1] + jcoef[2] * xnew  ## only good for simple llinear model
 				ynew = predict(jfit, newdata=newdata)
 				#plot(idx, jrec); lines(xnew, ynew.lm, col="blue",lw=3); lines(xnew, ynew, col="red") ## diagnostic for linear fit
+#browser();return()
 				ifit[[jj]] = list(idx=idx, jrec=jrec, jfit=jfit, xnew=xnew, jcoef=jcoef, ynew=ynew)
 			}
 			attr(ifit, "index") = ii
@@ -3353,7 +3367,7 @@ predictRec <- function(rec, indices, mos=1:12,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~predictRec
 
 
-## tabSS.compo--------------------------2025-12-04
+## tabSS.compo--------------------------2026-03-13
 ## Make Base Case Tables
 ## Note: u2023=u2022 (see 'gatherMCMC.r') so change 
 ##       labels here in rfpt tables to use 'prevYear'
@@ -3432,7 +3446,9 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 		}
 		rownames(tabPmed) =  paste(rep("$",nrow(tabPmed)),names.pars,rep("$",nrow(tabPmed)),sep="")
 		#colnames(tabPmed) =  gsub("\\%","\\\\%",colnames(tabPmed))
-	
+		write.csv(tabPmed, paste0(prefix,"tabPmed.csv"))
+
+
 		xtab.compo.pars = xtable(tabPmed, align="lrrrrr",
 			label   = paste0("tab:",prefix,"base.pars"), digits = if (exists("formatCatch")) NULL else sigdig,
 			caption = paste0("Base run (", istock, ")~: the ", texThatVec(tcall(quants5)), " quantiles for ", ifelse(NrefM>1,"pooled",""),
@@ -3483,7 +3499,8 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 				utrp       = avgRP[,"utgt"],
 				#LRP        = 0.16 * avgRP[,"B0"],
 				#USR        = 0.32 * avgRP[,"B0"],
-				LRP        = 0.4 * avgRP[,"Btgt"],
+				#LRP        = 0.4 * avgRP[,"Btgt"],
+				LRP         = 0.2 * avgRP[,"B0"],  ## SGR 2025 : RPR wants LRP to follow Barrett et al. (2025)
 				USR        = 0.8 * avgRP[,"Btgt"],
 				Bcurr.Btrp = avgRP[,"Bcurr"] / avgRP[,"Btgt"],
 				ucurr.utrp = avgRP[,"ucurr"] / avgRP[,"utgt"]
@@ -3535,7 +3552,8 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 						utrp       = xavgRP[,"utgt",a],
 						#LRP        = 0.16 * xavgRP[,"B0",a],
 						#USR        = 0.32 * xavgRP[,"B0",a],
-						LRP        = 0.4 * xavgRP[,"Btgt",a],
+						#LRP        = 0.4 * xavgRP[,"Btgt",a],
+						LRP        = 0.2 * xavgRP[,"B0",a],  ## SGR 2025 : RPR wants LRP to follow Barrett et al. (2025)
 						USR        = 0.8 * xavgRP[,"Btgt",a],
 						Bcurr.Btrp = xavgTS[,as.character(currYear),"B",a] / xavgRP[,"Btgt",a],
 						ucurr.utrp = xavgTS[,as.character(currYear),"u",a] / xavgRP[,"utgt",a]
@@ -3566,6 +3584,7 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 			rownames(tabQmed) = sub("3",paste0(".",xareas[3]), sub("2",paste0(".",xareas[2]), sub("1", paste0(".",xareas[1]), rownames(tabQmed) ) ) )
 #browser();return()
 		} ## end extra area collection
+		write.csv(tabQmed, paste0(prefix,"tabQmed.csv"))
 
 		tab.base.rfpt = formatCatch(tabQmed,N=sigdig-1)  ## use 3 instead of 4
 		names.rfpt = rownames(tab.base.rfpt)
@@ -3576,7 +3595,7 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 			gsub("_Other", "~(\\\\text{other})",
 			gsub("trp", "_\\\\text{TRP}",
 			gsub("msy", "_\\\\text{MSY}",
-			gsub("LRP",  paste0(switch(RPbase, 'BMSY'="0.4B_{\\\\text{MSY}}", 'B0'="0.16B_0")),
+			gsub("LRP",  paste0(switch(RPbase, 'BMSY'="0.4B_{\\\\text{MSY}}", 'B0'="0.2B_0")),
 			gsub("USR",  paste0(switch(RPbase, 'BMSY'="0.8B_{\\\\text{MSY}}", 'B0'="0.32B_0")),
 			gsub("MSY",  paste0("\\\\text{MSY}"),
 			gsub("VB",  "V",
@@ -3597,7 +3616,7 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 		rownames(tab.base.rfpt) =  paste(rep("$",nrow(tab.base.rfpt)),names.rfpt,rep("$",nrow(tab.base.rfpt)),sep="")
 
 		#remove.rows = grep("~~0\\.16|~~0\\.32|~~B\\_\\\\text\\{TRP|~~u\\_\\\\text\\{max",rownames(tab.base.rfpt))
-		remove.rows = grep("~~0\\.16|~~0\\.32|~~u\\_\\\\text\\{max",rownames(tab.base.rfpt))
+		remove.rows = grep("~~0\\.2|~~0\\.32|~~u\\_\\\\text\\{max",rownames(tab.base.rfpt))
 #browser();return()
 		if (length(remove.rows) > 0)
 			tab.base.rfpt = tab.base.rfpt[-remove.rows,]   ## otherwise it removes all rows
@@ -3774,6 +3793,7 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 		#ee$xtab.cruns.ll.out   <- xtab.cruns.ll.out
 		#ee$xtab.cruns.pars.out <- xtab.cruns.pars.out
 		#ee$xtab.cruns.rfpt.out <- xtab.cruns.rfpt.out
+#browser();return()
 
 		rm(list=setdiff(ls(),c(keep.pars,"keep.pars")))  ## need to clear the objects in first loop so they don't mask those in second environment
 		detach(ee)
@@ -3782,12 +3802,12 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tabSS.compo
 
 
-## tabSS.decision-----------------------2025-12-10
+## tabSS.decision-----------------------2026-03-23
 ## Make Decision Tables (Probabilities)
 ## ---------------------------------------------RH
 tabSS.decision <- function(envo, #istock="YTR", prefix="ytr.", compo,
   useRlow=FALSE, qRlow=0.25, decdig=2, cp.type="CC",  ## HR not used in SS3 yet (although it could be)
-  cp.num=c(1,3,6,9:15), use.agile=FALSE)
+  cp.num=c(1,3,6,9:15), use.agile=TRUE)
 {
 	vomit <- function() { gc(verbose=FALSE); while ("ee" %in% search()) detach(ee) }; #resetGraph() }
 	on.exit( vomit() )
@@ -3834,6 +3854,7 @@ tabSS.decision <- function(envo, #istock="YTR", prefix="ytr.", compo,
 			Nmcmc.good = tcall(Nmcmc.good)
 			#Nmcmc = format(tcall(Nmcmc),big.mark=",")
 		} else {  ## deprecated
+			stop ("!!!!! USE FUNCTION 'agileDT' !!!!!")
 			## Use old routine for single-stock models
 			## Diagnostics for select parameters
 			P.mpd       = ampdPA; storage.mode(P.mpd)="double"     ## For some reason, this matrix is stored as a list (maybe due to NA values?)
@@ -4043,6 +4064,7 @@ tabSS.decision <- function(envo, #istock="YTR", prefix="ytr.", compo,
 			iii  = sub("tabDT.","",ii)
 			ilab  = switch(iii,  ## try to simplify acronyms (ilab[3])
 				'0.16B0' = c("limit reference point (LRP) 0.16$B_0$", "P$(B_t > 0.16B_0)$", "LRP"),
+				'0.2B0'  = c("limit reference point (LRP) 0.2$B_0$", "P$(B_t > 0.2B_0)$", "LRP"),
 				'0.32B0' = c("upper stock reference (USR) 0.32$B_0$", "P$(B_t > 0.32B_0)$", "USR"),
 				'Btrp'   = c("target reference point (TRP) 0.4$B_0$", "P$(B_t > 0.4B_0)$",  "TRP"),
 				'Bcurr'  = c(paste0("current spawning biomass (BCU) $B_{",currYear,"}$"), paste0("P$(B_t > B_{",currYear,"})$"),  "BCU"),
@@ -4054,6 +4076,7 @@ tabSS.decision <- function(envo, #istock="YTR", prefix="ytr.", compo,
 				c("sumting", "wong", "XXX") ## can add more if MSY RPs come back into vogue
 			)
 			eval(parse(text=paste0("itab <- ", ii)))
+#browser();return()
 			client = ifelse(grepl("Gen|0\\.5|0\\.7",iii), "cosewic.", "gmu.")
 			tablab = paste0("tab:", prefix, client, ilab[3],".CC")
 			tabcap =
@@ -4082,7 +4105,7 @@ tabSS.decision <- function(envo, #istock="YTR", prefix="ytr.", compo,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tabSS.decision
 
 
-## tabSS.senso--------------------------2025-12-04
+## tabSS.senso--------------------------2026-03-30
 ## Make Sensitivity Tables
 ## Note: u2023=u2022 (see 'gatherMCMC.r') so change 
 ##       labels here in rfpt tables to use 'prevYear'
@@ -4149,8 +4172,12 @@ tabSS.senso <- function(envo, sigdig=4)
 		iCR         = grep(paste0(strsplit(exp.run.rwt,split="\\.")[[1]][1:2],collapse="."), unique(B.index))
 		S.prefix[1] = paste0("B",iCR, " (R", strsplit(exp.run.rwt,"\\.")[[1]][1], ") ")
 		sen.lab     = sen.lab[1:(length(S.num)-1)]
-		S.labels    = paste0(S.prefix, gsub("\\_"," ", c("Central Run",sen.lab)))
+		S.labels    = paste0(S.prefix, gsub("\\_"," ", c("Base Run",sen.lab)))
 		S.labels    = sub("\\\\pc", "%", S.labels)  ## just in case
+		if (strSpp=="405" && istock=="3area") {
+			S.prefix = sub("B([0-9])", "A\\1", S.prefix)
+			S.labels = sub("Base","Alternative",sub("B([0-9])", "A\\1", S.labels))  ## SGR 2025 change 3area label from base (B) to alternative (A)
+		}
 #browser();return()
 
 		P.qnts = calcQs(senPA, ivec=S.run.rwt, ovec=S.run.ord)
@@ -4167,7 +4194,7 @@ tabSS.senso <- function(envo, sigdig=4)
 		}
 		tabPmed = tabPmed[P.ord,]
 		tab.sens.pars = formatCatch(tabPmed,N=sigdig, na="-")
-		colnames(tab.sens.pars) = gsub("\\s+","",S.prefix)
+		colnames(tab.sens.pars) = gsub("\\s+","", S.prefix)
 
 		test = names.pars = rownames(tab.sens.pars)
 		## Deal with stupid catchabilities first
@@ -4335,7 +4362,8 @@ if (sumting) {
 				umax       = apply(senTS[,,"ut"],1,max,na.rm=T), ## for each mcmc sample across the time series
 				#Ytrp      = senRP[,"Ytgt"],
 				Btrp       = 0.40 * senRP[,"B0"],  ## this should be OK when B0=SSB_1933 (VIRG) but not OK when B0=SSB_1935 (first year)
-				LRP        = 0.16 * senRP[,"B0"],
+				#LRP        = 0.16 * senRP[,"B0"],
+				LRP        = 0.20 * senRP[,"B0"],
 				USR        = 0.32 * senRP[,"B0"],
 				Bcurr.Btrp = senRP[,"Bcurr"] / (0.40 * senRP[,"B0"])
 				#Btrp.B0    = (0.40 * senRP[,"B0"]) / senRP[,"B0"],  ## just 0.4
@@ -4385,7 +4413,8 @@ if (sumting) {
 						umax       = apply(xsenTS[,,"u",a],1,max,na.rm=T), ## for each mcmc sample across the time series
 						#Ytrp       = xsenRP[,"Ytgt",a],
 						Btrp       = 0.40 * xsenRP[,"B0",a],  ## this should be OK when B0=SSB_1933 (VIRG) but not OK when B0=SSB_1935 (first year)
-						LRP        = 0.16 * xsenRP[,"B0",a],
+						#LRP        = 0.16 * xsenRP[,"B0",a],
+						LRP        = 0.20 * xsenRP[,"B0",a],
 						USR        = 0.32 * xsenRP[,"B0",a],
 						Bcurr.Btrp = xsenTS[,as.character(currYear),"B",a] / (0.40 * xsenRP[,"B0",a])
 						#Btrp.B0    = (0.40 * senRP[,"B0"]) / senRP[,"B0"],  ## just 0.4
@@ -4434,7 +4463,8 @@ if (sumting) {
 			gsub("_Other", "~(\\\\text{other})",
 			gsub("trp", "_\\\\text{TRP}",
 			gsub("msy", "_\\\\text{MSY}",
-			gsub("LRP",  paste0(switch(RPbase, 'BMSY'="0.4B_{\\\\text{MSY}}", 'B0'="0.16B_0")),
+			#gsub("LRP",  paste0(switch(RPbase, 'BMSY'="0.4B_{\\\\text{MSY}}", 'B0'="0.16B_0")),
+			gsub("LRP",  paste0(switch(RPbase, 'BMSY'="0.4B_{\\\\text{MSY}}", 'B0'="0.2B_0")),
 			gsub("USR",  paste0(switch(RPbase, 'BMSY'="0.8B_{\\\\text{MSY}}", 'B0'="0.32B_0")),
 			gsub("MSY",  paste0("\\\\text{MSY}"),
 			gsub("VB",  "V",

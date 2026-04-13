@@ -1114,13 +1114,15 @@ panelTraces <- function (mcmc, mpd=mcmc[1,], nchains=1, pdisc=0,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~panelTraces
 
 
-## plot_cres ---------------------------2026-02-23
+## plot_cres ---------------------------2026-04-01
 ##  Produce 5-panel overview of residuals (pkg=compResidual) by default,
 ##  or one specific plot if the 'pick_one' argument is provided.
 ## Changed name from 'plot.cres.new' to 'plot_cres' to avoid methods crap (RH 260220)
 ## ---------------------------------------VT|AN|RH
-plot_cres <- function (x, pick_one=NULL, maxLag=NULL, main="",
-   png=FALSE, pngres=400, PIN=c(10,9), lang=c("f","e"), outnam=NULL, ...) 
+plot_cres <- function (x, pick_one=NULL, maxLag=NULL,
+   pearson=NULL, rawres=NULL,
+   main="", png=FALSE, pngres=400, PIN=c(10,9), 
+   lang=c("f","e"), outnam=NULL, ...) 
 {
 	## ---------------------
 	## Plot 1: bubble plot of the residuals
@@ -1165,6 +1167,7 @@ plot_cres <- function (x, pick_one=NULL, maxLag=NULL, main="",
 		changeLangOpts(L=l)
 		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+#browser();return()
 		if (png) {
 			clearFiles(paste0(fout,".png"))
 			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
@@ -1197,12 +1200,43 @@ plot_cres <- function (x, pick_one=NULL, maxLag=NULL, main="",
 				colb <- ifelse(zscale < 0, rgb(1, 0, 0, alpha = 0.5), rgb(0, 0, 1, alpha = 0.5))
 				points(xx, yy, cex = sqrt(abs(zscale))/max(sqrt(abs(zscale)), na.rm = TRUE) * 5 * bscale, pch = 19, col = colb)
 			}
+			## OSA residuals appear to be standadised
 			sample <- rep(1:ncol(x), each = nrow(x))
 			composition <- rep(1:nrow(x), ncol(x))
-			xlim = extendrange(sample, f=0.025)
+			extra = !is.null(pearson) || !is.null(rawres)
+			f1 = if(length(unique(sample))>=20) 0.01 else 0.025
+			f2 = if(!extra||length(unique(sample))>=20) f1 else if(length(unique(sample))>=10) 0.025 else if(length(unique(sample))>=5) 0.1 else 0.2
+#.flush.cat(c(f1,f2), "\n")
+			xlim = extendrange(sample, f=c(f1,f2) )
 			ylim = extendrange(composition, f=c(0.02,0.06))
 			#plotby(sample, composition, x, bubblescale=bubblescale, xlab=linguaFranca("Year",l), ylab=linguaFranca("Age (y)",l), yaxt="n", xaxt="n", xlim=xlim, ylim=ylim, ...)
 			do.call(plotby, args=list(x=sample, y=composition, z=x, bubblescale=bscale, xlab=linguaFranca("Year",l), ylab=linguaFranca("Age (y)",l), yaxt="n", xaxt="n", xlim=xlim, ylim=ylim, udots))
+			## Add in SDNR by year (RH 260331)
+			sdnr <- apply(x,2,sd)
+			sdnr.digs=3; sdnr.cex=0.8; sdnr.srt=0; sdnr.adj=c(0.5,-0.5)
+			if (length(sdnr)>=10 && length(sdnr)<15) {
+				sdnr.digs=2; sdnr.cex=0.7; sdnr.srt=0; sdnr.adj=c(0.5,-0.5)
+			} else if (length(sdnr)>=15) {
+				sdnr.digs=2; sdnr.cex=0.6; sdnr.srt=90; sdnr.adj=c(-0.1,0.5)
+			}
+			sdnr.annual <- show0(round(sdnr,sdnr.digs), sdnr.digs, add2int=TRUE)
+			sdnr.total  <- show0(round(sd(x),4), 4, add2int=TRUE)
+			text(1:length(sdnr), par()$usr[3], sdnr.annual, cex=sdnr.cex, adj=sdnr.adj, srt=sdnr.srt, col="darkslategray")
+			text(par()$usr[1], par()$usr[3], linguaFranca("SDNR",l), cex=0.8, font=2, xpd=NA, adj=c(1.2,-0.5))
+			#text(par()$usr[1], par()$usr[3]-0.03*diff(par()$usr[3:4]), sdnr.total, cex=0.8, font=2, xpd=NA, adj=c(1.2,-0.5))
+#browser();return()
+			if (extra) {  ## (RH 260226)
+				par(new=TRUE)
+				## Change bubble colours 
+				mess = deparse(plotby, width.cutoff=500L)
+				z = grep("rgb", mess)
+				mess[z] = gsub("rgb\\(1, 0, 0", "rgb(0.855, 0.647, 0.125", gsub("rgb\\(0, 0, 1", "rgb(0, 0.392, 0", mess[z]))  ## goldenrod, darkgreen
+				plotover = eval(parse(text=mess))
+				xoff = if(length(unique(sample))>=20) 0.5 else 0.33  ## x-value offset
+				extra.res = if (!is.null(pearson)) pearson else rawres  ## can only be one or the other (for now)
+				zed  = t(extra.res); zed = zed[-nrow(zed),]
+				do.call(plotover, args=list(x=sample+xoff, y=composition, z=zed, bubblescale=bscale, xlab="", ylab="", yaxt="n", xaxt="n", xlim=xlim, ylim=ylim, udots))
+			}
 			xTicks <- pretty(1:ncol(x))
 			xTicks <- xTicks[xTicks != 0]
 			yTicks <- pretty(1:nrow(x))
@@ -1210,8 +1244,9 @@ plot_cres <- function (x, pick_one=NULL, maxLag=NULL, main="",
 			axis(1, at = xTicks, labels = xname[xTicks])#, cex.axis=1.2)
 			axis(2, at = yTicks, labels = yname[yTicks])#, cex.axis=1.2)
 			add_legend(x, cex.text = 0.8, bubblescale=bscale)
-			addLabel(0.95,0.95, linguaFranca("OSA residuals",l), cex=1, adj=c(1,0))
-#browser();return()
+			leg2 = "OSA residuals"
+			if (extra) leg2 = paste0("OSA & ", if(!is.null(pearson)) "Pearson" else "raw", " residuals")
+			addLabel(0.95,0.95, linguaFranca(leg2,l), cex=0.8, adj=c(1,0))
 		}
 		## Autocorrelation plot (remove lag 0)
 		if (ncol(x)>1 && (pick_one == 2 || missing(pick_one))) {
@@ -1255,8 +1290,17 @@ plot_cres <- function (x, pick_one=NULL, maxLag=NULL, main="",
 				par(fig=c(0.5,1,0.67,1), new=TRUE)
 			qqnorm(x, col=col, main="", xlab=linguaFranca("Theoretical quantiles",l), ylab=linguaFranca("Sample quantiles",l), pch=20, cex=1.2)#, cex.axis=1.2)
 			abline(0, 1)
+			## Kolmogorov-Smirnov D statistic
+			## Null Hypothesis: the data follows a Normal CDF.
+			## The null hypothesis is rejected if the returned p-value < 0.05, indicating the sample distribution differs from the theoretical distribution.
+			ks.out = ks.test(as.vector(x), "pnorm", mean=mean(x), sd=sd(x))  ## (Google AI 260225) need to standardise the data
+			ks.leg = c("Kolmogorov-Smirnov", paste0("  D = ", round(ks.out$statistic,3)), paste0("  p = ", round(ks.out$p.value,3), ifelse(ks.out$p.value<=0.05,"*","") ) )
+			addLabel(0.025, 0.975, txt=paste0(ks.leg,collapse="\n"), cex=0.9, adj=c(0,1))
+			sdnr.total  <- show0(round(sd(x),4), 4, add2int=TRUE)
+			addLabel(0.025, 0.700, txt=linguaFranca(paste0("SDNR (OSA) = ", sdnr.total),l), cex=0.9, adj=c(0,1))
 			#legend("topleft", col=col, legend=yname, pch=20, bty="n", cex=1, pt.cex=1.2, ncol=4)
-			legend("topleft", legend=linguaFranca("Colours indicate age",l), bty="n", cex=1)
+			legend("bottomright", legend=linguaFranca("Colours indicate age",l), bty="n", cex=0.9)
+#browser();return()
 		}
 		## Residuals by matrix element
 		if (pick_one == 4 || missing(pick_one)) {
@@ -1312,8 +1356,9 @@ if(length(xvalue)!=length(yvalue)){browser(); return()}
 				## Plot this mess around
 				if (missing(pick_one))
 					par(fig=c(0.5,1,ifelse(bycol,0.33,0),ifelse(bycol,0.67,0.33)), new=TRUE)
-				xlim=c(0.5,length(out)+ 0.5)
-				ylim =  range(lapply(out, function(x) {range(x$yval)}))
+				xlim = c(0.5,length(out)+ 0.5)
+				ylim = range(lapply(out, function(x) {range(x$yval)}))
+				ylim = c(min(-2,ylim[1]), max(2.2,ylim[2]))
 				ymed =  lapply(out, function(x) {x$ymed})
 				ymed = do.call("rbind", lapply(ymed, data.frame, stringsAsFactors=FALSE))
 				plot(0,0, type="n", xlim=xlim, ylim=ylim, xlab=ifelse(bycol,"",linguaFranca("Age",l)), ylab=linguaFranca("Residuals",l), xaxt="n")
@@ -1332,7 +1377,7 @@ if(length(xvalue)!=length(yvalue)){browser(); return()}
 				axis(side=1, at=1:nfac, labels=FALSE, tick=T, tcl=-0.1)
 				axis(side=1, at=zlab, labels=names(out)[zlab], tick=T, tcl=-0.3, las=2) ## rotate labels
 #browser();return()
-				addLabel(0.99,0.99, txt=paste0(linguaFranca("breaks",l,little=6), " = ", brk), cex=0.8, adj=c(1,1))
+				addLabel(0.99,0.99, txt=paste0(linguaFranca("breaks",l,little=6), " = ", brk), cex=0.8, adj=c(1,1), col="darkslategray")
 			}
 		} ## end 4th and/or 5th plot
 		mtext(linguaFranca(main,l), outer=TRUE, side=3, line=0, cex=1.5)
@@ -1702,7 +1747,7 @@ plotSS.pairs <- function(P.mpd, P.mcmc, type="image", ptypes,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.pairs
 
 
-## plotSS.pmcmc-------------------------2025-12-03
+## plotSS.pmcmc-------------------------2026-03-12
 ##  Plot boxplots of quantiles for various MCMC parameters.
 ##  Modified from PBSawatea's 'plotBmcmcPOP' function.
 ##  Input comes from the output file 'derived.parameters.sso' (use r4ss::SSgetMCMC)
@@ -1726,6 +1771,7 @@ plotSS.pmcmc <- function(obj, pqs=NULL, xyType="quantBox",
 			col.rrr = .colBlind["bluegreen"]
 			expandGraph(mar=c(3,3.5,1.2,1.2), mgp = c(1.6,0.5,0))
 			plot(xLim, yLim, type="n", xlab=linguaFranca("Year",l), ylab=linguaFranca(yLab,l), ...)
+#browser();return()
 			if (exists("currYr"))
 				abline(v=currYr, col="purple", lty=2)
 			if (!y0) abline(h=0,col="gainsboro")
@@ -1838,7 +1884,8 @@ plotSS.pmcmc <- function(obj, pqs=NULL, xyType="quantBox",
 			#x.fore = .su(c(currYr, pyrs))
 			x.fore = setdiff(pyrs, currYr)  ## exclude current year from projections (RH 251028)
 			if (all(!is.na(pvec)) && all(x.fore %in% yrs)){
-				kcol = if (length(pvec)==1) "red" else c("green3","orange2","red")
+				#kcol = if (length(pvec)==1) "red" else c("green3","orange2","red")
+				kcol = if (length(pvec)==1) "red" else .colBlind[c("bluegreen","skyblue","vermillion")]
 				xpol = x.fore
 				if (length(x.fore)==1) {
 					xpol = c(x.fore, x.fore)
@@ -1911,8 +1958,10 @@ plotSS.pmcmc <- function(obj, pqs=NULL, xyType="quantBox",
 
 	if (inherits(obj,"list") &&  is.null(dim(obj)))
 		narea = length(obj)
-	else
+	else  {
 		narea = 1
+		obj = list('BC'=obj)
+	}
 	createFdir(lang)
 	if (missing(outnam))
 		outnam = gsub("[[:space:]]+",".",tolower(yLab))
@@ -1927,7 +1976,6 @@ plotSS.pmcmc <- function(obj, pqs=NULL, xyType="quantBox",
 				clearFiles(paste0(fout,".png"))
 				png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 			}
-#browser();return()
 			## narea is an internal object determined above
 			rc = if(narea==3) c(3,1) else .findSquare(narea)
 			expandGraph(mfrow=rc, mar=c(3.0,3.5,0.75,0.5), oma=c(0,0,0,0), mgp=c(1.75,0.5,0))
@@ -1941,6 +1989,7 @@ plotSS.pmcmc <- function(obj, pqs=NULL, xyType="quantBox",
 					aobj = obj[[i]]
 					acatpol = catpol[[i]]
 				}
+#browser();return()
 				# Plot quantiles of biomass using the posterior densities.
 				yrs1 = yrs2 = result1 = result2 = NULL
 				if(is.null(pqs)) pqs = c(0.05, 0.25, 0.50, 0.75, 0.95)
@@ -2004,8 +2053,11 @@ plotSS.pmcmc <- function(obj, pqs=NULL, xyType="quantBox",
 				} else 
 					axis(2, at=seq(par()$yaxp[1], par()$yaxp[2], by=yaxis.by), tcl=tcl.val, labels=FALSE)
 				#axis(2, at=seq(0, yLim[2], by=yaxis.by), tcl=tcl.val, labels=FALSE)
-				if (length(projvec)==3)
-					addLegend(0.5,0.975,legend=paste0(names(projvec)," t"), lty=1, lwd=ifelse(narea==1,3,2), seg.len=3, col=c("green3","orange2","red"), bty="n", xjust=0, yjust=1,title=linguaFranca("Projected catch",l), cex=ifelse(narea==1,1,0.8))
+				if (length(projvec)==3) {
+					col.leg = c("green3","orange2","red")
+					col.leg = .colBlind[c("bluegreen","skyblue","vermillion")]
+					addLegend(0.5,0.975,legend=paste0(names(projvec)," t"), lty=1, lwd=ifelse(narea==1,3,2), seg.len=3, col=col.leg, bty="n", xjust=0, yjust=1,title=linguaFranca("Projected catch",l), cex=ifelse(narea==1,1,0.8))
+				}
 #browser();return()
 				if (narea>1 || strSpp=="396") {## retrofit for POP 2023
 					area = sub("CST|5ABC-5DE-3CD", "BC", area)  ## adjust for SGR 2025
@@ -2312,7 +2364,7 @@ plt.yearResids <- function(obj, ages=NULL, main=NULL, fill.in=TRUE, lang="e", re
 ##====================================== End suite of quantile boxes of age-fit residuals
 
 
-## plt.selectivity----------------------2025-07-21
+## plt.selectivity----------------------2026-03-06
 ## Transferred selectivity code from PBSscape.r
 ## into plt function (RH 190718)
 ## sobj = second object (RH 201119)
@@ -2385,7 +2437,19 @@ plt.selectivity <- function( obj, sobj=NULL, mainTitle="Rockfish", maxage,
 
 	## Get the maturity ogive
 	#mats = getSS.control(tcall(control.file))$maturity_ogive[1:length(Pvec)]
-	mats = SS_readctl(tcall(control.file))$Age_Maturity[1:length(Pvec)]  ## (RH 240820)
+	#mats = SS_readctl(tcall(control.file), version=replist$SS_versionshort)$Age_Maturity[1:length(Pvec)]  ## (RH 240820)  ## bug has appeared
+	## Grab  maturity ogive manually (hack for now ## RH (260306)
+	ctl  = readLines(tcall(control.file))
+	zmat = grep("maturity_option", ctl)[1]
+	if (substring(ctl[zmat],1,1)=="3") {
+		mats = ctl[zmat+1]
+	} else {
+		message("sumtingwong in function 'plt.selectivity'"); browser(); return()
+	}
+	mess = paste0("mats = c(",gsub("\\s+",",",mats),")")
+	eval(parse(text=mess))
+	mats = mats[1:length(Pvec)]
+#browser();return()
 
 	strip.list = list(col=lucent("black",0.5), bg=lucent("moccasin",0.5), height=0.1, cex=1.5)
 

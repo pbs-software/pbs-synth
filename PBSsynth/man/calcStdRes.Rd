@@ -46,14 +46,14 @@ result$stdRes[idx] <- res[idx]/SD
 }
 \references{
 Bull, B., Francis, R.I.C.C., Dunn, A., McKenzie, A., Gilbert, D.J. and Smith, M.H. (2005)
-\href{https://docs.niwa.co.nz/library/public/NIWAtr127.pdf}{CASAL (C++ algorithmic stock assessment laboratory): CASAL User Manual v2.07-2005/08/21}.
+CASAL (C++ algorithmic stock assessment laboratory): CASAL User Manual v2.07-2005/08/21.
 NIWA Tech. Rep. 127. 274 p.
 }
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-04-11}
+  Last modified \code{Rd: 2026-04-13}
 }
 \note{
   No support for the Dirichlet-Multinomial (yet); however, see SS3 code \sQuote{SS_write_report.tpl} where:\cr

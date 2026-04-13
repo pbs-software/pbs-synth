@@ -16,8 +16,9 @@ plotSS.stdres(replist, kind="AGE", fleets="all",
    labels=c("Length (cm)", "Age (yr)", "Year", "Observed sample size",
    "Effective sample size", "Proportion", "cm", "Frequency", "Weight", "Length",
    "(mt)", "(numbers x1000)", "Stdev (Age)", "Conditional AAL plot, ", "Size bin"),
-   plot=TRUE, print=FALSE, type="Multinomial", useOSA=TRUE, usePearson=FALSE,
-   ptypes="png", pngres=400, PIN=c(7,9), outnam, lang="e", ...)
+   type="Multinomial", useOSA=TRUE, addPearOSA=FALSE, addRawOSA=FALSE, usePearson=FALSE, 
+   rm0=FALSE, plot=TRUE, print=FALSE, ptypes="png", pngres=400, PIN=c(10,8.5),
+   outnam, lang="e", ...)
 
 plt.ageResids (obj, ages=NULL, main=NULL, lang="e", yrs, resfld="Pearson", ...)
 
@@ -40,15 +41,21 @@ plt.cohortResids (obj, ages=NULL, main=NULL, lang="e", use.rdevs=T, resfld="Pear
   \item{aggregates_by_mkt}{\code{logical} -- if \code{TRUE}, make separate plots of aggregates
     across years into different plots for each market category (retained, discarded)}
   \item{labels}{\code{character} -- vector of labels for plots (titles and axis labels)}
-  \item{plot}{\code{logical} -- if \code{TRUE}, plot to active plot device}
-  \item{print}{\code{logical} -- if \code{TRUE}, print to PNG files}
   \item{type}{\code{character} -- type of distribution to fit AF data; 
     if \code{'Fournier'} or \code{'Coleraine'}, use function \code{'calcStdRes'} to 
     calculate Pearson residuals, else use SS3 calculation of Pearson residuals}
   \item{useOSA}{\code{logical} -- if \code{TRUE}, calculate one-step-ahead residuals 
     using function\cr \code{compResidual::resMulti}}
+  \item{addPearOSA}{\code{logical} -- if \code{TRUE}, add Pearson residuals alongside
+    OSA residuals when calling \code{'plot_cres'}}
+  \item{addRawOSA}{\code{logical} -- if \code{TRUE}, add raw residuals alongside
+    OSA residuals when calling \code{'plot_cres'}}
   \item{usePearson}{\code{logical} -- if \code{TRUE}, display Pearson residuals used
     by stock assessments before OSA residuals became a thing}
+  \item{rm0}{\code{logical} -- if \code{TRUE}, remove Pearson | raw residuals when 
+    plotting alongside OSA residuals when calling \code{'plot_cres'}}
+  \item{plot}{\code{logical} -- if \code{TRUE}, plot to active plot device}
+  \item{print}{\code{logical} -- if \code{TRUE}, print to PNG files}
   \item{ptypes}{\code{character} -- plot types (\code{'png'}, \code{'eps'})}
   \item{pngres}{\code{numeric} -- resolution (pixels/inch) for \code{.png} output}
   \item{PIN}{\code{numeric} -- plot device size (inches) for width and height}
@@ -96,8 +103,8 @@ plt.cohortResids (obj, ages=NULL, main=NULL, lang="e", use.rdevs=T, resfld="Pear
 
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2025-01-02}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-04-13}
 }
 \note{
   In 2024, functionality was updated to use one-step-ahead (OSA) residuals by Vanessa Trijoulet and Anders Nielsen.\cr
@@ -113,7 +120,8 @@ plt.cohortResids (obj, ages=NULL, main=NULL, lang="e", use.rdevs=T, resfld="Pear
 \seealso{
 In package \pkg{PBSsynth}:\cr
   \code{\link[PBSsynth]{calcStdRes}},
-  \code{\link[PBSsynth]{getSS.rdevs}}\cr
+  \code{\link[PBSsynth]{getSS.rdevs}},
+  \code{\link[PBSsynth]{plot_cres}}\cr
 In package \pkg{r4ss}:\cr
   \code{\link[r4ss]{SSplotComps}}\cr
 In package \pkg{compResidual}:\cr
