@@ -9,7 +9,7 @@
 }
 \usage{
 prepMPD(run.rwt.ver, 
-   d.base="C:/Users/haighr/Files/GFish/PSARC25/SGR/Data/SS3/SGR2025",
+   d.base="C:/Users/haighr/Files/GFish/PSARC26/WWR/Data/SS3/WWR2026",
    w=NULL, cvpro=NULL, modify=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -34,8 +34,8 @@ prepMPD(run.rwt.ver,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2026-02-20}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-05-19}
 }
 \seealso{
 In package \pkg{PBSsynth}:\cr

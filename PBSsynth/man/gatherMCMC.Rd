@@ -1,11 +1,13 @@
 \name{gatherMCMC}
 \alias{gatherMCMC}
+\alias{gatherMPD}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-  Gather MCMCs from Model Runs
+  Gather MCMCs (or MPDs) from Model Runs
 }
 \description{
-  Gather MCMC samples from a variety of model runs (e.g., composite base runs, sensitivity runs).
+  Gather MCMC posterior samples (or MPD estimates) from a variety of model runs
+  (e.g., composite base runs, sensitivity runs).
 }
 \usage{
 gatherMCMC(mcdir=".", type="compo", strSpp="SGR", 
@@ -13,10 +15,14 @@ gatherMCMC(mcdir=".", type="compo", strSpp="SGR",
    vyrs=1933, ryrs=1935:2026, pyrs=2026:2036, 
    valTS=c("SSB","F","Recr","RecrDev"), 
    valRP=c("SSB_MSY","annF_MSY","Dead_Catch_MSY"), debug=FALSE)
+   
+gatherMPD(mpdir=".", type="senso", strSpp="SGR",
+   basedir="C:/Users/haighr/Files/GFish/PSARC25/SGR/Data/SS3/SGR2025",
+   vyrs=1933, ryrs=1935:2026, pyrs=2026:2036)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{mcdir}{\code{character} -- name of directory containing MCMC results}
+  \item{mcdir}{\code{character} -- name of directories containing MCMC results}
   \item{type}{\code{character} -- type of runs (\code{'compo'}, \code{'senso'}, etc.)}
   \item{strSpp}{\code{character} -- three-letter code of species}
   \item{basedir}{\code{character} -- directory where SS3 runs are stored for species \code{strSpp}}
@@ -26,13 +32,15 @@ gatherMCMC(mcdir=".", type="compo", strSpp="SGR",
   \item{valTS}{\code{character} -- array dimension names for time series (TS) output}
   \item{valRP}{\code{character} -- array dimension names for reference point (RP) output}
   \item{debug}{\code{logical} -- if \code{TRUE}, print various objects created in function}
+  \item{mpdir}{\code{character} -- name of directories containing MPD model estimates}
 }
 \details{
   Collects a variety of arrays for use later, 
   primarily in the processing of Appendix F (Model Results).
 }
 \value{
-A list of arrays are produced for single-area models:
+\bold{For MCMC posteriors}\cr
+List of arrays are produced for single-area models:
 \tabular{rcl}{
   \code{ampdPA} \tab Dim \tab MPD parameter estimates for each run:\cr
                 \tab   1 \tab run designator (run.rwt), where rwt=reweight number\cr
@@ -80,19 +88,42 @@ An additional list of arrays are produced for multi-area models (prefixed by \co
   \code{xavgCP} \tab  -- \tab MCMC projected catch policies by subarea:\cr
                 \tab   1 \tab model projection year\cr
                 \tab   2 \tab subarea names\cr
-                \tab   3 \tab catch policy\cr
+                \tab   3 \tab catch policy
 }
   Various output files of MCMC results are characterised by their name:\cr
   \code{'compo'} -- base run (or composite base case)\cr
   \code{'senso'} -- sensitivity runs\cr
   \code{'penso'} -- single-area model MCMCs if main model (\code{'compo'}) is multi-area\cr
   \code{'renso'} -- low-recruitment MCMC samples only
+
+\bold{For MPD estimates}\cr
+For comparing MPD estimates, the only type that makes sense (currently) is \code{'senso'}.
+
+The \code{senso} object is a list comprising the following:
+\tabular{rcl}{
+  \code{mplst}  \tab list  \tab list of MPD runs (base plus sensitivities), each with objects:\cr
+                \tab    PA \tab parameter estimates\cr
+                \tab    TS \tab time series of \code{B} (spawing biomass), \code{D} (depletion), \code{R} (recruitment),\cr
+                \tab       \tab \code{F} (fishing mortality), U (exploitation rate)\cr
+                \tab    RP \tab reference points \code{Bcurr}, \code{B0}, \code{LRP}, \code{USR}, \code{Btrp}, \code{Bcurr.B0}, \code{ucurr}, \code{utrp}, and \code{ucurr.utrp}\cr
+  \code{valPAs} \tab  list \tab list of parameter names by MPD run\cr
+  \code{TSmat}  \tab array \tab three-dimensional array of MPD time series estimates\cr
+                \tab     1 \tab \code{year}  -- start year to last projection year\cr
+                \tab     2 \tab \code{value} -- \code{B}, \code{D}, \code{R}, \code{F}, \code{U}\cr
+                \tab     3 \tab \code{run}   -- run name for base and sensitivities\cr
+  \code{RPmat}  \tab array \tab two-dimensional array of reference points\cr
+                \tab     1 \tab \code{value} -- \code{Bcurr}, \code{B0}, \code{LRP}, \code{USR}, \code{Btrp}, \code{Bcurr.B0}, \code{ucurr}, \code{utrp}, and \code{ucurr.utrp}\cr
+                \tab     2 \tab \code{run}   -- run name for base and sensitivities\cr
+  \code{PAmat}  \tab array \tab two-dimensional array of parameter estimates\cr
+                \tab     1 \tab \code{par}   -- parameter names\cr
+                \tab     2 \tab \code{run}   -- run name for base and sensitivities
+}
 }
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2026-02-20}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-04-27}
 }
 \note{
   Perhaps output arrays should have a consistent order to their dimensions,

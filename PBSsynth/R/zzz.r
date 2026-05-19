@@ -48,7 +48,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"P.mcmc", "P.mpd", "P.rc", "Part",
 	"RecFraction", "RPbase", "RRR", "Rtdev.mcmc",
 	"SB0", "SPRloop", "SSB", "Seas", "Sexes", "SpawnBio", "StartStrategy", "StepStrategy", "StrategyType",  
-	"TRP", "Time",
+	"TRP", "Time", "TSmat",
 	"USR", 
 	"VB", "VB0",
 	"Yr",
@@ -78,12 +78,12 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"read_admb_cov", "recentCatch", "redoData", "red", "refCC.sentence", "refHR.sentence", 
 		"replist", "resMulti", "retro", "rich.colors.short", "rootd_models", "run.num",
 	"sample_admb", "sample_inits", "sarima", "scol", "sen.lab", "sen.mcsubs",
-		"senRP", "senTS", "set_prior", "sizebinlabs", "sizedbase", "sizemethod",
+		"senRP", "senTS", "senso", "set_prior", "sizebinlabs", "sizedbase", "sizemethod",
 		"slwd", "smpdPA", "so", "species", "splitGear", "spp.code", "sprod", "ss_executable",
 		"starts_with", "startYear", "starter_file_name", "startyr", "startYr",
 		"stock", "strSpp", "stolab", "stospp", "strip.columns", "subplot", 
 		"sum_Bio_all", "sum_SpawnBio", "sum_catch_tot","survVec", "symbol", "system_",
-	"tic", "time", "toc",
+	"tabPmed", "tic", "time", "toc", 
 	"ucurr", "umsy", "use.num", "utrp",
 	"var", "ver",
 	"wadbase", "weight_at_age_file_name",
@@ -91,7 +91,6 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 ##	"Y",
 	"zzz"
 	), package="PBSsynth")
-
 
 ## Force this globally (without have to make a documentation file)
 #do.call("assign", args=list(x="control.file", value="rebsn_control.ss", envir=.PBSmodEnv))

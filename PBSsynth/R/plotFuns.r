@@ -647,7 +647,8 @@ compAE <- function(fnlen, fnage, fnmod=NULL, CASAL=0.10, maxage=45,
 		}
 		expandGraph(mfrow=c(1,1), mar=c(3.5,3.5,1,1), oma=c(0,0,0,0), mgp=c(2,0.5,0))
 		plot(NA, xlim=xlim, ylim=ylim, xlab=linguaFranca("Expected age",l), ylab=linguaFranca("Standard deviation",l), cex.axis=1.25, cex.lab=1.5)
-		abline(h=if (max(atab[,-1])<=10) seq(1,ylim[2],1) else seq(5,ylim[2],5), col="gainsboro")
+#browser();return()
+		abline(h=if (max(atab[,-1],na.rm=T)<=10) seq(1,ylim[2],1) else seq(5,ylim[2],5), col="gainsboro")
 		if (useAE[4]) {
 			## Add polgons with missing age data
 			xnot = rep(NA, length(ages))
@@ -1114,7 +1115,7 @@ panelTraces <- function (mcmc, mpd=mcmc[1,], nchains=1, pdisc=0,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~panelTraces
 
 
-## plot_cres ---------------------------2026-04-01
+## plot_cres ---------------------------2026-05-12
 ##  Produce 5-panel overview of residuals (pkg=compResidual) by default,
 ##  or one specific plot if the 'pick_one' argument is provided.
 ## Changed name from 'plot.cres.new' to 'plot_cres' to avoid methods crap (RH 260220)
@@ -1282,8 +1283,11 @@ plot_cres <- function (x, pick_one=NULL, maxLag=NULL,
 			abline(h=c(-ci, ci), lty=2)
 			legend("topright", col=lcol, legend=linguaFranca(c("row","column","diagonal"),l,little=8), bty="n", lwd=2)
 		} else {
+			if (missing(pick_one))
+				par(fig=c(0,0.5,0,0.4), new=TRUE)
 			frame(); addLabel(0.5,0.5,"No ACF", col="slategrey", cex=3)
 		}
+#browser();return()
 		## Quantile-quantile plot
 		if (pick_one == 3 || missing(pick_one)) {
 			if (missing(pick_one))
@@ -1299,7 +1303,7 @@ plot_cres <- function (x, pick_one=NULL, maxLag=NULL,
 			sdnr.total  <- show0(round(sd(x),4), 4, add2int=TRUE)
 			addLabel(0.025, 0.700, txt=linguaFranca(paste0("SDNR (OSA) = ", sdnr.total),l), cex=0.9, adj=c(0,1))
 			#legend("topleft", col=col, legend=yname, pch=20, bty="n", cex=1, pt.cex=1.2, ncol=4)
-			legend("bottomright", legend=linguaFranca("Colours indicate age",l), bty="n", cex=0.9)
+			legend("bottomright", legend=linguaFranca("Colors indicate age",l), bty="n", cex=0.9)
 #browser();return()
 		}
 		## Residuals by matrix element
@@ -1326,6 +1330,7 @@ plot_cres <- function (x, pick_one=NULL, maxLag=NULL,
 				lval = list()
 				for (i in 1:ncol(rval)) lval[[i]] = rval[,i]
 				names(lval) = colnames(rval)
+#browser();return()
 				lout = lapply(lval, function(z){
 					xval   = table(ceiling(z/brk) * brk)
 					xval   = xval/max(xval)
@@ -1346,9 +1351,9 @@ if(length(xvalue)!=length(yvalue)){browser(); return()}
 			#qages = apply(xx,1,quantile, probs=probs)
 			#qyear = apply(xx,2,quantile, probs=probs)
 			for (bycol in c(TRUE, FALSE)) {
+#if (!bycol) {browser();return()}
 				out = easyBake(xx, bycol=bycol, brk=brk)
 				if (is.null(names(out))) names(out) = 1:length(out)  ## ages
-#if (!bycol) {browser();return()}
 				nout = as.numeric(names(out)[1]):as.numeric(rev(names(out))[1])
 				allout = as.list(rep(NA,length(nout)))
 				names(allout) = nout
@@ -1370,13 +1375,13 @@ if(length(xvalue)!=length(yvalue)){browser(); return()}
 					polygon(x=c(ixL,rev(ixR)), y=c(iy,rev(iy)), border=ifelse(bycol,"royalblue","sienna"), col=ifelse(bycol,"aquamarine","moccasin"), lwd=0.5)
 				}
 				points(1:nrow(ymed), ymed[,1], pch=21, cex=0.7, lwd=0.5, col="black", bg=ifelse(bycol,"blue","orangered"))
+#browser();return()
 				nfac = length(out)
 				zint = ifelse(bycol,ifelse(nfac>15,3,1),5)
-				zlab = .su(c(1,seq(zint,nfac-1,zint),nfac))
+				zlab = if (nfac==1) 1 else .su(c(1,seq(zint,nfac-1,zint),nfac))
 				#zlab = floor(seq(1,nfac,length=12))
 				axis(side=1, at=1:nfac, labels=FALSE, tick=T, tcl=-0.1)
 				axis(side=1, at=zlab, labels=names(out)[zlab], tick=T, tcl=-0.3, las=2) ## rotate labels
-#browser();return()
 				addLabel(0.99,0.99, txt=paste0(linguaFranca("breaks",l,little=6), " = ", brk), cex=0.8, adj=c(1,1), col="darkslategray")
 			}
 		} ## end 4th and/or 5th plot

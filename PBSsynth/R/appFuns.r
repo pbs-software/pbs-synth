@@ -1,8 +1,9 @@
-## ===============================================2024-08-27
+## =====================================2026-04-28
 ## SS3 APPENDIX FUNCTIONS (Apps F & G)
-## ------------------------------
+## -----------------------------------------------
 ## agileDT...............Produce agile decision tables for projections
-## gatherMCMC............Gather MCMCs for functions below
+## gatherMCMC............Gather MCMC posteriors from base and/or sensitivity runs
+## gatherMPD.............Gather MPD estimates from base run and its sensitivity runs
 ## getSS.rdevs...........Get reruitment deviations from replist
 ## load_extra_mcmc.......Load extra MCMC information from Report files generated for every sample
 ## makeFSARfigs..........Make figures for the new FSAR
@@ -351,6 +352,251 @@ agileDT <- function(compo, currYear=2026, projYear=2036, Ngen=3, gen1=25,
 #browser();return()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~agileDT
+
+
+## compMPD -----------------------------2026-04-20
+## Compare various MPDs gathered by gatherMPD()
+## ---------------------------------------------RH
+compMPD <- function( dir=".", type="senso", strSpp="SGR",
+   prefix="sgr.coast.", rda.name=NULL,
+   vyrs=1933, ryrs=1935:2026, pyrs=2026:2036, figs=FALSE, tabs=FALSE,
+	png=FALSE, pngres=400, PIN=c(9,9), lang=c("e") )
+{
+	if (is.null(rda.name))
+		stop("Run gatherMPD() before using this function")
+	if (!figs && !tabs)
+		stop("User wants no figures or tables; nothing more to do.")
+	rda.file = file.path(dir, rda.name)
+	if (!file.exists(rda.file))
+		stop("Cannot find the rda file specified.")
+	load(rda.file)
+	if (!exists(type, inherits=FALSE))
+		stop("Loaded rda does not match the type specified.")
+
+	## Sensitivity comparisons
+	if (type=="senso") {
+		unpackList(senso, scope="L")
+		S.lab = c("base run", "no constant added to AFs", "small constant added to AFs", "large constant added to AFs", "rdev sum-to-zero", "uniform prior on steepness", "increase AE 1.5 times")
+#browser();return()
+		if (figs) {
+			if (!exists("TSmat", inherits=FALSE))
+				stop("Sumtingwong : TSmat not available; check gatherMPD()")
+			if (png) createFdir(lang)
+
+			uyrs = c(vyrs,ryrs); cyrs = as.character(uyrs)  ## Choose which years to plot
+			runs = dimnames(TSmat)[[3]]; nrun = length(runs)
+			runs[1] = "R29v2"
+			## Provide 15 colours and line types
+			jcol = c("black","green4", "blue", "red", "purple", "orange", "lightseagreen", "skyblue", "gold3", "darkolivegreen", "hotpink", "brown", "cyan", "tomato", "chartreuse3", "darkorchid1")[1:nrun]
+			jlty = c("solid", "22", "44", "66", "13", "73", "1343", "1551", "2262", "3573", "654321", "12345678", "88", "17", "5937", "9876")[1:nrun]
+			jbg  = lucent(jcol,0.5)
+			jlab = paste0(S.lab, " (", runs, ")")
+			
+	
+			trajos = dimnames(TSmat)[[2]]  ## "B" "D" "R" "F" "U"
+#browser();return()
+			for (i in 1:length(trajos)) {
+				ii = trajos[i]
+				if (ii %in% c("F")) next
+				itraj = TSmat[cyrs,ii,]
+				xval  = as.numeric(rownames(itraj))
+				xlim  = range(xval)
+				ylim  = range(itraj); ylim[1]=0
+				VIRG  = is.element(xval, vyrs)
+				MAIN  = is.element(xval, ryrs)
+				#LATE = is.element(xval, 2019:2025)
+				PROJ  = is.element(xval, pyrs)
+
+				fout.e = paste0(prefix, type, ".mpd.",ii)
+				for (l in lang) {  
+					changeLangOpts(L=l)
+					#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+					fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+					if (png) {
+						clearFiles(paste0(fout,".png"))
+						png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+					}
+					expandGraph(mar=c(3.5,3.5,1,1), mgp=c(2, 0.5, 0))
+					plot(0,0,type="n", xlim=xlim, ylim=ylim, xlab="Year", ylab=switch(ii, 'B'="Spawning Biomass (t)", 'D'="Relative Spawning Biomass", 'R'="Recruits (1000s)", 'U'="Harvest Rate", "Sumting"), cex.axis=1.2, cex.lab=1.5)
+					axis(1, at=seq(ryrs[1],rev(ryrs)[1],5), labels=FALSE, tick=TRUE, tcl=-0.2)
+					if (ii=="D")
+						abline(h=c(0.2,0.32,0.4), lty=c(5,4,3), col=.colBlind[c("redpurple","bluegreen","blue")], lwd=2)
+					for (j in ncol(itraj):1) {
+						lines(xval[MAIN], itraj[MAIN,j], col=jcol[j], lwd=ifelse(j==1,4,3), lty=jlty[j])
+						points(xval[VIRG], itraj[VIRG,j], pch=21, col=jcol[j], bg=jbg[j], cex=1.2)
+					}
+					yleg = ifelse(ii%in%c("D"), 0.625, 0.8)
+					addLegend(0.025, yleg, col=jcol, lty=jlty, lwd=c(4,rep(3,nrun-1)), legend=jlab, box.col="grey", seg.len=4)
+					if (png) dev.off()
+				}; eop() ## end lang
+			} ## end i loop (trajectories)
+		} ## end figs
+
+		if (tabs) {
+			if (!exists("PAmat", inherits=FALSE) || !exists("RPmat", inherits=FALSE))
+				stop("Sumtingwong : PAmat and/or RPmat not available; check gatherMPD()")
+			runs = colnames(PAmat);  nrun = length(runs)
+			runs[1] = "R29v2"
+			startYear=1935; currYear=2026; RPbase="B0"
+
+			## Parameter table
+			## ---------------
+			colnames(PAmat)[1] = "R29v2"  ## SGR 2025 base run v.2 was rerun with forecast option 1 (Btgt) as v.4
+			sigdig = 3
+			tab.sens.pars = formatCatch(PAmat, N=sigdig, na="-", exInt=FALSE)
+			##----- Taken from 'tabSS.senso()': -----
+			names.pars = rownames(tab.sens.pars)
+			## Deal with stupid catchabilities first
+			zq = grep("LnQ", names.pars)
+			if (any(zq)) {
+				names.pars[zq] = sub("base\\_","", names.pars[zq])  ## where the f does 'base' come from?
+				names.pars[zq] = sub("LnQ\\_","\\\\log q~", names.pars[zq])
+				names.pars[zq] = sub("TRAWL_(BC|5ABC|5DE|3CD)", "TRAWL_\\1_", names.pars[zq ])
+				names.pars[zq] = sub("\\_$", "", names.pars[zq ])
+				names.pars[zq] = sapply(strsplit(names.pars[zq], split="~"),  function(x){ paste0(x[1],"~(\\text{",gsub("\\_","~",x[2]),"})")})
+			}
+#browser();return()
+			## Fix up Rdist
+			zd = grep("Rdist", names.pars)
+			if (any(zd)) {
+				oRdist = rownames(tabPmed)[zd]
+				oRdist = sub("3",areas[3],sub("2",areas[2],sub("1",areas[1],oRdist)))
+				names.pars[zd] = paste0("\\text{", gsub("\\_","~",oRdist), "}")
+				names.pars[zd] = sub("area", "", names.pars[zd])
+			}
+			names.pars = sub("LN\\(R0)", "\\\\log R_{0}", names.pars)
+			names.pars = sub("\\_GP1", "", names.pars)
+			names.pars = sub("M(1)?\\_Female", "M_{1}~(\\\\text{Female})", names.pars)
+			names.pars = sub("M(1)?\\_Male", "M_{2}~(\\\\text{Male})", names.pars)
+			names.pars = sub("BH\\_(h)", "h~(\\\\text{BH steepness})", names.pars)
+			## Fix selectivity
+			zs = grep("mu|varL|[Dd]elta", names.pars)
+			if (any(zs)) {
+				names.pars[zs] = sub("\\)","}",sub("\\(","_{",gsub("\\_","~", names.pars[zs])))
+				names.pars[zs] = sub("~(TRAWL|QCS|WCHG|WCVI|HS|GIG|NMFS)", "~(\\\\text{\\1", names.pars[zs])
+				names.pars[zs] = paste0("\\", names.pars[zs], "})")
+				names.pars[zs] = sub("\\\\varL_\\{([0-9])\\}", "\\\\log v_{\\\\text{L}\\1}", names.pars[zs])
+#browser();return()
+			}
+			rownames(tab.sens.pars) =  paste(rep("$", nrow(tab.sens.pars)), names.pars,rep("$",nrow(tab.sens.pars)), sep="")
+
+			B.lab = if (grepl("coast",prefix)) "B1" else if (grepl("3area",prefix)) "A1" else "Z1"
+			S.num = if (grepl("coast",prefix)) 14 else if (grepl("3area",prefix)) 14 else 1
+			S.num = pad0(S.num + 0:(nrun-2), 2)
+			S.wee = c(B.lab, paste0("S", S.num))
+			S.tab = paste0(c(B.lab, paste0("S", S.num)), "(", runs, ")")
+			colnames(tab.sens.pars) = S.tab
+			sen.leg = paste0("MPD sensitivity runs~: ", paste0("S", S.num,"~= ", S.lab[-1], collapse=", "),".")
+			cap.par = paste0(
+				strSpp, "~: MPD values for the primary estimated parameters, ",
+				"comparing the base run to ", nrun-1, " sensitivity runs. R~= Run, S~= Sensitivity. ",
+				"Numeric subscripts other than those for $R_0$ and $M$ indicate gear types $g$. ", sen.leg
+			)
+			xtab.sens.pars = xtable(tab.sens.pars, align=paste0("l",paste0(rep("r",nrun),collapse="")),
+				label   = paste0("tab:",prefix,"mpd.pars"), digits = if (exists("formatCatch")) NULL else sigdig,
+				caption = cap.par )
+			xtab.sens.pars.out = capture.output( print(xtab.sens.pars, caption.placement="top",
+				sanitize.rownames.function=function(x){x},
+				add.to.row = list(pos = list(-1), command = c("\\\\[-1.0ex]")),
+				size = "\\usefont{\\encodingdefault}{\\familydefault}{\\seriesdefault}{\\shapedefault}\\footnotesize"
+			) )
+			## Fiddle with first column label and columns widths
+			z1 = grep("B1|R29",xtab.sens.pars.out)
+			xtab.sens.pars.out[z1] = sub(" & ", "Parameter & ", xtab.sens.pars.out[z1])
+			z2 = grep("begingroup",xtab.sens.pars.out)
+			xtab.asens.pars.out = c(xtab.sens.pars.out[1:z2], "\\setlength{\\tabcolsep}{3pt}", xtab.sens.pars.out[(z2+1):length(xtab.sens.pars.out)])
+
+			## Reference points table
+			## ----------------------
+			colnames(RPmat)[1] = "R29v2"  ## SGR 2025 base run v.2 was rerun with forecast option 1 (Btgt) as v.4
+			sigdig = 3
+			tab.sens.rfpt = formatCatch(RPmat, N=sigdig, na="-", exInt=FALSE)
+			## Use same routine as in 'tabSS.senso'
+			names.rfpt = rownames(tab.sens.rfpt)
+			## Use routine from 'make.base.tabs.r':
+			names.rfpt =
+				gsub("\\}(B|u)", "}/\\1",
+				gsub("\\.(B|u)", "/\\1",
+				gsub("_Trawl", "~(\\\\text{trawl})",
+				gsub("_Other", "~(\\\\text{other})",
+				gsub("trp", "_\\\\text{TRP}",
+				gsub("msy", "_\\\\text{MSY}",
+				gsub("^RRR$",  paste0(switch(RPbase, 'BMSY'="u_{\\\\text{MSY}}", 'B0'="u_{\\\\text{TRP}}")),
+				gsub("^TRP$",  paste0(switch(RPbase, 'BMSY'="B_{\\\\text{MSY}}", 'B0'="0.4B_0")),
+				gsub("^USR$",  paste0(switch(RPbase, 'BMSY'="0.8B_{\\\\text{MSY}}", 'B0'="0.32B_0")),
+				gsub("^LRP$",  paste0(switch(RPbase, 'BMSY'="0.4B_{\\\\text{MSY}}", 'B0'="0.2B_0")),
+				gsub("MSY",  paste0("\\\\text{MSY}"),
+				gsub("VB",  "V",
+				gsub("[Uu]max", "u_\\\\text{max}",
+				gsub("(.+)RRR",  paste0(switch(RPbase, 'BMSY'="u_{\\\\text{MSY}}", 'B0'="\\1u_{\\\\text{TRP}}")),
+				gsub("ucurr",  paste0("u_{",currYear-1,"}"),
+				gsub("Bcurr",  paste0("B_{",currYear,"}"),
+				gsub("B0", "B_{0}",
+				names.rfpt)))))))))))))))))
+			if (exists("areas")) {
+				za = grep(paste0(areas,collapse="|"), names.rfpt)
+				if (any(za)) {
+					apat = paste0("(",paste0(areas,collapse="|"),")")
+					names.rfpt[za] = gsub(apat, "~~~\\1", names.rfpt[za])
+					names.rfpt[za] = gsub(paste0("(.*)\\.~~~", apat), "~~~\\\\text{\\2}~~\\1", names.rfpt[za])
+				}
+			}
+			rownames(tab.sens.rfpt) =  paste(rep("$",nrow(tab.sens.rfpt)),names.rfpt,rep("$",nrow(tab.sens.rfpt)),sep="")
+			colnames(tab.sens.rfpt) = S.tab
+
+			cap.rfpt = paste0(
+				strSpp, "~: MPD derived quantities from the base run and ", nrun-1,
+				" sensitivity runs. Definitions are: ",
+				"$B_0$                = unfished equilibrium spawning biomass (mature females), ",
+				#"$V_0$ = unfished equilibrium vulnerable biomass (males and females), ",
+				"$B_{", currYear, "}$ = spawning biomass at the start of ", currYear, ", ",
+				"$u_{", currYear-1, "}$ = exploitation rate (ratio of total catch to vulnerable biomass) in the middle of ", currYear-1 , ", ",
+				#"$u_\\text{max}$      = maximum exploitation rate (calculated for each sample as the maximum exploitation rate from ",
+				#startYear , " to ", currYear, "), ",
+				switch(RPbase, 
+				'BMSY'=paste0(c(
+					"MSY -- maximum sustainable yield at equilibrium, ",
+					"$B_\\text{MSY}$ -- equilibrium spawning biomass at MSY, ",
+					"$u_\\text{MSY}$ -- equilibrium exploitation rate at MSY. "
+					), collapse=""),
+				'B0'=paste0(c(
+					"$B_\\text{TRP}$~= equilibrium spawning female biomass ($B$*) at target reference point (TRP~= 0.4$B_0$), ",
+					"0.32$B_0$~= $B$* at the upper stock reference (USR) point, ",
+					"0.2$B_0$~=  $B$* at the limit reference point (LRP), ",
+					"$u_\\text{TRP}$~= equilibrium harvest rate at the TRP. "
+					), collapse="")
+				),
+				"All biomass values are in tonnes. ", sen.leg
+			)
+#browser();return()
+		
+			xtab.sens.rfpt = xtable(tab.sens.rfpt, align=paste0("l",paste0(rep("r",nrun),collapse="")),
+				label   = paste0("tab:",prefix,"mpd.rfpt"), digits = if (exists("formatCatch")) NULL else sigdig,
+				caption = cap.rfpt )
+			xtab.sens.rfpt.out = capture.output( 
+				print(xtab.sens.rfpt,  caption.placement="top",
+				sanitize.rownames.function=function(x){x},
+				#add.to.row=list(pos=list(-1,3,switch(RPbase,'BMSY'=11,'B0'=5)), command=c("\\\\[-1.0ex]", "\\hdashline \\\\[-1.75ex]", "\\hdashline \\\\[-1.75ex]")),
+				add.to.row=list(pos=list(-1), command=c("\\\\[-1.0ex]" )),
+				#add.to.row = list(pos = list(0), command = 
+				#	paste0("\\hline \\endhead", "\\hline",   "\\multicolumn{", ncol(tab.sens.rfpt) + 1, "}{l}",
+				#	"{\\footnotesize Continued on next page} ", "\\endfoot ", "\\endlastfoot ")), # Custom longtable commands
+				hline.after =  c(-1,0,nrow(xtab.sens.rfpt)),
+				size = "\\usefont{\\encodingdefault}{\\familydefault}{\\seriesdefault}{\\shapedefault}\\footnotesize"
+				)
+			)
+			## Fiddle with first column label and columns widths
+			z1 = grep("B1|R29",xtab.sens.rfpt.out)
+			xtab.sens.rfpt.out[z1] = sub(" & ", "Quantity & ", xtab.sens.rfpt.out[z1])
+			z2 = grep("begingroup",xtab.sens.rfpt.out)
+			xtab.asens.rfpt.out = c(xtab.sens.rfpt.out[1:z2], "\\setlength{\\tabcolsep}{3pt}", xtab.sens.rfpt.out[(z2+1):length(xtab.sens.rfpt.out)])
+
+#browser();return()
+			outwithit = c("xtab.asens.pars.out", "xtab.asens.rfpt.out") #, "xtab.asens.ll.out")
+			save(list=outwithit, file=paste0(prefix,"senso.mpd.tabs.rda"))
+		} ## tabs
+	} ## end sensitivity
+}
 
 
 ## gatherMCMC---------------------------2025-11-06
@@ -919,6 +1165,143 @@ gatherMCMC <- function( mcdir=".", type="compo", strSpp="SGR",
 	return(out)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~gatherMCMC
+
+
+## gatherMPD---------------------------2026-04-15
+##  Gather MPDs from base component runs or sensitivity runs
+## ---------------------------------------------RH
+gatherMPD <- function( mpdir=".", type="senso", strSpp="SGR",
+   basedir="C:/Users/haighr/Files/GFish/PSARC25/SGR/Data/SS3/SGR2025",
+   vyrs=1933, ryrs=1935:2026, pyrs=2026:2036)
+{
+	ayrs  = .su(c(vyrs, ryrs, pyrs)); nyrs = length(ayrs)
+	currYr = rev(ryrs)[1]; byr = cyr = as.character(currYr)
+	virgYr = vyrs        ; vyr = as.character(virgYr)
+	## Add in virgin year, mostly for B0 (RH 251105)
+	vryrs = c(vyrs, ryrs)
+
+	runs  = paste0("R",sub("\\.0[0-9]\\.", "", substring(basename(mpdir),5)))  ## maybe use later
+	mplst = Nmcmc = rowN = valPAs = valLLs = list()
+	TSmat = array(NA, dim=c(length(ayrs), 5, length(mpdir)), dimnames=list(year=ayrs, value=c("B","D","R","F","U"), run=substring(basename(mpdir),5) ))
+	rpnam = c("Bcurr", "B0", "LRP", "USR", "Btrp", "Bcurr.B0", "Bcurr.Btrp", "ucurr", "utrp", "ucurr.utrp")
+	RPmat = array(NA, dim=c(length(rpnam), length(mpdir)), dimnames=list(value=rpnam, run=substring(basename(mpdir),5) ))
+
+
+	for (m in 1:length(mpdir)){
+		mdir = file.path( sub("/$","",basedir), sub("/$","",mpdir[m]) )
+		mm   = substring(basename(mdir),5) #,10)
+		if(!file.exists(mdir)) {
+			.flush.cat(paste0("   Skipping MPD: run ", mm), "\n")
+			next
+		} else {
+			.flush.cat(paste0("Getting MPD: Run ", mm), "\n")
+		}
+		mplst[[mm]] = list()
+		cp = "AC.00"
+
+		## Gather MPD information
+		d.mpd = mdir #sub("[a-z]$","",sub("\\.mh.+","",sub("\\.hm.+","",sub("\\.nuts.+","",sub("MPD","MPD",mdir)))))
+		mpd = SS_output(dir=d.mpd, verbose=F, printstats=F)  ## 'Joining...' seems to occur with D-M MPDs
+		Fmethod =  mpd$F_method
+
+#		## Grab likelihood components
+#		run = as.numeric(strsplit(mm,"\\.")[[1]][1]); names(run)="Run"
+#		LL.fleet  = mpd$likelihoods_by_fleet
+#		LL.fleet.ex = LL.fleet[is.element(LL.fleet$Label,"Surv_like"),grep("OTHER",mpd$FleetNames,invert=T,value=T)]
+#		names(LL.fleet.ex) = sapply(strsplit(names(LL.fleet.ex),"_"), function(x) {
+#			if (length(x)==3 && x[2]=="FISHERY") x[2]=x[3]
+#			#out = paste0(x[1],"_",substring(x[2],1,3))
+#			out = paste0(x[1],"_",x[2])
+#			return(out) })
+#		#names(LL.fleet.ex) = sub("TRAWL","CPUE",names(LL.fleet.ex))
+#		#names(LL.fleet.ex)[grep("TRAWL",names(LL.fleet.ex))]="CPUE_BT"
+#		LL.used   = mpd$likelihoods_used
+#		LL.used.ex  = LL.used[c("Survey","Age_comp","Recruitment","TOTAL"),"values"]
+#		names(LL.used.ex) = c("Index","AF","Recruit","Total")
+#		LL.compo = c(run, LL.fleet.ex, LL.used.ex)
+#		LL.compo = unlist(LL.compo)
+##browser();return()
+#		mplst[[mm]][["LL"]] = LL.compo
+#		valLLs[[mm]] = names(LL.compo)  ## collect all names
+
+		## Check for catch policies
+		CP = c("AC", c("CC","HR")[file.exists(file.path(mdir,c("CC","HR")))])
+		if (type %in% c("senso","penso")) CP = "AC"
+
+		## Grab parameter estimates
+		pars = mpd$parameters
+		pactive = pars[!is.na(pars$Active_Cnt) & pars$Phase>0 & !is.element(pars$Pr_type,"dev"),]
+		pactive$Label = convPN(pactive$Label)
+		P.mpd = pactive$Value; names(P.mpd)=pactive$Label
+		mplst[[mm]][["PA"]] = P.mpd
+		valPA = names(P.mpd)
+		valPAs[[mm]] = valPA  ## collect all names for future organization
+		
+		## Grab time series
+		ts = mpd$timeseries
+		ts = ts[is.element(ts$Yr, ayrs),]
+		aggs = c("Yr","Area")
+		SSB  = crossTab(ts, aggs, "SpawnBio", sum)  ## spawning stock biomass
+		RSB  = SSB/SSB[1]                           ## relative spawning biomass (depletion)
+		RA0  = crossTab(ts, aggs, "Recruit_0", sum) ## recruits at age 0
+		TS.mpd = data.frame('B'=SSB, 'D'=RSB, 'R'=RA0); colnames(TS.mpd) = c("B","D","R")
+
+		## Get derived quantities (there appears to be redundancy between ts and dq)
+		dq = mpd$derived_quants
+		B0 = dq[is.element(dq$Label,"SSB_Virgin"),"Value"]
+		TRP = dq[is.element(dq$Label,"SSB_Btgt"),"Value"]
+		LRP = 0.2 * B0
+		USR = 0.8 * TRP
+		FTRP = dq[is.element(dq$Label,"annF_Btgt"),"Value"]
+		UTRP = RRR = 1 - exp(-FTRP) ## RRR (reference removal rate)
+		Bt = dq[grep("SSB_[1-2]+",dq$Label),"Value"]  ## same as SSB from ts (timeseies)
+		Ft = dq[grep("F_[1-2]+",dq$Label),"Value"]
+		ut = 1 - exp(-Ft)
+		currYear = rev(ryrs)[1]
+		zcurr = grep(currYear,ayrs)
+		Bcurr = Bt[zcurr]
+		ucurr = ut[zcurr]
+
+		TS.mpd = data.frame( TS.mpd, 'F'=c(0,Ft), 'U'=c(0,ut) )
+		RP.mpd = c('Bcurr'=Bcurr, 'B0'=B0, 'LRP'=LRP, 'USR'=USR, 'Btrp'=TRP, 'Bcurr.B0'= Bcurr/B0, 'Bcurr.Btrp'=Bcurr/TRP, 'ucurr'=ucurr, 'utrp'=RRR, 'ucurr.utrp'=ucurr/RRR)
+#browser();return()
+		mplst[[mm]][["TS"]] = TS.mpd
+		mplst[[mm]][["RP"]] = RP.mpd
+		TSmat[dimnames(TS.mpd)[[1]], dimnames(TS.mpd)[[2]], mm] = as.matrix(TS.mpd)
+		RPmat[names(RP.mpd),  mm] = as.matrix(RP.mpd)
+#browser();return()
+	}
+	## Apply shorter run names
+	dimnames(TSmat)[[3]] = runs
+	colnames(RPmat) = runs
+	## ----- END initial data collection -----
+
+	## Grab parameters across all runs
+	if (strSpp %in% c("CAR","POP","YTR","SGR")) {
+		valPA = unique(unlist(valPAs))
+		valPA = c(grep("R0",valPA,value=T), grep("Rdist",valPA,value=T), grep("R0|Rdist|theta",valPA,invert=T,value=T), grep("theta",valPA,value=T))
+		#valLL = unique(unlist(valLLs))
+		#chunk = "Index|AF|Recruit|Total"
+		#valLL = c(grep(chunk,valLL,invert=T,value=T), grep(chunk,valLL,value=T))
+	} else {
+		.flush.cat("Include species '", strSpp, " in parameter grab", sep="", "\n")
+		browser();return()
+	}
+	PAmat = array(NA, dim=c(length(valPA), length(mpdir)), dimnames=list(par=valPA, run=substring(basename(mpdir),5) ))
+	for (i in 1:length(mplst)) {
+		ii  = names(mplst)[i]
+		iPA = mplst[[ii]][["PA"]]  ## estimated parameter values
+		PAmat[names(iPA), ii] = as.matrix(iPA)
+	}
+	colnames(PAmat) = runs  ## shorter run names
+	rownames(PAmat) = gsub("_GP[0-9]", "", rownames(PAmat))
+	if (type=="senso")
+		out = list(mplst=mplst, valPAs=valPAs, TSmat=TSmat, RPmat=RPmat, PAmat=PAmat)
+	else
+		out = "sumtingwong"
+	return(out)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~gatherMPD
 
 
 ## getSS.rdevs-------------------------2023-10-13
@@ -1569,7 +1952,7 @@ load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~load_extra_mcmc
 
 
-## makeFSARfigs-------------------------2026-03-12
+## makeFSARfigs-------------------------2026-05-04
 ##  Make figures for the new FSAR
 ## ---------------------------------------------RH
 #makeFSARfigs <- function (xTS, xRP, xPJ, years=1935:2024, TAC,
@@ -1598,7 +1981,7 @@ makeFSARfigs <- function (envo, years=1935:2025, TAC, RPbase="B0",
 		bg.area  = c("cyan","green","pink","gainsboro")
 		lty.area = rep(1,4) #c(2, 3, 5, 1)
 		pch.area = c(22:24, 21)# c(15,18,17,16) #
-		col.refs = c(.colBlind[c("redpurple","bluegreen","skyblue")]) ## LRP, USR, RR
+		col.refs = c(.colBlind[c("redpurple","bluegreen","vermillion")]) ## LRP, USR, RRR
 		lty.refs = c(4,5,2)
 	
 		## Get catch time series from the base run
@@ -1703,7 +2086,7 @@ makeFSARfigs <- function (envo, years=1935:2025, TAC, RPbase="B0",
 						ylab = linguaFranca(paste0("Exploitation rate relative to ", switch(RPbase,'BMSY'="uMSY",'B0'="uTRP",'BTRP'="uTRP")), l)
 						ylab = sub("u(MSY|RMD|TRP|PRC)", "italic(u)[\\1]", gsub("\\s+","~",ylab))
 						mtext(eval(parse(text=paste0("expression(", ylab, ")"))), side=2, line=2.3, cex=1.1)
-						lines(years, rep(1,length(years)), col=col.refs[2], lwd=1.5, lty=5)
+						lines(years, rep(1,length(years)), col=col.refs[3], lwd=1.5, lty=lty.refs[3])
 					} else {
 						mtext(linguaFranca("Exploitation rate (per year)",l), side=2, line=2.5, cex=1.1)
 					}
@@ -1714,7 +2097,7 @@ makeFSARfigs <- function (envo, years=1935:2025, TAC, RPbase="B0",
 					lines(years, u.qts[2,], col=col.area[a], lwd=2)
 					if (useRR) {
 						if (strSpp %in% c("405"))
-							addLegend(0.025, 0.9, col=c(rep(col.area[a],2),col.refs[2]), lty=c(1,3,lty.refs[2]), legend=linguaFranca(c("Median relative exploitation","90% credibility envelope", "RRR"),l), bty="n", xjust=0, lwd=1.5, seg.len=3)
+							addLegend(0.025, 0.9, col=c(rep(col.area[a],2),col.refs[3]), lty=c(1,3,lty.refs[3]), legend=linguaFranca(c("Median relative exploitation","90% credibility envelope", "RRR"),l), bty="n", xjust=0, lwd=1.5, seg.len=3)
 						else
 							addLegend(0.95, 0.975, col=c(rep(col.area[a],2),col.refs[2]), lty=c(1,3,lty.refs[2]), legend=linguaFranca(c("Median relative exploitation","90% credibility envelope", "RRR"),l), bty="n", xjust=1, lwd=1.5, seg.len=3)
 					} else {
@@ -2476,7 +2859,7 @@ if (sumting) {
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.compo
 
 
-## plotSS.senso-------------------------2026-03-30
+## plotSS.senso-------------------------2026-04-17
 ## Make Sensitivity Figures
 ## ---------------------------------------------RH
 plotSS.senso <- function(envo, #senso, spp.code="SGR", istock="SGR",
@@ -2596,7 +2979,7 @@ plotSS.senso <- function(envo, #senso, spp.code="SGR", istock="SGR",
 	
 		L1 = if (spp.code %in% c("REBS")) istock else spp.code  ## RH 200416
 
-sumting=T
+sumting=F
 if (sumting) {
 
 		## Diagnostics for select parameters
@@ -2902,11 +3285,12 @@ if (sumtingmore) {
 			}; eop()
 		}
 #browser();return()
+} ## sumting
 
 		## Make plots of median trajectories
 		## ---------------------------------
 		ii   = as.character(startYear:currYear)
-		bb   = list('Bt'=B.qnts, 'BtB0'=D.qnts, 'U'=U.qnts, 'R'=R.qnts, 'RD'=RD.qnts)
+		bb   = list('Bt'=B.qnts, 'BtB0'=D.qnts, 'U'=U.qnts, 'R'=R.qnts, 'RD'=RD.qnts)[2]
 		bdat = lapply(bb,function(x){
 			sapply (x, function(y){
 				#if (!any(grepl("50", rownames(y)))) {browser();return()}
@@ -2963,8 +3347,13 @@ if (sumtingmore) {
 						}
 						par(mfrow=c(1,1), mar=c(3,3.5,1,0), oma=c(0,0,0,1), mgp=c(2,0.5,0))
 						plot(0,0,xlim=xlim,ylim=ylim,type="n",xlab="",ylab="",log=ifelse(kk=="R"&&logR,"y",""))
-						if (kk %in% c("BtB0"))
-							abline(h=c(0.2,0.32,0.4), lty=5, col="grey20") #col=c("salmon","darkorchid","navy"))
+						axis(1,at=intersect(seq(1900,2500,5),x),labels=FALSE,tcl=-0.2)
+						axis(1,at=intersect(seq(1900,2500,10),x),labels=FALSE)
+						if (kk %in% c("BtB0")) {
+							abline(h=c(0.2,0.32,0.4), lty=c(5,4,3), col=.colBlind[c("redpurple","bluegreen","blue")], lwd=2)
+							text(rep(xlim[1],3), c(0.2,0.32,0.4), labels=linguaFranca(c("LRP", "USR", "TRP"),l), pos=3, cex=0.9, font=2, col=.colBlind[c("redpurple","bluegreen","blue")])
+							axis(2, at=seq(0.1,ylim[2],0.1), tcl=-0.25, labels=FALSE)
+						}
 						if (kk %in% c("RD"))
 							abline(h=c(0), lty=5, col="grey20") #col=c("salmon","darkorchid","navy"))
 						for (j in Nruns:1) {
@@ -2975,7 +3364,7 @@ if (sumtingmore) {
 						}
 						#lines(x=as.numeric(names(bline)), y=if (jj=="R" && logR) log10(bline) else bline, col="black", lty=1, lwd=3)
 						mtext(linguaFranca("Year",l), side=1, line=1.75, cex=ifelse(Nruns==1,1.5,1.5)) ## wtf?
-						ylab = switch(kk, 'Bt'="Spawning Biomass", 'BtB0'="Spawning Biomass Depletion", 'B'="Spawning Biomass", 'VB'="Vulnerable Biomass", 'R'="Recruitment", 'RD'="Recruitment Deviation", 'U'="Exploitation Rate", "Unknown")
+						ylab = switch(kk, 'Bt'="Spawning Biomass (t)", 'BtB0'="Relative Spawning Biomass", 'B'="Spawning Biomass (t)", 'VB'="Vulnerable Biomass (t)", 'R'="Recruitment (1000s)", 'RD'="Recruitment Deviation", 'U'="Exploitation Rate", "Unknown")
 						#mtext(linguaFranca(ylabs[[jj]],l), side=2, line=1.8, cex=ifelse(Ntraj==1,1.5,1.2))
 						mtext(linguaFranca(ylab,l), side=2, line=1.8, cex=ifelse(Ntraj==1,1.5,1.5))
 						legtxt = gsub("_"," ",legtxt)
@@ -2983,7 +3372,13 @@ if (sumtingmore) {
 							if (kk %in% c("sumting")) {
 								xleg=0.99; yleg=0.99; xjust=1; yjust=1
 							} else if (kk %in% c("BtB0")){
-								xleg=0.04; yleg=0.04; xjust=0; yjust=0
+								if (istock=="3area") {
+									xleg=ifelse(l=="f",0.35,0.45); yleg=0.98; xjust=0; yjust=1
+								} else if (istock=="coast") {
+									xleg=ifelse(l=="f",0.4,0.45); yleg=0.98; xjust=0; yjust=1
+								} else {
+									xleg=0.04; yleg=0.04; xjust=0; yjust=0
+								}
 							} else if (kk %in% c("U","R","RD")){
 								xleg=0.04; yleg=0.98; xjust=0; yjust=1
 							} else if (kk %in% c("Bt")){
@@ -2997,10 +3392,6 @@ if (sumtingmore) {
 							}
 						}
 						addLegend(xleg, yleg, col=tcol, seg.len=5, legend=linguaFranca(legtxt,l), bty="o", box.col="grey", bg=ifelse(kk%in%c("BtB0"),"white","transparent"), xjust=xjust, yjust=yjust, lwd=2, lty=tlty, cex=0.8)
-						#if (Ntraj==1) {
-							axis(1,at=intersect(seq(1900,2500,5),x),labels=FALSE,tcl=-0.2)
-							axis(1,at=intersect(seq(1900,2500,10),x),labels=FALSE)
-						#}
 						box()
 						if (p %in% c("png","eps")) dev.off()
 					}
@@ -3008,7 +3399,7 @@ if (sumtingmore) {
 #browser();return()
 			}  ## end k loop (Ntraj)
 		}  ## end if redo.figs
-} ## sumting
+#} ## sumting
 
 		## Prepare sensitivity runs for function 'compBmsy' (stock status)
 		## ---------------------------------------------------------------
@@ -3442,7 +3833,7 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 			names.pars[zs] = sub("\\)","}",sub("\\(","_{",gsub("\\_","~", names.pars[zs])))
 			names.pars[zs] = sub("~(TRAWL|QCS|WCHG|WCVI|HS|GIG|NMFS)", "~(\\\\text{\\1", names.pars[zs])
 			names.pars[zs] = paste0("\\", names.pars[zs], "})")
-			names.pars[zs] = sub("\\\\varL\\_\\{([0-9])\\}", "\\\\log v_{\\\\text{L}\\1}", names.pars[zs])
+			names.pars[zs] = sub("\\\\varL_\\{([0-9])\\}", "\\\\log v_{\\\\text{L}\\1}", names.pars[zs])
 		}
 		rownames(tabPmed) =  paste(rep("$",nrow(tabPmed)),names.pars,rep("$",nrow(tabPmed)),sep="")
 		#colnames(tabPmed) =  gsub("\\%","\\\\%",colnames(tabPmed))
@@ -4105,7 +4496,7 @@ tabSS.decision <- function(envo, #istock="YTR", prefix="ytr.", compo,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tabSS.decision
 
 
-## tabSS.senso--------------------------2026-03-30
+## tabSS.senso--------------------------2026-04-16
 ## Make Sensitivity Tables
 ## Note: u2023=u2022 (see 'gatherMCMC.r') so change 
 ##       labels here in rfpt tables to use 'prevYear'
@@ -4139,8 +4530,8 @@ tabSS.senso <- function(envo, sigdig=4)
 		}
 
 		PA.mpd = mergePA(smpdPA, good=good, bad=bad)
-#browser();return()
 		PA.mcmc = mergePA(senPA, good=good, bad=bad)
+#browser();return()
 		#unpackList(PA.list, scope="L")
 		S.mpd = PA.mpd[["PA"]]
 		senPA = PA.mcmc[["PA"]]
@@ -4199,11 +4590,13 @@ tabSS.senso <- function(envo, sigdig=4)
 		test = names.pars = rownames(tab.sens.pars)
 		## Deal with stupid catchabilities first
 		zq = grep("LnQ", names.pars)
-		if (any(zq)) {
+		if (any(zq)) {  ## note: mergePA() has done some substituting previously
 			names.pars[zq] = sub("LnQ\\_","\\\\log q~", names.pars[zq])
 			names.pars[zq] = sub("TRAWL_(BC|5ABC|5DE|3CD)", "TRAWL_\\1_", names.pars[zq ])
 			names.pars[zq] = sub("\\_$", "", names.pars[zq ])
-			names.pars[zq] = sapply(strsplit(names.pars[zq], split="~"),  function(x){ paste0(x[1],"~(\\text{",gsub("\\_","~",x[2]),"})")})
+			names.pars[zq] = sub("_\\(([0-9])\\)", "~{\\1}", names.pars[zq ])
+#browser();return()
+			names.pars[zq] = sapply(strsplit(names.pars[zq], split="~"),  function(x){ paste0(x[1],"_",x[3],"~(\\text{",gsub("\\_","~",x[2]),"})")})
 		}
 		## Fix up Rdist
 		zd = grep("Rdist", names.pars)
@@ -4224,11 +4617,10 @@ tabSS.senso <- function(envo, sigdig=4)
 			names.pars[zs] = sub("\\)","}",sub("\\(","_{",gsub("\\_","~", names.pars[zs])))
 			names.pars[zs] = sub("~(TRAWL|QCS|WCHG|WCVI|HS|GIG|NMFS)", "~(\\\\text{\\1", names.pars[zs])
 			names.pars[zs] = paste0("\\", names.pars[zs], "})")
-#browser();return()
-			names.pars[zs] = sub("\\\\varL", "\\\\log v_{\\\\text{L}}", names.pars[zs])
+			names.pars[zs] = sub("\\\\varL_\\{([0-9])\\}", "\\\\log v_{\\\\text{L}\\1}", names.pars[zs])
 		}
-		rownames(tab.sens.pars) =  paste(rep("$", nrow(tab.sens.pars)), names.pars,rep("$",nrow(tab.sens.pars)), sep="")
 #browser();return()
+		rownames(tab.sens.pars) =  paste(rep("$", nrow(tab.sens.pars)), names.pars,rep("$",nrow(tab.sens.pars)), sep="")
 
 		sen.leg = paste0("Sensitivity runs: ", paste0("S", formatC(S.num[-1], width=0, format="d", flag="0"),"~= ", gsub("\\&","\\\\&", gsub("\\%","\\\\%", gsub("_"," ",sen.lab))), collapse=", "))
 		if (spp.code=="REBS") {  ## need to add Other fishery because it has ages but no CPUE index
@@ -4242,7 +4634,7 @@ tabSS.senso <- function(envo, sigdig=4)
 			"Numeric subscripts other than those for $R_0$ and $M$ indicate the following gear types $g$: ",
 			texThatVec(paste0(c(1, match(iseries,fleets)[-1]),"~= ",iseries),simplify=F), ". ", sen.leg
 		)
-		xtab.sens.pars = xtable(tab.sens.pars, align=paste0("c",paste0(rep("r",Nsens+1),collapse="")),
+		xtab.sens.pars = xtable(tab.sens.pars, align=paste0("l",paste0(rep("r",Nsens+1),collapse="")),
 			label   = paste0("tab:",prefix,"sens.pars"), digits = if (exists("formatCatch")) NULL else sigdig,
 			caption = cap.par )
 		xtab.sens.pars.out = capture.output( print(xtab.sens.pars, caption.placement="top",
@@ -4492,17 +4884,23 @@ if (sumting) {
 			" sensitivity runs (\\Nmcmc{} samples each) from their respective MCMC posteriors. Definitions are: ",
 			"$B_0$                = unfished equilibrium spawning biomass (mature females), ",
 			#"$V_0$ = unfished equilibrium vulnerable biomass (males and females), ",
-			"$B_{", currYear, "}$ = spawning biomass at the end of ",currYear, ", ",
-			"$u_{", currYear, "}$ = exploitation rate (ratio of total catch to vulnerable biomass) in the middle of ", currYear, ", ",
+			"$B_{", currYear, "}$ = spawning biomass at the start of ",currYear, ", ",
+			"$u_{", currYear-1, "}$ = exploitation rate (ratio of total catch to vulnerable biomass) in the middle of ", currYear-1, ", ",
 			"$u_\\text{max}$      = maximum exploitation rate (calculated for each sample as the maximum exploitation rate from ",
 			startYear , " to ", currYear, "), ",
-			switch(RPbase, 'BMSY'=c(
-				"MSY -- maximum sustainable yield at equilibrium, ",
-				"$B_\\text{MSY}$ -- equilibrium spawning biomass at MSY, ",
-				"$u_\\text{MSY}$ -- equilibrium exploitation rate at MSY. ",
-			), 'B0'=c(
-				"$B_\\text{TRP}$ -- equilibrium spawning biomass at target reference point (0.4$B_0$), "
-			)),
+			switch(RPbase, 
+				'BMSY'=paste0(c(
+					"MSY -- maximum sustainable yield at equilibrium, ",
+					"$B_\\text{MSY}$ -- equilibrium spawning biomass at MSY, ",
+					"$u_\\text{MSY}$ -- equilibrium exploitation rate at MSY. ",
+					), collapse=""),
+				'B0'=paste0(c(
+					"$B_\\text{TRP}$~= equilibrium spawning female biomass ($B$*) at target reference point (TRP~= 0.4$B_0$), ",
+					"0.32$B_0$~= $B$* at the upper stock reference (USR) point, ",
+					"0.2$B_0$~=  $B$* at the limit reference point (LRP), ",
+					"$u_\\text{TRP}$~= equilibrium harvest rate at the TRP. "
+				), collapse="")
+			),
 			"All biomass values are in tonnes. ", sen.leg
 		)
 #browser();return()

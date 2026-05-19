@@ -6296,7 +6296,7 @@ plotSS.comps <- function (replist, subplots=c(1:21, 24), kind="LEN", sizemethod=
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.comps
 
 
-## plotSS.francis-----------------------2025-09-11
+## plotSS.francis-----------------------2026-05-12
 ##  Plot mean age fits using Francis (2011) methodology
 ##  Modified function 'r4ss::SSMethod.TA1.8' :
 ##  Apply Francis composition weighting method TA1.8
@@ -6498,10 +6498,14 @@ plotSS.francis <- function(
 	}
 	pldat = as.data.frame(pldat)
 	lldat = split(pldat, pldat$Fleet)
-	Nmult = sapply(lldat, function(x) { 1/var(x[,'Std.res'],na.rm=TRUE) })
+	Nmult = sapply(lldat, function(x) { 1/var(x[,'Std.res'], na.rm=TRUE) })
+	Nmult[is.na(Nmult)] = 1  ## in case only one year of data
 	#Nmult <- 1/var(pldat[,'Std.res'],na.rm=TRUE)
+	wj   = sapply(lldat, function(x) { ## (RH 260512)
+		if (nrow(x)==1) {wfac = 1}
+		else {wfac = 1 / var((x[,'Obsmn']-x[,'Expmn'])/((x[,'Vexp']/x[,'N'])^0.5), na.rm=TRUE)}
+		return(wfac) })
 #browser();return()
-	wj   = sapply(lldat, function(x) { 1 / var((x[,'Obsmn']-x[,'Expmn'])/((x[,'Vexp']/x[,'N'])^0.5), na.rm=TRUE) })
 
 	## Find the adjusted confidence intervals
 	for(i in 1:length(uindx)){
@@ -9629,7 +9633,7 @@ plotSS.stock.recruit <- function (replist, subplot = 1:3, add = FALSE, plot = TR
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.stock.recruit
 
 
-## plotSS.ts----------------------------2026-03-12
+## plotSS.ts----------------------------2026-05-19
 ##  Plot SS time series (Bt, BtB0, Age-0 recruits)
 ##  Modified r4ss function 'SSplotTimeseries'.
 ## ----------------------------------------r4ss|RH
@@ -9689,6 +9693,7 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 	SS_versionshort <- replist$SS_versionshort
 	timeseries      <- replist$timeseries
 	timeseries2     <- replist$catch          ## (RH 250325) vulnerable biomass is reported here (250821: but it looks sketchy by Area and Fleet)
+	recruit         <- replist$recruit        ## (RH 260513) want to know the Main recruitment period
 	nseasons        <- replist$nseasons
 	spawnseas       <- replist$spawnseas
 	birthseas       <- replist$birthseas
@@ -9750,7 +9755,9 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 		areanames <- paste("area", 1:nareas)
 	}
 	ts  <- timeseries
+	rownames(ts) = paste0(ts$Yr,"(",ts$Area,")")  ## make tracking simpler
 	ts2 <- timeseries2 ## (RH 250326)
+	rownames(ts2) = paste0(ts2$Yr,"(",ts2$Area,")")  ## make tracking simpler
 	if (nseasons > 1) {
 		if (SS_versionshort == "SS-V3.11") {
 			ts$YrSeas <- ts$Yr + (ts$Seas - 1)/nseasons
@@ -9806,6 +9813,10 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 		}
 		if (subplot %in% 11:15) {
 			yvals <- ts[,"Recruit_0",drop=FALSE] ##$Recruit_0
+			mainYrs <- .su(recruit$Yr[is.element(recruit$era,"Main")])
+			mainRec <- crossTab(ts[is.element(ts$Yr,mainYrs),], c("Yr","Area"), "Recruit_0", sum)
+			meanRec <- apply(mainRec,2,mean,na.rm=T)  ## average recruitment by Area over the Main period
+#browser();return()
 			ylab <- labels[11]
 			if (all(yvals[ts$Era == "VIRG",] == 0 & max(ts$Seas == 1))) {
 				yvals[ts$Era == "VIRG",] <- derived_quants["Recr_Virgin", "Value"]
@@ -9863,7 +9874,7 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 			}
 			if (subplot %in% c(103)){
 				ysub  = ts[,c("Area", paste0("u",ncfleet))]
-				ylab = "Harvest Rate"
+				ylab = "Exploitation Rate"
 			}
 			ylist = split(ysub[,-1,drop=FALSE],ysub[,"Area"])
 			yvals = sapply(1:ncol(ylist[[1]]), function(i){Reduce("+", lapply(ylist, "[[", i))})
@@ -10032,26 +10043,33 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 			else use.y2 = FALSE
 			expandGraph(mfrow=c(1,1), mar=c(3,3,1,1), mgp=c(1.75,0.5,0))
 			#plot(yrvals, yvals[plot1 | plot2 | plot3], type="n", xlab=xlab, xlim=xlim, ylim=c(0, 1.05 * ymax), yaxs="i", ylab=ylab, main=main, cex.main=cex.main, font.main=1)
-#browser();return()
 			if (subplot %in% c(103)) ylim = c(-ymax*0.075, 1.02*ymax)
 			else                     ylim = c(0, 1.05 * ymax)
+			## Plot blank slate
 			plot(0, 0, type="n", xlim=xlim, ylim=ylim, yaxs=ifelse(subplot%in%c(103),"i","i"), xlab=linguaFranca(xlab,l), ylab=linguaFranca(ylab,l), main=NULL, cex.main=cex.main, cex.lab=1.4, font.main=1, yaxt="n")
 			axis(1, at=intersect(seq(1900,3000,5),xlim[1]:xlim[2]), tcl=-0.2, labels=FALSE)
 			axis(2, at=pretty(ylim,n=10), labels=format(pretty(ylim,n=10), big.mark=options()$big.mark,trim=T), cex=1.4)  ## nMark nZero -- make sure Options()$big.mark has been set
+			currYr = ts$Yr[match("FORE",ts$Era)]
+			if (subplot %in% c(1:10,13:15))
+				abline(v=currYr, col="purple", lty=2)
+#browser();return()
 		}
-		if (subplot %in% c(9, 10)) {
+		if (subplot %in% c(9,10)) {
 			addtarg <- function() {
 				if (btarg > 0 & btarg < 1) {
-					abline(h=btarg, col="green4",lty=2)
-					text(max(startyr, minyr) + 1, btarg + 0.02, linguaFranca(ifelse(subplot%in%c(9,10),paste0(btarg,"B0"),labels[10]),l), adj=0, col="green4")
+					abline(h=btarg, col=.colBlind["blue"], lty=3, lwd=2)
+					text(max(startyr, minyr) + 1, btarg + 0.02, linguaFranca(ifelse(subplot%in%c(9,10), "TRP", labels[10]), l), adj=0, col=.colBlind["blue"], font=2)
 				}
 				if (all(minbthresh > 0) & all(minbthresh < 1)) {
 					for (i in 1:length(minbthresh)) {
 						ii = sort(minbthresh)[i]
 #browser();return()
-						icol = switch(i, "red", "blue", "green4")
-						abline(h=ii, col=icol, lty=2)
-						text(max(startyr, minyr) + 1, ii + 0.02, linguaFranca(ifelse(subplot%in%c(9,10),paste0(ii,"B0"),labels[10]),l), adj=0, col=icol)
+						#icol = switch(i, "red", "blue", "green4")
+						icol = switch(i, .colBlind["redpurple"], .colBlind["bluegreen"], .colBlind["vermillion"])
+						ilty = switch(i, 4, 5, 2)
+						ilab = switch(i, "LRP", "USR", "RRR")
+						abline(h=ii, col=icol, lty=ilty, lwd=2)
+						text(max(startyr, minyr) + 1, ii + 0.02, linguaFranca(ifelse(subplot%in%c(9,10), ilab, labels[10]), l), adj=0, col=icol, font=2)
 					}
 				}
 			}
@@ -10086,7 +10104,7 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 			}
 			#legend("topright", legend=linguaFranca(paste("Season", birthseas),l), lty=1, pch=1, col=seascols, bty="n")
 			addLegend(0.975, 0.975, legend=linguaFranca(paste("Season", birthseas),l), lty=1, pch=1, col=seascols, bty="n", xjust=1, yjust=1)
-		}
+		} 
 		else {
 			if (subplot %in% c(1,4,7,9,11,14,15, 101:103)) 
 				myareas <- 1
@@ -10129,12 +10147,17 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 						legcol = c(legcol, "darkgoldenrod1")
 					}
 					for (yy in 1:ncol(yvals)) {
-						#points(ts$YrSeas[plot1], yvals[plot1,yy], pch=19, col=mycol)
-						#lines(ts$YrSeas[plot2], yvals[plot2,yy], type=mytype, col=mycol)
+						if (subplot %in% 11) {
+							## Add average recruitment over Main period
+							abline(h=meanRec[yy], lty=3, col=lucent(mycol,0.5))
+							text(xlim[1]+1, meanRec[yy], paste0(formatCatch(meanRec[yy]), " (", paste0(range(mainYrs),collapse="-"), ")"), cex=0.8, col=mycol, adj=c(0,-0.5))
+						}
+						## Plot time series trajectories onto prepared canvas
 						points(ts$YrSeas[plot1], yvals[plot1,yy], pch=24, col=mycol, bg=mybg, cex=1.2)
-						lines(ts$YrSeas[plot2], yvals[plot2,yy], type="l", col=mycol)
-						points(ts$YrSeas[plot2], yvals[plot2,yy], pch=21, col=mycol, bg=mybg)
-						points(ts$YrSeas[plot3], yvals[plot3,yy], pch=17, col=mycol)
+						lines(ts$YrSeas[plot2], yvals[plot2,yy], type="l", col=mycol, lwd=2)
+						points(ts$YrSeas[plot2], yvals[plot2,yy], pch=21, col=mycol, bg=mybg, cex=1.2)
+						points(ts$YrSeas[plot3], yvals[plot3,yy], pch=17, col=lucent(mycol,0.25), cex=1.2)
+#browser();return()
 					}
 					legtxt = c(legtxt, paste0("SS3 ", switch(sp, '7'="Bt", '8'="Bt by area", '9'="Bt/B0", "age-0 recruits")))
 					leglty = c(leglty, 1)
@@ -10149,26 +10172,16 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 							points(ts$YrSeas[plot1], yvals[plot1,j], pch=24, col=col.sex, bg=colorspace::lighten(col.sex, amount=0.25)) #lucent(mycol,0.2))
 							lines(ts$YrSeas[plot2|plot3], yvals[plot2|plot3,j], col=col.sex, lwd=2)
 						} else {
-							#col.pch = ifelse(grepl("Bio_all",jj),"black",mycol)
-							#col.fleet = c("blue","green3","red","purple") ## may need more colours
-							#col.pch = switch(jj, 'Bio_all'="black", 'V1'=col.fleet[1], 'V2'=col.fleet[2], 'V3'=col.fleet[3], 'V4'=col.fleet[4], 'u1'=col.fleet[1], 'u2'=col.fleet[2], 'u3'=col.fleet[3], 'u4'=col.fleet[4], mycol)
 							col.fleet = gearcols
 							bg.fleet  = gearbgs
-							## This is so problematic:
+							## This is so problematic (really?):
 							col.pch = switch(jj, 'Bio_all'="black", 'V1'=col.fleet[1], 'V2'=col.fleet[2], 'V3'=col.fleet[3], 'V10'=col.fleet[4], 'V11'=col.fleet[5], 'u1'=col.fleet[1], 'u2'=col.fleet[2], 'u3'=col.fleet[3], 'u10'=col.fleet[4], 'u11'=col.fleet[5], mycol)
 							col.bg = switch(jj, 'Bio_all'="gainsboro", 'V1'=bg.fleet[1], 'V2'=bg.fleet[2], 'V3'=bg.fleet[3], 'V10'=bg.fleet[4], 'V11'=bg.fleet[5], 'u1'=bg.fleet[1], 'u2'=bg.fleet[2], 'u3'=bg.fleet[3], 'u10'=bg.fleet[4], 'u11'=bg.fleet[5], mybg)
-							#col.pch = col.fleet[j]
-							#col.bg  = bg.fleet[j]
-#print(c(col.pch, mycol))
-							#points(ts$YrSeas[plot1], yvals[plot1,j], pch=22, col=col.pch, bg=colorspace::lighten(col.pch, amount=0.25)) #lucent(mycol,0.2))
-							#lines(ts$YrSeas[plot2], yvals[plot2,j], col="gainsboro", lwd=2)
-							#points(ts$YrSeas[plot2], yvals[plot2,j], pch=21, col=col.pch, bg=colorspace::lighten(col.pch, amount=0.25)) #lucent(mycol,0.2))
-							#points(ts$YrSeas[plot3], yvals[plot3,j], pch=24, cex=0.8, col=col.pch, bg=colorspace::lighten(col.pch, amount=0.25)) #lucent(mycol,0.2))
 							points(ts$YrSeas[plot1], yvals[plot1,j], pch=24, col=col.pch, bg=col.bg) ## equilbrium start
 							lines(ts$YrSeas[plot2], yvals[plot2,j], col=col.pch, lwd=2)
-							points(ts$YrSeas[plot2], yvals[plot2,j], pch=21, col=col.pch, bg=col.bg) ## main reconstruction
-							points(ts$YrSeas[plot3], yvals[plot3,j], pch=24, cex=0.8, col=col.pch, bg=col.bg) ## forecast
-#if(j==4){browser();return()}
+							points(ts$YrSeas[plot2], yvals[plot2,j], pch=21, cex=1.2, col=col.pch, bg=col.bg) ## main reconstruction
+							points(ts$YrSeas[plot3], yvals[plot3,j], pch=17, cex=1.2, col=lucent(col.pch,0.25))
+#if(j==2){browser();return()}
 #browser();return()
 						}
 						if (subplot %in% c(7,9,11) || colnames(yvals)[j] %in% c("SpawnBio")) {
@@ -10213,7 +10226,15 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 					} ## end j loop
 				}
 			} ## end iarea loop
-			if (nareas > 1 & subplot %in% c(2, 3, 5, 6, 8, 10, 12, 13)) {
+			if (nareas == 1 & subplot %in% c(1,3,4,6,7,9)) {
+				catproj = rev(ts[,"dead(B):_1"])[1]
+				bigmark = ifelse(is.null(options()$big.mark),",",options()$big.mark)
+				catmark = format(catproj, big.mark=bigmark)
+				addLegend(0.8, 0.975, legend=linguaFranca(paste0("projections using catch = ", catmark, " t/y"), l),  pch=17, pt.cex=1.2, col=lucent(mycol,0.25), bty="o", bg="transparent", box.col="gainsboro", xjust=1, yjust=1)
+#browser();return()
+				#addLegend (0.975, 0.975, legend=linguaFranca(legtxt,l), lty=leglty, col=legcol, lwd=2, seg.len=3, bty="n", xjust=1, yjust=1)
+			}
+			if (nareas > 1 & subplot %in% c(2, 5, 8, 10, 12, 13)) {
 				if (exists("area.names") && narea==length(areas))  ## need to source 'initialise.r' first
 					areanames = area.names
 				addLegend(0.975, 0.975, legend=linguaFranca(areanames[areas],l), lty=1, seg.len=3, pch=21, col=areacols[areas], pt.bg=areabgs[areas], bty="n", xjust=1, yjust=1)
@@ -10260,7 +10281,7 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 				legtxt = NULL
 				if (subplot %in% 101) {
 					sumage  = replist$BioSmry_age
-					legtxt = c("Total biomass","Female summary biomass", "Male summary biomass", "Spawning biomass", "Coastwide catch")
+					legtxt = c("total biomass","female summary biomass", "male summary biomass", "spawning biomass", "coastwide catch")
 					if (!is.null(sumage)) {
 						legtxt[2:3] = sub("Female", convUTF("\\u{2640}"), legtxt[2:3])
 						legtxt[2:3] = sub("Male", convUTF("\\u{2642}"), legtxt[2:3])
@@ -10276,7 +10297,7 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 				else if (subplot %in% 102) {
 					gear.area.names = paste0(gear.names, " (", area.names, ")")  ## too wordy (confusing)
 					legmain = ifelse(nareas==1, "Single-area model", "Multi-area model")
-					legtxt = c("Total biomass", paste0("Vulnerable biomass - ", gear.names), paste0("Catch - ", gear.names))
+					legtxt = c("total biomass", paste0("vulnerable biomass - ", gear.names), paste0("catch - ", gear.names))
 					legcol = c("black", col.fleet[1:ncfleets], col.fleet[1:ncfleets])
 					legbg  = c("gainsboro", bg.fleet[1:ncfleets], bg.fleet[1:ncfleets])
 					legpch = c(21,rep(21,ngear),rep(22,ngear))
@@ -10284,32 +10305,38 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 				else if (subplot %in% 103) {
 					gear.area.names = paste0(gear.names, " (", area.names, ")")  ## too wordy (confusing)
 					legmain = ifelse(nareas==1, "Single-area model", "Multi-area model")
-					legtxt = c(paste0("Harvest rate - ", gear.names), paste0("Catch (t) - ", gear.names))
-					legcol = c(col=col.fleet[1:ncfleets], col.fleet[1:ncfleets])
+					legtxt = c(paste0("harvest rate - ", gear.names), paste0("catch (t) - ", gear.names))
+					#legcol = c(col=col.fleet[1:ncfleets], lucent(col.fleet[1:ncfleets],0.25))
+					legcol = c(col=col.fleet[1:ncfleets], col.fleet[1:ncfleets])  ## 
 					legbg  = c(bg.fleet[1:ncfleets], bg.fleet[1:ncfleets])
 					legpch = c(rep(21,ngear),rep(22,ngear))
 				}
 				if (!is.null(legtxt)){
 					if (subplot %in% c(101)) {
 						if (forecastplot) {
-							zfor = grep("Total|Spawning", legtxt); zoff = grep("Total|Spawning", legtxt, invert=T)
+							zfor = grep("total|spawning", legtxt); zoff = grep("total|spawning", legtxt, invert=T)
+							zcat = grep("catch", legtxt)
 							forpch = legpch; forpch[zfor] = 21; forpch[zoff] = NA
 							fortxt = rep(paste0(rep(" ",2*max(sapply(legtxt,nchar))),collapse=""),length(legtxt))
-							addLegend(ifelse(print,0.965,0.95), 0.975, legend=fortxt, pch=forpch, col=legcol, pt.bg=legbg, pt.cex=1.5, pt.lwd=1,  bty="n", xjust=1, yjust=1, cex=1.2)
-							legpch[zfor] = 24
+							#addLegend(ifelse(print,0.955,0.965), 0.975, legend=fortxt, pch=forpch, col=legcol, pt.bg=legbg, pt.cex=1.5, pt.lwd=1,  bty="n", xjust=1, yjust=1, cex=1.2)
+							## Trick is to plot legend twice, using white text the first time
+							addLegend(0.960, 0.975, legend=linguaFranca(legtxt,l), pch=legpch, lty=leglty, lwd=2, col=legcol, pt.bg=legbg, pt.cex=1.5, pt.lwd=1, bty="n", xjust=1, yjust=1, cex=1.2, text.col="white")
+							legpch[zfor] = 17
+							legcol[zfor] = lucent(legcol[zfor],0.25)
+							legpch[zcat] = NA
 							addLegend(0.975, 0.975, legend=linguaFranca(legtxt,l), pch=legpch, lty=leglty, lwd=2, col=legcol, pt.bg=legbg, pt.cex=1.5, pt.lwd=1, bty="n", xjust=1, yjust=1, cex=1.2)
 #browser();return()
 						} else {
 							addLegend(0.97, 0.975, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1.2)
 						}
-					}
+					}  ## end subplot 101
 					if (subplot %in% c(102, 103)) {
 						if (forecastplot) {
 							if (subplot %in% c(102)) {
-								zfor = grep("Total|Vulnerable", legtxt); zoff = grep("Total|Vulnerable", legtxt, invert=T)
+								zfor = grep("total|vulnerable", legtxt); zoff = grep("total|vulnerable", legtxt, invert=T)
 							}
 							if (subplot %in% c(103)) {
-								zfor = grep("Harvest", legtxt); zoff = grep("Harvest", legtxt, invert=T)
+								zfor = grep("harvest", legtxt); zoff = grep("harvest", legtxt, invert=T)
 							}
 							forpch = legpch; forpch[zfor] = 21; forpch[zoff] = NA
 							#fortxt = rep(paste0(rep(" ",1.75*max(sapply(legtxt,nchar))),collapse=""),length(legtxt))
@@ -10317,12 +10344,13 @@ plotSS.ts <- function (replist, subplot, add=FALSE, areas="all", areacols="defau
 							#legpch[zfor] = 24
 							#addLegend(0.975, 0.995, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1, title="")
 							## Trick is to plot legend twice, using white text the first time
-							addLegend(0.960, 0.995, legend=linguaFranca(legtxt,l), pch=forpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1, title=legmain, title.font=2, title.adj=0, title.col="black", text.col="white")
+							addLegend(0.960, 0.995, legend=linguaFranca(legtxt,l), pch=forpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1, title=legmain, title.font=2, title.adj=0, title.col="black", text.col="white", pt.cex=1.2)
+							legpch[zfor] = 17
+							legcol[zfor] = lucent(legcol[zfor], 0.25)
+							addLegend(0.975, 0.995, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1, title="", pt.cex=1.2)
 #browser();return()
-							legpch[zfor] = 24
-							addLegend(0.975, 0.995, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1, title="")
 						} else {
-							addLegend(0.975, 0.995, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1, title=legmain, title.font=2, title.adj=0, title.col="black", text.col="black")
+							addLegend(0.975, 0.995, legend=linguaFranca(legtxt,l), pch=legpch, col=legcol, pt.bg=legbg, bty="n", xjust=1, yjust=1, cex=1, title=legmain, title.font=2, title.adj=0, title.col="black", text.col="black", pt.cex=1.2)
 						}
 					}
 				}

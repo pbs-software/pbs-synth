@@ -1071,16 +1071,16 @@ mergePA <- function(PA, good, bad, idx=3)
 		#PA = PA[,setdiff(colnames(PA), iii)]
 		#PA = cbind(PA,psum)
 	}
-#browser();return()
 	## Clean up the main PA table
 	if (spp.code=="YTR")
 		colnames(PA) = gsub("\\_BC$", "", gsub("^delta1", "delta", colnames(PA)))
 	if (spp.code %in% c("SGR")) {
+#browser();return()
 		colnames(outPA) = gsub("LnQ\\_base", "LnQ", colnames(outPA))
 		colnames(outPA) = gsub("Rdist\\_area\\(1\\)", "Rdist_5ABC", colnames(outPA))
 		colnames(outPA) = gsub("Rdist\\_area\\(2\\)", "Rdist_5DE", colnames(outPA))
 		colnames(outPA) = gsub("Rdist\\_area\\(3\\)", "Rdist_3CD", colnames(outPA))
-		colnames(outPA) = gsub("\\([0-9]\\)", "", colnames(outPA))
+		#colnames(outPA) = gsub("\\([0-9]\\)", "", colnames(outPA))
 	}
 
 	## Clean up the excised (low occurrence) PA table  (still needs to be revised)
@@ -1209,11 +1209,11 @@ prepCP <- function(run.rwt, ver="", cp=list('BC'=4000), d.cp="CC", tag="", #tag=
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prepCP
 
 
-## prepMPD------------------------------2025-08-11
+## prepMPD------------------------------2026-05-12
 ##  Prepare MPD runs from previous runs for analysis.
 ## ---------------------------------------------RH
 prepMPD <- function(run.rwt.ver,
-	d.base = "C:/Users/haighr/Files/GFish/PSARC25/SGR/Data/SS3/SGR2025",
+	d.base = "C:/Users/haighr/Files/GFish/PSARC26/WWR/Data/SS3/WWR2026",
 	w=NULL, cvpro=NULL, modify=TRUE)
 {
 	padded = pad0(run.rwt.ver[c(1,2,4,5)],2)
