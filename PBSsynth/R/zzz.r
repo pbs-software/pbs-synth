@@ -58,8 +58,8 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"calc_var_adjust", "catch_tot", "cattab", "ccex.strip", "central.mpd.dir", 
 		"central.run", "compo", "condbase", "control.file", "control_file_name",
 		"corARMA", "currYear", "currYr",
-	"d.mcmc", "data.compo.figs", "data_file_name", "derposts_file_name", "detectCores",
-	"e1", "endyr", "exp.run.num", "exp.run.rwt",
+	"d.mcmc", "data.compo.figs", "data_file_name", "derposts_file_name", "detectCores", "duplicates",
+	"e1", "endyr", "est", "exp.run.num", "exp.run.rwt",
 	"fft", "fleets.all", "fleets.lab", "fn.ylim", "forecast_file_name", "fval",
 	"gear.names", "gen1", "get_dat_new_name", "get_model_executable", 
 		"ghostagedbase", "ghostlendbase", "gls", "gray", "green", "gseries",
@@ -67,11 +67,11 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"intervals", "isnull", "istock", "itab",
 ##	"J",
 	"kcol",
-	"ladbase", "lang", "latex.bold", "lendbase",
+	"l", "ladbase", "lang", "latex.bold", "lendbase",
 	"m", "maxgrad", "mcmc.dir", "mcmc.ts", "mcmc.ts.sub", "method", "modYrs", "mpd", "mutate_at",
-	"name", "narea", "ngear", "nmcmc", "npars",
+	"name", "narea", "ncols.compfile", "ngear", "nmcmc", "npars",
 	"osares", "out",
-	"pen.lab", "pen.long", "pen.run.num", "pen.run.rwt", "pen.rwt.num", "pgenYear",
+	"parfile", "pen.lab", "pen.long", "pen.run.num", "pen.run.rwt", "pen.rwt.num", "pgenYear",
 		"pick", "plot.cres.new", "plotby",
 		"posts_file_name", "prefix", "prevYear", "proYrs", "projYear",
 	"qRlow", "quants3", "quants5",
@@ -80,7 +80,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"sample_admb", "sample_inits", "sarima", "scol", "sen.lab", "sen.mcsubs",
 		"senRP", "senTS", "senso", "set_prior", "sizebinlabs", "sizedbase", "sizemethod",
 		"slwd", "smpdPA", "so", "species", "splitGear", "spp.code", "sprod", "ss_executable",
-		"starts_with", "startYear", "starter_file_name", "startyr", "startYr",
+		"starts_with", "startYear", "starter", "starter_file_name", "startyr", "startYr",
 		"stock", "strSpp", "stolab", "stospp", "strip.columns", "subplot", 
 		"sum_Bio_all", "sum_SpawnBio", "sum_catch_tot","survVec", "symbol", "system_",
 	"tabPmed", "tic", "time", "toc", 
@@ -99,7 +99,8 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 #do.call("assign", args=list(x="species.name", value="Canary Rockfish", envir=.PBSmodEnv))
 #do.call("assign", args=list(x="species.name", value="Pacific Ocean Perch", envir=.PBSmodEnv))
 #do.call("assign", args=list(x="species.name", value="Yellowtail Rockfish", envir=.PBSmodEnv))
-do.call("assign", args=list(x="species.name", value="Silvergray Rockfish", envir=.PBSmodEnv))
+#do.call("assign", args=list(x="species.name", value="Silvergray Rockfish", envir=.PBSmodEnv))
+do.call("assign", args=list(x="species.name", value="Widow Rockfish", envir=.PBSmodEnv))
 do.call("assign", args=list(x="quants3", value=c(0.05,0.50,0.95), envir=.PBSmodEnv))
 do.call("assign", args=list(x="quants5", value=c(0.05,0.25,0.50,0.75,0.95), envir=.PBSmodEnv))
 do.call("assign", args=list(x="ptypes", value=c("win","png"), envir=.PBSmodEnv))

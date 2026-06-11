@@ -17,6 +17,15 @@ CRAN package version numbers follow a "major.minor.patch" format (e.g., 1.2.3), 
 	Patch: Indicates bug fixes and minor improvements that do not introduce new features.
 -----------------------------------
 
+1.7.0 (2026-06-11) [Rcheck=T, Rbuild=F]
+  * R code
+    + Added new function `plotSS.data', taken from r4ss::SSplotData, and frenchified it (RH 260610)
+    + Tried to hide explicit use of `::', `:::', and `require' (RH 260605)
+  * Documentation
+    + Removed pdf files from 7z archives (too big) (RH 260611)
+    + Aside: to find files in 7z archives:
+      - for /r %i in (*.7z) do @echo Archive: %i & "C:\Program Files\7-Zip\7z.exe" l "%i" *.txt -r | findstr /i /c:".txt"
+
 1.6.0 (2026-05-19) [Rcheck=T, Rbuild=T]
   * R code
     + Updated `plotSS.ts' to better contrast the reconstruction years with the the projection years (RH 260519)

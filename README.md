@@ -31,5 +31,6 @@ As with any freely available product, there is no warranty or promise that **PBS
 
 Maintainer: <a href="mailto:rowan.haigh@dfo-mpo.gc.ca">Rowan Haigh</a>
 
-<p align="right"><img src="DFOlogo_small.jpg" alt="DFO logo" style="height:30px;"></p> 
+<img src="NOAA-logo.jpg" alt="noaa" style="width:5%" align="right"  hspace="10" />
+<img src="DFOlogo_small.jpg" alt="dfo" style="width:50%" align="right" />
 

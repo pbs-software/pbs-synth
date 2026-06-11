@@ -7,6 +7,7 @@
 ## make.multifig.........Make a multi-panel figure (mod.r4ss)
 ## plotSS.comparisons....Compare model output from a summary of multiple models
 ## plotSS.comps..........Plot age proportions and model fit (mod.r4ss)
+## plotSS.data...........Plot data timelines (e.g., catch, indices, age compositions)
 ## plotSS.francis........Plot mean age fits using Francis (2011) methodology
 ## plotSS.index..........Plot SS model fit to abundance index series
 ## plotSS.pars...........Plot parameter fits and priors
@@ -100,16 +101,15 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 		}
 		return(df)
 	}
-	if (lifecycle::is_present(ncols)) {
-		lifecycle::deprecate_warn(when="1.46.0", what="getSS.output(ncols)", 
-			details="Input 'ncols' no longer needed.")
+	if ( eval(parse(text="lifecycle::is_present(ncols)")) ) {
+		eval(parse(text="lifecycle::deprecate_warn(when=\"1.46.0\", what=\"getSS.output(ncols)\", details=\"Input 'ncols' no longer needed.\")"))
 	}
 	if (!is.character(dir) | length(dir) != 1) {
 		stop("Input 'dir' should be a character string for a directory")
 	}
 	shortrepfile <- repfile
 	repfile <- file.path(dir, repfile)
-	parfile <- r4ss:::get_par_name(dir)
+	eval(parse(text="parfile <- r4ss:::get_par_name(dir)"))
 	if (is.na(parfile)) {
 		if (!hidewarn) {
 			message("Some stats skipped because the .par file not found.")
@@ -224,7 +224,7 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 		message("Reading full report file")
 	}
 	flush.console()
-	ncols  <- r4ss:::get_ncol(repfile)
+	eval(parse(text="ncols  <- r4ss:::get_ncol(repfile)"))
 	rawrep <- read.table(file=repfile, col.names=1:ncols, 
 		fill=TRUE, quote="", colClasses="character", nrows=-1, 
 		comment.char="", blank.lines.skip=FALSE)
@@ -330,8 +330,7 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 			logfile <- NA
 		}
 		else {
-			logfile <- tidyr::separate(as.data.frame(logfile), 
-				col=1, into=c("File", "Size"), sep="=")
+			eval(parse(text="logfile <- tidyr::separate(as.data.frame(logfile), col=1, into=c(\"File\", \"Size\"), sep=\"=\")"))
 			names(logfile) <- c("TempFile", "Size")
 			logfile[["Size"]] <- as.numeric(logfile[["Size"]])
 			maxtemp <- max(logfile[["Size"]])
@@ -458,8 +457,7 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 		if (exists("Length_comp_error_controls") & exists("present_Length_comp_error_controls")) {
 			names(Length_comp_error_controls)[names(Length_comp_error_controls) == 
 				"NoName"] <- c("NoName", "Fleet_name")
-			Length_comp_error_controls <- dplyr::select(Length_comp_error_controls, 
-				-NoName)
+			eval(parse(text="Length_comp_error_controls <- dplyr::select(Length_comp_error_controls, -NoName)"))
 		}
 		if ("Age_comp_error_controls" %in% rawdefs[["X1"]]) {
 			Age_comp_error_controls <- match_report_table("Age_comp_error_controls", 
@@ -471,13 +469,10 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 		if (exists("Age_comp_error_controls") & exists("present_Age_comp_error_controls") > 0) {
 			names(Age_comp_error_controls)[names(Age_comp_error_controls) == 
 				"NoName"] <- c("NoName", "Fleet_name")
-			Age_comp_error_controls <- dplyr::select(Age_comp_error_controls, 
-				-NoName)
+			eval(parse(text="Age_comp_error_controls <- dplyr::select(Age_comp_error_controls, -NoName)"))
 		}
 		if ("Size_comp_error_controls" %in% rawdefs[["X1"]]) {
-			Size_comp_error_controls <- dplyr::rename(match_report_table("Size_comp_error_controls", 
-				adjust1=1, header=TRUE, type.convert=TRUE), 
-				Sz_method="#_Sz_method")
+			eval(parse(text="Size_comp_error_controls <- dplyr::rename(match_report_table(\"Size_comp_error_controls\", adjust1=1, header=TRUE, type.convert=TRUE), Sz_method=\"#_Sz_method\")"))
 		}
 	}
 	else {
@@ -545,7 +540,7 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 		accuage <- max(as.numeric(tempaccu[tempaccu != ""]))
 	}
 	if (comp) {
-		ncols.compfile <- r4ss:::get_ncol(compfile, skip=3)
+		eval(parse(text="ncols.compfile <- r4ss:::get_ncol(compfile, skip=3)"))
 		allbins <- read.table(file=compfile, col.names=1:ncols.compfile, fill=TRUE, colClasses="character", skip=3, nrows=25)
 		lbins <- as.numeric(allbins[grep("Size_Bins_dat", allbins[, 1]) + 2, -1])
 		lbins <- lbins[!is.na(lbins)]
@@ -570,7 +565,7 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 			compdbase <- rawcompdbase[2:(endfile - 2), ]
 			compdbase <- df.rename(compdbase, oldnames=c("Pick_sex", "Pick_gender", "Gender", "N", "Rep"), 
 				newnames=c("Sexes", "Sexes", "Sex", "Nsamp_adj", "Repl."))
-			duplicates <- duplicated(dplyr::select(compdbase, -Cum_obs, -Cum_exp))
+			eval(parse(text="duplicates <- duplicated(dplyr::select(compdbase, -Cum_obs, -Cum_exp))"))
 			if (verbose) {
 				message("Removing ", sum(duplicates), " out of ", nrow(compdbase),
 					" rows in CompReport.sso which are duplicates.")
@@ -727,10 +722,7 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 				Lbin_ranges <- as.data.frame(table(agedbase[["Lbin_range"]]))
 				names(Lbin_ranges)[1] <- "Lbin_hi-Lbin_lo"
 				if (length(unique(agedbase[["Lbin_range"]])) > 1) {
-					warning("different ranges of Lbin_lo to Lbin_hi found in age comps.\n", 
-						paste(utils::capture.output(print(Lbin_ranges)), collapse="\n"),
-						"\n consider increasing 'aalmaxbinrange' to designate\n", 
-						"some of these data as conditional age-at-length.")
+					eval(parse(text="warning(\"different ranges of Lbin_lo to Lbin_hi found in age comps.\n\", paste(utils::capture.output(print(Lbin_ranges)), collapse=\"\n\"), \"\n consider increasing 'aalmaxbinrange' to designate\n\", \"some of these data as conditional age-at-length.\")\""))
 				}
 				agebins <- sort(unique(agedbase[["Bin"]][!is.na(agedbase[["Bin"]])]))
 			}
@@ -1040,7 +1032,7 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 	wtatage <- NULL
 	if (readwt) {
 		wtfile <- file.path(dir, wtfile)
-		wtatage <- r4ss:::SS_readwtatage(file=wtfile, verbose=verbose)
+		eval(parse(text="wtatage <- r4ss:::SS_readwtatage(file=wtfile, verbose=verbose)"))
 	}
 	if (is.null(dir.mcmc)) {
 		mcmc <- NULL
@@ -1063,7 +1055,7 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 				if (verbose) {
 					message("Running 'SSgetMCMC' to get MCMC output")
 				}
-				mcmc <- SSgetMCMC(dir=dir.mcmc.full)
+				mcmc <- SSgetMCMC(dir=dir.mcmc.full)  ## (RH 250403) this function needs debugging so will get latest r4ss
 			}
 			else {
 				warning("skipping reading MCMC output because posterior.sso file", 
@@ -1373,7 +1365,7 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 				sizentune <- sizentune[nchar(sizentune[["Data_type"]]) == 1, ]
 				sizentune <- type.convert(sizentune, as.is=TRUE)
 				stats[["Size_Comp_Fit_Summary"]] <- sizentune
-				fit_size_comps <- dplyr::filter(fit_size_comps, Fleet_Name %in% FleetNames & Fleet %in% 1:nfleets)
+				eval(parse(text="fit_size_comps <- dplyr::filter(fit_size_comps, Fleet_Name %in% FleetNames & Fleet %in% 1:nfleets)"))
 			}
 		}
 		else {
@@ -1403,24 +1395,20 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 		if (!is.null(Length_comp_error_controls) | !is.null(Age_comp_error_controls)) {
 			if (comp) {
 				if (nrow(lendbase) > 0) {
-					fit_len_comps_select <- 
-						dplyr::select(dplyr::rename(fit_len_comps, Like_sum=Like), Fleet, Time, Sexes, Part, Nsamp_DM)
-					lendbase <- dplyr::left_join(lendbase, fit_len_comps_select)
+					eval(parse(text="fit_len_comps_select <- dplyr::select(dplyr::rename(fit_len_comps, Like_sum=Like), Fleet, Time, Sexes, Part, Nsamp_DM)"))
+					eval(parse(text="lendbase <- dplyr::left_join(lendbase, fit_len_comps_select)"))
 				}
 				if (nrow(agedbase) > 0) {
-					fit_age_comps_select <- 
-						dplyr::select(dplyr::rename(fit_age_comps, Like_sum=Like), Fleet, Time, Sexes, Part, Nsamp_DM)
-					agedbase <- dplyr::left_join(agedbase, fit_age_comps_select)
+					eval(parse(text="fit_age_comps_select <- dplyr::select(dplyr::rename(fit_age_comps, Like_sum=Like), Fleet, Time, Sexes, Part, Nsamp_DM)"))
+					eval(parse(text="agedbase <- dplyr::left_join(agedbase, fit_age_comps_select)"))
 				}
 				if (nrow(condbase) > 0) {
-					fit_cond_age_select <- 
-						dplyr::select(dplyr::rename(fit_age_comps, Like_sum=Like), Fleet, Time, Sexes, Part, Nsamp_DM)
-					condbase <- dplyr::left_join(condbase, fit_cond_age_select)
+					eval(parse(text="fit_cond_age_select <- dplyr::select(dplyr::rename(fit_age_comps, Like_sum=Like), Fleet, Time, Sexes, Part, Nsamp_DM)"))
+					eval(parse(text="condbase <- dplyr::left_join(condbase, fit_cond_age_select)"))
 				}
 				if (nrow(sizedbase) > 0) {
-					fit_size_comps_select <- 
-						dplyr::select(dplyr::rename(dplyr::rename(fit_size_comps, Like_sum=Like), method=Method), Fleet, Time, Sexes, Part, Nsamp_DM, method)
-					sizedbase <- dplyr::left_join(sizedbase, fit_size_comps_select)
+					eval(parse(text="fit_size_comps_select <- dplyr::select(dplyr::rename(dplyr::rename(fit_size_comps, Like_sum=Like), method=Method), Fleet, Time, Sexes, Part, Nsamp_DM, method)"))
+					eval(parse(text="sizedbase <- dplyr::left_join(sizedbase, fit_size_comps_select)"))
 				}
 			}
 		}
@@ -1432,7 +1420,7 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 			datfile <- SS_readdat(file=file.path(dir, datname), 
 				verbose=verbose, )
 			if (is.null(datfile)) {
-				starter <- r4ss:::SS_readstarter(file=file.path(dir, "starter.ss"), verbose=verbose)
+				eval(parse(text="starter <- r4ss:::SS_readstarter(file=file.path(dir, \"starter.ss\"), verbose=verbose)"))
 				datfile <- SS_readdat(file=file.path(dir, starter[["datfile"]]), verbose=verbose, version="3.30")
 			}
 			age_data_info <- datfile[["age_info"]]
@@ -1881,7 +1869,7 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 	}
 	if (depletion_basis %in% c(1, 3:4)) {
 		if (file.exists(file.path(dir, "starter.ss"))) {
-			starter <- r4ss:::SS_readstarter(file=file.path(dir, "starter.ss"), verbose=verbose)
+			eval(parse(text="starter <- r4ss:::SS_readstarter(file=file.path(dir, \"starter.ss\"), verbose=verbose)"))
 			depletion_multiplier <- starter[["depl_denom_frac"]]
 		}
 		else {
@@ -2276,7 +2264,7 @@ getSS.output <- function (dir="C:/myfiles/mymodels/myrun/", dir.mcmc=NULL,
 		yielddat[yielddat == "-nan(ind)"] <- NA
 		names(yielddat) <- names
 		if ("SPRloop" %in% names) {
-			yielddat <- dplyr::filter(yielddat, SPRloop != "ready")
+			eval(parse(text="yielddat <- dplyr::filter(yielddat, SPRloop != \"ready\")"))
 		}
 		yielddat <- type.convert(yielddat, as.is=TRUE)
 	}
@@ -4835,7 +4823,7 @@ plotSS.comps <- function (replist, subplots=c(1:21, 24), kind="LEN", sizemethod=
 #browser();return()
 		createFdir(lang, dir=plotdir)
 		changeLangOpts(L=lang)
-		fout = switch(lang, 'e' = file.path(plotdir, file), 'f' = file.path(plotdir,"french", file) )
+		fout = switch(l, 'e' = paste0("./english/",file), 'f' = paste0("./french/",file) )
 		clearFiles(fout)
 		png(filename=fout, width=pwidth+addsize, height=pheight+addsize, units=punits, res=res, pointsize=ptsize)
 		plotinfo <- rbind(plotinfo, data.frame(file=file, caption=caption))
@@ -5283,7 +5271,7 @@ plotSS.comps <- function (replist, subplots=c(1:21, 24), kind="LEN", sizemethod=
 							}
 							cols[dbase$sex > 0] <- colvec[dbase$sex[dbase$sex > 0]]
 						}
-						r4ss:::bubble3(x=xvals, y=dbase$Bin, z=z, xlab=linguaFranca(labels[3],l), ylab=linguaFranca(kindlab,l), col=cols, cexZ1=cexZ1, legend=linguaFranca(bublegend,l), las=1, main=linguaFranca(ptitle,l), cex.main=cex.main, maxsize=pntscalar, allopen=allopen, minnbubble=minnbubble)
+						eval(parse(text="r4ss:::bubble3(x=xvals, y=dbase$Bin, z=z, xlab=linguaFranca(labels[3],l), ylab=linguaFranca(kindlab,l), col=cols, cexZ1=cexZ1, legend=linguaFranca(bublegend,l), las=1, main=linguaFranca(ptitle,l), cex.main=cex.main, maxsize=pntscalar, allopen=allopen, minnbubble=minnbubble)"))
 						if (length(cohortlines) > 0) {
 							for (icohort in 1:length(cohortlines)) {
 								cat("  Adding line for", cohortlines[icohort], "cohort\n")
@@ -5462,7 +5450,7 @@ plotSS.comps <- function (replist, subplots=c(1:21, 24), kind="LEN", sizemethod=
 								}
 								titles <- c(ptitle, titles)
 								tempfun5 <- function(l="e") {
-									r4ss:::bubble3(x=x.vec, y=ydbase$Lbin_lo, z=z, xlab=linguaFranca(labels[2],l), ylab=linguaFranca(labels[1],l), col=cols, las=1, main=linguaFranca(ptitle,l), cex.main=cex.main, maxsize=pntscalar, cexZ1=cexZ1, legend=linguaFranca(bublegend,l), allopen=FALSE, minnbubble=minnbubble)
+									eval(parse(text="r4ss:::bubble3(x=x.vec, y=ydbase$Lbin_lo, z=z, xlab=linguaFranca(labels[2],l), ylab=linguaFranca(labels[1],l), col=cols, las=1, main=linguaFranca(ptitle,l), cex.main=cex.main, maxsize=pntscalar, cexZ1=cexZ1, legend=linguaFranca(bublegend,l), allopen=FALSE, minnbubble=minnbubble)"))
 								} ## end tempfun5
 								if (plot) 
 									tempfun5(l=lang)
@@ -6234,7 +6222,7 @@ plotSS.comps <- function (replist, subplots=c(1:21, 24), kind="LEN", sizemethod=
 					}
 					ylim <- range(dbase$Bin)
 					ylim[2] <- ylim[2] + 0.2 * diff(ylim)
-					r4ss:::bubble3(x=xvals, y=dbase$Bin, z=z, col=cols, cexZ1=cexZ1, legend=linguaFranca(bublegend,l), las=1, main="", cex.main=cex.main, maxsize=pntscalar, allopen=allopen, xlim=xlim, ylim=ylim, axis1=FALSE)
+					eval(parse(text="r4ss:::bubble3(x=xvals, y=dbase$Bin, z=z, col=cols, cexZ1=cexZ1, legend=linguaFranca(bublegend,l), las=1, main=\"\", cex.main=cex.main, maxsize=pntscalar, allopen=allopen, xlim=xlim, ylim=ylim, axis1=FALSE)"))
 					legend("topleft", title=linguaFranca(panel_table$Name[ipanel],l), legend=NA, bty="n", cex=1.5)
 					if (length(cohortlines) > 0) {
 						for (icohort in 1:length(cohortlines)) {
@@ -6294,6 +6282,395 @@ plotSS.comps <- function (replist, subplots=c(1:21, 24), kind="LEN", sizemethod=
 	return(invisible(plotinfo))
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.comps
+
+
+## plotSS.data -------------------------2026-06-10
+##  Plot data timelines (e.g., catch, indices, age compositions)
+##  based on r4ss function: SSplotData
+##  created (purloined) 260610
+## ----------------------------------------r4ss|RH
+plotSS.data <- function (replist, plot=TRUE, print=FALSE, plotdir=".", 
+	subplots=1:2, fleetcol="default", datatypes="all", 
+	fleets="all", fleetnames="default", ghost=FALSE, pwidth=10, 
+	pheight=7.5, punits="in", res=400, ptsize=10, cex.main=1, 
+	margins=c(3,1,1,10), cex=2, lwd=12, maxsize=1, 
+	alphasize=1, mainTitle=FALSE, verbose=TRUE, subplot=lifecycle::deprecated(),
+	lang="e") 
+{
+	if (lifecycle::is_present(subplot)) {
+		lifecycle::deprecate_warn(when="1.45.1", what="plotSS.data(subplot)", 
+		 with="plotSS.data(subplots)")
+	subplots <- subplot
+	}
+
+	## Need to hijack 'save_png' from r4ss
+	save_png <- function (plotinfo, file, plotdir, pwidth, pheight, punits, res,
+		ptsize, caption=NA, alt_text="nada", filenameprefix=NA)  {
+		#file <- gsub(pattern="/", replacement="_per_", x=file, fixed=TRUE) ## wtf?
+		if (!is.na(filenameprefix)) {
+			file <- file.path(dirname(file), paste0(filenameprefix,basename(file)) )
+		}
+		if ( grepl(paste0("^",gsub("\\.","\\\\.",plotdir)), file) ) {  ## plotdir already in file name
+			filename = file
+		} else {
+			filename = file.path(plotdir, file)
+		}
+#browser();retun()
+		png(filename=filename, width=pwidth,  height=pheight, units=punits, res=res, pointsize=ptsize)
+		invisible(rbind(plotinfo, data.frame(file=file, caption=caption, alt_text=alt_text)))
+	}
+	## Main function starts here
+	plotinfo <- NULL
+	startyr <- replist[["startyr"]]
+	endyr <- replist[["endyr"]]
+	nfleets <- replist[["nfleets"]]
+	if (fleetnames[1] == "default") {
+		fleetnames <- replist[["FleetNames"]]
+	}
+	if (plotdir == "default") {
+		plotdir <- replist[["inputs"]][["dir"]]
+	}
+	catch <- replist[["catch"]]
+	cpue <- replist[["cpue"]]
+	lendbase <- replist[["lendbase"]]
+	sizedbase <- replist[["sizedbase"]]
+	agedbase <- replist[["agedbase"]]
+	condbase <- replist[["condbase"]]
+	ghostagedbase <- replist[["ghostagedbase"]]
+	ghostcondbase <- replist[["ghostcondbase"]]
+	ghostlendbase <- replist[["ghostlendbase"]]
+	ladbase <- replist[["ladbase"]]
+	wadbase <- replist[["wadbase"]]
+	tagdbase1 <- replist[["tagdbase1"]]
+	morphcompdbase <- replist[["morphcompdbase"]]
+	mnwgt <- replist[["mnwgt"]]
+	discard <- replist[["discard"]]
+	tagrelease <- replist[["tagrelease"]]
+	environmental_data <- replist[["environmental_data"]]
+	typetable <- matrix(c("catch", "Catches", "cpue", "Abundance indices", 
+		"lendbase", "Length compositions", "sizedbase", "Size compositions", 
+		"agedbase", "Age compositions", "condbase", "Conditional age-at-length compositions", 
+		"ghostagedbase", "Excluded age compositions", "ghostcondbase", 
+		"Excluded conditional age-at-length compositions", "ghostlendbase", 
+		"Excluded length compositions", "ladbase", "Mean length-at-age", 
+		"wadbase", "Mean weight-at-age", "mnwgt", "Mean body weight", 
+		"discard", "Discards", "tagrelease", "Tag releases", 
+		"tagdbase1", "Tag recaptures", "morphcompdbase", "Morph compositions", 
+		"environmental_data", "Environmental data"), ncol=2, 
+		byrow=TRUE)
+	if (!ghost) {
+		typetable <- typetable[-grep("ghost", typetable[, 1]), ]
+	}
+	typenames <- typetable[, 1]
+	typelabels <- typetable[, 2]
+	ntypes <- 0
+	typetable <- NULL
+	for (itype in seq_along(typenames)) {
+		dat <- get(typenames[itype])
+		typename <- typenames[itype]
+		if (!is.null(dat) && !all(is.na(dat)) && nrow(dat) > 0) {
+			ntypes <- ntypes + 1
+			for (ifleet in 1:nfleets) {
+				allyrs <- NULL
+				size <- NULL
+				dat.f <- dat[dat[["Fleet"]] == ifleet, ]
+				if (typename == "environmental_data") {
+					dat.f <- dat
+				}
+				if (nrow(dat.f) > 0) {
+					if (typename == "catch") {
+						dat.agg <- aggregate(dat.f[["Obs"]], by=list(dat.f[["Yr"]]), FUN=sum)
+						allyrs <- dat.agg[["Group.1"]][dat.agg[["x"]] > 0]
+						size <- dat.agg[["x"]][dat.agg[["x"]] > 0]
+					}
+					if (typename == "cpue") {
+						dat.f <- dat.f[!is.na(dat.f[["Use"]]) & dat.f[["Use"]] > 0, ]
+						if (nrow(dat.f) > 0) {
+							dat.agg <- aggregate(dat.f[["SE"]], by=list(dat.f[["Yr"]]), FUN=mean)
+							allyrs <- dat.agg[["Group.1"]]
+							size <- 1/dat.agg[["x"]]
+						}
+					}
+					if (typename == "mnwgt") {
+						dat.f <- dat.f[!is.na(dat.f[["Use"]]) & dat.f[["Use"]] > 0, ]
+						if (nrow(dat.f) > 0) {
+							dat.agg <- aggregate(dat.f[["CV"]], by=list(dat.f[["Yr"]]), FUN=mean)
+							allyrs <- dat.agg[["Group.1"]]
+							size <- 1/dat.agg[["x"]]
+						}
+					}
+					if (typename == "discard") {
+						dat.f <- dat.f[!is.na(dat.f[["Use"]]) & dat.f[["Use"]] > 0, ]
+						if (nrow(dat.f) > 0) {
+							dat.agg <- aggregate(dat.f[["Std_in"]], by=list(dat.f[["Yr"]]), FUN=mean)
+							allyrs <- dat.agg[["Group.1"]]
+							size <- 1/dat.agg[["x"]]
+						}
+					}
+					if (typename %in% c("lendbase", "sizedbase", "agedbase")) {
+						dat.agg <- aggregate(dat.f[["Nsamp_adj"]], by=list(dat.f[["Yr"]]), FUN=sum)
+						allyrs <- dat.agg[["Group.1"]]
+						size <- dat.agg[["x"]]
+					}
+					if (typename %in% c("ghostagedbase", "ghostcondbase", "ghostlendbase")) {
+						allyrs <- unique(dat.f[["Yr"]])
+						size <- rep(1, length(allyrs))
+					}
+					if (typename %in% c("condbase", "ghostcondbase")) {
+						representative.rows <- !duplicated(paste(dat.f[["Yr.S"]], dat.f[["Sexes"]], dat.f[["Lbin_lo"]], dat.f[["Lbin_hi"]]))
+						dat.sub <- dat.f[representative.rows, ]
+						if (nrow(dat.sub) > 0) {
+							dat.agg <- aggregate(dat.sub[["Nsamp_adj"]], by=list(dat.sub[["Yr"]]), FUN=sum)
+							allyrs <- dat.agg[["Group.1"]]
+							size <- dat.agg[["x"]]
+						}
+					}
+					if (typename == "tagrelease" & ifleet == 1) {
+						dat.agg <- aggregate(dat.f[["Nrelease"]], by=list(dat.f[["Yr"]]), FUN=sum)
+						allyrs <- dat.agg[["Group.1"]]
+						size <- dat.agg[["x"]]
+					}
+					if (typename == "tagdbase1") {
+						dat.f <- dat.f[dat.f[["Used"]] == "yes", ]
+						if (nrow(dat.f) > 0) {
+							dat.agg <- aggregate(dat.f[["Obs"]], by=list(dat.f[["Yr"]]), FUN=sum)
+							allyrs <- dat.agg[["Group.1"]][dat.agg[["x"]] > 0]
+							size <- dat.agg[["x"]][dat.agg[["x"]] > 0]
+						}
+					}
+					if (typename == "morphcompdbase") {
+						if (nrow(dat.f) > 0) {
+							dat.agg <- aggregate(dat.f[["Nsamp_adj"]], by=list(dat.f[["Yr"]]), FUN=sum)
+							allyrs <- dat.agg[["Group.1"]][dat.agg[["x"]] > 0]
+							size <- dat.agg[["x"]][dat.agg[["x"]] > 0]
+						}
+					}
+					if (typename %in% c("ladbase", "wadbase")) {
+						dat.f <- dat.f[dat.f[["Used"]] == "yes", ]
+						if (nrow(dat.f) > 0) {
+							dat.agg <- aggregate(dat.f[["Nsamp_adj"]], by=list(dat.f[["Yr"]]), FUN=sum)
+							allyrs <- dat.agg[["Group.1"]]
+							size <- dat.agg[["x"]]
+						}
+					}
+					if (typename == "environmental_data" & ifleet == 1) {
+						if (nrow(dat.f) > 0) {
+							allyrs <- dat.f %>% dplyr::select(Yr, dplyr::starts_with("env")) %>% 
+								dplyr::filter(dplyr::if_any(dplyr::starts_with("env"), ~. != 0)) %>% dplyr::pull(Yr) %>% unique()
+							size <- rep(1, length(allyrs))
+						}
+					}
+					if (!is.null(allyrs) & length(allyrs) > 0) {
+						unique.index <- which(!duplicated(allyrs))
+						yrs <- floor(allyrs[unique.index])
+						size.sorted <- size[unique.index][order(yrs)]
+						yrs.sorted <- yrs[order(yrs)]
+						fleet_id <- dplyr::case_when(typename == "environmental_data" ~ nfleets + 1, typename == "tagrelease" ~ nfleets + 1, TRUE ~ ifleet)
+						typetable <- rbind(typetable, data.frame(yr=yrs.sorted, fleet=fleet_id, itype=ntypes, typename=typename, size=size.sorted, stringsAsFactors=FALSE))
+					}
+				}
+			}
+		}
+	}
+	if (fleets[1] == "all") {
+		fleets <- 1:(nfleets + 1)
+	}
+	if (datatypes[1] == "all") {
+		datatypes <- typenames
+	}
+	typetable2 <- typetable[typetable[["fleet"]] %in% fleets & typetable[["typename"]] %in% datatypes, ]
+	ntypes     <- length(unique(typetable2[["itype"]]))
+	fleets2    <- sort(unique(typetable2[["fleet"]]))
+	fleets2    <- fleets2[fleets2 %in% c(0, fleets)]
+	nfleets2   <- length(fleets2)
+	if (nfleets + 1 %in% fleets2) {
+		fleetnames <- c(fleetnames, "unassigned")
+	}
+	if (fleetcol[1] == "default") {
+		if (nfleets2 > 3) {
+			fleetcol <- rich.colors.short(nfleets2 + 1)[-1]
+		}
+		if (nfleets2 == 1) {
+			fleetcol <- "grey40"
+		}
+		if (nfleets2 == 2) {
+			fleetcol <- rich.colors.short(nfleets2)
+		}
+		if (nfleets2 == 3) 
+		    fleetcol <- c("blue", "red", "green3")
+	}
+	else {
+		if (length(fleetcol) < nfleets2) 
+		    fleetcol <- rep(fleetcol, nfleets2)
+	}
+	plotdata <- function(datasize, l="e") {
+		par(mar=margins)
+		xlim <- c(-1, 1) + range(typetable2[["yr"]], na.rm=TRUE)
+		yval <- 0
+		ymax <- sum(as.data.frame(table(typetable2[["fleet"]], typetable2[["itype"]]))[["Freq"]] > 0)
+		main.temp <- ""
+		if (mainTitle) {
+			main.temp <- if (datasize) {
+				switch (l, 
+				'e'="Data by type and year, circle area is relative to precision within data type",
+				'f'=convUTF("Donn\\u{00E9}es par type et ann\\u{00E9}e, la surface du cercle est relative \\u00E0 la pr\\u{00E9}cision au sein du type de donn\\u{00E9}es")
+				)
+			}
+			else {
+				switch(l,
+				'e'="Data by type and year",
+				'f'=convUTF("Donn\\u{00E9}es par type et par ann\\u{00E9}e")
+				)
+			}
+		}
+		expandGraph(mar=margins)
+		plot(0, xlim=xlim, ylim=c(0, ymax + 2 * ntypes + 0.5), axes=FALSE, xaxs="i", yaxs="i", type="n", xlab=linguaFranca("Year",l), ylab="", main=main.temp, cex.main=cex.main)
+		xticks <- 5 * round(xlim[1]:xlim[2]/5)
+		abline(v=xticks, col="grey", lty=3)
+		axistable <- data.frame(fleet=rep(NA, ymax), yval=NA)
+		itick <- 1
+		for (itype in rev(unique(typetable2[["itype"]]))) {
+			size.max <- max(typetable2[["size"]][typetable2[["itype"]] == itype], na.rm=TRUE)
+			if (size.max > 0) {
+				typetable2[["size"]][typetable2[["itype"]] == itype] <- typetable2[["size"]][typetable2[["itype"]] == itype]/size.max
+			}
+			else {
+				typetable2[["size"]][typetable2[["itype"]] == itype] <- 0
+			}
+			typename <- unique(typetable2[["typename"]][typetable2[["itype"]] == itype])
+			type.fleets <- sort(unique(typetable2[["fleet"]][typetable2[["itype"]] == itype]))
+			for (ifleet in rev(type.fleets)) {
+				yrs <- typetable2[["yr"]][typetable2[["fleet"]] == ifleet & typetable2[["itype"]] == itype]
+				if (length(yrs) > 0) {
+					col <- fleetcol[which(fleets2 == ifleet)]
+					size.cex <- typetable2[["size"]][typetable2[["fleet"]] == ifleet & typetable2[["itype"]] == itype]
+					yval <- yval + 1
+					x <- min(yrs):max(yrs)
+					n <- length(x)
+					y <- rep(yval, n)
+					y[!x %in% yrs] <- NA
+					solo <- rep(FALSE, n)
+					if (n == 1) {
+					  solo <- 1
+					}
+					if (n == 2 & yrs[2] != yrs[1] + 1) {
+					  solo <- rep(TRUE, 2)
+					}
+					if (n >= 3) {
+						for (i in 2:(n - 1)) {
+							if (is.na(y[i - 1]) & is.na(y[i + 1])) 
+								solo[i] <- TRUE
+						}
+						if (is.na(y[2])) {
+							solo[1] <- TRUE
+						}
+						if (is.na(y[n - 1])) 
+							solo[n] <- TRUE
+					}
+					if (!datasize) {
+						points(x[solo], y[solo], pch=16, cex=cex, col=col)
+						lines(x, y, lwd=lwd, col=col)
+					}
+					else {
+						x <- x[!is.na(y)]
+						y <- y[!is.na(y)]
+						symbols(x=x, y=y, circles=sqrt(size.cex) * maxsize, bg=adjustcolor(col, alpha.f=alphasize), add=TRUE, inches=FALSE)
+					}
+					axistable[itick, ] <- c(ifleet, yval)
+					itick <- itick + 1
+				}
+			}
+			yval <- yval + 2
+			if (itype != 1) {
+				abline(h=yval + 0.3, col="grey", lty=3)
+			}
+#.flush.cat(typename, "\n")
+#if (typename=="catch") {browser();return()}
+			text(mean(xlim), yval - 0.3, linguaFranca(typelabels[typenames==typename],l), font=2, cex=1.5)
+		}
+		axis(4, at=axistable[["yval"]], labels=toupper(linguaFranca(fleetnames[axistable[["fleet"]]],l)), las=1)
+		box()
+		axis(1, at=xticks)
+	} ## end plotdata
+
+	if (1 %in% subplots) {
+		if (plot) {
+			plotdata(datasize=FALSE)
+		}
+		if (print) {
+			caption <- "Data presence by year for each fleet and data type."
+			file <- "data_plot.png"
+			plotinfo <- save_png(plotinfo=plotinfo, file=file, plotdir=plotdir, pwidth=pwidth, pheight=pheight, punits=punits, res=res, ptsize=ptsize, caption=caption)
+			plotdata(datasize=FALSE)
+			dev.off()
+		}
+	}
+	if (2 %in% subplots) {
+		if (plot) {
+			for (l in lang) {
+				plotdata(datasize=TRUE, l=l)
+			}
+		}
+		if (print) {
+			fout.e = "data_plot2"
+			for (l in lang) {
+				changeLangOpts(L=l)
+				fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+				createFdir(l)
+				clearFiles(paste0(fout,".png"))
+				#png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+				caption <- switch(l,
+					'e'=paste("Data presence by year for each fleet, where circle area is <br> ", 
+					"relative within a data type. Circles are proportional to <br> ", 
+					"total catch for catches; to precision for indices, discards, and <br> ", 
+					"mean body weight observations; and to total sample size for <br>", 
+					"compositions and mean weight- or length-at-age observations. <br>", 
+					"Observations excluded from the likelihood have <br>", 
+					"equal size for all years. <br>", "Note that since the circles are are scaled relative <br> ", 
+					"to maximum within each type, the scaling within separate plots <br> ", 
+					"should not be compared."),
+					'f'=paste(convUTF("Pr\\u{00E9}sence des donn\\u{00E9}es par ann\\u{00E9}e pour chaque flotte, la surface des cercles \\u{00E9}tant"), "<br>",
+					convUTF("relative au sein d'un m\\u00EAme type de donn\\u{00E9}es. Les cercles sont proportionnels aux"), "<br>", 
+					convUTF("captures totales ; \\u00E0 la pr\\u{00E9}cision pour les indices, les rejets et"), "<br>",
+					convUTF("les observations de poids corporel moyen ; et \\u00E0 la taille totale de l'\\u{00E9}chantillon pour"), "<br>",
+					convUTF("les compositions et les observations de poids ou de longueur moyens en fonction de l'\\u00E2ge."), "<br>",
+					"Les observations exclues du calcul de vraisemblance ont", "<br>",
+					convUTF("une taille identique pour toutes les ann\\u{00E9}es."), "<br>",
+					convUTF("Notez que, puisque les cercles sont dimensionn\\u{00E9}s par rapport"), "<br>",
+					convUTF("au maximum au sein de chaque type, les \\u{00E9}chelles au sein de graphiques"), "<br>",
+					convUTF("distincts ne doivent pas \\u00EAtre compar\\u{00E9}es."))
+				)
+				if (replist[["nseasons"]] > 1) {
+					caption <- switch(l,
+						'e'=paste(caption, "<br>This is a seasonal model, so scaling is based on either <br> ", 
+							"the sum of samples within each year (for things like comps) <br> ", 
+							"or the average among observations within a year (for  <br> ", 
+							"things like index uncertainty)."),
+						'f'=paste(caption, "<br>",
+							convUTF("Il s'agit d'un mod\\u00E8le saisonnier, donc la mise \\u00E0 l'\\u00E9chelle est bas\\u00E9e soit sur"), "<br>",
+							convUTF("la somme des \\u00E9chantillons au sein de chaque ann\\u00E9e (pour des \\u00E9l\\u00E9ments comme les comparaisons)"), "<br>",
+							convUTF("soit sur la moyenne des observations au sein d'une ann\\u00E9e (pour des \\u00E9l\\u00E9ments comme l'incertitude de l'indice)."))
+						)
+				}
+				file <- paste0(fout,".png")
+#browser();return()
+				plotinfo <- save_png(plotinfo=plotinfo, file=file, 
+					plotdir=plotdir, pwidth=pwidth, pheight=pheight, 
+					punits=punits, res=res, ptsize=ptsize, 
+					caption=caption, filenameprefix="sgr.coast.")
+				plotdata(datasize=TRUE, l=l)
+				dev.off()
+			}; eop()
+		}
+	}
+	returnlist <- list(typetable2=typetable2)
+	if (!is.null(plotinfo)) {
+		plotinfo[["category"]] <- "Data"
+		returnlist[["plotinfo"]] <- plotinfo
+	}
+	return(invisible(returnlist))
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.data
 
 
 ## plotSS.francis-----------------------2026-05-12
@@ -9063,7 +9440,7 @@ plotSS.selex <- function (replist, infotable=NULL, fleets="all", fleetnames="def
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.selex
 
 
-## plotSS.stdres------------------------2026-03-31
+## plotSS.stdres------------------------2026-06-05
 ## Plot standardised residuals -- three plots on one page.
 ## Modified from PBSawatea code in 'PBSscape.r'.
 ## Resolved sex combinations (for F & M only)
@@ -9323,7 +9700,7 @@ plotSS.stdres <- function(replist, kind="AGE", fleets="all",
 	}
 	## Try out 'one-step-ahead' (OSA) aka forecast quantile residuals [Trijoulet et al. 2023] (RH 240405)
 	if (useOSA) {
-		require(compResidual) ## only installed in R develop
+		eval(parse(text="require(compResidual)")) ## only installed in R develop
 		## Process OSA residuals by fleet
 		fbase = split(dbase_kind, dbase_kind$Fleet)
 		fappy = lapply(fbase, function(xbase) {
@@ -9345,12 +9722,12 @@ plotSS.stdres <- function(replist, kind="AGE", fleets="all",
 					z0 = oraw==0
 					spea[z0] = sraw[z0] = 0
 				}
-#browser();return()
 				sOSA = data.frame(Fleet=.su(sbase$Fleet), Year=.su(sbase$Yr), ESS=round(.su(sbase$effN)), t(sobs), t(sexp), t(spea), t(sraw))
 			})
 			yOSA = do.call("rbind", lapply(yappy, data.frame, stringsAsFactors=FALSE))
 			ifleet = paste0("fleet_", .su(yOSA$Fleet))
 			fleet.name = fleets.all[.su(yOSA$Fleet)]
+#browser();return()
 
 			OSAlist[[ifleet]][["osa_dat"]] = yOSA
 			sexy = sexes
@@ -9375,7 +9752,6 @@ plotSS.stdres <- function(replist, kind="AGE", fleets="all",
 				pear <- yOSA[, grep(paste0("^pear",sss,collapse="|"), colnames(yOSA))]
 				pear <- round(pear,5)
 				raw  <- yOSA[, grep(paste0("^raw",sss,collapse="|"), colnames(yOSA))]
-#browser();return()
 
 				if (length(sss)>1) {
 					mess = paste0("obs <- ",paste0(paste0("obs[,grep(\"", sss, "\",colnames(obs))]"), collapse=" + "))
@@ -9410,6 +9786,7 @@ plotSS.stdres <- function(replist, kind="AGE", fleets="all",
 				sdnr.res <- apply(res,2,sd)  ## but will need to do this in 'plot_cres' also
 				## Add names to sample number for plotting:
 				colnames(res) <- yOSA[,"Year"]
+#browser();return()
 				OSAlist[[ifleet]][["oas_obs"]][[iii]]  = obs
 				OSAlist[[ifleet]][["oas_pred"]][[iii]] = pred
 				OSAlist[[ifleet]][["oas_pear"]][[iii]] = pear  ## (RH 260224) adding Pearson for comparison with OSA

@@ -104,7 +104,7 @@ plt.cohortResids (obj, ages=NULL, main=NULL, lang="e", use.rdevs=T, resfld="Pear
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2026-04-13}
+  Last modified \code{Rd: 2026-06-04}
 }
 \note{
   In 2024, functionality was updated to use one-step-ahead (OSA) residuals by Vanessa Trijoulet and Anders Nielsen.\cr
@@ -114,8 +114,8 @@ plt.cohortResids (obj, ages=NULL, main=NULL, lang="e", use.rdevs=T, resfld="Pear
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \section{Disclosure}{
-  A cheeky person \emph{borrowed} the fungible function \code{'SSplotComps'} from
-  R-package \code{r4ss}, and modified it for a bespoke scientific use.
+  A cheeky person \emph{borrowed} the non-fungible function \code{'SSplotComps'} from
+  R-package \code{r4ss}, and modified it for a bespoke scientific purpose.
 }
 \seealso{
 In package \pkg{PBSsynth}:\cr

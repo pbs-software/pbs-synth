@@ -24,7 +24,7 @@
 ##==========================================================
 
 
-## calcRhat ----------------------------2025-12-04
+## calcRhat ----------------------------2026-06-05
 ##  Calculate R-hat and ESS statistics for MCMC chains.
 ## ---------------------------------------AL|AV|RH
 calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
@@ -202,7 +202,7 @@ calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
 			bw="nrd0"; adjust=1; kernel="gaussian"; gridsize=512; cut=3; na.rm=TRUE
 			do.call(density, args=list(x=x, bw=bw, adjust=adjust, kernel=kernel, n=gridsize, cut=cut, na.rm=na.rm))
 		} else if (smoother %in% c("bkde")) {
-			require(KernSmooth)  ## (RH 251125) best to let algorithm choose bandwith (each data set seems to require a different bandwidth)
+			eval(parse(text="require(KernSmooth)"))  ## (RH 251125) best to let algorithm choose bandwith (each data set seems to require a different bandwidth)
 			bw=0.05; kernel="normal"; gridsize=401L
 			do.call(bkde, args=list(x=x, kernel=kernel, gridsize=gridsize ))
 		}
@@ -1670,7 +1670,7 @@ plotSS.dmcmc <- function(mcmcObj, mpdObj, ptypes, lang, pngres=400, PIN=c(9,9),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.dmcmc
 
 
-## plotSS.pairs-------------------------2024-04-10
+## plotSS.pairs-------------------------2026-06-05
 ##  Pairs|density plot comparison among parameters
 ## ---------------------------------------------RH
 plotSS.pairs <- function(P.mpd, P.mcmc, type="image", ptypes, 
@@ -1696,7 +1696,7 @@ plotSS.pairs <- function(P.mpd, P.mcmc, type="image", ptypes,
 		if (type %in% c("contour","image")){
 			xy = cbind(x, y)
 			bw = apply(xy,2,function(x){quantile(abs(diff(x))*0.25,0.5)})
-			est <- KernSmooth::bkde2D(xy, bandwidth=bw)#c(0.25,0.25))
+			eval(parse(text="est <- KernSmooth::bkde2D(xy, bandwidth=bw)#c(0.25,0.25))"))
 			#contour(est$x1, est$x2, est$fhat, add=T)
 			#image(est$x1,est$x2,est$fhat,col=gray(200:100/200), add=T)
 			image(est$x1,est$x2,est$fhat,col=cr(ncol), add=TRUE)
@@ -1707,10 +1707,11 @@ plotSS.pairs <- function(P.mpd, P.mcmc, type="image", ptypes,
 
 	panel.text <- function(x, y, labels, cex, font, ...)
 	{
+		tget(l)
 		polygon(c(0,0,1,1), c(0,1,1,0), col="gainsboro")
-		text(0.5,0.5,labels,cex=cex.max,font=2)
-	}
 #browser();return()
+		text(0.5, 0.5, linguaFranca(labels,l), cex=cex.max, font=2)
+	}
 
 	## Doing 1 pairs plot with all parameters
 	npp = 1
@@ -1733,17 +1734,21 @@ plotSS.pairs <- function(P.mpd, P.mcmc, type="image", ptypes,
 		} else {
 			cex.min=0.7; cex.max=1; cex.fac=2.5
 		}
-		fout = fout.e = paste0("pairsPars", ifelse(npp>1, pad0(i,2), ""))
-		for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		fout.e = paste0("pairsPars", ifelse(npp>1, pad0(i,2), ""))
+		for (l in lang) {
+			tput(l) ## easiest way to pass this to 'panel.text'
 			createFdir(lang, dir=".")
 			changeLangOpts(L=l)
-			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 			for (p in ptypes) {
 				if (p=="eps") postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], horizontal=FALSE,  paper="special")
-				else if (p=="png") png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+				else if (p=="png") {
+					clearFiles(paste0(fout,".png"))
+					png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+				}
 				par(mar=c(0,0,0,0), oma=c(0,0,0,0), mgp=c(2,0.75,0))
 				pairs(P.use[, ii], col=lucent("black",0.1), pch=20, cex=0.2, gap=0, lower.panel=panel.cor.small, upper.panel=panel.dens.type, text.panel=panel.text, cex.axis=1, cex.labels=1)
-#browser();return()
 				if (p %in% c("eps","png")) dev.off()
 			} ## end p (ptypes) loop
 		}; eop()

@@ -1,6 +1,6 @@
 Package: PBSsynth
-Version: 1.6.0
-Date:    2026-05-19
+Version: 1.7.0
+Date:    2026-06-11
 Title:   Tools for Manipulating SS3
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
@@ -16,7 +16,7 @@ Author:      Rowan Haigh [aut, cre], Ian G. Taylor [aut], Ian Stewart [aut], Ric
 Maintainer:  Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
 Copyright:   2020-2026, Fisheries and Oceans Canada
 Depends:     R (>= 3.5.0), PBSmapping, PBSmodelling, PBSdata, PBStools, r4ss
-Imports:     astsa, compResidual, colorspace, dplyr, grDevices, graphics, here, Hmisc, KernSmooth, Kmisc, MASS, nlme, stats, stringr, tictoc, utils, xtable
+Imports:     astsa, compResidual, colorspace, dplyr, grDevices, graphics, here, Hmisc, KernSmooth, Kmisc, lifecycle, MASS, nlme, stats, stringr, tictoc, utils, xtable
 Suggests:    adnuts, cli, crayon, devtools, parallel
 NeedsCompilation: no
 Description: A collection of effervescent functions to facilitate the

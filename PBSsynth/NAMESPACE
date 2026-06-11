@@ -15,7 +15,7 @@ importFrom("grDevices", "adjustcolor", "colorRampPalette", "dev.list",
 importFrom("graphics", "abline", "arrows", "axis", "barplot", "box",
            "contour", "frame", "hist", "image", "legend", "lines",
            "matplot", "mtext", "pairs", "par", "persp", "plot.default",
-           "points", "polygon", "rect", "segments", "text", "title")
+           "points", "polygon", "rect", "segments", "symbols", "text", "title")
 importFrom("stats", "acf", "aggregate", "as.ts", "approx", "cor", "density",
            "dnorm", "fft", "ks.test", "lm", "loess", "loess.smooth", "median", "na.omit",
            "pnorm", "predict", "qchisq", "qlnorm", "qnorm", "qqnorm", "qt",
@@ -32,6 +32,7 @@ importFrom("here", "here")
 importFrom("Hmisc", "Lag")
 importFrom("KernSmooth", "bkde2D")
 importFrom("Kmisc", "read")
+importFrom("lifecycle", "deprecated", "deprecate_warn", "is_present")
 importFrom("MASS", "stepAIC")
 importFrom("nlme", "gls")
 importFrom("stringr", "str_split")

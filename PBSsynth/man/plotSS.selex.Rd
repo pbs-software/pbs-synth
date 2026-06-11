@@ -118,12 +118,12 @@ plt.selectivity(obj, sobj=NULL, mainTitle="Rockfish", maxage,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2026-02-23}
+  Last modified \code{Rd: 2026-06-04}
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \section{Disclosure}{
-  A cheeky person \emph{borrowed} the fungible function \code{'SSplotSelex'} from
-  R-package \code{r4ss}, and modified it for a bespoke scientific use.
+  A cheeky person \emph{borrowed} the non-fungible function \code{'SSplotSelex'} from
+  R-package \code{r4ss}, and modified it for a bespoke scientific purpose.
 }
 \seealso{
 In package \pkg{PBSsynth}:\cr

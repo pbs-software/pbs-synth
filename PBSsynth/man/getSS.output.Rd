@@ -64,8 +64,8 @@ myreplist <- getSS.output(dir="c:/SS/Simple/", dir.mcmc="mcmc")
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \section{Disclosure}{
-  A cheeky person \emph{borrowed} the fungible function \code{'SS_output'} from
-  R-package \code{r4ss}, and modified it for a bespoke scientific use.
+  A cheeky person \emph{borrowed} the non-fungible function \code{'SS_output'} from
+  R-package \code{r4ss}, and modified it for a bespoke scientific purpose.
 }
 \seealso{
 In package \pkg{r4ss}:\cr

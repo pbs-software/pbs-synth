@@ -4193,7 +4193,7 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tabSS.compo
 
 
-## tabSS.decision-----------------------2026-03-23
+## tabSS.decision-----------------------2026-06-05
 ## Make Decision Tables (Probabilities)
 ## ---------------------------------------------RH
 tabSS.decision <- function(envo, #istock="YTR", prefix="ytr.", compo,
@@ -4202,7 +4202,7 @@ tabSS.decision <- function(envo, #istock="YTR", prefix="ytr.", compo,
 {
 	vomit <- function() { gc(verbose=FALSE); while ("ee" %in% search()) detach(ee) }; #resetGraph() }
 	on.exit( vomit() )
-	require(xtable)
+	eval(parse(text="require(xtable)"))
 
 	for (e in 1:length(envo)) {
 		keep.pars = ls()  ## need to clear environment of objects on subsequent loops through envo

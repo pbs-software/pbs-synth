@@ -77,8 +77,8 @@ plotSS.ts(replist, subplot, add=FALSE, areas="all", areacols="default",
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \section{Disclosure}{
-  A cheeky person \emph{borrowed} the fungible function \code{'SSplotTimeseries'} from
-  R-package \code{r4ss}, and modified it for a bespoke scientific use.
+  A cheeky person \emph{borrowed} the non-fungible function \code{'SSplotTimeseries'} from
+  R-package \code{r4ss}, and modified it for a bespoke scientific purpose.
 }
 \references{
   Taylor, I.G., Doering, K.L., Johnson, K.F., Wetzel, C.R., Stewart, I.J., 2021.
@@ -91,8 +91,8 @@ plotSS.ts(replist, subplot, add=FALSE, areas="all", areacols="default",
 
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-08-21}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-06-04}
 }
 \seealso{
 In package \pkg{PBSsynth}:\cr
