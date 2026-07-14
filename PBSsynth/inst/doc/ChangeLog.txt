@@ -17,7 +17,15 @@ CRAN package version numbers follow a "major.minor.patch" format (e.g., 1.2.3), 
 	Patch: Indicates bug fixes and minor improvements that do not introduce new features.
 -----------------------------------
 
-1.7.0 (2026-06-11) [Rcheck=T, Rbuild=F]
+1.8.0 (2026-07-14) [Rcheck=T, Rbuild=T]
+  * R code
+    + Added new function `initStock' to initialize objects for a stock (species+year) and run (RH 260714)
+      - previously sourced the R file `initialise.r' to get these objects globally
+      - use `unpackList' to release the objects into whatever environment one inhabits
+    + Fixed bug in function `tabSS.senso' that did not index fleets correctly (RH 260630)
+    + Modified function `makeFSARfigs' to accommodate requested revisions to SGR (RH 260610)
+
+1.7.0 (2026-06-11) [Rcheck=T, Rbuild=T]
   * R code
     + Added new function `plotSS.data', taken from r4ss::SSplotData, and frenchified it (RH 260610)
     + Tried to hide explicit use of `::', `:::', and `require' (RH 260605)

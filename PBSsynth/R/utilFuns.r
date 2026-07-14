@@ -15,6 +15,7 @@
 ## importCor.............Import SS parameter correlations (mod.PBSawatea)
 ## importEva.............Import SS Hessian eigenvlaues (mod.PBSawatea)
 ## importPar.............Import all SS parameters (mod.PBSawatea).
+## initStock.............Initialize settings for stock (species and year) and run
 ## mergePA...............Agglomerate parameters due to fleet offsets
 ## prepCP................Prepare Catch Policies -- 'CC'=constant catch
 ## prepMPD...............Prepare MPD runs for likelihood analysis
@@ -1036,6 +1037,487 @@ importStd <- function(std.file, vnam="name")
 	return(out)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~importStd
+
+
+## initStock ---------------------------2026-07-14
+##  Initialize settings for stock (species and year) and run
+## Code `initilise.r' converted to a function (260714)
+##  'strSpp' must be Hart code
+## ---------------------------------------------RH
+initStock <- function(strSpp, assyr, run, rwt=NULL, ver=NULL)
+{
+	## Must specify a run before run-specific settings can be assigned
+	if (missing(strSpp) || missing(assyr) || missing(run))
+		stop("Provide three valid argument : 'strSpp', 'assyr', 'run'")
+	ici = lenv()
+
+	## Get species name and code
+	data("species", package="PBSdata", envir=ici)
+	species.code = species[strSpp,"code3"]
+	species.name = species[strSpp,"name"]
+	bad.loc.mess = "sum ting wong with location of SS3 runs"
+	rwt.use      = ifelse(is.null(rwt),-1,rwt)
+	ver.use      = ifelse(is.null(ver),"0z",ver)
+
+	## Create a vector of return objects possible across all scenarios
+	inits = c("strSpp", "assyr", "run", "rwt", "ver", "species.code", "species.name", "d.base", "fleets.all", "fleets.use", "fleets.lab", "nfleet", "fleets.idx", "fleets.sel", "fleets.af", "fleets.gear", "gear.names", "ngear", "area.names", "narea", "col.idx", "bg.idx", "maxage.sel", "assYrs")
+
+	## Widow (WWR)
+	if (strSpp %in% c("417") && assyr==2026)
+	{
+		d.base = "C:/Users/haighr/Files/GFish/PSARC26/WWR/Data/SS3/WWR2026"
+		if (!grepl(species.code,d.base) || !grepl(assyr,d.base) || !dir.exists(d.base)) {
+			.flush.cat(bad.loc.mess, ":\n"); .flush.cat("\t", d.base, "\n"); browser(); return()
+		}
+		## All fleets used in the stock assessment (including sensitivites)
+		fleets.all = c("BC Trawl Fishery", "WCHG Synoptic", "QCS Synoptic", "WCVI Synoptic", "HS Synoptic", "GIG Historical", "NMFS Triennial")
+	
+		## Default values -----------------------------
+		## Used for R01, R02
+		fleets.use  = c(1:7)
+		fleets.lab  = fleets.all[fleets.use]
+		nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+		fleets.idx  = c(1:7)              ## fleets (idx, sel, af, gear) relative to subset
+		fleets.sel  = c(1:7)
+		fleets.af   = c(1:4)              ## link HS and GIG to QCS; link NMFS to WCVI
+		fleets.gear = c(1)                ## commercial gear types
+		gear.names  = fleets.lab[fleets.gear]
+		ngear       =  length(gear.names) ## number of commercial fisheries
+		area.names  = c("BC")
+		narea       = length(area.names)  ## number of areas
+		col.idx     = rep("purple",6)
+		bg.idx      = rep("thistle",6)
+		maxage.sel  = 30
+		assYrs      = c(2019) ## technically, modelled current year (not assessment year)
+	
+		## Remove HS survey (as was the case in the 2019 WWR FSA)
+		if (run %in% c(3:100)) {
+			fleets.use  = c(1:4,6:7)
+			fleets.lab  = fleets.all[fleets.use]
+			nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+			fleets.idx  = c(1:6)              ## fleets (idx, sel, af, gear) relative to subset
+			fleets.sel  = c(1:6)
+		}
+	} ## end WWR in 2026
+
+	## Silvergray (SGR
+	if (strSpp %in% c("405") && assyr==2025)
+	{
+		d.base = "C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC25/SGR/Data/SS3/SGR2025"
+		if (!grepl(species.code,d.base) || !grepl(assyr,d.base) || !dir.exists(d.base)) {
+			.flush.cat(bad.loc.mess, ":\n"); .flush.cat("\t", d.base, "\n"); browser(); return()
+		}
+		## All fleets used in the stock assessment (including sensitivites)
+		fleets.all = c("BC Trawl Fishery", "QCS Synoptic", "WCHG Synoptic", "WCVI Synoptic", "HS Synoptic", "GIG Historical", "NMFS Triennial", "HBLL North", "HBLL South")
+	
+		## Default values -----------------------------
+		fleets.use  = c(1:7)
+		fleets.lab  = fleets.all[fleets.use]
+		nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+		fleets.idx  = c(2:7)              ## fleets (idx, sel, af, gear) relative to subset
+		fleets.sel  = c(1:7)
+		fleets.af   = c(1:4)              ## link HS and GIG to QCS; link NMFS to WCVI
+		fleets.gear = c(1)                ## commercial gear types
+		gear.names  = fleets.lab[fleets.gear]
+		ngear       =  length(gear.names) ## number of commercial fisheries
+		area.names  = c("BC")
+		narea       = length(area.names)  ## number of areas
+		col.idx     = rep("purple",6)
+		bg.idx      = rep("thistle",6)
+		maxage.sel  = 45
+		assYrs      = c(1999, 2001, 2014) ## technically, modelled current year (not assessment year)
+	
+		## Started by trying to estimate HS selectivity
+		if (run==1) {
+			fleets.af   = c(1:5)  ## estimate HS selectivity
+		}
+		## Add in HBLL surveys
+		if (run==3) {
+			fleets.use  = c(1:9)
+			fleets.lab  = fleets.all[fleets.use]
+			nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+			fleets.idx  = c(2:9)              ## fleets (idx, sel, af, gear) relative to subset
+			fleets.sel  = c(1:9)
+			fleets.af   = c(1:4,8,9)          ## link HS and GIG to QCS; link NMFS to WCVI
+			col.idx     = rep("purple",8)
+			bg.idx      = rep("thistle",8)
+		}
+		## Use coastwide CPUE for fleet 1
+		if (run %in% c(6,7)) {
+			fleets.idx  = c(1:7)              ## fleets (idx, sel, af, gear) relative to subset
+			col.idx     = rep("purple",7)
+			bg.idx      = rep("thistle",7)
+		}
+		if (run %in% c(8:100)) {
+			fleets.all = c("5ABC Trawl Fishery", "5DE Trawl Fishery", "3CD Trawl Fishery", "QCS Synoptic", "WCHG Synoptic", "WCVI Synoptic", "HS Synoptic", "GIG Historical", "NMFS Triennial", "HBLL North", "HBLL South")
+			fleets.use  = c(1:9)
+			fleets.lab  = fleets.all[fleets.use]
+			nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+			fleets.idx  = c(1:9)              ## fleets (idx, sel, af, gear) relative to subset
+			fleets.sel  = c(1:9)
+			fleets.af   = c(1:6)              ## link HS to WCHG; link GIG to QCS; link NMFS to WCVI
+			fleets.gear = c(1,2,3)            ## commercial gear types
+			gear.names  = fleets.lab[fleets.gear]
+			ngear       = length(gear.names) ## number of commercial fisheries
+			col.idx     = c("blue","red","green4","blue","red","green4","blue","blue","green4")
+			bg.idx      = c("cyan","pink","green","cyan","pink","green","cyan","cyan","green")
+		}
+		if (run %in% c(8,23,seq(29,99,2))) { ## added three fishery CPUE series but kept region coastwide (one area)
+			col.idx     = rep("purple",9)
+			bg.idx      = rep("thistle",9)
+		}
+		if (run %in% c(9:22,seq(24,46,2),48:50, 52:100)) {  ## only multi-area models (exclude coastwide models)
+			area.names  = c("5ABC", "5DE", "3CD")
+			narea       = length(area.names)  ## number of areas
+		}
+		if (run %in% c(12:14)) { ## remove CPUE series for 5ABC, 5DE, and 3CD;
+			fleets.idx  = c(4:9)
+			col.idx     = c("blue","red","green4","blue","blue","green4")
+			bg.idx      = c("cyan","pink","green","cyan","cyan","green")
+		}
+		if (run %in% c(15:16,18:22,seq(28,46,2),48:50, 52:100)) {
+			col.idx     = c("blue","red","green4","blue","red","green4","red","blue","green4")
+			bg.idx      = c("cyan","pink","green","cyan","pink","green","pink","cyan","green")
+		}
+		if (run %in% c(22)) {  ## R18v11 was renamed R22v1
+			fleets.af   = c(1,4:6)              ## link 5DE and 3CD to 5ABC; link HS to WCHG; link GIG to QCS; link NMFS to WCVI
+		}
+		if (run %in% c(8) && ver.use %in% c("7b","7c") || run %in% c(18) && ver.use %in% c("11b","11c")) {  ## R08v7b MCMC
+			fleets.af   = c(1:3)              ## fix selectivity for the synoptic surveys, estimate it for the three fisheries
+		}
+		if (run %in% c(22) && ver.use %in% c("7b","7c") ) {
+			fleets.af   = c(1)              ## fix selectivity for the synoptic surveys, estimate it for the 5ABC fishery
+		}
+		## Sensitivity runs ---------------------------
+		if (run %in% c(24,25,32,33)) { ## remove CPUE series for runs 24 and 25
+			fleets.idx  = c(4:9)
+			fleets.af   = c(1:6)
+			if (run %in% c(24,32)) {
+				col.idx     = c("blue","red","green4","red","blue","green4")
+				bg.idx      = c("cyan","pink","green","pink","cyan","green")
+			} else if (run %in% c(25,33)) {
+				col.idx     = rep("purple",6)
+				bg.idx      = rep("thistle",6)
+			}
+		}
+		if (run %in% c(26,27,30,31)) { ## add two HBLL surveys
+			fleets.use  = c(1:11)
+			fleets.lab  = fleets.all[fleets.use]
+			fleets.idx  = fleets.sel  = fleets.use
+			fleets.af   = c(1:6,10:11)
+			if (run %in% c(26,30)) {
+				col.idx     = c("blue","red","green4","blue","red","green4","red","blue","green4","red","blue")
+				bg.idx      = c("cyan","pink","green","cyan","pink","green","pink","cyan","green","pink","cyan")
+				if (ver.use %in% c(1)) { ## HBLL South assigned to 5ABC
+					col.idx[11] = "green4"; bg.idx[11] = "green"
+				}
+			} else if (run %in% c(27,31)) {
+				col.idx     = rep("purple",11)
+				bg.idx      = rep("thistle",11)
+			}
+		}
+		if (run %in% c(46, 47)) { ## drop two historical surveys (GIG, NMFS)
+			fleets.use  = c(1:7)
+			fleets.lab  = fleets.all[fleets.use]
+			fleets.idx  = fleets.sel  = fleets.use
+			fleets.af   = c(1:6)
+			if (run %in% c(46)) {
+				col.idx     = c("blue","red","green4","blue","red","green4","red")
+				bg.idx      = c("cyan","pink","green","cyan","pink","green","pink")
+			} else if (run %in% c(47)) {
+				col.idx     = rep("purple",7)
+				bg.idx      = rep("thistle",7)
+			}
+		}
+	} ## end SGR in 2025
+
+	## Lingcod (LIN)
+	if (strSpp %in% c("467") && assyr==2025)
+	{
+		d.base = "C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC25/oLIN/Data/SS3/LIN2025"
+		if (!grepl(species.code,d.base) || !grepl(assyr,d.base) || !dir.exists(d.base)) {
+			.flush.cat(bad.loc.mess, ":\n"); .flush.cat("\t", d.base, "\n"); browser(); return()
+		}
+		## All fleets used in the stock assessment (including sensitivites)
+		fleets.all = c("Bottom Trawl", "Hook and Line", "Recreational", "Synoptic Survey", "HBLL Survey", "IPHC Survey", "NMFS Triennial", "BT Discard")
+	
+		## Default values -----------------------------
+		fleets.use  = c(1:8)
+		fleets.lab  = fleets.all[fleets.use]
+		nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+		fleets.idx  = c(4:7)              ## fleets (idx, sel, af, gear) relative to subset
+		fleets.sel  = c(1:8)
+		fleets.af   = c(1,2,4,5,6,8)              ## 
+		fleets.gear = c(1:3,8)                ## commercial gear types
+		gear.names  = fleets.lab[fleets.gear]
+		ngear       =  length(gear.names) ## number of commercial fisheries
+		area.names  = c("BC")
+		narea       = length(area.names)  ## number of areas
+		maxage.sel  = 20
+		assYrs      = c(2012) ## technically, modelled current year (not assessment year)
+	} ## end LIN in 2025
+
+	## Yellowtail (YTR)
+	if (strSpp %in% c("418") && assyr==2024)
+	{
+		d.base = "C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC24/YTR/Data/SS3/YTR2024"
+		if (!grepl(species.code,d.base) || !grepl(assyr,d.base) || !dir.exists(d.base)) {
+			.flush.cat(bad.loc.mess, ":\n"); .flush.cat("\t", d.base, "\n"); browser(); return()
+		}
+		## All fleets used in the stock assessment (including sensitivites)
+		fleets.all = c("BC Trawl Fishery", "QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic", "HS Synoptic", "GIG Historical", "NMFS Triennial", "WCVI Historical", "HBLL North", "HBLL South", "BC BT Fishery", "BC MW Fishery")
+	
+		## Default values -----------------------------
+		fleets.use  = c(1:7)
+		fleets.lab  = fleets.all[fleets.use]
+		nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+		fleets.idx  = c(2:7)     ## fleets (idx, sel, af, gear) relative to subset
+		fleets.sel  = c(1:7)
+		fleets.af   = c(1,2,3,7) ## fix HS selectivity
+		fleets.gear = c(1)       ## commercial gear types
+		gear.names  = fleets.lab[fleets.gear]
+		ngear       =  length(gear.names)  ## number of commercial fisheries
+		area.names  = c("BC")
+		narea       = length(area.names)  ## number of areas
+		maxage.sel  = 25
+		assYrs      = c(1996,1997,2015)  ## Modelled current year
+	
+		## Started by trying to estimate HS selectivity
+		if (run==1) {
+			fleets.af   = c(1,2,3,5,7)  ## estimate HS selectivity
+		}
+		## Sensitivity runs
+		## Add HBLL abundance indices
+		if (run==4) {
+			fleets.use  = c(1:7,9:10)
+			fleets.lab  = fleets.all[fleets.use]
+			nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+			fleets.idx  = c(2:9)   ## fleets (idx, sel, af, gear) relative to subset
+			fleets.sel  = c(1:9)
+		}
+		## dome-shaped selectivity
+		if (run==11) {
+			maxage.sel = 35
+		}
+		## split trawl fleet into BT and MW trawl fleets
+		if (run==17) {
+			fleets.use  = c(11,12,2:7)
+			fleets.lab  = fleets.all[fleets.use]
+			nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+			fleets.idx  = c(3:8)     ## fleets (idx, sel, af, gear) relative to subset
+			fleets.sel  = c(1:8)
+			fleets.af   = c(1,2,3,4,8) ## fix HS selectivity
+			fleets.gear = c(1:2)       ## commercial gear types
+			gear.names  = fleets.lab[fleets.gear]
+			ngear       =  length(gear.names)  ## number of commercial fisheries
+		}
+	} ## end YTR in 2024
+
+	## Petrale (PEL)
+	if (strSpp %in% c("607") && assyr==2023)
+	{
+		d.base = "C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC24/PEL/Data/SS/PEL2023"
+		if (!grepl(species.code,d.base) || !grepl(assyr,d.base) || !dir.exists(d.base)) {
+			.flush.cat(bad.loc.mess, ":\n"); .flush.cat("\t", d.base, "\n"); browser(); return()
+		}
+		## Only one fleet specified in Mackenzies's setup
+		fleets.all = c("Trawl Fishery", "QCS Synoptic", "HS Synoptic", "WCVI Synoptic")
+	
+		## Default values -----------------------------
+		fleets.use  = c(1:4)
+		fleets.lab  = fleets.all[fleets.use]
+		nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+		fleets.idx  = c(2:4)
+		fleets.sel  = c(1:4)
+		fleets.af   = c(1:4)
+		fleets.gear = c(1)
+		gear.names  = fleets.lab[fleets.gear]
+		ngear       =  length(gear.names)  ## number of commercial fisheries
+		area.names  = c("BC")
+		narea       = length(area.names)  ## number of areas
+		maxage.sel  = 25
+	} ## end PEL in 2023
+
+	## Pacific Ocean Perch (POP)
+	if (strSpp %in% c("396") && assyr==2023)
+	{
+		d.base = "C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC23/POP/Data/SS/POP2023"
+		if (!grepl(species.code,d.base) || !grepl(assyr,d.base) || !dir.exists(d.base)) {
+			.flush.cat(bad.loc.mess, ":\n"); .flush.cat("\t", d.base, "\n"); browser(); return()
+		}
+		## All fleets used in the stock assessment (including sensitivites)
+		fleets.all = c("5ABC Trawl Fishery", "3CD Trawl Fishery", "5DE Trawl Fishery", "QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic", "GIG Historical", "NMFS Triennial", "WCVI Historical", "3CD Midwater Fishery", "5ABC Midwater Fishery", "HS Synoptic")
+	
+		## Default values -----------------------------
+		fleets.use  = c(1:9)
+		fleets.lab  = fleets.all[fleets.use]
+		nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+		fleets.idx  = c(4:9)
+		fleets.sel  = c(1:9)
+		fleets.af   = c(1:8)
+		fleets.gear = c(1:3)
+		gear.names  = fleets.lab[fleets.gear]
+		ngear       =  length(gear.names)  ## number of commercial fisheries
+		area.names  = c("5ABC","3CD","5DE")
+		narea       = length(area.names)  ## number of areas
+		maxage.sel  = 25
+		assYrs      = c(2001,2010,2012,2017)
+	
+	
+		## 5ABC Area ----------------------------------
+		if (run %in% c(3,18,24)) {
+			fleets.use  = c(1,4,7)
+			fleets.lab  = fleets.all[fleets.use]
+			nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+			fleets.idx  = c(2:3)  ## relative to subset
+			fleets.sel  = c(1:3)
+			fleets.af   = c(1:3)
+			fleets.gear = c(1)
+			gear.names  = fleets.lab[fleets.gear]
+			ngear       =  length(gear.names)  ## number of commercial fisheries
+			area.names  = c("5ABC")
+			narea       = length(area.names)  ## number of areas
+			assYrs      = c(2001,2010,2017)
+		}
+		## 3CD Area -----------------------------------
+		if (run %in% c(4,19,25)) {
+			fleets.use  = c(2,5,8,9)
+			fleets.lab  = fleets.all[fleets.use]
+			nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+			fleets.idx  = c(2:4)  ## relative to subset
+			fleets.sel  = c(1:4)
+			fleets.af   = c(1:3)
+			fleets.gear = c(1)
+			gear.names  = fleets.lab[fleets.gear]
+			ngear       =  length(gear.names)  ## number of commercial fisheries
+			area.names  = c("3CD")
+			narea       = length(area.names)  ## number of areas
+			assYrs      = c(2012)
+		}
+		## 5DE Area -----------------------------------
+		if (run %in% c(5,20,26)) {
+			fleets.use  = c(3,6)
+			fleets.lab  = fleets.all[fleets.use]
+			nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+			fleets.idx  = c(2)  ## relative to subset
+			fleets.sel  = c(1:2)
+			fleets.af   = c(1:2)
+			fleets.gear = c(1)
+			gear.names  = fleets.lab[fleets.gear]
+			ngear       =  length(gear.names)  ## number of commercial fisheries
+			area.names  = c("5DE")
+			narea       = length(area.names)  ## number of areas
+			assYrs      = c(2012)
+		}
+		## Add 3CD and 5ABC midwater fleets
+		if (run %in% c(22)) {
+			fleets.use  = c(1:11)
+			fleets.lab  = fleets.all[fleets.use]
+			nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+			fleets.idx  = c(4:9)  ## relative to subset
+			fleets.sel  = c(1:11)
+			fleets.af   = c(1:8,10)
+			fleets.gear = c(1:3,10:11)
+			gear.names  = fleets.lab[fleets.gear]
+			ngear       =  length(gear.names)  ## number of commercial fisheries
+			area.names  = c("5ABC","3CD","5DE")
+			narea       = length(area.names)  ## number of areas
+		}
+		## Add HS synoptic survey
+		if (run %in% c(36)) {
+			fleets.use  = c(1:9,12)
+			fleets.lab  = fleets.all[fleets.use]
+			nfleet      = length(fleets.use)  ## number of fleets (fisheries + surveys)
+			fleets.idx  = c(4:10)  ## relative to subset
+			fleets.sel  = c(1:10)
+			fleets.af   = c(1:8)
+			fleets.gear = c(1:3)
+			gear.names  = fleets.lab[fleets.gear]
+			ngear       =  length(gear.names)  ## number of commercial fisheries
+			area.names  = c("5ABC","3CD","5DE")
+			narea       = length(area.names)  ## number of areas
+		}
+	} ## end POP in 2023
+
+	## Canary (CAR)
+	if (strSpp %in% c("437") && assyr==2022)
+	{
+		d.base = "C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC22/CAR/Data/SS/CAR2022"
+		if (!grepl(species.code,d.base) || !grepl(assyr,d.base) || !dir.exists(d.base)) {
+			.flush.cat(bad.loc.mess, ":\n"); .flush.cat("\t", d.base, "\n"); browser(); return()
+		}
+		## Default values
+		fleets.lab = c("Trawl Fishery","Other Fishery","QCS Synoptic","WCVI Synoptic","NMFS Triennial","HS Synoptic","WCHG Synoptic","GIG Historical")
+		fleets.idx = fleets.sel = c(1,3:8)
+		fleets.af  = c(1,3:5)
+		## R34 (S10) -- Add HS and WCHG AF data
+		if (run %in% c(34)) {
+			if (rwt.use==0 && is.null(ver))
+				fleets.af  = c(1,3:7)
+			else
+				fleets.af  = c(1,3:7)
+		}
+		## R35 (S11) -- Use HBLL North and South survey series
+		if (run %in% c(35,47)) {
+			fleets.lab = c("Trawl Fishery","Other Fishery","QCS Synoptic","WCVI Synoptic","NMFS Triennial","HS Synoptic","WCHG Synoptic","GIG Historical","HBLL North","HBLL South")
+			fleets.idx = fleets.sel = c(1,3:10)
+			fleets.af  = c(1,3:5,9,10)
+		}
+		 ## R37 (S13) -- Remove commercial CPUE times series
+		if (run %in% c(37)) {
+			fleets.idx = c(3:8)
+		}
+		## R42 (PDO) -- Use PDO index as an abundance index
+		if (run %in% c(42)) {
+			fleets.lab = c("Trawl Fishery","Other Fishery","QCS Synoptic","WCVI Synoptic","NMFS Triennial","HS Synoptic","WCHG Synoptic","GIG Historical","PDO Winter")
+			fleets.idx = fleets.sel = c(1,3:9)
+			fleets.af  = c(1,3:5)
+		}
+		## R46 (PDO) -- Remove NMFS Triennial and GIG Historical
+		if (run %in% c(46)) {
+			fleets.lab = c("Trawl Fishery","Other Fishery","QCS Synoptic","WCVI Synoptic","HS Synoptic","WCHG Synoptic")
+			fleets.idx = fleets.sel = c(1,3:6)
+			fleets.af  = c(1,3:4)
+		}
+		maxage = 40
+	} ## end CAR in 2022
+
+	## Yellowmouth (YMR)
+	if (strSpp %in% c("440","YMR") && assyr==2021)
+	{
+		d.base = "C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC21/YMR/Data/SS/YMR2021"
+		if (!grepl(species.code,d.base) || !grepl(assyr,d.base) || !dir.exists(d.base)) {
+			.flush.cat(bad.loc.mess, ":\n"); .flush.cat("\t", d.base, "\n"); browser(); return()
+		}
+		fleets.af  = c(1:5); fleets.idx = ifelse(is.element(run,c(50:53,55:79,81:100))|run=="75a",1,2):5
+		fleets.lab = c("Trawl+ Fishery","QCS Synoptic","WCVI Synoptic","WCHG Synoptic","GIG Historical")
+	} ## end YMR in 2021
+
+	## Yellowmouth (YMR)
+	if (strSpp %in% c("440") && assyr==2011)
+	{
+		d.base = "C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC21/YMR/Data/SS/YMR2011"
+		if (!grepl(species.code,d.base) || !grepl(assyr,d.base) || !dir.exists(d.base)) {
+			.flush.cat(bad.loc.mess, ":\n"); .flush.cat("\t", d.base, "\n"); browser(); return()
+		}
+		fleets.af  = c(1:3); fleets.idx = 2:6
+		fleets.lab = c("Trawl Fishery", "GIG Historical", "QCS Synoptic", "QCS Shrimp", "WCHG Synoptic", "WCVI Synoptic")
+	} ## end YMR in 2011
+
+	## Save objects listed in 'inits'
+	createTdir()
+	inits.avail = intersect(inits,ls())  ## not all will be available
+	if (length(inits.avail) <= (length(formals(initStock)) + 2))
+		stop (paste0("The combo of 'strSpp' = ", strSpp, " and 'assyr' = ", assyr, " has not been specified within the function."))
+	runny = paste0("R", pad0(run,2), ifelse(is.null(rwt),"",paste0("w", pad0(rwt,2))), ifelse(is.null(ver),"",paste0("v",ver)) )
+	save(list=inits.avail, file=paste0("./data/inits.stock(", strSpp, "-", assyr, ")-", runny, ".rda"))
+	inits.stock = list()
+	for (i in inits.avail) {
+		inits.stock[[i]] <- get(i)
+	}
+	return(inits.stock)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~initStock
 
 
 ## mergePA------------------------------2025-10-30

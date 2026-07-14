@@ -1952,7 +1952,7 @@ load_extra_mcmc <- function(dir.mcmc=".", dir.extra="./sso",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~load_extra_mcmc
 
 
-## makeFSARfigs-------------------------2026-05-04
+## makeFSARfigs-------------------------2026-06-10
 ##  Make figures for the new FSAR
 ## ---------------------------------------------RH
 #makeFSARfigs <- function (xTS, xRP, xPJ, years=1935:2024, TAC,
@@ -2039,7 +2039,7 @@ makeFSARfigs <- function (envo, years=1935:2025, TAC, RPbase="B0",
 					za = is.element(rownames(catch), years)
 					points(TAC$Year, TAC[,aa], pch= convUTF("\\u{2584}"), col="orange")
 					lines(years, catch[za,a], col=col.area[a], lwd=2)
-					addLegend(ifelse(strSpp %in% c("405"),0.5,0.95), 0.975, col=c(col.area[a],"orange"), lty=c(1,2), legend=linguaFranca(c(paste0("Catch (", ifelse(Cscale==1000,"kilo",""), "tonnes)"), paste0("TAC (", ifelse(Cscale==1000,"kilo",""), "tonnes)")),l), bty="n", xjust=1, lwd=3, seg.len=3)
+					addLegend(ifelse(strSpp %in% c("405","SGR"),0.5,0.95), 0.975, col=c(col.area[a],"orange"), lty=c(1,2), legend=linguaFranca(c(paste0("Catch (", ifelse(Cscale==1000,"kilo",""), "tonnes)"), paste0("TAC (", ifelse(Cscale==1000,"kilo",""), "tonnes)")),l), bty="n", xjust=1, lwd=3, seg.len=3)
 					addLabel(0.05, 0.95, "(A)", cex=1.5, col="black", adj=c(0,1))
 					addLabel(0.05, 0.85, linguaFranca(aa,l), cex=1.5, col=col.area[a], adj=c(0,1))
 #browser();return()
@@ -2096,7 +2096,7 @@ makeFSARfigs <- function (envo, years=1935:2025, TAC, RPbase="B0",
 					lines(years, u.qts[3,], col=col.area[a], lwd=1, lty=3)
 					lines(years, u.qts[2,], col=col.area[a], lwd=2)
 					if (useRR) {
-						if (strSpp %in% c("405"))
+						if (strSpp %in% c("405","SGR"))
 							addLegend(0.025, 0.9, col=c(rep(col.area[a],2),col.refs[3]), lty=c(1,3,lty.refs[3]), legend=linguaFranca(c("Median relative exploitation","90% credibility envelope", "RRR"),l), bty="n", xjust=0, lwd=1.5, seg.len=3)
 						else
 							addLegend(0.95, 0.975, col=c(rep(col.area[a],2),col.refs[2]), lty=c(1,3,lty.refs[2]), legend=linguaFranca(c("Median relative exploitation","90% credibility envelope", "RRR"),l), bty="n", xjust=1, lwd=1.5, seg.len=3)
@@ -2118,11 +2118,12 @@ makeFSARfigs <- function (envo, years=1935:2025, TAC, RPbase="B0",
 					lines(years, R.qts[3,], col="gainsboro", lwd=1, lty=1) ## just to add a bit more emphasis
 					lines(years, R.qts[3,], col=col.area[a], lwd=1, lty=3)
 					lines(years, R.qts[2,], col=col.area[a], lwd=2)
-					addLegend(ifelse(strSpp %in% c("405"),0.65,0.95), 0.975, col=c(rep(col.area[a],2)), lty=c(1,3), legend=linguaFranca(c("Median recruitment","90% credibility envelope"),l), bty="n", xjust=1, lwd=1.5, seg.len=3)
+					if (strSpp %in% c("405","SGR")) { xpos=0.025; ypos=0.90; xjust=0 } else { xpos=0.95; ypos=0.975; xjust=1 }
+					addLegend(xpos, ypos, col=c(rep(col.area[a],2)), lty=c(1,3), legend=linguaFranca(c("Median recruitment","90% credibility envelope"),l), bty="n", xjust=xjust, lwd=1.5, seg.len=3)
 					addLabel(0.05, 0.95, "(D)", cex=1.5, col="black", adj=c(0,1))
 					if (png) dev.off()
 				}; eop()
-	#browser();return()
+#browser();return()
 			} ## end a (catch)
 		} ## end include 4 panel
 #browser();return()
@@ -2859,7 +2860,7 @@ if (sumting) {
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSS.compo
 
 
-## plotSS.senso-------------------------2026-04-17
+## plotSS.senso-------------------------2026-07-14
 ## Make Sensitivity Figures
 ## ---------------------------------------------RH
 plotSS.senso <- function(envo, #senso, spp.code="SGR", istock="SGR",
@@ -2869,6 +2870,7 @@ plotSS.senso <- function(envo, #senso, spp.code="SGR", istock="SGR",
 {
 	vomit <- function() { gc(verbose=FALSE); while ("ee" %in% search()) detach(ee) }; #resetGraph() }
 	on.exit( vomit() )
+	ici = lenv()  ## local function environment
 
 	for (e in 1:length(envo)) {
 		keep.pars = ls()  ## need to clear environment of objects on subsequent loops through envo
@@ -3197,7 +3199,6 @@ if (sumtingmore) {
 				P.pars  = P.cent.sens
 			}
 
-	
 			## Sometimes want to exclude sensitivities  ## RH 200416
 			verboten = NULL
 			if (spp.code=="BOR") {
@@ -3215,16 +3216,17 @@ if (sumtingmore) {
 				bad.rows = lapply(1:length(zap.runs),function(i){ (nmcmc[[i]][1]:nmcmc[[i]][2]) + (zap.runs[i] * nmcmc[[i]][2]) })
 				zap.rows = unlist(bad.rows)
 				#P.pars[zap.rows,] = NA
-				fn.ylim <- function(x, yzero=T){
+				fn1.ylim <- function(x, yzero=T){
 					xr = extendrange(sapply(split(x,names(x)), quantile,quants5[c(1,5)], na.rm=TRUE))
 					if (yzero) xr[1] = 0
 					return(xr)
 				}
+				assign("fn.ylim", fn1.ylim, envir=ici)
 			} else {
 				## Sometimes the 95pc limits are outrageously high so use this function:
 				##   hardwire index i for now
 				##   hardwire yzero because passing yzero to yzero is problematic (promise already under evaluation)
-				fn.ylim <- function(x, i=rep(1:(length(S.num)+1),each=2000), yzero=F){
+				fn2.ylim <- function(x, i=rep(1:(length(S.num)+1),each=2000), yzero=F){
 					xr = range(x, na.rm=TRUE)
 					xx = split(x,i);
 #browser();return()
@@ -3235,6 +3237,7 @@ if (sumtingmore) {
 					xr[2] = quantile(x,0.975,na.rm=T)
 					return(xr)
 				}
+				assign("fn.ylim", fn2.ylim, envir=ici)
 			}
 #browser();return()
 
@@ -4496,7 +4499,7 @@ tabSS.decision <- function(envo, #istock="YTR", prefix="ytr.", compo,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tabSS.decision
 
 
-## tabSS.senso--------------------------2026-04-16
+## tabSS.senso--------------------------2026-06-30
 ## Make Sensitivity Tables
 ## Note: u2023=u2022 (see 'gatherMCMC.r') so change 
 ##       labels here in rfpt tables to use 'prevYear'
@@ -4628,12 +4631,17 @@ tabSS.senso <- function(envo, sigdig=4)
 			iseries[nseries] = paste0(iseries[nseries],"/Trawl fishery")
 			iseries = c(iseries, "Other fishery")
 		}
+		codes <- c("TRAWL", sub(" .*", "", iseries))
+		fleet.num = grep(paste0(codes,collapse="|"), fleets)
 		cap.par = paste0(
 			name, "~: median values of MCMC samples for the primary estimated parameters, ",
 			"comparing the ", ifelse(NrefM>1,"central","base"), " run to ", Nsens, " sensitivity runs (\\Nmcmc{} samples each). R~= Run, S~= Sensitivity. ",
 			"Numeric subscripts other than those for $R_0$ and $M$ indicate the following gear types $g$: ",
-			texThatVec(paste0(c(1, match(iseries,fleets)[-1]),"~= ",iseries),simplify=F), ". ", sen.leg
+			#texThatVec(paste0(c(1, match(iseries,fleets)[-1]),"~= ",iseries),simplify=F), ". ", 
+			texThatVec(paste0(fleet.num, "~= ", fleets.all[fleet.num]),simplify=F),
+			". ", sen.leg
 		)
+#browser();return()
 		xtab.sens.pars = xtable(tab.sens.pars, align=paste0("l",paste0(rep("r",Nsens+1),collapse="")),
 			label   = paste0("tab:",prefix,"sens.pars"), digits = if (exists("formatCatch")) NULL else sigdig,
 			caption = cap.par )
