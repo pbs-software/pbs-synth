@@ -24,7 +24,7 @@
 ##==========================================================
 
 
-## calcRhat ----------------------------2026-06-05
+## calcRhat ----------------------------2026-07-24
 ##  Calculate R-hat and ESS statistics for MCMC chains.
 ## ---------------------------------------AL|AV|RH
 calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
@@ -215,13 +215,13 @@ calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
 		mcmc.dir = file.path(dir,"sso")
 	else
 		mcmc.dir = dir
+	xlim.rhat = xlim  ## need to remember this because 'xlim' gets confounded by other plots
 
 	filename = file.path(mcmc.dir,"posteriors.sso")
 	if (!file.exists(filename))
 		stop("No file name 'posteriors.sso' at\n\t", dir)
 	dat <- read.table(filename, header=T)
 	dat$chain = rep(1:8, each=nrow(dat)/nchains)
-#browser();return()
 	if (missing(parpos))
 		parpos = 1:ncol(dat)
 	cdat <- split(dat,dat$chain)
@@ -452,10 +452,11 @@ calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
 	## Plot results
 	fout.e = if (missing(outnam)) paste0("rhat.", tolower(basename(dir))) else outnam
 	#xlim = c(min(0.98,min(rhat), na.rm=T), max(1.06,max(rhat), na.rm=T))
-	if (is.null(xlim))
+	if (is.null(xlim.rhat))
 		xlim = c(min(rhat, na.rm=T) - offset, max(badhat + offset, max(rhat) + 2*offset, na.rm=T))
 	xtck = pretty(xlim, n=10)
 	ylim = c(dim(rhat)[1],1) + c(1,-2) * 0.05 * diff(c(1,dim(rhat)[1]))
+
 	if (recdevs) {
 		fout.e = if (missing(outnam)) paste0("rhat.recdev.", tolower(basename(dir))) else outnam
 		clrs = rep("black", nrow(rhat))
@@ -468,7 +469,6 @@ calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
 		ylim = xlim
 		ytck = xtck
 		xlim = range(yrs)
-#browser();return()
 	}
 	## add in language loop
 	for (l in lang) {
@@ -555,7 +555,6 @@ calcRhat <- function(dir=".", nchains=8, parpos, rhat.only=FALSE,
 		#	senno = switch(runno, '28'="B1", '29'="B1", '32'="S01", '33'="S01")
 		#}
 		addLabel(0.99,0.98, runlab, adj=c(1,0.5), cex=0.9, col="slategrey")
-#browser();return()
 		box()
 		if (png) dev.off()
 	}; eop()  ## end lang loop

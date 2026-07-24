@@ -11,11 +11,23 @@ Contributors:
    AE  = Anisa Egeli
    AL  = Adam Langley
 -----------------------------------
-CRAN package version numbers follow a "major.minor.patch" format (e.g., 1.2.3), where: 
+CRAN package version numbers follow a "major.minor.patch" format (e.g., 1.2.3), where:
 	Major: Indicates a significant change that might break existing code.
 	Minor: Indicates the addition of new features or improvements, while generally maintaining backward compatibility.
 	Patch: Indicates bug fixes and minor improvements that do not introduce new features.
 -----------------------------------
+
+1.9.0 (2026-07-24) [Rcheck=T, Rbuild=T]
+  * R code
+    + Revised `calcRhat' to fix a bug in 'xlim' (RH 260724)
+    + Added new function `setControls' to set values used by AppG builds (RH 260717)
+      - replaced the sourced R code `set.controls', an ad hoc spewer of objects based on the stock being modeled
+    + Added small helper functions to `smallFuns.r' (RH 260716)
+      - transferred from `set.controls.r', command-line code to help build AppG (model results)
+    + Update function `copySSfiles' to include WWR 2026 (RH 260715)
+    + Updated reference point tables in `plotSS.compo' and `plotSS.senso' (RH 260715)
+  * SQL code
+    + Added new query `fos_mcatRAY.sql' to get catch of top quota species in BC by gear and PMFC area (RH 260721)
 
 1.8.0 (2026-07-14) [Rcheck=T, Rbuild=T]
   * R code

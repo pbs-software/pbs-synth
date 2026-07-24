@@ -22,6 +22,7 @@
 ## quickDT...............Produce quick decision tables for Bt/LRP, Bt/USR, etc.
 ## repeatMPD ............Repeat MPDs for axes of uncertainty to visualise likelihood density
 ## runSweave.............Run Sweave code to build pdfs for MPD and MCMC runs (not appendix)
+## setControls...........Set controls for one or more stocks while building model results appendix
 ## tabDQs................Tables of Derived Quantities
 ## weightAF..............Weight age frequencies using harmonic mean ratio method
 ##==========================================================
@@ -612,18 +613,18 @@ convPN <- function(pnams)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convPN
 
 
-## copySSfiles -------------------------2026-02-18
+## copySSfiles -------------------------2026-07-15
 ##  Copy SS3 input files to folders for archiving on GitHub
 ## ---------------------------------------------RH
-copySSfiles <- function (strSpp="405", assyr=2025)
+copySSfiles <- function (strSpp="405", assyr=2025, clean=FALSE)
 {
 	rwts  = c("00","01")  ## will have to be more complicated if different number of rweights by run
 	if (strSpp=="405" && assyr==2025) {
-		dir.from = "C:/Users/haighr/Files/GFish/PSARC25/SGR/Data/SS3/SGR2025"
+		dir.from = "C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC25/SGR/Data/SS3/SGR2025"
 		dir.to   = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/input/2025/SGR"
 		areas = list()
 		areas[["BC_coast"]] = list()
-		areas[["BC_coast"]][["nbase"]] = 1
+		areas[["BC_coast"]][["nbase"]] = 1  ## number of base runs comprising base case
 		areas[["BC_coast"]][["runs"]]  = c(29,33,23,31,seq(35,47,2),51)
 		areas[["BC_coast"]][["vers"]]  = c(2,1,3,2,rep(1,8))
 		areas[["BC_3area"]] = list()
@@ -631,9 +632,27 @@ copySSfiles <- function (strSpp="405", assyr=2025)
 		areas[["BC_3area"]][["runs"]]  = c(28,32,21,30,seq(34,46,2),50,48,49)
 		areas[["BC_3area"]][["vers"]]  = c(2,1,3,2,rep(1,10))
 	}
+	if (strSpp=="417" && assyr==2026) {
+		dir.from = "C:/Users/haighr/Files/GFish/PSARC26/WWR/Data/SS3/WWR2026"
+		dir.to   = "C:/Users/haighr/Files/Projects/R/Develop/PBSsynth/Authors/input/2026/WWR"
+		areas = list()
+		areas[["BC"]] = list()
+		areas[["BC"]][["nbase"]] = 1
+		areas[["BC"]][["runs"]]  = c(6, 1:5)
+		areas[["BC"]][["vers"]]  = c(1, 2,2,1,1,1)
+	}
 	## ------------
 	## Generic code
 	## ------------
+	if (!dir.exists(dir.to))
+		dir.create(dir.to, recursive=TRUE)
+	if (clean) {  ## Google Gemini
+		## Get the full paths of all contents inside the directory
+		dir_contents <- list.files(dir.to, full.names=TRUE, all.files=TRUE, no.. = TRUE)
+		## Delete all files and subdirectories recursively
+		unlink(dir_contents, recursive=TRUE)
+	}
+#browser();return()
 	for (a in 1:length(areas)) {
 		aa = names(areas)[a]
 		.flush.cat("Copying files for model ", aa,"\n")
@@ -659,6 +678,7 @@ copySSfiles <- function (strSpp="405", assyr=2025)
 				if (!dir.exists(jdir.to))
 					dir.create(jdir.to)
 				jdir.from = paste0(dir.from, "/Run", ii, "/MPD.", jdir, ".v", vv)
+#browser();return()
 				if (!dir.exists(jdir.from))
 					stop ("Source directory specified incorrectly")
 				ssfiles = paste0(c("starter", "forecast", paste0(c("data.","control."), paste0(c(ii,jj),collapse="."))),".ss")
@@ -2110,6 +2130,684 @@ runSweave <- function (d.model=getwd(), d.sweave, type="MPD", figs.only=FALSE, d
 	mpd.sweave = shell(cmd=paste0("texify --pdf --synctex=1 --clean ",sub("\\.Rnw",".tex",f.sweave)), wait=TRUE, intern=TRUE)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~runSweave
+
+
+## setControls -------------------------2026-07-22
+## Set controls for one or more stocks while
+##  building AppG (model results, formerly AppF)
+## First created from SGR 'set.controls.r' (RH 260716)
+## First 'set.controls' was REBS (RH 200528)
+## Prior to 2020, stock was built in Sweave files
+##  'fsa' = fisheries stock assessment
+## -----------------------------------------------
+setControls <- function(fsa="SGR2025", stospp=c("SGR","SGR"), stolab=c("3area", "coast"), assyr=2025,
+   appG.dir, clean=FALSE, lang="e")
+{
+	if (missing(appG.dir))
+		stop("Supply a location for the Model Results appendix")
+	if (clean)
+		rm(list=setdiff(ls(all=T),c(".First","so","Rcode","qu","Scode")))  ## Start with clean slate
+	ici = lenv() ## remember function environment
+
+	## If in package, don't need to do these requires:
+	#require(PBStools)
+	#require(xtable)
+	#require(r4ss)
+	options(scipen=10)  ## for displaying 10 decimal places before switching to scientific display
+
+	## For the Sweave, choose only one language even though some plots will be made in both.
+	tput(lang)  ## 'e'=english, 'f'=francais
+	## Create a subdirectory called `french' for French-language figures if 'f' in lang
+	createFdir(lang)
+	
+	##----------------------------
+	## Stock control list object
+	##----------------------------
+	stock     = list()
+	Nstock    = length(stolab)
+	saveDate  = sub("/0","/",sub("^0","",format.Date(Sys.time(),"%m/%d/%Y %H:%M")))
+	collect   = c("saveDate", "stospp", "stolab", "assyr", "appG.dir", "Nstock")
+
+	if (Nstock > 2) {  ## probably unnecessary
+		.flush.cat("You have more than two stocks, object 'stock' is only coded for 1 or 2 stocks","\n")
+		browser(); return()
+	}
+	## Can set up species-specific inputs before populating list object stock below
+	## Make every variable a list object for consistency
+	## -------------------------------------------------
+	## Rougheye/Blackspotted Rockfish (2020)
+	if (fsa == "REBS2020") {
+		base.runs = list( c(49:51, 47,46,48, 52:54), c(18,12,15, 17,11,14, 19,13,16) )  ; nbrun = lapply(base.runs, length)
+		base.rwts = list( rep(1,9), rep(1,9) )     ; nbrwt = lapply(base.runs, length)
+		base.vers = list( rep("",9), rep("",9) )   ; nbver = lapply(base.runs, length)
+		axis.dim  = c(3,3,2)  ## number of axes of uncertainty
+		axisA.dimnames = list(M=c(0.035,0.045,0.055), cp=c(0.1,0.2759,0.4), AE=c(3,5))
+		axisB.dimnames = list(M=c(0.035,0.045,0.055), cp=c(0.1,0.2529,0.4), AE=c(3,5))
+		runA = rwtA = verA = array(NA, dim=axis.dim, dimnames=axisA.dimnames)  ## empty array
+		runB = rwtB = verB = array(NA, dim=axis.dim, dimnames=axisB.dimnames)  ## empty array
+		useA = array(FALSE, dim=axis.dim, dimnames=axisA.dimnames)      ## logical array set to FALSE
+		useB = array(FALSE, dim=axis.dim, dimnames=axisB.dimnames)      ## logical array set to FALSE
+		## Populate A arrays for first stock
+		#runA["0.035",,"3"] = 49:51; runA["0.045",,"3"] = c(47,46,48); runA["0.055",,"3"] = 52:54
+		runA[,,"3"] = as.array(matrix(base.runs[[1]], nrow=3, ncol=3, byrow=TRUE))
+		rwtA[,,"3"] = as.array(matrix(base.rwts[[1]], nrow=3, ncol=3, byrow=TRUE))
+		useA[,,"3"] = TRUE
+		## Populate B arrays for second stock
+		#runB["0.035",,"3"] = c(18,12,15); runB["0.045",,"3"] = c(17,11,14); runB["0.055",,"3"] = c(19,13,16)
+		runB[,,"3"] = as.array(matrix(base.runs[[2]], nrow=3, ncol=3, byrow=TRUE))
+		rwtB[,,"3"] = as.array(matrix(base.rwts[[2]], nrow=3, ncol=3, byrow=TRUE))
+		useB[,,"3"] = TRUE
+		#useB["0.035",,"3"] = rep(TRUE,3); useB["0.045",,"3"] = c(F,T,T); useB["0.055",,"3"] = c(F,F,T) ## RPR subset
+		A.base  = gather.vectors(runA, rwtA, verA, useA)
+		B.base  = gather.vectors(runB, rwtB, verB, useB)
+		collect = c(collect, c("runA", "runB", "A.base", "B.base"))
+#browser();return()
+
+		## Start assigning values relevant to REBS 2020
+		strSpp        = list("425", "394")
+		spp.name      = list("Blackspotted Rockfish", "Rougheye Rockfish")
+		latin.name    = list("Sebases melanostictus", "Sebastes aleutianus")
+		name          = list("REBS North", "REBS South")
+		prefix        = list("BSR.", "RER.")
+		model.dir     = rep(list("C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC20/REBS/Data/Awatea"), Nstock)
+		base.dir      = as.list(paste0(model.dir, c("/BSR_2F", "/RER_2F")))  ## top level directory for runs
+		RPbase        = rep(list("BMSY"), Nstock)                            ## as oppposed to 'B0' or 'BHIS'
+		virginYear    = rep(list(1933), Nstock)
+		startYear     = rep(list(1935), Nstock)
+		currYear      = rep(list(2021), Nstock)
+		prevYear      = rep(list(2020), Nstock)
+		projYear      = rep(list(2031), Nstock)                              ## 10-yr projection
+		pgenYear      = rep(list(1.5*50), Nstock)                            ## 1.5G (G=50y)
+		gen1          = rep(list(50),   Nstock)
+		Ngen          = rep(list(1.5),  Nstock)
+		Nsex          = rep(list(2),    Nstock)
+		Nsurv         = list(1, 3)
+		Ncpue         = list(1, 1)
+		Ngear         = list(2, 2)                                           ## commercial fisheries
+		Narea         = list(1, 1)
+		Nsubarea      = list(1, 1)                                           ## subareas
+		Nfleet        = list(2, 4)
+		iseries       = list( c("WCHG Synoptic"), c("QCS Synoptic", "WCVI Synoptic", "NMFS Triennial") )  ## index series
+		useries       = list( c("commercial trawl CPUE"), c("commercial trawl CPUE") )  ## cpue series
+		gseries       = list( c("Trawl","Other"), c("Trawl","Other") )       ## gear series
+		area.name     = list("BC", "BC")
+		area.names    = list("BC", "BC")
+		fleets        = list( c("WCHG Synoptic", "commercial trawl CPUE"), c("QCS Synoptic", "WCVI Synoptic", "NMFS Triennial", "commercial trawl CPUE") )  ## all fleet names (base + sensitivities)
+		mcsub         = rep(list(c(201,1200)), Nstock)
+		run.num       = list(A.base$run.num, B.base$run.num)
+		rwt.num       = list(A.base$rwt.num, B.base$rwt.num)
+		ver.num       = list(A.base$ver.num, B.base$ver.num)
+		use.num       = list(A.base$use.num, B.base$use.num)
+		exp.run.num   = list(46, 11)                                         ## central run (originally called example run)
+		exp.run.rwt   = list("46.01", "11.02")
+		recentCatch   = list(                                                ## RH 230829: change to a list object for multiple areas
+			list('BC' = c('2015'= 549.6, '2016'= 483.8, '2017'= 667.7, '2018'= 579.0, '2019'= 460.4) ),   ## avg = 548 t
+			list('BC' = c('2015'= 349.8, '2016'= 244.6, '2017'= 220.8, '2018'= 245.2, '2019'= 394.6) ) )  ## avg = 291 t
+		## Axes of uncertainty (set to NULL if none)
+		axisU         = list(runA, runB)
+		base.lab      = list( paste0("B",names(A.base$run.num)), paste0("B",names(B.base$run.num)) )
+		base.long     = list( paste0("B",names(A.base$run.num)), paste0("B",names(B.base$run.num)) )
+		Nsens         = list(8, 6)
+		sen.run.num   = list( c(56:63), c(20:25) )
+		sen.rwt.num   = list( c(rep(1,8)), c(rep(1,6)) )
+		sen.ver.num   = list( rep(NA,8), rep(NA,6) )  ## versions were not implemented 
+		sen.run.rwt   = list(
+			paste(pad0(sen.run.num[[1]],2), pad0(sen.rwt.num[[1]],2), sep="."),
+			paste(pad0(sen.run.num[[2]],2), pad0(sen.rwt.num[[2]],2), sep=".") )
+		sen.lab        = list(
+			c("estimate_M", "reduce_catch", "increase_catch", "AE5_M45_CV10", "AE5_M45_CV28", "AE5_M45_CV40", "AE5_M35_CV40", "AE3_varCV"),
+			c("reduce_catch", "increase_catch", "AE5_M35_CV25", "AE5_M45_CV25", "AE5_M55_CV25", "remove_NMFS") )
+		sen.long       = list(
+			c("estimate M using normal prior N(0.045,0.009)", "reduce all commercial catch from 1965 to 1995 by 33%", "increase all commercial catch from 1965 to 1995 by 50%", "use wide AE matrix (+/-5 ages), M=0.045, and CPUE cp=0.1", "use wide AE matrix (+/-5 ages) , M=0.045, and CPUE cp=0.2759", "use wide AE matrix (+/-5 ages), M=0.045, and CPUE cp=0.4", "use wide AE matrix (+/-5 ages), M=0.035, and CPUE cp=0.4", "use moderate AE matrix (+/-3 ages) with CV increasing by age"),
+			c("reduce all commercial catch from 1965 to 1995 by 33%", "increase all commercial catch from 1965 to 1995 by 50%", "use wide AE matrix (+/-5 ages), M=0.035, and CPUE cp=0.2529", "use wide AE matrix (+/-5 ages), M=0.045, and CPUE cp=0.2529", "use wide AE matrix (+/-5 ages), M=0.055, and CPUE cp=0.2529", "remove NMFS triennial survey") )
+		## survey series for comparing sens to base parameters (RH 240627: not sure if this is used anywhere, keep an eye open)
+		sseries        = list( rep(list(1),8), c(rep(list(1:3),5),list(1:2)) )
+		sen.mcsubs     = list( rep(list(c(201,1200)),8), rep(list(c(201,1200)),6) )
+#browser();return()
+	}
+	## Yellowmouth Rockfish (2021)
+	if (fsa == "YMR2021") {
+		base.runs = list(c(77,71,75,72,76))     ; nbrun = lapply(base.runs, length)
+		base.rwts = list(1)     ; nbrwt = lapply(base.runs, length)
+		base.vers = list("")  ; nbver = lapply(base.runs, length)
+		axis.dim  = c(5,1,1)  ## number of axes of uncertainty
+		axisA.dimnames = list(M=c(0.04,0.045,0.05,0.055,0.06), cp=c(0.3296), Rwt="HMR")  ## RM = Reweight method: 1=Francis mean age, 2=Harmonic mean ratio
+		runA = rwtA = verA = array(NA, dim=axis.dim, dimnames=axisA.dimnames)  ## empty array
+		useA = array(FALSE, dim=axis.dim, dimnames=axisA.dimnames)      ## logical array set to FALSE
+		## Populate A arrays for first stock
+		runA[,1,1] = base.runs[[1]]
+		rwtA[,1,1] = base.rwts[[1]]
+		verA[,1,1] = base.vers[[1]]
+		useA[,1,1] = TRUE
+		A.base  = gather.vectors(runA, rwtA, verA, useA)
+		collect = c(collect, c("runA", "A.base"))
+#browser();return()
+
+		## Start assigning values relevant to YMR 2021
+		strSpp        = rep(list("440"), Nstock)
+		spp.name      = rep(list("Yellowmouth Rockfish"), Nstock)
+		latin.name    = rep(list("Sebastes reedi"), Nstock)
+		name          = as.list(paste0("YMR ", assyr )) ## Don't specify 3 stocks if using SS3's multi-area model
+		prefix        = list("ymr.")
+		model.dir     = rep(list("C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC21/YMR/Data/SS"), Nstock)
+		base.dir      = as.list(paste0(model.dir, c("/YMR2021"))) ## Top level directory for runs
+		RPbase        = rep(list("BMSY"), Nstock)                              ## as oppposed to 'BMSY' or 'BHIS'
+		virginYear    = rep(list(1933), Nstock)
+		startYear     = rep(list(1935), Nstock)
+		currYear      = rep(list(2022), Nstock)
+		prevYear      = rep(list(2021), Nstock)
+		projYear      = rep(list(2032), Nstock)                              ## 10-yr projection
+		pgenYear      = rep(list(3*30), Nstock)                              ## 3G (G=25y)
+		gen1          = rep(list(30),   Nstock)
+		Ngen          = rep(list(3),    Nstock)
+		Nsex          = rep(list(2),    Nstock)
+		Nsurv         = rep(list(4),    Nstock)
+		Ncpue         = rep(list(1),    Nstock)
+		Ngear         = rep(list(1),    Nstock)                              ## commercial fishery
+		Narea         = rep(list(1),    Nstock)
+		Nsubarea      = list(1)
+		Nfleet        = rep(list(5), Nstock)
+		iseries       = rep(list( c("Bottom Trawl CPUE", "QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic", "GIG Historical")), Nstock)  ## index series
+		useries       = rep(list("Trawl"), Nstock)  ## cpue series
+		gseries       = rep(list( c("Trawl+")), Nstock)  ## gear series
+		area.name     = list("BC")
+		area.names    = list("BC")                        ## subareas
+		fleets        = rep(list( c("Bottom Trawl CPUE", "QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic", "GIG Historical")), Nstock)  ## fleet names
+		mcsub         = rep(list(c(1,2000)), Nstock)
+		run.num       = list(A.base$run.num)
+		rwt.num       = list(A.base$rwt.num)
+		ver.num       = list(A.base$ver.num)
+		use.num       = list(A.base$use.num)
+		exp.run.num   = list(75)                                             ## central run (originally called example run)
+		exp.run.rwt   = list("75.01")
+		recentCatch   = list(                                                ## RH 230829: change to a list object for multiple areas
+			list( 'CST' = c('2016'=1162.4,'2017'=1404.2,'2018'=1216.3,'2019'=1520.7,'2020'=1056.9) ) ) 
+		## Axes of uncertainty (set to NULL if none)
+		axisU         = list(runA)
+		base.lab      = list( paste0("B",names(A.base$run.num),": R",A.base$run.num, paste0(" (M=",rownames(runA),")")) )
+		base.long     = list( paste0("B",names(A.base$run.num),": R",A.base$run.num, paste0(" (M=",rownames(runA),")")) )
+		Nsens         = list(14)
+		sen.run.num   = list( c(78:88,91:93) )
+		sen.rwt.num   = list( rep(1,14) )
+		sen.ver.num   = list( rep(NA,14) )  ## versions were not implemented 
+		sen.run.rwt   = list( paste(pad0(sen.run.num[[1]],2), pad0(sen.rwt.num[[1]],2), sep=".") )
+		sen.lab       = list( c("add_1997_WCHG_index", "estimate_M", "drop_CPUE", "Tweedie_CPUE", "sigmaR=0.6", "sigmaR=1.2", "reduce_catch_33%", "increase_catch_50%", "upweight_QCS_AF", "start_Rdevs_in_1970", "no_ageing_error", "steepness_h=0.5", "double_2021_catch", "AE_from_age_readers") )
+		sen.long       = list( c("add_1997_WCHG_index", "estimate_M", "drop_CPUE", "Tweedie_CPUE", "sigmaR=0.6", "sigmaR=1.2", "reduce_catch_33%", "increase_catch_50%", "upweight_QCS_AF", "start_Rdevs_in_1970", "no_ageing_error", "steepness_h=0.5", "double_2021_catch", "AE_from_age_readers") )
+		## survey series for comparing sens to base parameters (RH 240627: not sure if this is used anywhere, keep an eye open)
+		sseries        = list( c(rep(list(1:5),2),list(2:5),rep(list(1:5),11)) )
+		sen.mcsubs     = list( rep(list(c(1,2000)),14) )
+#browser();return()
+	}
+	## Canary Rockfish (2022)
+	if (fsa == "CAR2022") {
+		base.runs = list(24)     ; nbrun = lapply(base.runs, length)
+		base.rwts = list(1)     ; nbrwt = lapply(base.runs, length)
+		base.vers = list("")  ; nbver = lapply(base.runs, length)
+		axis.dim  = c(1,1,1)  ## number of axes of uncertainty
+		axisA.dimnames = list(M="coast", cp=0.178, Rwt="DM")  ## Rwt = Reweight method: 'NO'=None, 'DM'=Dirichlet-Multinomial, 'FMA'=Francis mean age, 'HMR'=Harmonic mean ratio
+		runA = rwtA = verA = array(NA, dim=axis.dim, dimnames=axisA.dimnames)  ## empty array
+		useA = array(FALSE, dim=axis.dim, dimnames=axisA.dimnames)      ## logical array set to FALSE
+		## Populate A arrays for first stock
+		runA[1,1,1] = base.runs[[1]]
+		rwtA[1,1,1] = base.rwts[[1]]
+		verA[1,1,1] = base.vers[[1]]
+		useA[1,1,1] = TRUE
+		A.base  = gather.vectors(runA, rwtA, verA, useA)
+		collect = c(collect, c("runA", "A.base"))
+#browser();return()
+
+		## Start assigning values relevant to CAR 2022
+		strSpp        = rep(list("437"), Nstock)
+		spp.name      = rep(list("Canary Rockfish"), Nstock)
+		latin.name    = rep(list("Sebastes pinniger"), Nstock)
+		name          = as.list(paste0("CAR ", assyr )) ## Don't specify 3 stocks if using SS3's multi-area model
+		prefix        = list("car.")
+		model.dir     = rep(list("C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC22/CAR/Data/SS"), Nstock)
+		base.dir      = as.list(paste0(model.dir, c("/CAR2022"))) ## Top level directory for runs
+		RPbase        = rep(list("BMSY"), Nstock)                              ## as oppposed to 'BMSY' or 'BHIS'
+		virginYear    = rep(list(1933), Nstock)
+		startYear     = rep(list(1935), Nstock)
+		currYear      = rep(list(2023), Nstock)
+		prevYear      = rep(list(2022), Nstock)
+		projYear      = rep(list(2033), Nstock)                              ## 10-yr projection
+		pgenYear      = rep(list(3*25), Nstock)                              ## 3G (G=25y)
+		gen1          = rep(list(25),   Nstock)
+		Ngen          = rep(list(3),    Nstock)
+		Nsex          = rep(list(2),    Nstock)
+		Nsurv         = rep(list(6),    Nstock)
+		Ncpue         = rep(list(1),    Nstock)
+		Ngear         = rep(list(2),    Nstock)                              ## commercial fishery
+		Narea         = rep(list(1),    Nstock)
+		Nsubarea      = list(1)
+		Nfleet        = rep(list(7), Nstock)
+		iseries       = rep(list( c("Bottom Trawl CPUE", "QCS Synoptic", "WCVI Synoptic", "NMFS Triennial", "HS Synoptic", "WCHG Synoptic", "GIG Historical")), Nstock)  ## index series
+		useries       = rep(list("BC Trawl"), Nstock)  ## cpue series
+		gseries       = rep(list( c("Trawl", "Other")), Nstock)  ## gear series
+		area.name     = list("BC")
+		area.names    = list("BC")                        ## subareas
+		fleets        = rep(list( c("Trawl", "Other", "QCS Synoptic", "WCVI Synoptic", "NMFS Triennial", "HS Synoptic", "WCHG Synoptic", "GIG Historical","HBLL North","HBLL South")), Nstock)  ## fleet names
+		mcsub         = rep(list(c(1,2000)), Nstock)
+		run.num       = list(A.base$run.num)
+		rwt.num       = list(A.base$rwt.num)
+		ver.num       = list(A.base$ver.num)
+		use.num       = list(A.base$use.num)
+		exp.run.num   = list(24)                                             ## central run (originally called example run)
+		exp.run.rwt   = list("24.01")
+		recentCatch   = list(                                                ## RH 230829: change to a list object for multiple areas
+			list( 'CST' = c('2017'=833.1,'2018'=892.5,'2019'=652.7,'2020'=832.7,'2021'=732.8) ) ) 
+		## Axes of uncertainty (set to NULL if none)
+		axisU         = list(runA)
+		base.lab      = list(
+			paste0("B",names(A.base$run.num),": R",A.base$run.num, paste0(" (M=",rownames(runA),")")) )
+		base.long     = list( paste0("B",names(A.base$run.num),": R",A.base$run.num, paste0(" (M=",rownames(runA),")")) )
+		Nsens         = list(14)
+		sen.run.num   = list( c(25:37,49) )
+		sen.rwt.num   = list( rep(1,14) )
+		sen.ver.num   = list( rep(NA,14) )  ## versions were not implemented 
+		sen.run.rwt   = list( paste(pad0(sen.run.num[[1]],2), pad0(sen.rwt.num[[1]],2), sep=".") )
+		sen.lab       = list( c("split_M_ages(13,14)", "AE1_no_age_error", "AE5_age_reader_CV", "AE6_CASAL_CV=0.1", "reduce_catch_30%", "increase_catch_50%", "sigmaR=0.6", "sigmaR=1.2", "female_dome_select", "use_AF_HS_WCHG", "add_HBLL_surveys", "use_Tweedie_CPUE", "remove_comm_CPUE", "use Francis reweight") )
+		sen.long       = list( c("split M between ages 13 and 14", "apply no ageing error", "use smoothed ageing error from age-reader CVs", "use constant-CV ageing error", "reduce commercial catch (1965-95) by 30\\\\pc{}", "increase commercial catch (1965-95) by 50\\\\pc{}", "reduce $\\\\sigma_R$ to 0.6", "increase $\\\\sigma_R$ to 1.2", "use female dome-shaped selectivity", "use AF data from HS \\\\& WCHG synoptic surveys", "add HBLL North \\\\& South surveys", "use CPUE fitted by Tweedie distribution", "remove commercial CPUE series", "use Francis mean-age reweighting") )
+		## survey series for comparing sens to base parameters (RH 240627: not sure if this is used anywhere, keep an eye open)
+		sseries        = list( c(rep(list(c(1,3:8)),10), list(c(1,3:10)), list(c(1,3:8))) )
+		sen.mcsubs     = list( rep(list(c(1,2000)),14) )
+#browser();return()
+	}
+	## Pacific Ocean Perch (2023)
+	if (fsa == "POP2023") {
+		base.runs = list(21)     ; nbrun = lapply(base.runs, length)
+		base.rwts = list(1)     ; nbrwt = lapply(base.runs, length)
+		base.vers = list("3a")  ; nbver = lapply(base.runs, length)
+		axis.dim  = c(1,1,1)  ## number of axes of uncertainty
+		axisA.dimnames = list(M="coast", cp="RSS", Rwt="FMA")  ## Rwt = Reweight method: 'NO'=None, 'DM'=Dirichlet-Multinomial, 'FMA'=Francis mean age, 'HMR'=Harmonic mean ratio
+		runA = rwtA = verA = array(NA, dim=axis.dim, dimnames=axisA.dimnames)  ## empty array
+		useA = array(FALSE, dim=axis.dim, dimnames=axisA.dimnames)      ## logical array set to FALSE
+		## Populate A arrays for first stock
+		runA[1,1,1] = base.runs[[1]]
+		rwtA[1,1,1] = base.rwts[[1]]
+		verA[1,1,1] = base.vers[[1]]
+		useA[1,1,1] = TRUE
+		A.base  = gather.vectors(runA, rwtA, verA, useA)
+		collect = c(collect, c("runA", "A.base"))
+#browser();return()
+
+		## Start assigning values relevant to POP 2023
+		strSpp        = rep(list("396"), Nstock)
+		spp.name      = rep(list("Pacific Ocean Perch"), Nstock)
+		latin.name    = rep(list("Sebastes alutus"), Nstock)
+		name          = as.list(paste0("POP ", assyr )) ## Don't specify 3 stocks if using SS3's multi-area model
+		prefix        = list("pop.")
+		model.dir     = rep(list("C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC23/POP/Data/SS"), Nstock)
+		base.dir      = as.list(paste0(model.dir, c("/POP2023"))) ## Top level directory for runs
+		RPbase        = rep(list("BMSY"), Nstock)                              ## as oppposed to 'BMSY' or 'BHIS'
+		virginYear    = rep(list(1933), Nstock)
+		startYear     = rep(list(1935), Nstock)
+		currYear      = rep(list(2024), Nstock)
+		prevYear      = rep(list(2023), Nstock)
+		projYear      = rep(list(2034), Nstock)                              ## 10-yr projection
+		pgenYear      = rep(list(3*25), Nstock)                              ## 3G (G=25y)
+		gen1          = rep(list(25),   Nstock)
+		Ngen          = rep(list(3),    Nstock)
+		Nsex          = rep(list(2),    Nstock)
+		Nsurv         = rep(list(6),    Nstock)
+		Ncpue         = rep(list(0),    Nstock)
+		Ngear         = rep(list(3),    Nstock)                              ## commercial fishery
+		Narea         = rep(list(1),    Nstock)
+		Nsubarea      = list(3)
+		Nfleet        = rep(list(9), Nstock)
+		iseries       = rep(list(c("QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic", "GIG Historical", "NMFS Triennial", "WCVI Historical")), Nstock)  ## index series
+		useries       = rep(list(NA), Nstock)  ## cpue series
+		gseries       = rep(list( c("5ABC Trawl", "3CD Trawl", "5DE Trawl")), Nstock)  ## gear series
+		area.name     = list("BC")
+		area.names    = list(c("5ABC", "3CD", "5DE"))                        ## subareas
+		fleets        = rep(list( c("5ABC Trawl", "3CD Trawl", "5DE Trawl", "QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic", "GIG Historical", "NMFS Triennial", "WCVI Historical")), Nstock)  ## fleet names
+		mcsub         = rep(list(c(1,2000)), Nstock)
+		run.num       = list(A.base$run.num)
+		rwt.num       = list(A.base$rwt.num)
+		ver.num       = list(A.base$ver.num)
+		use.num       = list(A.base$use.num)
+		exp.run.num   = list(21)                                             ## central run (originally called example run)
+		exp.run.rwt   = list("21.01.v3a")
+		recentCatch   = list(                                                ## RH 230829: change to a list object for multiple areas
+			list( 'CST' =c('2018'=3845, '2019'=3754, '2020'=2973, '2021'=2360, '2022'=3599),
+			'5ABC'=c('2018'=2024, '2019'=2034, '2020'=1364, '2021'=1118, '2022'=1551), 
+			'3CD' =c('2018'=1066, '2019'= 711, '2020'= 970, '2021'= 606, '2022'= 849),
+			'5DE' =c('2018'= 755, '2019'=1010, '2020'= 639, '2021'= 636, '2022'=1200) ) ) 
+		## Axes of uncertainty (set to NULL if none)
+		axisU         = list(runA)
+		base.lab      = list(
+			paste0("B",names(A.base$run.num),": R",A.base$run.num, paste0(" (M=",rownames(runA),")")) )
+		base.long     = list( "estimate $M$ for each sex" )
+		Nsens         = list(10)
+		sen.run.num   = list( c(17,27:35) )
+		sen.rwt.num   = list( c(0,rep(1,9)) )
+		sen.ver.num   = list( c("17.00.v18a",paste0(27:35,".01.v1a")) )
+		sen.run.rwt   = list( paste(pad0(sen.run.num[[1]],2), pad0(sen.rwt.num[[1]],2), sen.ver.num[[1]], sep=".") )
+		sen.lab       = list( c("D-M_parameterisation", "Rdist_5ABC_fixed", "Rdist_3CD_fixed", "AE1_no_age_error", "AE5_age_reader_CV", "AE6_CASAL_CV=0.1", "reduce_catch_30%", "increase_catch_50%", "sigmaR=0.6", "sigmaR=1.2") )
+		sen.long       = list( c("use Dirichlet-Mutinomial parameterisation", "fix parameter Rdist for 5ABC to 0", "fix parameter Rdist for 3CD to 0", "apply no ageing error", "use smoothed ageing error from age-reader CVs", "use constant-CV ageing error", "reduce commercial catch (1965-95) by 30\\\\pc{}", "increase commercial catch (1965-95) by 50\\\\pc{}", "reduce $\\\\sigma_R$ to 0.6", "increase $\\\\sigma_R$ to 1.2") )
+		## survey series for comparing sens to base parameters (RH 240627: not sure if this is used anywhere, keep an eye open)
+		sseries        = list( rep(list(c(4:9)),10), rep(list(c(4:9)),1) )
+		sen.mcsubs     = list( rep(list(c(1,2000)),10) )
+		## Add additional RPR sensitivities
+		asen.run.num   = list( c(22,26,27) )
+		asen.rwt.num   = list( rep(1,3) )
+		asen.ver.num   = list( c("v2","v2","v1") ) ## MPD runs
+		asen.run.rwt   = list( paste(pad0(asen.run.num[[1]],2), pad0(asen.rwt.num[[1]],2), asen.ver.num[[1]], sep=".") )
+		asen.lab       = list( c("add 3CD 5ABC midwater", "add HS synoptic", "empirical proportions mature") )
+		asen.long      = list( c("add midwater trawl fisheries for 3CD and 5ABC", "add Hecate Strait synoptic survey to 5DE data", "use empirical proportions mature") )
+		## Add PJS sensitivities
+		psen.run.num   = list( c(24:26) )
+		psen.rwt.num   = list( rep(1,3) )
+		psen.ver.num   = list( rep("v1a",3) )  ## single-area models in each of the subareas
+		psen.run.rwt   = list( paste(pad0(psen.run.num[[1]],2), pad0(psen.rwt.num[[1]],2), psen.ver.num[[1]], sep=".") )
+		psen.lab       = list( c("single-area 5ABC", "single-area 3CD", "single-area 5DE") )
+		psen.long      = list( c("single-area model for 5ABC", "single-area model for 3CD", "single-area model for 5DE") )
+#browser();return()
+	}
+	## Yellowtail Roockfish (2024)
+	if (fsa == "YTR2024") {
+		base.runs = list(2)     ; nbrun = lapply(base.runs, length)
+		base.rwts = list(1)     ; nbrwt = lapply(base.runs, length)
+		base.vers = list("1c")  ; nbver = lapply(base.runs, length)
+		axis.dim  = c(1,1,1)  ## number of axes of uncertainty
+		axisA.dimnames = list(M="coast", cp="RSS", Rwt="FMA")  ## Rwt = Reweight method: 'NO'=None, 'DM'=Dirichlet-Multinomial, 'FMA'=Francis mean age, 'HMR'=Harmonic mean ratio ## RH 230829
+		runA = rwtA = verA = array(NA, dim=axis.dim, dimnames=axisA.dimnames)  ## empty array
+		useA = array(FALSE, dim=axis.dim, dimnames=axisA.dimnames)      ## logical array set to FALSE
+		## Populate A arrays for first stock
+		runA[1,1,1] = base.runs[[1]]
+		rwtA[1,1,1] = base.rwts[[1]]
+		verA[1,1,1] = base.vers[[1]]
+		useA[1,1,1] = TRUE
+		A.base  = gather.vectors(runA, rwtA, verA, useA)
+		collect = c(collect, c("runA", "A.base"))
+#browser();return()
+
+		## Start assigning values relevant to YTR 2024
+		strSpp        = rep(list("418"), Nstock)
+		spp.name      = rep(list("Yellowtail Rockfish"), Nstock)
+		latin.name    = rep(list("Sebastes flavidus"), Nstock)
+		name          = as.list(paste0("YTR ", assyr )) ## Don't specify 3 stocks if using SS3's multi-area model
+		prefix        = list("ytr.")
+		model.dir     = rep(list("C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC24/YTR/Data/SS3"), Nstock)
+		base.dir      = as.list(paste0(model.dir, c("/YTR2024"))) ## Top level directory for runs
+		RPbase        = rep(list("BMSY"), Nstock)                              ## as oppposed to 'BMSY' or 'BHIS'
+		virginYear    = rep(list(1933), Nstock)
+		startYear     = rep(list(1935), Nstock)
+		currYear      = rep(list(2025), Nstock)
+		prevYear      = rep(list(2024), Nstock)
+		projYear      = rep(list(2035), Nstock)                              ## 10-yr projection
+		pgenYear      = rep(list(3*20), Nstock)                              ## 3G (G=25y)
+		gen1          = rep(list(20),   Nstock)
+		Ngen          = rep(list(3),    Nstock)
+		Nsex          = rep(list(2),    Nstock)
+		Nsurv         = rep(list(6),    Nstock)
+		Ncpue         = rep(list(0),    Nstock)
+		Ngear         = rep(list(1),    Nstock)                              ## commercial fishery
+		Narea         = rep(list(1),    Nstock)
+		Nsubarea      = list(1)
+		Nfleet        = rep(list(7), Nstock)
+		iseries       = rep(list(c("QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic", "HS Synoptic", "GIG Historical", "NMFS Triennial")), Nstock)  ## index series
+		useries       = rep(list(NA), Nstock)  ## cpue series
+		gseries       = rep(list(c("BC Trawl")), Nstock)                     ## gear series
+		area.name     = list("BC")
+		area.names    = list("BC")                                           ## subareas
+		fleets        = rep(list(c("BC Trawl", "QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic", "HS Synoptic", "GIG Historical", "NMFS Triennial", "HBLL North", "HBLL South", "BC BT Fishery", "BC MW Fishery")), Nstock)  ## fleet names
+		mcsub         = rep(list(c(1,2000)), Nstock)
+		run.num       = list(A.base$run.num)
+		rwt.num       = list(A.base$rwt.num)
+		ver.num       = list(A.base$ver.num)
+		use.num       = list(A.base$use.num)
+		exp.run.num   = list(2)                                              ## central run (originally called example run)
+		exp.run.rwt   = list("02.01.v2a")
+		recentCatch   = list(                                                ## RH 230829: change to a list object for multiple areas
+			list('BC'  = c('2019'=3913, '2020'=3530, '2021'=4578, '2022'=4043, '2023'=4431) ) ) 
+		## Axes of uncertainty (set to NULL if none)
+		axisU         = list(runA)
+		base.lab      = list(
+			paste0("B",names(A.base$run.num),": R",pad0(A.base$run.num,2), paste0(" (M=",rownames(runA),")") ))
+		base.long     = list( "estimate $M$ for each sex" )
+		Nsens         = list(14)
+		sen.run.num   = list( c(10,11,5:8,12:16,9,4,17) )
+		sen.rwt.num   = list( c(rep(1,5),0,rep(1,8)) )
+		sen.ver.num   = list( paste0("v",c(rep(2,4),3,rep(2,6),4,3,2),letters[rep(1,14)]) )
+		sen.run.rwt   = list( paste(pad0(sen.run.num[[1]],2), pad0(sen.rwt.num[[1]],2), sen.ver.num[[1]], sep=".") )
+		sen.lab       = list( c("split-M at age 9", "fem dome-shape sel", "sigmaR=0.6", "sigmaR=1.2", "estimate sigmaR", "D-M_parameterisation", "AE1_no_age_error", "AE5_age_reader_CV", "AE6_CASAL_CV=0.1", "reduce_catch_30%", "increase_catch_50%", "geospatial indices", "HBLL indices", "BT & MW fleets") )
+		sen.long       = list( c("split $M$ at ages 9-10", "use dome-shaped selectivity for females", "reduce $\\\\sigma_R$ to 0.6", "increase $\\\\sigma_R$ to 1.2", "estimate $\\\\sigma_R$",  "use Dirichlet-Mutinomial parameterisation", "apply no ageing error", "use smoothed ageing error from age-reader CVs", "use constant-CV ageing error (e.g. CASAL)", "reduce commercial catch (1965-95) by 30\\\\pc{}", "increase commercial catch (1965-95) by 50\\\\pc{}", "use geospatial indices for synoptic surveys", "use HBLL North \\\\& South survey indices", "split trawl fleet into bottom \\\\& midwater trawl") )
+		## survey series for comparing sens to base parameters (RH 240627: not sure if this is used anywhere, keep an eye open)
+		sseries        = list( c(rep(list(c(2:7)),12), list(c(2:9)), list(c(10,11,2:7))) )
+		sen.mcsubs     = list( rep(list(c(1,2000)),14) )
+		## Add additional RPR sensitivities
+		asen.run.num   = list( c(18,19) )
+		asen.rwt.num   = list( rep(1,2) )
+		asen.ver.num   = list( c("v2a","v1a") )  ## group small-constant runs together
+		asen.run.rwt   = list( paste(pad0(asen.run.num[[1]],2), pad0(asen.rwt.num[[1]],2), asen.ver.num[[1]], sep=".") )
+		asen.lab       = list( c("use alternative priors on M", "use S.flavidus fecundity parameters") )
+		asen.long      = list( c("use alternative priors on M by sex", "use S.flavidus fecundity parameters from Dick et al. (2017)") )
+#browser();return()
+	}
+	## Silvergray Rockfish (2025)
+	if (fsa == "SGR2025") {
+		base.runs = list(28,29)       ; nbrun = lapply(base.runs, length)
+		base.rwts = list(1,1)         ; nbrwt = lapply(base.runs, length)
+		base.vers = list("2c", "2c")  ; nbver = lapply(base.runs, length)
+		axis.dim  = c(1,1,1)  ## number of axes of uncertainty
+		axisA.dimnames = list(M="3area", cp="RSS", Rwt="FMA")  ## Rwt = Reweight method: 'NO'=None, 'DM'=Dirichlet-Multinomial, 'FMA'=Francis mean age, 'HMR'=Harmonic mean ratio ## RH 230829
+		axisB.dimnames = list(M="coast", cp="RSS", Rwt="FMA")  ## Rwt = Reweight method: 'NO'=None, 'DM'=Dirichlet-Multinomial, 'FMA'=Francis mean age, 'HMR'=Harmonic mean ratio ## RH 230829
+		runA = rwtA = verA = array(NA, dim=axis.dim, dimnames=axisA.dimnames)  ## empty array
+		runB = rwtB = verB = array(NA, dim=axis.dim, dimnames=axisB.dimnames)  ## empty array
+		useA = array(FALSE, dim=axis.dim, dimnames=axisA.dimnames)      ## logical array set to FALSE
+		useB = array(FALSE, dim=axis.dim, dimnames=axisB.dimnames)      ## logical array set to FALSE
+		## Populate A arrays for first stock
+		runA[1,1,1] = base.runs[[1]]
+		rwtA[1,1,1] = base.rwts[[1]]
+		verA[1,1,1] = base.vers[[1]]
+		useA[1,1,1] = TRUE
+		## Populate B arrays for second stock
+		runB[1,1,1] = base.runs[[2]]
+		rwtB[1,1,1] = base.rwts[[2]]
+		verB[1,1,1] = base.vers[[2]]
+		useB[1,1,1] = TRUE
+		A.base  = gather.vectors(runA, rwtA, verA, useA)
+		B.base  = gather.vectors(runB, rwtB, verB, useB)
+		collect = c(collect, c("runA", "runB", "A.base", "B.base"))
+#browser();return()
+
+		## Start assigning values relevant to SGR 2025
+		strSpp        = rep(list("405"), Nstock)
+		spp.name      = rep(list("Silvergray Rockfish"), Nstock)
+		latin.name    = rep(list("Sebastes brevispinis"), Nstock)
+		name          = as.list(paste0("SGR ", assyr, c(" (3area)", " (coast)"))) ## Don't specify 3 stocks if using SS3's multi-area model
+		prefix        = list("sgr.3area.", "sgr.coast.")
+		model.dir     = rep(list("C:/Users/haighr/Files/GFish/PSARC/PSARC_2020s/PSARC25/SGR/Data/SS3"), Nstock)
+		base.dir      = as.list(paste0(model.dir, c("/SGR2025","/SGR2025"))) ## Top level directory for runs
+		RPbase        = rep(list("B0"), Nstock)                              ## as oppposed to 'BMSY' or 'BHIS'
+		virginYear    = rep(list(1933), Nstock)
+		startYear     = rep(list(1935), Nstock)
+		currYear      = rep(list(2026), Nstock)
+		prevYear      = rep(list(2025), Nstock)
+		projYear      = rep(list(2036), Nstock)                              ## 10-yr projection
+		pgenYear      = rep(list(3*25), Nstock)                              ## 3G (G=25y)
+		gen1          = rep(list(25),   Nstock)
+		Ngen          = rep(list(3),    Nstock)
+		Nsex          = rep(list(2),    Nstock)
+		Nsurv         = rep(list(6),    Nstock)
+		Ncpue         = rep(list(3),    Nstock)
+		Ngear         = rep(list(3),    Nstock)                              ## commercial fisheries
+		Narea         = rep(list(1),    Nstock)
+		Nsubarea      = list(3, 1)                                           ## subareas
+		Nfleet        = rep(list(9), Nstock)
+		iseries       = rep(list(c("QCS Synoptic", "WCHG Synoptic", "WCVI Synoptic", "HS Synoptic", "GIG Historical", "NMFS Triennial")), Nstock)  ## index series
+		useries       = rep(list(c("5ABC Fishery","5DE Fishery","3CD Fishery")), Nstock)  ## cpue series
+		gseries       = rep(list(c("5ABC Trawl", "5DE Trawl", "3CD Trawl")), Nstock)      ## gear series
+		area.name     = list("BC", "BC")
+		area.names    = list(c("5ABC","5DE","3CD"), "BC")
+		fleets        = rep(list(c("5ABC Trawl", "5DE Trawl", "3CD Trawl", "QCS Synoptic", "WCHG Synoptic", "WCVI Synoptic", "HS Synoptic", "GIG Historical", "NMFS Triennial", "HBLL North", "HBLL South")), Nstock)  ## all fleet names (base + sensitivities)
+		mcsub         = rep(list(c(1,2000)), Nstock)
+		run.num       = list(A.base$run.num, B.base$run.num)
+		rwt.num       = list(A.base$rwt.num, B.base$rwt.num)
+		ver.num       = list(A.base$ver.num, B.base$ver.num)
+		use.num       = list(A.base$use.num, B.base$use.num)
+		exp.run.num   = list(28, 29)                                         ## central run (originally called example run)
+		exp.run.rwt   = list("28.01.v2c", "29.01.v2c")
+		recentCatch   = list(                                                ## RH 230829: change to a list object for multiple areas
+			list('5ABC'=c('2020'= 960, '2021'= 844, '2022'= 926, '2023'=1099, '2024'=1322), 
+			     '5DE' =c('2020'= 184, '2021'= 237, '2022'= 203, '2023'= 167, '2024'= 214),
+			     '3CD' =c('2020'= 334, '2021'= 249, '2022'= 265, '2023'= 345, '2024'= 312) ),
+			list('BC'  =c('2020'=1479, '2021'=1330, '2022'=1394, '2023'=1611, '2024'=1847) ) ) 
+		## Axes of uncertainty (set to NULL if none)
+		axisU         = list(runA, runB)
+		base.lab      = list(
+			paste0("B",names(A.base$run.num),": R",pad0(A.base$run.num,2), paste0(" (M=",rownames(runA),")")), 
+			paste0("B",names(B.base$run.num),": R",pad0(B.base$run.num,2), paste0(" (M=",rownames(runB),")"))  )
+		base.long     = list( "three-area model with three subareas", "coastwide model with three subareas" )
+		Nsens         = list(13, 11)
+		sen.run.num   = list(c(32,21,30,seq(34,46,2),50,48:49), c(33,23,31,seq(35,47,2),51) )
+		sen.rwt.num   = list(c(rep(1,13)), c(rep(1,11)) )               ## even D-M is reweighted once using CPUE cvpro
+		sen.ver.num   = list(
+			paste0("v",c(1,3,2, rep(1,10)), c(letters[c(rep(2,5),rep(1,8))] ) ), 
+			paste0("v",c(1,3,2, rep(1,8)), c(letters[c(rep(2,5),rep(1,6))] ) ) )
+		sen.run.rwt   = list(
+			paste(pad0(sen.run.num[[1]],2), pad0(sen.rwt.num[[1]],2), sen.ver.num[[1]], sep="."),
+			paste(pad0(sen.run.num[[2]],2), pad0(sen.rwt.num[[2]],2), sen.ver.num[[2]], sep=".") )
+		sen.lab.share  = c("drop_CPUE", "swept_area", "add_HBLL", "sigmaR=0.6", "sigmaR=1.2", "dirichlet", "no_age_error", "reduce_catch", "increase_catch", "drop_GIG_NMFS", "loosen_M_prior")
+		sen.lab        = list( c(sen.lab.share, "fix_5ABC_Rdist", "fix_5DE_Rdist"), sen.lab.share )
+		sen.long.share = c("drop CPUE index series", "use design-based series", "use HBLL surveys (North \\\\& South)", "reduce $\\\\sigma_R$ to 0.6", "increase $\\\\sigma_R$ to 1.2", "use Dirichlet-Mutinomial parameterisation", "apply no ageing error", "reduce commercial catch (1965-95) by 30\\\\pc{}", "increase commercial catch (1965-95) by 50\\\\pc{}", "drop GIG \\\\& NMFS surveys", "loosen M prior means: N(0.065,0.065)")
+		sen.long       = list( c(sen.long.share, "fix 5ABC recruitment distribution parameter", "fix 5DE recruitment distribution parameter"), sen.long.share )
+		## survey series for comparing sens to base parameters (RH 240627: not sure if this is used anywhere, keep an eye open)
+		sseries.share  = c(rep(list(c(4:9)),2), list(c(4:11)), rep(list(c(4:9)),6), list(c(4:7)), list(c(4:9)) )
+		sseries        = list( c(sseries.share, rep(list(c(4:9)),2) ), sseries.share)  
+		sen.mcsubs     = list( rep(list(c(1,2000)),12), rep(list(c(1,2000)),10) )
+		## Add additional RPR sensitivities
+		asen.run.num   = list( NA, rep(29,6) )
+		asen.rwt.num   = list( NA, rep(1,6) )
+		asen.ver.num   = list( NA, paste0("v", c(5,7,8,6,9,10)) )  ## group small-constant runs together
+		asen.run.rwt   = list( NA, paste(pad0(asen.run.num[[2]],2), pad0(asen.rwt.num[[2]],2), asen.ver.num[[2]], sep=".") )
+		asen.lab       = list( NA,
+			c("no_constant_added_to_AFs", "small_constant_added_to_AFs", "large_constant_added_to_AFs", 
+			"rdev_sum-to-zero", "uniform_prior_on_steepness", "increase_AE_1.5_times") )
+		asen.long      = list( NA, 
+			c("no constant (c=0) added to age frequency data", "add small constant (c=0.000001) to age frequency data", 
+			"add large constant (c=0.01) to age frequency data", "force recruitment deviations to sum to zero over main period", 
+			"use uniform prior U(0.2,1) on steepness parameter", "increase ageing error by 1.5 times across all ages") )
+#browser();return()
+	}
+	## ----------------------------------------------
+	## Generalized population of 'stock' control list
+	## ----------------------------------------------
+	for (i in 1:length(stolab)) {
+		ii = stolab[i]
+		jj = "Controls"
+		stock[[ii]] = list()
+		stock[[ii]][[jj]] = list()
+		stock[[ii]][[jj]][["spp.code"]]     = stospp[[i]] ## defined above to use in conditions
+		stock[[ii]][[jj]][["strSpp"]]       = strSpp[[i]]
+		stock[[ii]][[jj]][["spp.name"]]     = spp.name[[i]]
+		stock[[ii]][[jj]][["latin.name"]]   = latin.name[[i]]
+		stock[[ii]][[jj]][["name"]]         = name[[i]]
+		stock[[ii]][[jj]][["prefix"]]       = prefix[[i]]
+		stock[[ii]][[jj]][["model.dir"]]    = model.dir[[i]]
+		stock[[ii]][[jj]][["base.dir"]]     = base.dir[[i]]
+		stock[[ii]][[jj]][["RPbase"]]       = RPbase[[i]]
+		stock[[ii]][[jj]][["virginYear"]]   = virginYear[[i]]
+		stock[[ii]][[jj]][["startYear"]]    = startYear[[i]]
+		stock[[ii]][[jj]][["currYear"]]     = currYear[[i]]
+		stock[[ii]][[jj]][["prevYear"]]     = prevYear[[i]]
+		stock[[ii]][[jj]][["projYear"]]     = projYear[[i]]
+		stock[[ii]][[jj]][["pgenYear"]]     = pgenYear[[i]]
+		stock[[ii]][[jj]][["gen1"]]         = gen1[[i]]
+		stock[[ii]][[jj]][["Ngen"]]         = Ngen[[i]]
+		stock[[ii]][[jj]][["Nsex"]]         = Nsex[[i]]
+		stock[[ii]][[jj]][["Nsurv"]]        = Nsurv[[i]]
+		stock[[ii]][[jj]][["iseries"]]      = iseries[[i]]
+		stock[[ii]][[jj]][["Ncpue"]]        = Ncpue[[i]]
+		stock[[ii]][[jj]][["useries"]]      = useries[[i]]
+		stock[[ii]][[jj]][["Ngear"]]        = Ngear[[i]]
+		stock[[ii]][[jj]][["gseries"]]      = gseries[[i]]
+		stock[[ii]][[jj]][["Narea"]]        = Narea[[i]]
+		stock[[ii]][[jj]][["area.name"]]    = area.name[[i]]
+		stock[[ii]][[jj]][["Nsubarea"]]     = Nsubarea[[i]]
+		stock[[ii]][[jj]][["area.names"]]   = area.names[[i]]
+		stock[[ii]][[jj]][["Nfleet"]]       = Nfleet[[i]]
+		stock[[ii]][[jj]][["fleets"]]       = fleets[[i]]
+		stock[[ii]][[jj]][["mcsub"]]        = mcsub[[i]]
+		stock[[ii]][[jj]][["run.num"]]      = run.num[[i]]
+		stock[[ii]][[jj]][["rwt.num"]]      = rwt.num[[i]]
+		stock[[ii]][[jj]][["ver.num"]]      = ver.num[[i]]
+		stock[[ii]][[jj]][["use.num"]]      = use.num[[i]]
+		stock[[ii]][[jj]][["exp.run.num"]]  = exp.run.num[[i]]
+		stock[[ii]][[jj]][["exp.run.rwt"]]  = exp.run.rwt[[i]]
+		stock[[ii]][[jj]][["recentCatch"]]  = recentCatch[[i]]
+		## Axes of uncertainty (set to NULL if none)
+		stock[[ii]][[jj]][["axisU"]]        = axisU[[i]]
+		stock[[ii]][[jj]][["base.lab"]]     = base.lab[[i]]
+		stock[[ii]][[jj]][["base.long"]]    = base.long[[i]]
+		stock[[ii]][[jj]][["Nsens"]]        = Nsens[[i]]
+		stock[[ii]][[jj]][["sen.run.num"]]  = sen.run.num[[i]]
+		stock[[ii]][[jj]][["sen.rwt.num"]]  = sen.rwt.num[[i]]
+		stock[[ii]][[jj]][["sen.ver.num"]]  = sen.ver.num[[i]]
+		stock[[ii]][[jj]][["sen.run.rwt"]]  = sen.run.rwt[[i]]
+		stock[[ii]][[jj]][["sen.lab"]]      = sen.lab[[i]]
+		stock[[ii]][[jj]][["sen.long"]]     = sen.long[[i]]
+		stock[[ii]][[jj]][["sseries"]]      = sseries[[i]]
+		stock[[ii]][[jj]][["sen.mcsubs"]]   = sen.mcsubs[[i]]
+		## Add additional RPR sensitivities
+		if (exists("asen.run.num", envir=ici)) {
+			stock[[ii]][[jj]][["asen.run.num"]] = asen.run.num[[i]]
+			stock[[ii]][[jj]][["asen.rwt.num"]] = asen.rwt.num[[i]]
+			stock[[ii]][[jj]][["asen.ver.num"]] = asen.ver.num[[i]]
+			stock[[ii]][[jj]][["asen.run.rwt"]] = asen.run.rwt[[i]]
+			stock[[ii]][[jj]][["asen.lab"]]     = asen.lab[[i]]
+			stock[[ii]][[jj]][["asen.long"]]    = asen.long[[i]]
+		}
+		## Add PJS sensitivities
+		if (exists("psen.run.num", envir=ici)) {
+			stock[[ii]][[jj]][["psen.run.num"]] = psen.run.num[[i]]
+			stock[[ii]][[jj]][["psen.rwt.num"]] = psen.rwt.num[[i]]
+			stock[[ii]][[jj]][["psen.ver.num"]] = psen.ver.num[[i]]
+			stock[[ii]][[jj]][["psen.run.rwt"]] = psen.run.rwt[[i]]
+			stock[[ii]][[jj]][["psen.lab"]]     = psen.lab[[i]]
+			stock[[ii]][[jj]][["psen.long"]]    = psen.long[[i]]
+		}
+	}
+	##----------------------------
+	collect = c(collect, c("stock"))
+#browser();return()
+	
+	## Commonalities (use unique() rather than .su() because don't want alphabetic sorting)
+	## NOTE: probably only works for one species with multiple stocks
+	strSpp     = unique(sapply(stock,function(x){x$Controls$strSpp}))
+	spp.code   = unique(sapply(stock,function(x){x$Controls$spp.code})); species.code = spp.code
+	spp.name   = unique(sapply(stock,function(x){x$Controls$spp.name})); species.name = spp.name
+	latin.name = unique(sapply(stock,function(x){x$Controls$latin.name}))
+	spp.year   = paste(spp.name, assyr)
+	the.stocks = gsub(" ","~",unique(sapply(stock,function(x){x$Controls$name})))
+	ptype      = "png" ## make sure this is the same choice on line 19
+	pngres     = 400   ## pixels per inch
+	sigdig     = 3     ## Number of significant digits to output in tables
+	decdig     = 2     ## Number of decimal digits (e.g., may only want 2 for decision tables)
+	## Create quants and put into .PBSmodEnv just in case a PBSawatea plotting function might need either.
+	quants3    = c(0.05,0.50,0.95);           tput(quants3)
+	quants5    = c(0.05,0.25,0.50,0.75,0.95); tput(quants5)
+	collect = c(collect, c("strSpp", "spp.code", "spp.name", "latin.name", "spp.year", "the.stocks", "ptype", "pngres", "sigdig", "decdig", "quants3", "quants5"))
+	
+	## Unpack the years to get Sweave started in the wrapper Rnw (not sure about this)
+	#unpackList(stock[[1]][["Controls"]][c("startYear","currYear","prevYear","projYear","pgenYear")])
+
+	## Save objects listed in 'collect'
+	createTdir()
+	collect.avail = intersect(collect, ls(envir=ici))  ## not all will be available
+	if (length(collect.avail) <= 4)
+		stop (paste0("There is something fishy in the 'collect' object."))
+#browser();return()
+	strSpp = ifelse(length(strSpp)==1, strSpp, "REBS")   ## quick hack (fix later)
+	save(list=collect.avail, file=paste0("./data/set.controls(", strSpp, "-", assyr, ").rda"))
+	set.controls = list()
+	for (i in collect.avail) {
+#print(i)
+		set.controls[[i]] <- get(i, envir=ici)
+	}
+	return(set.controls)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~setControls
 
 
 ## tabDQs-------------------------------2025-09-25

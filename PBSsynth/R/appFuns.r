@@ -1,4 +1,4 @@
-## =====================================2026-04-28
+## =====================================2026-07-15
 ## SS3 APPENDIX FUNCTIONS (Apps F & G)
 ## -----------------------------------------------
 ## agileDT...............Produce agile decision tables for projections
@@ -3761,7 +3761,7 @@ predictRec <- function(rec, indices, mos=1:12,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~predictRec
 
 
-## tabSS.compo--------------------------2026-03-13
+## tabSS.compo--------------------------2026-07-15
 ## Make Base Case Tables
 ## Note: u2023=u2022 (see 'gatherMCMC.r') so change 
 ##       labels here in rfpt tables to use 'prevYear'
@@ -3794,7 +3794,7 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 		use.run.rwt = is.element(P.runs, P.run.ord) ## default use all runs but a subset might be used for management advice
 		B.labs      = paste0(rep("B",NrefM),1:NrefM," (R",P.run.ord,")")
 		if (spp.code %in% c("YMR"))
-			P.ord=c(1,seq(2,10,2),seq(3,11,2))
+			P.ord = c(1,seq(2,10,2),seq(3,11,2))
 		else
 			P.ord = 1:ncol(ampdPA)
 
@@ -3804,7 +3804,7 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 		tabPmed = t(apply(avgPA,2,quantile,tcall(quants5),na.rm=T))  ## arrays so cannot use sapply
 		tabPmed = tabPmed[P.ord,]
 		tabPmed = formatCatch(tabPmed,N=sigdig)
-	
+
 		names.pars = rownames(tabPmed)
 		## (RH 251010) This substitution sequence was overhauled for SGR 2025
 
@@ -3842,7 +3842,6 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 		#colnames(tabPmed) =  gsub("\\%","\\\\%",colnames(tabPmed))
 		write.csv(tabPmed, paste0(prefix,"tabPmed.csv"))
 
-
 		xtab.compo.pars = xtable(tabPmed, align="lrrrrr",
 			label   = paste0("tab:",prefix,"base.pars"), digits = if (exists("formatCatch")) NULL else sigdig,
 			caption = paste0("Base run (", istock, ")~: the ", texThatVec(tcall(quants5)), " quantiles for ", ifelse(NrefM>1,"pooled",""),
@@ -3853,26 +3852,26 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 			sanitize.rownames.function=function(x){x}, 
 			add.to.row =list(pos=list(-1), command=c("\\\\[-1.0ex]")),
 			size = "\\usefont{\\encodingdefault}{\\familydefault}{\\seriesdefault}{\\shapedefault}\\footnotesize" ) )
-		#tput(xtab.compo.pars.out)  ## no reason to save this in an environment
 
-	# \\hline\\\\[-2.2ex] CC & 2023 & 2024 & 2025 & 2026 & 2027 & 2028 & 2029 & 2030 & 2031 \\\\[0.2ex]\\hline\\\\[-1.5ex]
 		##----------Table 2-----------
 		## MCMC Derived Parameters
 		##----------------------------
-		yrsUse = modYrs[c(1,length(modYrs)+c(-1,0))]
+		yrsUse = modYrs[c(1,length(modYrs) + c(-1,0))]
 		yrsChr = as.character(yrsUse)
 
 		if (RPbase=="BMSY") {
 			B.mcmc = data.frame (
+				## Derived quantities
 				B0         = avgRP[,"B0"],
 				Bcurr      = avgRP[,"Bcurr"],
 				Bcurr.B0   = avgRP[,"Bcurr"] / avgRP[,"B0"],
 				ucurr      = avgRP[,"ucurr"],
 				umax       = apply(avgTS[,,"ut"],1,max,na.rm=T),  ## for each mcmc sample across the time series (note 1933 ut=NA)
+				## Reference point values
 				MSY        = avgRP[,"MSY"],
-				Bmsy       = avgRP[,"Bmsy"],
 				LRP        = avgRP[,"LRP"],
 				USR        = avgRP[,"USR"],
+				Bmsy       = avgRP[,"Bmsy"],
 				Bcurr.Bmsy = avgRP[,"Bcurr"] / avgRP[,"Bmsy"],
 				Bmsy.B0    = avgRP[,"Bmsy"] / avgRP[,"B0"],
 				umsy       = avgRP[,"umsy"],
@@ -3880,51 +3879,46 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 			)
 		}
 		if (RPbase=="B0") {
-			## eventually grab code from SweaveMCMC.Rnw
 			B.mcmc = data.frame (
+				## Derived quantities
 				B0         = avgRP[,"B0"],
 				Bcurr      = avgRP[,"Bcurr"],
 				Bcurr.B0   = avgRP[,"Bcurr"] / avgRP[,"B0"],
 				ucurr      = avgRP[,"ucurr"],
 				umax       = apply(avgTS[,,"ut"],1,max,na.rm=T), ## for each mcmc sample across the time series (note 1933 ut=NA)
+				## Reference point values
 				Ytrp       = avgRP[,"Ytgt"],
-				#Btrp       = 0.40 * avgRP[,"B0"],  ## this is OK as long as B0=SSB_1933 (VIRG) and not SSB_1935
-				Btrp       = avgRP[,"Btgt"],
-				utrp       = avgRP[,"utgt"],
-				#LRP        = 0.16 * avgRP[,"B0"],
-				#USR        = 0.32 * avgRP[,"B0"],
-				#LRP        = 0.4 * avgRP[,"Btgt"],
-				LRP         = 0.2 * avgRP[,"B0"],  ## SGR 2025 : RPR wants LRP to follow Barrett et al. (2025)
+				LRP        = 0.2 * avgRP[,"B0"],  ## SGR 2025 : RPR wants LRP to follow Barrett et al. (2025)
 				USR        = 0.8 * avgRP[,"Btgt"],
+				Btrp       = avgRP[,"Btgt"],  ## or 0.4 * avgRP[,"B0"],  ## this is OK as long as B0=SSB_1933 (VIRG) and not SSB_1935
 				Bcurr.Btrp = avgRP[,"Bcurr"] / avgRP[,"Btgt"],
+				utrp       = avgRP[,"utgt"],
 				ucurr.utrp = avgRP[,"ucurr"] / avgRP[,"utgt"]
 			)
 		}
 		tabQmed = t(apply(B.mcmc,2,quantile,tcall(quants5),na.rm=T)) 
-#browser();return()
 
 		## Extract area-based information if it exists
 		if (exists("xavgRP") && length(xavgRP)>1) {
-			## colnames(xavgRP) = "Bmsy" "Fmsy" "MSY"  "umsy" "Btgt"  "Ftgt"  "Ytgt"  "utgt"  "LRP"  "USR"  "Vmsy" "Vtgt"  "B0"   "V0"   "pVB"
-			## dimnames(xavgTS)[3] =  "B"      "BtBtgt"  "BtBmsy" "D"      "fR"     "R"      "u"      "ututgt"  "utumsy" "V"
 			if (RPbase=="BMSY") {
 				A.collect = list('BC'=tabQmed)
 				for (a in dimnames(xavgRP)[[3]]) {
 					A.mcmc = data.frame (
-						## Needs revision (see below)
-						B0         = avgRP[,"B0"],
-						Bcurr      = avgRP[,"Bcurr"],
-						Bcurr.B0   = avgRP[,"Bcurr"] / avgRP[,"B0"],
-						ucurr      = avgRP[,"ucurr"],
-						umax       = apply(avgTS[,,"ut"],1,max,na.rm=T), ## for each mcmc sample across the time series
-						MSY        = avgRP[,"MSY"],
-						Bmsy       = avgRP[,"Bmsy"],
-						LRP        = avgRP[,"LRP"],  ## LRP and USR automatically set to 0.4Bmsy and 0.8Bmsy in 'load_extra_mcmc.R' for multi-area models
-						USR        = avgRP[,"USR"],
-						Bcurr.Bmsy = avgRP[,"Bcurr"] / avgRP[,"Bmsy"],
-						Bmsy.B0    = avgRP[,"Bmsy"] / avgRP[,"B0"],
-						umsy       = avgRP[,"umsy"],
-						ucurr.umsy = avgRP[,"ucurr"] / avgRP[,"umsy"]
+						## Derived quantities
+						B0         = xavgRP[,"B0",a],
+						Bcurr      = xavgTS[,as.character(currYear),"B",a],
+						Bcurr.B0   = xavgTS[,as.character(currYear),"B",a] / xavgRP[,"B0",a],
+						ucurr      = xavgTS[,as.character(currYear),"u",a],
+						umax       = apply(xavgTS[,,"u",a],1,max,na.rm=T), ## for each mcmc sample across the time series
+						## Reference point values
+						MSY        = xavgRP[,"MSY",a],
+						LRP        = xavgRP[,"LRP",a],  ## LRP and USR automatically set to 0.4Bmsy and 0.8Bmsy in 'load_extra_mcmc.R' for multi-area models
+						USR        = xavgRP[,"USR",a],
+						Bmsy       = xavgRP[,"Bmsy",a],
+						Bcurr.Bmsy = xavgTS[,as.character(currYear),"B",a] / xavgRP[,"Bmsy",a],
+						Bmsy.B0    = xavgRP[,"Bmsy",a] / avgRP[,"B0",a],
+						umsy       = xavgRP[,"umsy",a],
+						ucurr.umsy = xavgTS[,as.character(currYear),"u",a] / avgRP[,"umsy",a]
 					)
 					tabAmed = t(apply(A.mcmc,2,quantile,tcall(quants5),na.rm=T)) 
 					A.collect[[a]] = tabAmed
@@ -3935,28 +3929,26 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 				A.collect = list('BC'=tabQmed)
 				for (a in dimnames(xavgRP)[[3]]) {
 					A.mcmc = data.frame (
+						## Derived quantities
 						B0         = xavgRP[,"B0",a],
 						Bcurr      = xavgTS[,as.character(currYear),"B",a],
 						Bcurr.B0   = xavgTS[,as.character(currYear),"B",a] / xavgRP[,"B0",a],
 						ucurr      = xavgTS[,as.character(currYear),"u",a],
 						umax       = apply(xavgTS[,,"u",a],1,max,na.rm=T), ## for each mcmc sample across the time series
+						## Reference point values
 						Ytrp       = xavgRP[,"Ytgt",a],
-						#Btrp       = 0.40 * xavgRP[,"B0",a],  ## this is OK as long as B0=SSB_1933 (VIRG) and not SSB_1935
-						Btrp       = xavgRP[,"Btgt",a],
-						utrp       = xavgRP[,"utgt",a],
-						#LRP        = 0.16 * xavgRP[,"B0",a],
-						#USR        = 0.32 * xavgRP[,"B0",a],
-						#LRP        = 0.4 * xavgRP[,"Btgt",a],
-						LRP        = 0.2 * xavgRP[,"B0",a],  ## SGR 2025 : RPR wants LRP to follow Barrett et al. (2025)
+						LRP        = 0.2 * xavgRP[,"B0",a], ## SGR 2025 : RPR wants LRP to follow Barrett et al. (2025) not 0.4 * xavgRP[,"Btgt",a]
 						USR        = 0.8 * xavgRP[,"Btgt",a],
+						Btrp       = xavgRP[,"Btgt",a],     ## or 0.4 * xavgRP[,"B0",a],  ## this is OK as long as B0=SSB_1933 (VIRG) and not SSB_1935
 						Bcurr.Btrp = xavgTS[,as.character(currYear),"B",a] / xavgRP[,"Btgt",a],
+						utrp       = xavgRP[,"utgt",a],  ## RRR
 						ucurr.utrp = xavgTS[,as.character(currYear),"u",a] / xavgRP[,"utgt",a]
 					)
 					tabAmed = t(apply(A.mcmc,2,quantile,tcall(quants5),na.rm=T)) 
 					A.collect[[a]] = tabAmed
-#browser();return()
 				} ## end area a loop
 			} ## end RPbase 'B0'
+
 			## How to interleave a data frame (Google AI 251016)
 			## Add an identifier and row number to each data frame
 			interleaved_list <- lapply(seq_along(A.collect), function(i) {
@@ -3976,7 +3968,6 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 			tabQmed = interleaved_df
 			xareas  = dimnames(xavgRP)[[3]]
 			rownames(tabQmed) = sub("3",paste0(".",xareas[3]), sub("2",paste0(".",xareas[2]), sub("1", paste0(".",xareas[1]), rownames(tabQmed) ) ) )
-#browser();return()
 		} ## end extra area collection
 		write.csv(tabQmed, paste0(prefix,"tabQmed.csv"))
 
@@ -3998,7 +3989,6 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 			gsub("Bcurr",  paste0("B_{",currYear,"}"),
 			gsub("B0", "B_{0}",
 			names.rfpt)))))))))))))
-#browser();return()
 		if (exists("areas")) {
 			za = grep(paste0(areas,collapse="|"), names.rfpt)
 			if (any(za)) {
@@ -4009,35 +3999,28 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 		}
 		rownames(tab.base.rfpt) =  paste(rep("$",nrow(tab.base.rfpt)),names.rfpt,rep("$",nrow(tab.base.rfpt)),sep="")
 
-		#remove.rows = grep("~~0\\.16|~~0\\.32|~~B\\_\\\\text\\{TRP|~~u\\_\\\\text\\{max",rownames(tab.base.rfpt))
 		remove.rows = grep("~~0\\.2|~~0\\.32|~~u\\_\\\\text\\{max",rownames(tab.base.rfpt))
-#browser();return()
 		if (length(remove.rows) > 0)
 			tab.base.rfpt = tab.base.rfpt[-remove.rows,]   ## otherwise it removes all rows
-
-
-		#remove.rows = grep("~~0\\.16|~~0\\.32|~~B\\_\\\\text\\{TRP|~~u\\_\\\\text\\{max",rownames(tab.base.rfpt))
-		#if (length(remove.rows) > 0)
-		#	tab.base.rfpt = tab.base.rfpt[-remove.rows,]   ## otherwise it removes all rows
 
 		## Caption for Ref Point table
 		cap.rfpt = paste0(
 			"Base run (", istock, ")~: the ", texThatVec(tcall(quants5)), " quantiles of MCMC-derived quantities from \\Nbase{} samples ", 
 			ifelse(NrefM>1,"pooled","")," from ", ifelse(NrefM>1, "component runs.", "a single base run."),
 			" Definitions are: ",
-			"$B_0$ -- unfished equilibrium spawning biomass (mature females), ",
-			"$B_{", currYear, "}$ -- spawning biomass at the beginning of ", currYear, ", ",
-			"$u_{", prevYear, "}$ -- exploitation rate (ratio of total catch to vulnerable biomass) in the middle of ", prevYear, ", ",
-			"$u_\\text{max}$ -- maximum exploitation rate (calculated for each sample as the maximum exploitation rate from ",
+			"$B_0$ = unfished equilibrium spawning biomass (mature females), ",
+			"$B_{", currYear, "}$ = spawning biomass at the beginning of ", currYear, ", ",
+			"$u_{", prevYear, "}$ = exploitation rate (ratio of total catch to vulnerable biomass) in the middle of ", prevYear, ", ",
+			"$u_\\text{max}$ = maximum exploitation rate (calculated for each sample as the maximum exploitation rate from ",
 			modYrs[1], "-", prevYear, "), ",
 			switch(RPbase, 'BMSY'=paste0(c(
-				"MSY -- maximum sustainable yield at equilibrium, ",
-				"$B_\\text{MSY}$ -- equilibrium spawning biomass at MSY, ",
-				"$u_\\text{MSY}$ -- equilibrium exploitation rate at MSY. ",
+				"MSY = maximum sustainable yield at equilibrium, ",
+				"$B_\\text{MSY}$ = equilibrium spawning biomass at MSY, ",
+				"$u_\\text{MSY}$ = equilibrium exploitation rate at MSY. ",
 			),collapse=""), 'B0'=paste0(c(
-				"$Y_\\text{TRP}$ -- equilibrium yield at target reference point (0.4$B_0$), ",
-				"$B_\\text{TRP}$ -- equilibrium spawning biomass at target reference point (0.4$B_0$), ",
-				"$u_\\text{TRP}$ -- equilibrium exploitation rate at target reference point (0.4$B_0$), "
+				"$Y_\\text{TRP}$ = equilibrium yield at target reference point (0.4$B_0$), ",
+				"$B_\\text{TRP}$ = equilibrium spawning biomass at target reference point (0.4$B_0$), ",
+				"$u_\\text{TRP}$ = equilibrium exploitation rate at target reference point (0.4$B_0$), "
 			), collapse="") ),
 			"All biomass values (and Yield) are in tonnes. ", refCC.sentence
 		)
@@ -4088,7 +4071,6 @@ tabSS.compo <- function(envo, #istock="YTR", prefix="ytr.", compo,
 				F.list = split(F.data, ivec)
 				rr.ord = match(ovec, as.numeric(substring(names(F.list),1,2)) )  ## order not so important for sensitivities
 				F.list = F.list[rr.ord]
-		#browser();return()
 				F.qnts = lapply(F.list,function(x){
 					z = apply(x,2,function(xx){!all(is.na(xx))})
 					out = apply(x[z],2,quantile,qval,na.rm=T)
@@ -4499,7 +4481,7 @@ tabSS.decision <- function(envo, #istock="YTR", prefix="ytr.", compo,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tabSS.decision
 
 
-## tabSS.senso--------------------------2026-06-30
+## tabSS.senso--------------------------2026-07-15
 ## Make Sensitivity Tables
 ## Note: u2023=u2022 (see 'gatherMCMC.r') so change 
 ##       labels here in rfpt tables to use 'prevYear'
@@ -4534,8 +4516,6 @@ tabSS.senso <- function(envo, sigdig=4)
 
 		PA.mpd = mergePA(smpdPA, good=good, bad=bad)
 		PA.mcmc = mergePA(senPA, good=good, bad=bad)
-#browser();return()
-		#unpackList(PA.list, scope="L")
 		S.mpd = PA.mpd[["PA"]]
 		senPA = PA.mcmc[["PA"]]
 	
@@ -4545,7 +4525,6 @@ tabSS.senso <- function(envo, sigdig=4)
 		modYrsChar  = as.character(modYrs)
 		## Diagnostics for select parameters
 		P.names     = colnames(senPA) ## parameter names
-		#S.mpd       = smpdPA; storage.mode(S.mpd)="double"     ## For some reason, this matrix is stored as a list (maybe due to NA values?)
 		S.runs      = as.numeric(sapply(strsplit(rownames(senPA),"\\."),function(x){x[1]})) ## vector of Runs
 		S.run.rwt   = sapply(strsplit(rownames(senPA),"\\."),function(x){paste0(x[1],".",x[2],".",x[3])}) ## vector of Runs and Rwts
 		S.run.ord   = unique(S.runs)                           ## unique Run numbers (1st is central run)
@@ -4572,7 +4551,6 @@ tabSS.senso <- function(envo, sigdig=4)
 			S.prefix = sub("B([0-9])", "A\\1", S.prefix)
 			S.labels = sub("Base","Alternative",sub("B([0-9])", "A\\1", S.labels))  ## SGR 2025 change 3area label from base (B) to alternative (A)
 		}
-#browser();return()
 
 		P.qnts = calcQs(senPA, ivec=S.run.rwt, ovec=S.run.ord)
 	
@@ -4598,7 +4576,6 @@ tabSS.senso <- function(envo, sigdig=4)
 			names.pars[zq] = sub("TRAWL_(BC|5ABC|5DE|3CD)", "TRAWL_\\1_", names.pars[zq ])
 			names.pars[zq] = sub("\\_$", "", names.pars[zq ])
 			names.pars[zq] = sub("_\\(([0-9])\\)", "~{\\1}", names.pars[zq ])
-#browser();return()
 			names.pars[zq] = sapply(strsplit(names.pars[zq], split="~"),  function(x){ paste0(x[1],"_",x[3],"~(\\text{",gsub("\\_","~",x[2]),"})")})
 		}
 		## Fix up Rdist
@@ -4622,7 +4599,6 @@ tabSS.senso <- function(envo, sigdig=4)
 			names.pars[zs] = paste0("\\", names.pars[zs], "})")
 			names.pars[zs] = sub("\\\\varL_\\{([0-9])\\}", "\\\\log v_{\\\\text{L}\\1}", names.pars[zs])
 		}
-#browser();return()
 		rownames(tab.sens.pars) =  paste(rep("$", nrow(tab.sens.pars)), names.pars,rep("$",nrow(tab.sens.pars)), sep="")
 
 		sen.leg = paste0("Sensitivity runs: ", paste0("S", formatC(S.num[-1], width=0, format="d", flag="0"),"~= ", gsub("\\&","\\\\&", gsub("\\%","\\\\%", gsub("_"," ",sen.lab))), collapse=", "))
@@ -4641,7 +4617,6 @@ tabSS.senso <- function(envo, sigdig=4)
 			texThatVec(paste0(fleet.num, "~= ", fleets.all[fleet.num]),simplify=F),
 			". ", sen.leg
 		)
-#browser();return()
 		xtab.sens.pars = xtable(tab.sens.pars, align=paste0("l",paste0(rep("r",Nsens+1),collapse="")),
 			label   = paste0("tab:",prefix,"sens.pars"), digits = if (exists("formatCatch")) NULL else sigdig,
 			caption = cap.par )
@@ -4650,11 +4625,7 @@ tabSS.senso <- function(envo, sigdig=4)
 			add.to.row =list(pos = list(-1), command = c("\\\\[-1.0ex]")),
 			size = "\\usefont{\\encodingdefault}{\\familydefault}{\\seriesdefault}{\\shapedefault}\\footnotesize"
 		) )
-		#tput(xtab.sens.pars.out)
 #browser();return()
-
-sumting = T
-if (sumting) {
 
 		## Deal with extra sensitivity parameters
 		if (!is.null(PA.mcmc$exPA)) {
@@ -4706,7 +4677,6 @@ if (sumting) {
 					ragtab = c(ragtab, paste0(jjj, " & ", jjjj, " \\\\"))
 				}
 			}
-	#browser();return()
 			ragtab = c(ragtab, c(
 				"\\hline",
 				"\\end{tabular}",
@@ -4715,13 +4685,9 @@ if (sumting) {
 			))
 			xtab.sens.pars2.out = ragtab
 			tput(xtab.sens.pars2.out)  ## may need fixing
-	#browser();return()
 		} else {
 			xtab.sens.pars2.out = NULL
 		}
-} ## end sumting
-
-#browser();return()
 
 		## MCMC MSY-based quantities  (RH 251009) we don't have TRP info from the sensitivities
 		## -------------------------
@@ -4738,15 +4704,17 @@ if (sumting) {
 	
 		if (RPbase=="BMSY") {
 			Q.mcmc = data.frame (
+				## Derived quantities
 				B0         = senRP[,"B0"],
 				Bcurr      = senRP[,"Bcurr"],
 				Bcurr.B0   = senRP[,"Bcurr"] / senRP[,"B0"],
 				ucurr      = senRP[,"ucurr"],
 				umax       = apply(senTS[,,"ut"],1,max,na.rm=T), ## for each mcmc sample across the time series
+				## Reference point values
 				MSY        = senRP[,"MSY"],
-				Bmsy       = senRP[,"Bmsy"],
 				LRP        = senRP[,"LRP"],
 				USR        = senRP[,"USR"],
+				Bmsy       = senRP[,"Bmsy"],
 				Bcurr.Bmsy = senRP[,"Bcurr"] / senRP[,"Bmsy"],
 				Bmsy.B0    = senRP[,"Bmsy"] / senRP[,"B0"],
 				umsy       = senRP[,"umsy"],
@@ -4755,20 +4723,22 @@ if (sumting) {
 		}
 		if (RPbase=="B0") {
 			Q.mcmc = data.frame (
+				## Derived quantities
 				B0         = senRP[,"B0"],
 				Bcurr      = senRP[,"Bcurr"],
 				Bcurr.B0   = senRP[,"Bcurr"] / senRP[,"B0"],
 				ucurr      = senRP[,"ucurr"],
 				umax       = apply(senTS[,,"ut"],1,max,na.rm=T), ## for each mcmc sample across the time series
+				## Reference point values
+				## For SGR 2025, sensitivities were not run using Btgt (forecast.ss : benchmark ref point used option 2 instead of 1)
 				#Ytrp      = senRP[,"Ytgt"],
-				Btrp       = 0.40 * senRP[,"B0"],  ## this should be OK when B0=SSB_1933 (VIRG) but not OK when B0=SSB_1935 (first year)
-				#LRP        = 0.16 * senRP[,"B0"],
 				LRP        = 0.20 * senRP[,"B0"],
 				USR        = 0.32 * senRP[,"B0"],
+				Btrp       = 0.40 * senRP[,"B0"],  ## this should be OK when B0=SSB_1933 (VIRG) but not OK when B0=SSB_1935 (first year)
 				Bcurr.Btrp = senRP[,"Bcurr"] / (0.40 * senRP[,"B0"])
 				#Btrp.B0    = (0.40 * senRP[,"B0"]) / senRP[,"B0"],  ## just 0.4
-				#umsy       = senRP[,"umsy"],
-				#ucurr.umsy = senRP[,"ucurr"] / senRP[,"umsy"]
+				#utrp       = senRP[,"utgt"],
+				#ucurr.utrp = senRP[,"ucurr"] / senRP[,"utgt"]
 			)
 		} 
 		Q.mcmc.sens = split(Q.mcmc, S.run.rwt)  ## split rearranges order of Runs alphabetically
@@ -4780,46 +4750,49 @@ if (sumting) {
 
 		## Extract area-based information if it exists
 		if (exists("xsenRP") && length(xsenRP)>1) {
-			## colnames(xsenRP) = "Bmsy" "Fmsy" "MSY"  "umsy" "Btgt"  "Ftgt"  "Ytgt"  "utgt"  "LRP"  "USR"  "Vmsy" "Vtgt"  "B0"   "V0"   "pVB"
-			## dimnames(xsensTS)[3] =  "B"      "BtBtgt"  "BtBmsy" "D"      "fR"     "R"      "u"      "ututgt"  "utumsy" "V"
 			if (RPbase=="BMSY") {
-				A.mcmc = data.frame (
-					## Needs revision (see below)
-					B0         = senRP[,"B0"],
-					Bcurr      = senRP[,"Bcurr"],
-					Bcurr.B0   = senRP[,"Bcurr"] / senRP[,"B0"],
-					ucurr      = senRP[,"ucurr"],
-					umax       = apply(senTS[,,"ut"],1,max,na.rm=T), ## for each mcmc sample across the time series
-					MSY        = senRP[,"MSY"],
-					Bmsy       = senRP[,"Bmsy"],
-					LRP        = senRP[,"LRP"],
-					USR        = senRP[,"USR"],
-					Bcurr.Bmsy = senRP[,"Bcurr"] / senRP[,"Bmsy"],
-					Bmsy.B0    = senRP[,"Bmsy"] / senRP[,"B0"],
-					umsy       = senRP[,"umsy"],
-					ucurr.umsy = senRP[,"ucurr"] / senRP[,"umsy"]
-				)
-			}
-			if (RPbase=="B0") {
 				A.collect = list('BC'=tabQmed)
-				
 				for (a in dimnames(xsenRP)[[3]]) {
-#browser();return()
 					A.mcmc = data.frame (
+						## Derived quantities
 						B0         = xsenRP[,"B0",a],
 						Bcurr      = xsenTS[,as.character(currYear),"B",a],
 						Bcurr.B0   = xsenTS[,as.character(currYear),"B",a] / xsenRP[,"B0",a],
 						ucurr      = xsenTS[,as.character(currYear),"u",a],
 						umax       = apply(xsenTS[,,"u",a],1,max,na.rm=T), ## for each mcmc sample across the time series
+						## Reference point values
+						MSY        = xsenRP[,"MSY",a],
+						LRP        = xsenRP[,"LRP",a],
+						USR        = xsenRP[,"USR",a],
+						Bmsy       = xsenRP[,"Bmsy",a],
+						Bcurr.Bmsy = xsenTS[,as.character(currYear),"B",a] / xsenRP[,"Bmsy",a],
+						Bmsy.B0    = xsenRP[,"Bmsy",a] / xsenRP[,"B0",a],
+						umsy       = xsenRP[,"umsy",a],
+						ucurr.umsy = xsenTS[,as.character(currYear),"u",a] / xsenRP[,"umsy",a]
+					)
+				} ## end a loop
+			} ## end BMSY
+
+			if (RPbase=="B0") {
+				A.collect = list('BC'=tabQmed)
+				for (a in dimnames(xsenRP)[[3]]) {
+					A.mcmc = data.frame (
+						## Derived quantities
+						B0         = xsenRP[,"B0",a],
+						Bcurr      = xsenTS[,as.character(currYear),"B",a],
+						Bcurr.B0   = xsenTS[,as.character(currYear),"B",a] / xsenRP[,"B0",a],
+						ucurr      = xsenTS[,as.character(currYear),"u",a],
+						umax       = apply(xsenTS[,,"u",a],1,max,na.rm=T), ## for each mcmc sample across the time series
+						## Reference point values
+						## For SGR 2025, sensitivities were not run using Btgt (forecast.ss : benchmark ref point used option 2 instead of 1)
 						#Ytrp       = xsenRP[,"Ytgt",a],
-						Btrp       = 0.40 * xsenRP[,"B0",a],  ## this should be OK when B0=SSB_1933 (VIRG) but not OK when B0=SSB_1935 (first year)
-						#LRP        = 0.16 * xsenRP[,"B0",a],
 						LRP        = 0.20 * xsenRP[,"B0",a],
 						USR        = 0.32 * xsenRP[,"B0",a],
+						Btrp       = 0.40 * xsenRP[,"B0",a],  ## this should be OK when B0=SSB_1933 (VIRG) but not OK when B0=SSB_1935 (first year)
 						Bcurr.Btrp = xsenTS[,as.character(currYear),"B",a] / (0.40 * xsenRP[,"B0",a])
-						#Btrp.B0    = (0.40 * senRP[,"B0"]) / senRP[,"B0"],  ## just 0.4
-						#umsy       = senRP[,"umsy"],
-						#ucurr.umsy = senRP[,"ucurr"] / senRP[,"umsy"]
+						#Btrp.B0    = (0.40 * xsenRP[,"B0",a]) / xsenRP[,"B0",a],  ## just 0.4
+						#utrp       = xsenRP[,"utgt",a],
+						#ucurr.utgt = xsenTS[,as.character(currYear),"u",a] / xsenRP[,"utgt"]
 					)
 					A.mcmc.sens = split(A.mcmc, S.run.rwt)  ## split rearranges order of Runs alphabetically
 					A.mcmc.sens = A.mcmc.sens[use.run.rwt]  ## force back to original order
@@ -4829,6 +4802,7 @@ if (sumting) {
 					A.collect[[a]] = tabAmed
 				} ## end area a loop
 			} ## end RPbase 'B0'
+
 			## How to interleave a data frame (Google AI 251016)
 			## Add an identifier and row number to each data frame
 			interleaved_list <- lapply(seq_along(A.collect), function(i) {
@@ -4848,12 +4822,10 @@ if (sumting) {
 			tabQmed = interleaved_df
 			xareas  = dimnames(xsenRP)[[3]]
 			rownames(tabQmed) = sub("3",paste0(".",xareas[3]), sub("2",paste0(".",xareas[2]), sub("1", paste0(".",xareas[1]), rownames(tabQmed) ) ) )
-#browser();return()
 		} ## end extra area collection
 
 		tab.sens.rfpt = formatCatch(tabQmed,N=sigdig-1)  ## use 3 instead of 4
 		colnames(tab.sens.rfpt) = gsub(" +","",S.prefix)
-#browser();return()
 
 		names.rfpt = rownames(tab.sens.rfpt)
 		## Use routine from 'make.base.tabs.r':
@@ -4882,7 +4854,6 @@ if (sumting) {
 			}
 		}
 		rownames(tab.sens.rfpt) =  paste(rep("$",nrow(tab.sens.rfpt)),names.rfpt,rep("$",nrow(tab.sens.rfpt)),sep="")
-		#remove.rows = grep("max|0\\.16|0\\.32|~~B\\_\\\\text\\{TRP",rownames(tab.sens.rfpt))
 		remove.rows = grep("~~0\\.16|~~0\\.32|~~B\\_\\\\text\\{TRP|~~u\\_\\\\text\\{max",rownames(tab.sens.rfpt))
 		if (length(remove.rows) > 0)
 			tab.sens.rfpt = tab.sens.rfpt[-remove.rows,]   ## otherwise it removes all rows
@@ -4890,29 +4861,27 @@ if (sumting) {
 		cap.rfpt = paste0(
 			name, "~: medians of MCMC-derived quantities from the ", ifelse(NrefM>1,"central","base"), " run and ", Nsens,
 			" sensitivity runs (\\Nmcmc{} samples each) from their respective MCMC posteriors. Definitions are: ",
-			"$B_0$                = unfished equilibrium spawning biomass (mature females), ",
-			#"$V_0$ = unfished equilibrium vulnerable biomass (males and females), ",
-			"$B_{", currYear, "}$ = spawning biomass at the start of ",currYear, ", ",
-			"$u_{", currYear-1, "}$ = exploitation rate (ratio of total catch to vulnerable biomass) in the middle of ", currYear-1, ", ",
-			"$u_\\text{max}$      = maximum exploitation rate (calculated for each sample as the maximum exploitation rate from ",
+			"$B_0$~= unfished equilibrium spawning biomass (mature females), ",
+			"$B_{", currYear, "}$~= spawning biomass at the start of ",currYear, ", ",
+			"$u_{", currYear-1, "}$~= exploitation rate (ratio of total catch to vulnerable biomass) in the middle of ", currYear-1, ", ",
+			"$u_\\text{max}$~= maximum exploitation rate (calculated for each sample as the maximum exploitation rate from ",
 			startYear , " to ", currYear, "), ",
 			switch(RPbase, 
 				'BMSY'=paste0(c(
-					"MSY -- maximum sustainable yield at equilibrium, ",
-					"$B_\\text{MSY}$ -- equilibrium spawning biomass at MSY, ",
-					"$u_\\text{MSY}$ -- equilibrium exploitation rate at MSY. ",
+					"MSY~= maximum sustainable yield at equilibrium, ",
+					"$B_\\text{MSY}$~= equilibrium spawning biomass at MSY, ",
+					"$u_\\text{MSY}$~= equilibrium exploitation rate at MSY. ",
 					), collapse=""),
 				'B0'=paste0(c(
 					"$B_\\text{TRP}$~= equilibrium spawning female biomass ($B$*) at target reference point (TRP~= 0.4$B_0$), ",
 					"0.32$B_0$~= $B$* at the upper stock reference (USR) point, ",
-					"0.2$B_0$~=  $B$* at the limit reference point (LRP), ",
+					"0.2$B_0$~= $B$* at the limit reference point (LRP), ",
 					"$u_\\text{TRP}$~= equilibrium harvest rate at the TRP. "
 				), collapse="")
 			),
 			"All biomass values are in tonnes. ", sen.leg
 		)
-#browser();return()
-	
+
 		xtab.sens.rfpt = xtable(tab.sens.rfpt, align=paste0("l",paste0(rep("r",Nsens+1),collapse="")),
 			label   = paste0("tab:",prefix,"sens.rfpt"), digits = if (exists("formatCatch")) NULL else sigdig,
 			caption = cap.rfpt )
@@ -4934,7 +4903,6 @@ if (sumting) {
 		## Sensitivity run likelihoods
 		## ---------------------------
 		cutout = switch(spp.code, 'YTR'="HBLL|BT_|MW_|CPUE_", 'SGR'="Index|AF|Recruit|Total")
-#browser();return()
 		senLL = senLL[grep(cutout,rownames(senLL),value=T,invert=T),]  ## YTR 2024 : get rid of these rows
 		tab.sens.ll = formatCatch(senLL,N=sigdig,na="-",zero="-")
 		names.ll = rownames(senLL)
@@ -4944,7 +4912,6 @@ if (sumting) {
 		LL.senso = t(tab.sens.ll)
 		LL.senso[,"Sen.Run"] = sub("\\s+$", "", S.prefix)
 		LL.senso = data.frame(Sen.Run=LL.senso[,"Sen.Run"], Label = c("base run", gsub("_"," ",sen.lab)), LL.senso[,-c(1)])
-#browser();return()
 
 		xtab.sens.ll = xtable(LL.senso, align=paste0("l", "p{0.6in}p{1.0in}", paste0(rep("p{0.6in}",dim(LL.senso)[2]-2),collapse="")),
 			label   = paste0("tab:",prefix,"sens.ll"), digits=NULL, 
@@ -4955,11 +4922,9 @@ if (sumting) {
 			add.to.row = list(pos = list(-1,1), command = c("\\\\[-0.5ex]", "\\hdashline \\\\[-1.75ex]")),
 			size = "\\usefont{\\encodingdefault}{\\familydefault}{\\seriesdefault}{\\shapedefault}\\footnotesize"
 		) )
-		#tput(xtab.sens.ll.out)
 #browser();return()
 	
 		outwithit = c("xtab.sens.pars.out", "xtab.sens.rfpt.out", "xtab.sens.ll.out")
-	#browser();return()
 		if (!is.null(xtab.sens.pars2.out))
 			outwithit = c(outwithit, "xtab.sens.pars2.out")
 		save(list=outwithit, file=paste0(prefix,"senso.tabs.rda"))

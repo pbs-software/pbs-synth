@@ -8,12 +8,13 @@
   Copy SS input files to an archive folder that can be copied later to a git repository.
 }
 \usage{
-copySSfiles(strSpp="405", assyr=2025)
+copySSfiles(strSpp="405", assyr=2025, clean=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{strSpp}{\code{character} -- string species Hart code}
   \item{assyr}{\code{numeric} -- year that \code{strSpp} stock was assessed}
+  \item{clean}{\code{logical} -- if \code{TRUE}, remove objects from user's working environment}
 }
 \details{
   Uses R's \code{'file.copy'} function to copy SS files from model runs to 
@@ -26,7 +27,7 @@ copySSfiles(strSpp="405", assyr=2025)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2026-02-23}
+  Last modified \code{Rd: 2026-07-24}
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{
